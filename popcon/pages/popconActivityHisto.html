@@ -1,0 +1,252 @@
+<!doctype html> 
+<html lang="en"> 
+  <head>
+    <title>PopCon monitor: home page</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <link href="css/popcon.css" rel="stylesheet" type="text/css" />
+    <link href="css/columns.css" rel="stylesheet" type="text/css" />
+    <script src="http://www.google.com/jsapi?key=ABQIAAAA77AvVXGr-NXQPnb-teNgXBTazzi4P4lW63pXwfn9Om7sI6mhvhSYq9j0-z34cphuvaZpWWD77sZMMA" type="text/javascript"></script>
+    <script type="text/javascript">
+	google.load("jquery", "1.4.2");
+    </script>
+    <script type="text/javascript" src="js/flot/jquery.js"></script>
+    <script type="text/javascript" src="js/flot/jquery.flot.js"></script>
+    <script type="text/javascript" src="js/flot/jquery.flot.selection.js"></script>
+    <script type="text/javascript" src="js/flot/jquery.flot.stack.js"></script>
+    <script type="text/javascript" src="js/flot/jquery.flot.navigate.js"></script>
+    <script type="text/javascript" src="js/jquery.mb.flipText/inc/jquery.mb.flipText.js"></script>
+    <style type="text/css" title="currentStyle">
+      @import "css/demo_table.css";
+      @import "css/dropdown.css";
+    </style>
+    <script type="text/javascript" src="js/dropdown.js"></script>
+      <style>
+        #placeholder .button {
+            position: absolute;
+            cursor: pointer;
+        }
+        #placeholder div.button {
+            font-size: smaller;
+            color: #999;
+            background-color: #eee;
+            padding: 2px;
+        }
+        .message {
+            padding-left: 50px;
+            font-size: smaller;
+        }
+        #one-ddcontent {
+            width: 230px; 
+        }
+      </style>
+  </head>
+  <body>
+    <div id="header">
+      <h1><a href="#"><img src="images/blank.png" alt=""></a> Pop<span style="font-weight:bold; color:#73868C;">Con</span> monitor </h1>
+    </div>
+    <div id="container">
+      <div id="navcontainer">
+        <ul id="nav">
+          <li id="nav-1"><a href="">Home</a></li>
+          <li id="nav-2"><a href="PopConRecentActivityRecorded.html">PopConRecentActivityRecorded</a></li>
+          <li id="nav-3"><a href="PopConCronjobTailFetcher.html">PopConCronjobTailFetcher</a></li>
+          <li id="nav-4"><a href="popconActivityHisto.html">popconActivityHisto</a></li>
+          <li id="contactForm">
+          <dl class="dropdown">
+            <dt id="one-ddheader" onmouseover="ddMenu('one',1)" onmouseout="ddMenu('one',-1)"><b>Set columns</b></dt>
+            <dd id="one-ddcontent" onmouseover="cancelHide('one')" onmouseout="ddMenu('one',-1)">
+              <p id="list"></p>
+            </dd>
+          </dl>
+          </li>
+        </ul>
+      </div>
+      <script>
+        $('#one-ddheader').html("<b>Set account</b>");
+      </script>
+      <div id="contentleft">
+        <div id="miniature" style="float: left; margin-left: 20px; margin-top: 20px;">
+          <p id="overviewLegend" style="margin-left: 10px; width: 90%"> </p>
+        </div>
+        <div style="float: left;">
+          <div id="placeholder" style="width: 90%; height:60%; position: relative; margin-bottom: 30px"></div>
+            <br />
+            <div style="margin: 5px 10px">
+              <span>
+                <input class="stackControls" value="With stacking" type="button">
+                <input class="stackControls" value="Without stacking" type="button">
+              </span>
+              <span style="margin-left:15px">
+                <input class="graphControls" value="Bars" type="button">
+                <input class="graphControls" value="Lines" type="button">
+              </span>
+            </div>
+          </div>
+          <script id="source">
+            $(function () {
+              var placeholder = $("#placeholder");
+              output = "<div id='choices'></div>";
+              $("#list").html(output);
+              var choiceContainer = $("#choices");
+              var plot;
+              var overview;
+              var stack = null, bars = false, lines = true, steps = false;
+              var minX, maxX, minY, maxY; 
+              var startData = "";
+              var tickNames = ""; 
+              var totalValues = "";
+              function showTooltip(x, y, contents) {
+                $('<div id="tooltip">' + contents + '</div>').css( {
+                  position: 'absolute',
+                  display: 'none',
+                  top: y + 5,
+                  left: x + 5,
+                  border: '1px solid #fdd',
+                  padding: '2px',
+                  'background-color': '#fee',
+                  opacity: 0.80
+                }).appendTo("body").fadeIn(200);
+              }
+              function plotWithOptions() {
+                var data = [];
+                choiceContainer.find("input:checked").each(function () {
+                  var key = $(this).attr("name");
+                  if (key && startData[key])
+                    data.push(startData[key]);
+                });
+                plot = $.plot($("#placeholder"), data, {
+                  legend: { show: true, noColumns:7, container: $("#overviewLegend") },
+                  series: {
+                    stack: stack,
+                    lines: { show: lines, steps: steps },
+                    bars: { show: bars, barWidth: 0.6 }
+                  },
+                  grid: { hoverable: true, clickable: true },  
+                  xaxis: { min: minX, max: maxX, ticks: tickNames },
+                  selection: { mode: "x" }
+                });
+                $(".tickToFormat").mbFlipText(false);
+                $('<div class="button" style="right:20px;top:20px">reset</div>').appendTo(placeholder).click(function (e) {
+                  e.preventDefault();
+                  minX = null;
+                  maxX = null;
+                  plotWithOptions();
+                });
+              } 
+              $('#placeholder').width(Math.ceil($(window).width()*0.9));
+              $('#placeholder').height(Math.ceil($(window).height()*0.4));
+              $.ajax({
+                async: false,
+                url: "/popconActivityHisto",
+                dataType: "json",
+                context: document,
+                success: function(data){
+                  startData = data.plotData;
+                  tickNames = data.tickNames;
+                  totalValues = data.totalValues;
+                } 
+              });
+              var i = 0;
+              $.each(startData, function(key, val) {
+                val.color = i;
+                ++i;
+              });
+              choiceContainer.append('<ul>');
+              $.each(startData, function(key, val) {
+                choiceContainer.append('<li><input type="checkbox" style="margin:5px" name="' + key +
+                                       '" checked="checked" id="id' + key + '">' +
+                                       '<label for="id' + key + '">'
+                                       + val.label + '</label></li>');
+              });
+              choiceContainer.append('</ul>');
+              choiceContainer.find("input").click(plotWithOptions);
+              plotWithOptions();
+              $(".stackControls").click(function (e) {
+                e.preventDefault();
+                stack = $(this).val() == "With stacking" ? true : null;
+                plotWithOptions();
+              });
+              $(".graphControls").click(function (e) {
+                e.preventDefault();
+                bars = $(this).val().indexOf("Bars") != -1;
+                lines = $(this).val().indexOf("Lines") != -1;
+                steps = $(this).val().indexOf("steps") != -1;
+                plotWithOptions();
+              });
+              $("#placeholder").bind("plotselected", function (event, ranges) {
+                // clamp the zooming to prevent eternal zoom
+                if (ranges.xaxis.to - ranges.xaxis.from < 0.00001)
+                  ranges.xaxis.to = ranges.xaxis.from + 0.00001;
+                if (ranges.yaxis.to - ranges.yaxis.from < 0.00001)
+                  ranges.yaxis.to = ranges.yaxis.from + 0.00001; 
+                minX = ranges.xaxis.from;
+                maxX = ranges.xaxis.to;
+                minY = ranges.yaxis.from;
+                maxY = ranges.yaxis.to;
+                var data = [];
+                choiceContainer.find("input:checked").each(function () {
+                  var key = $(this).attr("name");
+                  if (key && startData[key])
+                    data.push(startData[key]);
+                });
+                // do the zooming
+                plot = $.plot($("#placeholder"), data, 
+                  $.extend(true, {}, {
+                    legend: { show: true, noColumns:7, container: $("#overviewLegend") },
+                    series: {
+                      stack: stack,
+                      lines: { show: lines, steps: steps },
+                      bars: { show: bars, barWidth: 0.6 }
+                    },
+                    grid: { hoverable: true, clickable: true }, 
+                    xaxis: { min: minX, max: maxX, ticks: tickNames },
+                    selection: { mode: "x" }
+                  }, {
+                    xaxis: { min: minX, max: maxX },
+                  })
+                );
+                $(".tickToFormat").mbFlipText(false); 
+                // don't fire event on the overview to prevent eternal loop
+                //overview.setSelection(ranges, true);
+                $('<div class="button" style="right:20px;top:20px">reset</div>').appendTo(placeholder).click(function (e) {
+                  e.preventDefault();
+                  minX = null;
+                  maxX = null;
+                  plotWithOptions();
+                });
+              });
+              var previousPoint = null;
+              $("#placeholder").bind("plothover", function (event, pos, item) {
+                if (item)
+                {
+                  if(!(bars && (stack != true) ))
+                    if (previousPoint != item.datapoint) {
+                      previousPoint = item.datapoint;
+                      $("#tooltip").remove();
+                      var size = item.series.data[item.dataIndex][1],
+                      total = totalValues[item.series.data[item.dataIndex][0]]; 
+                      showTooltip(item.pageX, item.pageY,
+                                  "<span style='color:blue; font-weight:bold'>" + item.series.label + " : " + size + "</span><br />Total: " + total);
+                    }
+                }
+                else {
+                  $("#tooltip").remove();
+                  previousPoint = null;            
+                }
+              });
+            });
+          </script>
+        </div>
+      <div>
+        &nbsp;
+      </div>
+    </div>
+    <div id="footer">
+      <div id="bottom">
+        <a href="">homepage</a> | Questions? <a href="mailto:hn-cms-database__at__cern.ch"> hn-cms-database__at__cern.ch</a> | &copy; 2009 PopCon
+         -     Jan 31
+      </div>
+    </div>
+  </body>
+</html>
+

@@ -1,0 +1,64 @@
+
+# Creating a new service
+
+
+Creating a new service for CMS DB Web services is really easy with the new infrastructure.
+
+
+## Quick setup
+
+First of all, login to your private virtual machine for development and deploy CMS DB Web services. See the related documentation for this.
+
+Next, create a new folder for your service. The name is arbitrary, but try to follow the camelCase convention:
+
+	$ cd /data/services
+	$ mkdir myService
+
+Then copy the serviceTemplate.py from the docs:
+
+	$ cp docs/serviceTemplate.py myService/myService.py
+
+Take a look to the simple code and after that create an empty server.conf file:
+
+	$ touch myService/server.conf
+
+Now add an entry in the keeper configuration to register your service:
+
+	$ your_favorite_editor keeper/config.py
+
+like this:
+
+	'myService': {
+		'filename':      'myService.py',
+		'listeningPort':  9999,
+	},
+
+Open the port you picked in your firewall:
+
+	# system-config-firewall
+
+Then, as an example, edit the secrets file and add one:
+
+	$ your_favorite_editor /data/secrets/secrets.py
+
+like this:
+
+	'myService': {
+		'biggestSecret': 'that the sky is blue!',
+	},
+
+Go to the keeper and start your service:
+
+	$ cd keeper
+	$ ./keeper.py start ServiceTemplate
+
+And finally browse to:
+
+	http://thevirtualmachine:theport/
+
+And you should read something like:
+
+	I am myService, I am listening on 9999, with production level "private", my root directory is /afs/cern.ch/user/m/mojedasa/scratch0/services/myService and my biggest secret is that the sky is blue!!
+
+That's it! You don't need anything else to start developing! :)
+

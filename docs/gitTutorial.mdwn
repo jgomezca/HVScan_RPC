@@ -1,0 +1,344 @@
+
+# Git tutorial
+
+
+Informally explains the basics of Git in 5 minutes and the basic workflow
+we will follow in our group, including working examples.
+
+
+## Basic workflow
+
+First, update your global username and email. This is important because
+*your identity is immutably baked into all the commits you pass around*:
+
+	$ git config --global user.name "Miguel Ojeda"
+	$ git config --global user.email mojedasa@cern.ch
+
+You have now completed all the steps required to setup Git :)
+
+As you are probably using AFS, these values will be saved in ~/.gitconfig,
+so you only need to do this once. However, if you start working on a machine
+without AFS access or with another user, please remember to set it up
+before working with Git!
+
+Start cloning our remote master repository (you can think of it as
+the equivalent of the SVN/CVS server). It is called clone and not
+checkout because you are *really cloning the full repository into
+your local machine*, which is the reason why later your Git commands
+work so fast compared to SVN/CVS: Everything is local:
+
+	$ git clone ssh://lxplus.cern.ch/afs/cern.ch/cms/DB/rep/cmsDbWebServices.git
+
+Note: Usually you won't clone the repository like this, instead, you will
+deploy using keeper/deploy.py, which will give you the full infrastructure
+with the repository already cloned at /data/services. Please read
+[deploying.html](deploying.html) later on.
+
+Now you have a complete copy of the repository inside the new folder
+`cmsDbWebServices`. If the server's hardware ever breaks, you could just
+clone your local repository into a new server and everything will stay
+the same as it was. This is a completely different model than SVN's/CVS'.
+
+Let's do some work on it. Say you need to update the listening port for
+popcon, so let's modify the keeper's configuration:
+
+	$ cd cmsDbWebServices
+	$ your_favorite_editor keeper/config.py
+
+Save your changes. You can now see what you have changed:
+
+	$ git diff
+	diff --git a/keeper/config.py b/keeper/config.py
+	index d3f7084..5d5d131 100644
+	--- a/keeper/config.py
+	+++ b/keeper/config.py
+	@@ -45,7 +45,7 @@ servicesConfiguration = {
+	        #},
+	        'popcon': {
+	                'filename':       'popconBackend.py',
+	-               'listeningPort':  8082,
+	+               'listeningPort':  1234,
+	        },
+	        #'regressionTesting': {
+	        #       'filename':       '',
+
+Git is printing the diff between what you have in your working directory
+(i.e. the files you edited) and what is in its index. The index contains
+changes that are waiting for being committed. If you ask Git now
+about what would be committed if you commit right now, it will say 'nothing':
+
+	$ git status
+	# On branch master
+	# Changed but not updated:
+	#   (use "git add <file>..." to update what will be committed)
+	#   (use "git checkout -- <file>..." to discard changes in working directory)
+	#
+	#	modified:   keeper/config.py
+	#
+	no changes added to commit (use "git add" and/or "git commit -a")
+
+Let's tell Git that our changes in `config.py` should go into
+the next commit:
+
+	$ git add keeper/config.py
+
+And ask again what would be committed:
+
+	$ git status
+	# On branch master
+	# Changes to be committed:
+	#   (use "git reset HEAD <file>..." to unstage)
+	#
+	#	modified:   keeper/config.py
+	#
+
+Let's commit our changes:
+
+	$ git commit -m 'Updated the listening port of popcon to 1234.'
+	[master 297e7d1] Updated the listening port of popcon to 1234.
+	 1 files changed, 1 insertions(+), 1 deletions(-)
+
+And check the log of the project:
+
+	$ git log
+	commit 297e7d117df641894697cc2afccea096e543ee00
+	Author: Miguel Ojeda <mojedasa@cern.ch>
+	Date:   Fri May 11 10:46:40 2012 +0200
+	
+	    Updated the listening port of popcon to 1234.
+	
+	commit f807189aa88b5533fe7a651f96c77f7dcabaea15
+	Author: Miguel Ojeda <mojedasa@cern.ch>
+	Date:   Thu May 10 15:48:48 2012 +0200
+	
+	    Initial commit with keeper, popcon (new one) and getLumi.
+	
+Careful! Recall that with Git you always work locally. You committed
+your changes *locally*, i.e. in *your* Git repository. No one can see
+how hard you worked yet :)
+
+For that to happen, there are several possibilities, depending on your
+privileges and/or how the workflow is setup in the project you are working on:
+
+	1. "git push" your changes into the server, if you have privileges.
+	2. Ask someone with privileges to "git pull" your changes
+	   from your repository to the server.
+	3. Send a patch to a mailing list (and get blamed for your code ;).
+
+In our group, we are taking the same approach as the kernel guys: Everyone
+send their patches to a common mailing list so that we can all review
+and, hopefully, spot a few bugs early on, before they even get committed.
+This is slower than the other options, but we make sure we don't mess up
+the master repository, at least until we all get accustomed to Git enough
+to use git pull.
+
+However, if your changes are big enough and/or we want to save your commits,
+you would need to request a git pull. i.e. when you send a patch to a mailing
+list and it gets applied, all your commits are gone. This is why if you fix
+20 bugs, with one commit for each bugfix; you would need either to send
+1 full patch to the mailing list, or 20 individual patches, each with its
+description, or just request a git pull.
+
+So, let's create the email with the changes with respect to our groups'
+master repository, called 'origin':
+
+	$ git format-patch --stdout origin/master
+	From 297e7d117df641894697cc2afccea096e543ee00 Mon Sep 17 00:00:00 2001
+	From: Miguel Ojeda <mojedasa@cern.ch>
+	Date: Fri, 11 May 2012 10:46:40 +0200
+	Subject: [PATCH] Updated the listening port of popcon to 1234.
+	
+	---
+	 keeper/config.py |    2 +-
+	 1 files changed, 1 insertions(+), 1 deletions(-)
+	
+	diff --git a/keeper/config.py b/keeper/config.py
+	index d3f7084..5d5d131 100644
+	--- a/keeper/config.py
+	+++ b/keeper/config.py
+	@@ -45,7 +45,7 @@ servicesConfiguration = {
+	 	#},
+	 	'popcon': {
+	 		'filename':       'popconBackend.py',
+	-		'listeningPort':  8082,
+	+		'listeningPort':  1234,
+	 	},
+	 	#'regressionTesting': {
+	 	#	'filename':       '',
+	-- 
+	1.7.2.5
+
+Just copy paste from the Subject line to your email client and send it to
+<yet-to-be-decided-egroup@cern.ch>.
+
+Another option is to open the output in your email client as a message,
+it will automatically fill the email. You can use:
+
+	$ git format-patch origin/master
+	0001-Updated-the-listening-port-of-popcon-to-12.patch
+	$ ls -l
+	total 16
+	-rw------- 1 mojedasa mojedasa  698 May 11 11:32 0001-Updated-the-listening-port-of-popcon-to-12.patch
+	drwx------ 2 mojedasa mojedasa 4096 May 11 10:35 getLumi
+	drwx------ 2 mojedasa mojedasa 4096 May 11 11:06 keeper
+	drwx------ 6 mojedasa mojedasa 4096 May 11 10:35 popcon
+	...
+
+And then open the file in your email client.
+
+Note: By default, *git format-patch creates an email per commit* (which is
+what you usually want).
+
+Finally, before you close this tutorial, you need to learn how to update
+your repository with the changes other people applied in 'origin',
+the master repository: 
+
+	$ git pull
+	Already up-to-date.
+
+This output happens if everything is up to date. However, if you made some
+changes and then you git pull new changes, the changes of the other people
+will have to be merged. Git will try to do it automatically, and it is quite
+good at it. If the changes can't be merged (for instance, changes in the same
+line in the same file), Git will stop and ask you to decide what to do:
+
+	$ git pull
+	remote: Counting objects: 5, done.
+	remote: Total 3 (delta 0), reused 0 (delta 0)
+	Unpacking objects: 100% (3/3), done.
+	From [...]
+	   24d4db5..5eb7942  master     -> origin/master
+	Auto-merging config.py
+	CONFLICT (content): Merge conflict in keeper/config.py
+	Automatic merge failed; fix conflicts and then commit the result.
+
+In this case, you need to:
+
+	$ your_favourite_editor keeper/config.py
+
+Find the >>>>, ====, <<<< parts and fix the problem. Then:
+ 
+	$ git add keeper/config.py
+
+To mark the conflict as solved. Finally:
+
+	$ git commit -m 'How I solved the conflict.'
+
+
+## Advanced workflow
+
+The previous section only covers the very basic workflow of Git needed
+to easily create a patch for our egroup. It does not even explain how
+to work with branches.
+
+However, the power of Git comes with using branches. With them you can
+easily work on several aspects of your project in parallel. Also,
+if people gets more comfortable working with Git, we could use git pulls.
+
+As there is plenty material on the Internet on how to use Git,
+with much better graphics than those which can be pulled in an ASCII file,
+I recommend you to read the Git book:
+
+ * [http://book.git-scm.com](http://book.git-scm.com)
+
+If you don't have the time, I would suggest you to learn about, at least,
+the following commands:
+
+	git fetch
+	git merge
+
+	git branch
+	git checkout
+	git rebase
+
+Also, a useful GUI tool for visualizing git's topology is gitk (available in
+both SLC5 and SLC6):
+
+	gitk
+
+
+## A not so random selection of git commands
+
+
+### Checking things 
+
+A short summary of changes, commit message in one line, names of affected files below
+
+	git log --oneline --name-status
+
+A text-based graphical representation of all commit history:
+
+	git log --oneline --graph --all
+
+A pretty looking equivalent:
+
+	git log --graph --all --abbrev-commit --date=relative --format=format:'%C(bold blue)%h%C(reset) %C(green)%cr %C(yellow)%cn%C(bold yellow)%d%C(reset) %C(white)%s'
+
+For small terminals you might prefer:
+
+	git log --graph --all --abbrev-commit --date=relative --format=format:'%C(bold blue)%h%C(reset) %C(green)%cr %C(yellow)%cn%C(bold yellow)%d%C(reset)%n        %C(white)%s%n'
+
+You can set up these as aliases in your ~/.gitconfig:
+
+	[alias]
+		llog = log --graph --all --abbrev-commit --date=relative --format=format:'%C(bold blue)%h%C(reset) %C(green)%cr %C(yellow)%cn%C(bold yellow)%d%C(reset)%n        %C(white)%s%n'
+
+Search for string "octopus" in the last 50 commits to the "master" branch
+
+	git diff -S"octopus" master~50
+
+
+### Branching
+
+	git branch <branch> [starting-commit]
+
+If no starting-commit is given, use the latest commit of the working branch.
+If no <branch> is given, list all branches.
+
+Checkout a branch and switch to using it:
+
+	git checkout -b <branch>
+
+List info about branches and commits:
+
+	git show-branch
+
+
+### Tagging
+
+Making an official (i.e. -a, annotated) tag (of the current commit):
+
+	git tag -a -m"Tag version 1.0" v1.0
+
+Pushing the tag to the official repository:
+
+	git push --tags
+
+List all tags:
+
+	git tag
+
+
+### Handling merge conflicts
+
+When resolving a conflict, use git log to figure out exactly where the changes come from:
+
+	git log --merge --left-right -p [<filename>]
+
+Show diffs between merge-base and the version you're merging:
+
+	git diff :1:hello :3:hello
+
+Once done, do 
+
+	git commit ... 	
+
+Aborting a merge (restores working dir and index to state immediately before merge):
+
+	git reset --hard HEAD
+
+Reset a merge (abort/discard after merge is done):
+
+	git reset --hard ORIG_HEAD
+
+

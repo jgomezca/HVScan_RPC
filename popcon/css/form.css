@@ -1,0 +1,82 @@
+.ui-tabs-nav li a{
+padding: 0.3em 0.3em !important;
+font-size:90% !important;
+font-weight: bold;
+list-style-image:url("../images/ok.png") !important;
+}
+
+div.tabs ul{
+}
+
+
+#dt_example .login_form{
+ width: 275px;
+ padding-left: 20px;
+ padding-top: 20px;
+}
+.login_input{
+ width: 36%;
+ float: left;
+ text-align: right;
+}
+.login_input{
+ float: left;
+ text-align: right;
+}
+.login_submit{
+ float: right;
+}
+div.box{width:100%!important;width /**/:auto;
+    overflow:auto;padding: 0px;
+    border:0px solid #EEE;border-right:0 solid;
+    background:url(gradient.png) repeat-x fixed top left
+	}
+
+div.box p{margin-top:0}
+
+.sort-table {
+	width:		100%;
+	font:		Icon;
+	border:		1px Solid ThreeDShadow;
+	background:	Window;
+	color:		WindowText;
+	text-align:	center;
+}
+
+.sort-table thead {
+	background:	ButtonFace;
+}
+.sort-table tbody tr td div{
+	padding:14px;
+	height:150px;
+	overflow:auto;!important
+}
+
+.sort-table tbody tr td {
+	vertical-align: top;
+	text-align: left;
+	border-style:solid;
+	border-width:1px;
+	max-width:200px;
+}
+
+.sort-table thead td {
+	border:			1px solid;
+	border-color:	ButtonHighlight ButtonShadow
+					ButtonShadow ButtonHighlight;
+	cursor:			default;
+}
+
+#leftcol {
+width:45px; 
+float:left; 
+vertical-align:top; 
+padding:4px 2px 4px 4px;
+}
+
+#rightcol {
+width:45%; float:right; 
+vertical-align:top; 
+padding:4px 4px 4px 2px;
+}
+

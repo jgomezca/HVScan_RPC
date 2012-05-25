@@ -1,0 +1,87 @@
+
+# Deploying
+
+
+## Introduction
+
+Deploying allows you to get a working full setup of the CMS DB Web services in a single step. Usually, you will do this once in your private development machine. The same script is also used in dev/int/pro for deploying and updating.
+
+
+## Deploying
+
+Deploying is really easy. Login into your virtual/private machine and verify that you can run Python 2.6 (if you are in SLC5, maybe you do not have it):
+
+	$ python2.6
+
+If not, please install it:
+
+	$ sudo yum install python26
+
+Then, in a temporary directory, run:
+
+	$ git clone ssh://lxplus.cern.ch/afs/cern.ch/cms/DB/rep/cmsDbWebServices.git services
+
+This allows you to get access to the latest deploy script. Now, in order to deploy HEAD in the default /data, run:
+
+	$ services/keeper/deploy.py HEAD
+
+Finally you can remove the temporary directory and start developing. Please read [managingServices.html](managingServices.html).
+
+
+## Example
+
+This is an example output of what you should see:
+
+	~ $ mkdir tmp
+
+	~/tmp $ cd tmp
+
+	~/tmp $ git clone ssh://lxplus.cern.ch/afs/cern.ch/cms/DB/rep/cmsDbWebServices.git services
+	Initialized empty Git repository in /afs/cern.ch/user/m/mojedasa/tmp/services/.git/
+	remote: Counting objects: 307, done.
+	remote: Compressing objects: 100% (270/270), done.
+	remote: Total 307 (delta 114), reused 0 (delta 0)
+	Receiving objects: 100% (307/307), 243.96 KiB, done.
+	Resolving deltas: 100% (114/114), done.
+
+	~/tmp $ services/keeper/deploy.py HEAD
+	[2012-05-21 20:34:13,776] INFO: Executing: sudo mkdir --version
+	[2012-05-21 20:34:13,784] INFO: Executing: git --version
+	[2012-05-21 20:34:13,786] INFO: Executing: rsync --version
+	[2012-05-21 20:34:13,789] INFO: Executing: sudo mkdir -p /data
+	[2012-05-21 20:34:13,797] INFO: Working directory: /data
+	[2012-05-21 20:34:13,797] INFO: Executing: sudo chown -R mojedasa:zh .
+	[2012-05-21 20:34:13,840] INFO: Executing: sudo chmod g-w,o-rwx .
+	[2012-05-21 20:34:13,848] INFO: Executing: mkdir -p logs
+	[2012-05-21 20:34:13,850] INFO: Executing: mkdir -p docs
+	[2012-05-21 20:34:13,852] INFO: Executing: rsync -az lxplus.cern.ch:/afs/cern.ch/cms/DB/conddb/internal/webServices/secrets .
+	[2012-05-21 20:34:15,844] INFO: Executing: git clone -q ssh://lxplus.cern.ch/afs/cern.ch/cms/DB/rep/cmsDbWebServices.git services
+	[2012-05-21 20:34:17,255] INFO: Executing: cd services && git checkout -q HEAD
+	[2012-05-21 20:34:17,263] INFO: Dependency: cmsDbWebLibs v0.1
+	[2012-05-21 20:34:17,263] INFO: Dependency: cmssw V01-00-01
+	[2012-05-21 20:34:17,263] INFO: Executing: git clone -q ssh://lxplus.cern.ch/afs/cern.ch/cms/DB/rep/cmsDbWebLibs.git libs
+	[2012-05-21 20:34:19,660] INFO: Executing: cd libs && git checkout -q v0.1
+	[2012-05-21 20:34:19,680] INFO: Executing: git clone -q ssh://vocms145.cern.ch/data/cmssw cmssw
+	[2012-05-21 20:35:05,365] INFO: Executing: cd cmssw && git checkout -q V01-00-01
+	[2012-05-21 20:35:05,691] INFO: Executing: ln -s cmssw cmsswNew
+	[2012-05-21 20:35:05,693] INFO: Deployment successful.
+
+	~/tmp $ ls -l /data
+	total 28
+	drwxr-xr-x.  7 mojedasa zh 4096 May 21 20:35 cmssw
+	lrwxrwxrwx.  1 mojedasa zh    5 May 21 20:35 cmsswNew -> cmssw
+	drwxr-xr-x.  2 mojedasa zh 4096 May 21 20:34 docs
+	drwxr-xr-x.  4 mojedasa zh 4096 May 21 20:34 libs
+	drwxr-xr-x.  2 mojedasa zh 4096 May 21 20:34 logs
+	drwx------.  2 mojedasa zh 4096 May 18 21:11 secrets
+	drwxr-xr-x. 10 mojedasa zh 4096 May 21 20:34 services
+
+	~/tmp $ ls -l /data/services/
+	total 28
+	drwxr-xr-x. 2 mojedasa zh 4096 May 21 20:34 common
+	drwxr-xr-x. 2 mojedasa zh 4096 May 21 20:34 dependencies
+	drwxr-xr-x. 2 mojedasa zh 4096 May 21 20:34 docs
+	drwxr-xr-x. 2 mojedasa zh 4096 May 21 20:34 getLumi
+	drwxr-xr-x. 2 mojedasa zh 4096 May 21 20:34 keeper
+	drwxr-xr-x. 6 mojedasa zh 4096 May 21 20:34 popcon
+

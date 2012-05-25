@@ -1,0 +1,30 @@
+
+# Developing
+
+
+## Requirements and/or instructions for developing
+
+For developing the CMS DB Web services, you will need to do the following:
+
+ * Request a private (virtual) machine with SLC5 or SLC6. Do so at [https://vmm.cern.ch/](https://vmm.cern.ch/).
+ * Check that git, rsync and python2.6 are installed and working properly.
+ * Deploy a new instance of the CMS DB Web services. Read [deploying.html](deploying.html).
+ * Learn how to manage the services. Read [managingServices.html](managingServices.html).
+ * If you are new to git, read the [gitTutorial.html](gitTutorial.html).
+ * If you need to develop a new service, read [creatingANewService.html](creatingANewService.html).
+ * Also read the tricks section of this document for easier development.
+
+
+## Tricks
+
+While you can develop using your favorite terminal-based editor within your virtual machine, you might want to use your desktop operating system for editing the code. Also, you might want to access the code in several computers.
+
+In order to do so, move your private virtual machine's /data/services folder into your ~/scratch0 area. Then make a symlink:
+
+	$ mv /data/services ~/scratch0
+	$ ln -s ~/scratch0/services /data/services
+
+Now you can open easily the code of the services in any computer and develop them using your favorite GUI editor.
+
+This just works because a git repository is just a set of normal files in the filesystem.
+

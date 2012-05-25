@@ -1,0 +1,40 @@
+
+# Managing services
+
+
+Managing services in a private virtual/development machine is easy: you use the keeper service as a module, which means you use the same code to run the services as the keeper in production.
+
+
+## Managing
+
+In order to manage your services, you can issue:
+
+	$ /data/services/keeper.py
+
+to see the available commands. For instance, you can start getLumi typing:
+
+	$ /data/services/keeper.py start getLumi
+
+Or check the status of all services and the keeper itself with:
+
+	$ /data/services/keeper.py status
+
+Also, you can script this by using keeper as a Python 2.6 module, e.g.:
+
+	>>> import keeper
+	>>> keeper.start('getLumi')
+
+Other functions like stop(), getPIDs(), isRunning(), etc. are also available. See the help of the module for more information:
+
+	>>> help(keeper)
+
+
+## Rationale
+
+The advantages of using Python and the same code as the keeper for managing the services are:
+
+ * Cleaner than bash scripts.
+ * More robust, as you run the service like it will be done in production.
+ * It makes it easy to develop more interfaces and/or tools based on the keeper module for managing the services.
+    - A web interface (could be interesting).
+

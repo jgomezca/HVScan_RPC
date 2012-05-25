@@ -1,0 +1,112 @@
+table {
+    width: 100%;
+}
+
+.sortable th {
+    background: #333; 
+    text-align: left;
+    color: #cfdce7; 
+    border: 1px solid white; 
+    border-right: none
+}
+.sortable th h3 {
+    font-family: verdana;
+    font-size:11px; 
+    color: white;
+    padding: 6px 8px 8px;
+}
+
+.sortable td {
+    padding: 7px 10px 8px 12px; 
+    border-bottom: 1px solid #c6d5e1; 
+    border-right: 1px solid #c6d5e1;
+    font-family: verdana;
+    font-size: 11px;
+    color: black;
+}
+
+.sortable .head h3 {
+    background: url(../images/sort.gif) 7px center no-repeat; 
+    cursor: pointer; 
+    padding-left: 18px;
+}
+
+.sortable .desc h3 {
+    background: url(../images/desc.gif) 7px center no-repeat; 
+    cursor: pointer; 
+    padding-left: 18px
+}
+
+.sortable .asc h3 {
+    background: url(../images/asc.gif) 7px  center no-repeat; 
+    cursor: pointer; 
+    padding-left: 18px
+}
+
+#controls {
+    width: 980px; 
+    margin: 0 auto; 
+    height: 20px;
+    padding: 0px;
+    padding-top: 20px;
+    padding-bottom: 10px;
+    font-family: verdana;
+    font-size: 11px;
+    color: #333;
+}
+
+#perpage {
+    float: left; 
+    width:200px;
+}
+
+#perpage select {
+    float: left; 
+    font-size:10px;
+    width: 50px;
+}
+#perpage span {
+    float: left; 
+    margin:2px 0 0 5px;
+}
+
+#navigation {
+    float: left; 
+    width: 580px; 
+    text-align: center;
+}
+
+#navigation img {
+    cursor: pointer;
+}
+
+#text2 {
+    float: left; 
+    width: 200px; 
+    text-align: right;
+    margin-top: 2px;
+}
+
+
+.sortable .evenrow td {
+    background: #fff;
+}
+
+.sortable .oddrow td {
+    background: #E6E6E6;
+}
+
+.sortable td.evenselected {
+    background: #E6E6E6;
+}
+
+.sortable td.oddselected {
+    background: #D5D3D3;
+}
+
+#needless {
+    display: none;
+}
+
+
+

@@ -1,0 +1,122 @@
+
+# Thoughts and ideas discussed in the short talk we had on 2012-05-10.
+
+
+* We will use git as the version control system.
+    - Iteration: First.
+    - Why: It is better ;)
+
+* We will maintain a 'master' repository/ies somewhere (not yet decided), backed up in AFS.
+    - Iteration: First.
+    - Why: We will use this bare repository to centralize our changes and
+      deploy to dev/int/pro from there.
+    - The old repositories were at:
+        /afs/cern.ch/user/a/andreasp/workspace0/public/gitReps
+    - The new ones are at:
+        /afs/cern.ch/cms/DB/rep
+
+* We will use patches to a mailing list as the workflow.
+    - Iteration: First.
+    - Why: It is the safest Git workflow until we all get accustomed enough
+      to Git.
+    - Probably we will allow git pulls for big changes.
+    - There will be a maintainer applying patches, we can rotate ourselves
+      into the role.
+    - For starters, only Andreas and Miguel have git push rights.
+    - See [gitTutorial.html](gitTutorial.html) for more details about the workflow.
+
+* The mailing list for patches is still to be decided.
+    - doc/patchesMailingList.txt will contain the email address.
+
+* The git repositories will send automatic emails to the mailing list
+  whenever something is pushed into them, using git's hooks.
+    - Iteration: First.
+    - Why: It makes people be aware of the changes so that they can fetch,
+      without putting that burden on the person who pushes.
+
+* We will use git web as the web access to the repository.
+    - Iteration: First
+    - Why: It is really convenient to browse the repository and keep ourselves
+      up to date with what others are doing.
+
+* We will have two git repositories:
+   cmsDbWebServices.git - Services' code.
+   cmsDbWebLibs.git     - Common libraries (e.g. jquery, ...)
+
+    - Iteration: First.
+    - Why: Libs.git's contents are (mostly) external and they will be updated
+      less frequently than the code in Services.git.
+
+* Add a doc/ folder for the Documentation.
+    - Iteration: First.
+    - Why: This way it is revision controlled, will be alongside the code
+      (i.e. never get lost) and easily readable/modificable.
+    - We should add a TWiki page pointing to this folder,
+      probably a http:// link to the latest revision on our git web.
+
+* The keeper will pass the rootDirectory, listeningPort and productionLevel
+  to the services via arguments. The keeper will take care of
+  the daemonization of the services and other aspects.
+    - Iteration: First.
+    - Why: It standarizes the services, they don't have to guess the rootDirectory,
+       we centralize the ports information to a single place, it is easy to run
+       the services outside the keeper, it takes out a lot of code from them (...)
+
+* The services should use the productionLevel command line argument to decide
+  to which database access to, etc.
+
+* The services should use server.conf for their CherryPy's configuration needs.
+  Then, only the necessary updates, like the one for the port which comes through
+  command-line argument, are done in the code itself:
+        cherrypy.config.update({
+            'global': {
+                'server.socket_port': serviceSettings['listeningPort'],
+            },
+        })
+        cherrypy.quickstart(LumiDB(), config='server.conf')
+
+    - Iteration: After the first.
+
+* The code for services' initialization (like CherryPy's configuration
+  and parsing the arguments) should be the same for all of them, so that later
+  on we can put it in a common.py file and import it.
+    - Iteration: First.
+ 
+* The keeper will chroot('/data') the services (maybe even itself).
+    - Iteration: First.
+    - Why: This way we make sure the services are not accessing any file
+      outside /data.
+    - It also improves security.
+    - As we have python installed in /data/cmssw, loading modules on the fly
+      should work.
+
+* The keeper may use a different user for each service.
+    - Iteration: Afer the first.
+    - Why: It allows us to have a fine-grained control of the services
+      privileges.
+    - It also improves security.
+
+* The services should provide a test.py file (the name could be configured
+  in keeper/config.py) which runs all the tests that service requires.
+
+* We will provide a system-wide test.py script for testing services which
+  depend on one another (which ones?) or tests that require inter-service
+  communication (i.e. the normal test.py files of each service will most
+  likely be unittests).
+
+* The development machine should periodically (6 hours for instance)
+  a script that:
+    1. Stops all the services
+    2. Pulls the changes from the master Git repository
+    3. Runs the test.py file for each service
+    4. Runs the syste-wide test.py.
+    5. Reports the results via email to the mailing list.
+    6. Starts the services
+
+* The test.py file for a service should be run by the developers before
+  sending a patch. A patch will not be accepted unless it passes the tests.
+
+* There will be deployment scripts which take care of creating the required
+  structure in a new machine (VM) for developing and fetching the files.
+  They will be used in dev/int/pro as well.
+

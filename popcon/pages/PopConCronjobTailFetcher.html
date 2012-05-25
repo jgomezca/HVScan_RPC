@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>PopCon monitor: home page</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <link href="css/popcon.css" rel="stylesheet" type="text/css" />
+    <link rel="stylesheet" href="css/form.css" type="text/css" media="all" />
+    <link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.7.2/themes/base/ui.all.css" type="text/css" media="all" />
+    <script src="http://www.google.com/jsapi?key=ABQIAAAA77AvVXGr-NXQPnb-teNgXBTazzi4P4lW63pXwfn9Om7sI6mhvhSYq9j0-z34cphuvaZpWWD77sZMMA" type="text/javascript"></script>
+    <script type="text/javascript">
+      google.load("jquery", "1.5.2");
+    </script>
+    <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.7.3/jquery-ui.min.js" type="text/javascript"></script>
+    <script type="text/javascript">
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-1950165-27']);
+      _gaq.push(['_setDomainName', '.cern.ch']);
+      _gaq.push(['_trackPageview']);
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="header">
+      <h1><a href="#"><img src="images/blank.png" alt=""></a> 
+        Pop<span style="font-weight:bold; color:#73868C;">Con</span> monitor
+      </h1>
+    </div>
+    <div id="container">
+      <div id="navcontainer">
+        <ul id="nav">
+          <li id="nav-1"><a href="">Home</a></li>
+          <li id="nav-2"><a href="PopConRecentActivityRecorded.html">PopConRecentActivityRecorded</a></li>
+          <li id="nav-3"><a href="PopConCronjobTailFetcher.html">PopConCronjobTailFetcher</a></li>
+          <li id="nav-4"><a href="popconActivityHisto.html">popconActivityHisto</a></li>
+        </ul>
+      </div>
+      <div id="contentleft">
+        <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.7.2/jquery-ui.min.js" type="text/javascript"></script>
+        <script type="text/javascript" src="js/jquery.blockUI.js"></script>
+        <script type="text/javascript">
+          var wsw	=	window.screen.width;
+          var wsh	=	window.screen.height;
+          var serverFunctionName = "PopConCronjobTailFetcherShort";
+          $(document).ready(function() {
+            $.blockUI({ message: $('#processing') });
+            var hashName = "";
+            hashName = window.location.hash.substring(1);
+            if ((hashName != "EcalLaserExpressTimeBasedO2O") && 
+               (hashName != "EcalDAQO2O") && 
+               (hashName != "SiStripDetVOffTimeBasedO2O") &&
+               (hashName != "RunInfoStart") && 
+               (hashName != "OfflineDropBox") &&
+               (hashName != "EcalPedestalsTimeBasedO2O") &&
+               (hashName != "EcalDCSO2O") &&
+               (hashName != "RunInfoStop") && 
+               (hashName != "EcalLaserTimeBasedO2O")){
+                hashName = "";
+            }      
+            if (hashName == ""){
+              serverFunctionName = "PopConCronjobTailFetcher";
+              displayData(true, hashName);
+            }
+            else{
+              displayData(false, hashName);
+              serverFunctionName = "PopConCronjobTailFetcher"
+              displayData(true, hashName);
+            }
+          });
+          function displayData(one, hashName) {
+            $.ajax({
+              type: 'POST',
+              url: serverFunctionName,
+              data: {hashName: hashName},
+              async: one,
+              dataType: 'json',
+              success:                               
+                function(data) {
+                  var _tabs       =   $('#tabs');
+                  $.each(data.items, function(i,item){
+                    $.each(item.name_of_columns, function(k,itemk){
+                    });
+                    var _tabs_ul    =   $('#tabs ul');
+                    $.each(item.aaData, function(k2,item2){
+                      _tabs_ul.append("<li id='_"+k2+"'><a href=\"#"+k2+"\">"+k2.replace("Job","") + "</a><li>");
+                      _tabs.append("<div id=\""+k2+"\"><p></p></div>");
+                      $("<table/>").appendTo('#'+k2+' p');
+                      $('table').addClass('sort-table');
+                      var _table  =   $('#'+k2+' table');
+                      var _k2     =   $('#_'+k2);
+                      $.each(item2, function(k3,item3){
+                        _table.append("<tr/>");
+                        var td_child    =   $('#'+k2+' tr:nth-child('+(k3+1)+')');
+                        $.each(item3, function(k4,item4){
+                          if(typeof(item4)=="string"){
+                            td_child.append('<td><div>'+item4+'</div></td>');
+                          }
+                          if(typeof(item4)=="object"){
+                            $.each(item4, function(k5,item5){
+                              if(item5==0){
+                                _k2.append("<img src='images/ok.png'>");
+                              }
+                              else {
+                                if(item5==1){
+                                  _k2.append("<img src='images/ko.png'>");
+                                }
+                                else {
+                                _k2.append("<img src='images/warning.gif'>");
+                                }
+                              }
+                            });
+                          }
+                        });
+                      });             
+                    });
+                  });
+                  if (one == true) {
+                    _tabs       =   $('#tabs');
+                    _tabs.tabs();
+                    $.unblockUI();
+                  }
+                  else{
+                    $.unblockUI();
+                  }
+                  fix_data_size();
+                },                       
+              error: function() { alert("Error in data send"); }
+            });
+          }
+          fix_data_size = function(){
+            $('table td:nth-child(1)').css('max-width','80px')
+            $('table div').css('height','400px')
+          }
+        </script>
+        <div>
+          &nbsp;
+        </div>
+        <div id="tabs">
+          <ul>
+          </ul>
+        </div>
+        <div id=processing style="display:none;">
+          <div style="text-align:center;padding:15px;font: normal 15px Arial, Helvetica, sans-serif;color:#000000;font-weight:bold;width:350px">
+            <div class="BoxTitle" style="text-align:center;"></div>
+              <img src="images/ajaxloader.gif" style="margin-top:10px">
+              <p>Please Stand By......</p>
+            </div>
+            <div>
+              &nbsp;
+            </div>
+          </div>
+          <div>
+            &nbsp;
+          </div>
+        </div>
+      <div id="footer">
+        <div id="bottom">
+          <a href="/">homepage</a> | Questions?<a href="mailto:hn-cms-database@cern.ch">hn-cms-database@cern.ch</a> | &copy; 2009 PopCon
+           -     Jan 31
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+

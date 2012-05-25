@@ -1,0 +1,54 @@
+table.display {
+	font-size: 90%;
+        border-spacing: 0px!important;
+}
+table.display thead {
+	background: #333333 !important;
+	color: #ffffff;
+}
+
+table.display tr.even {
+background-color:#E6E6E6 !important;
+}
+table.display tr.odd {
+background-color:#FFFFFF !important;
+}
+table.display tr.odd td.sorting_1 {
+background-color:#E6E6E6 !important;
+}
+table.display tr.even td.sorting_1 {
+background-color:#D5D3D3 !important;
+}
+
+
+/**
+ * Table Head
+ */
+table.display thead tr th {
+	white-space:nowrap;
+	padding: 0px 0px 0px 0px !important;
+}
+table.display thead tr th span {
+	float: left;
+}
+
+/**
+ * Table Footer
+ */
+table.display tfoot tr th {
+	color:#555555;
+}
+
+/**
+ * Pagination
+ */
+.fg-toolbar .fg-button {
+	padding-left: 5px;
+	padding-right: 5px;
+	margin-left: 2px;
+	cursor-right: pointer;
+}
+
+.fg-toolbar {
+	padding: 3px 5px 3px 8px;
+}
