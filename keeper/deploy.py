@@ -11,18 +11,20 @@ __maintainer__ = 'Miguel Ojeda'
 __email__ = 'mojedasa@cern.ch'
 
 
+import os
 import config
 
 
 defaultDataDirectory = config.rootDirectory
-defaultWebRepositoryBase = 'ssh://lxplus.cern.ch/afs/cern.ch/cms/DB/rep'
-defaultCmsswRepository = 'ssh://vocms146.cern.ch/cmssw.git'
+defaultRepositoryBase = 'ssh://lxplus.cern.ch/afs/cern.ch/cms/DB/rep'
+defaultServicesRepository = os.path.join(defaultRepositoryBase, 'cmsDbWebServices.git')
+defaultLibsRepository = os.path.join(defaultRepositoryBase, 'cmsDbWebLibs.git')
+defaultCmsswRepository = os.path.join(defaultRepositoryBase, 'cmssw.git')
 
 # In the rsync format
 secretsSource = 'lxplus.cern.ch:/afs/cern.ch/cms/DB/conddb/internal/webServices/secrets'
 
 
-import os
 import sys
 import pwd
 import grp
@@ -67,15 +69,23 @@ def getOptions():
 		default = defaultDataDirectory,
 		help = 'The directory where it will be installed. If it is not /data (default), a /data symlink will be created to that location so that CMSSW works properly.'
 	)
-	parser.add_option('-r', '--webRepositoryBase', type = 'str',
-		dest = 'webRepositoryBase',
-		default = defaultWebRepositoryBase,
-		help = 'The base path to the Git CMS DB Web repositories.'
+
+	parser.add_option('-s', '--servicesRepository', type = 'str',
+		dest = 'servicesRepository',
+		default = defaultServicesRepository,
+		help = 'The path to the Services Git repository.'
 	)
+
+	parser.add_option('-l', '--libsRepository', type = 'str',
+		dest = 'libsRepository',
+		default = defaultLibsRepository,
+		help = 'The path to the Libs Git repository.'
+	)
+
 	parser.add_option('-c', '--cmsswRepository', type = 'str',
 		dest = 'cmsswRepository',
 		default = defaultCmsswRepository,
-		help = 'The path to the Git CMSSW repository.'
+		help = 'The path to the CMSSW Git repository.'
 	)
 
 	(options, args) = parser.parse_args()
@@ -89,7 +99,8 @@ def getOptions():
 		'force': options.force,
 		'update': options.update,
 		'dataDirectory': options.dataDirectory,
-		'webRepositoryBase': options.webRepositoryBase,
+		'servicesRepository': options.servicesRepository,
+		'libsRepository': options.libsRepository,
 		'cmsswRepository': options.cmsswRepository,
 		'productionLevel': config.getProductionLevel()
 	}
@@ -247,7 +258,7 @@ def checkRequirementsDeploy(options):
 def deploy(options):
 	'''Deploys a new instance of the CMS DB Web Services:
 		- Creates the required /data file structure.
-		- Clones the Services, Libs and cmsswNew repositories.
+		- Clones the Services, Libs and CMSSW repositories.
 		- Checks out the given treeish for them.
 		- Sets the proper ownership for the files.
 	'''
@@ -289,7 +300,7 @@ def deploy(options):
 		execute('sudo ln -s ' + options['dataDirectory'] + ' ' + defaultDataDirectory)
 
 	# Clone services and checkout the treeish
-	execute('git clone -q ' + options['webRepositoryBase'] + '/cmsDbWebServices.git services')
+	execute('git clone -q ' + options['servicesRepository'] + ' services')
 	execute('cd services && git checkout -q ' + options['gitTreeish'])
 
 	# Get the dependencies' tags
@@ -299,7 +310,7 @@ def deploy(options):
 	logger.info('Dependency: cmssw ' + cmsswTag)
 
 	# Clone libs and checkout the tag
-	execute('git clone -q ' + options['webRepositoryBase'] + '/cmsDbWebLibs.git libs')
+	execute('git clone -q ' + options['libsRepository'] + ' libs')
 	execute('cd libs && git checkout -q ' + cmsDbWebLibsTag)
 
 	# Clone cmsswNew and checkout the tag
