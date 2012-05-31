@@ -168,7 +168,7 @@ def start(service):
 
 	# The service is running
 	if len(pids) > 0:
-		logger.warning('Tried to start a service which is already running: %s', ','.join(pids))
+		logger.warning('Tried to start a service (%s) which is already running: %s', service, ','.join(pids))
 		return
 
 	# The service is not running, start it
