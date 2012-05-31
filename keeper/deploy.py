@@ -24,6 +24,9 @@ defaultCmsswRepository = os.path.join(defaultRepositoryBase, 'cmssw.git')
 # In the rsync format
 secretsSource = '/afs/cern.ch/cms/DB/conddb/internal/webServices/secrets'
 
+utilitiesDirectory = '/afs/cern.ch/cms/DB/utilities'
+utilitiesPythonPackages = os.path.join(utilitiesDirectory, 'python-packages')
+
 
 import sys
 import pwd
@@ -135,6 +138,15 @@ def execute(command):
 	return check_output(command, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 
 
+def generateDocs():
+	'''Generates the docs by calling services/docs/generate.py.
+
+	Uses the markdown Python module installed in utilitiesPythonPackages.
+	'''
+
+	execute('cd services/docs && PYTHONPATH=' + utilitiesPythonPackages + ' ./generate.py')
+
+
 def checkRequirementsUpdate(options):
 	'''Checks the requirements needed for update().
 	'''
@@ -159,6 +171,7 @@ def update(options):
 		- Git fetchs on services/, libs/ and cmssw/.
 		- Checks out the gitTreeish on services/.
 		- Checks out the dependencies in libs/ and cmssw/.
+		- Regenerates the docs.
 		- Starts the keeper (which will start the services).
 	'''
 
@@ -193,6 +206,9 @@ def update(options):
 	# Checkout the tags
 	execute('cd libs && git checkout -q ' + cmsDbWebLibsTag)
 	execute('cd cmssw && git checkout -q ' + cmsswTag)
+
+	# Regenerate the docs
+	generateDocs()
 
 	# Start the keeper
 	execute('services/keeper/keeper.py start keeper')
@@ -261,6 +277,7 @@ def deploy(options):
 		- Clones the Services, Libs and CMSSW repositories.
 		- Checks out the given treeish for them.
 		- Sets the proper ownership for the files.
+		- Generates the docs.
 	'''
 
 	# Check requirements
@@ -324,6 +341,9 @@ def deploy(options):
 
 	# FIXME: Create symlink cmsswNew -> cmssw
 	execute('ln -s cmssw cmsswNew')
+
+	# Generate docs
+	generateDocs()
 
 	logger.info('Deployment successful.')
 
