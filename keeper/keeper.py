@@ -150,7 +150,7 @@ def daemonize(stdoutFile = None, stderrFile = None, workingDirectory = '/'):
 		os.close(fd)
 
 
-def start(service):
+def start(service, warnIfAlreadyStarted = True):
 	'''Starts a service or the keeper itself.
 	'''
 
@@ -168,7 +168,8 @@ def start(service):
 
 	# The service is running
 	if len(pids) > 0:
-		logger.warning('Tried to start a service (%s) which is already running: %s', service, ','.join(pids))
+		if warnIfAlreadyStarted:
+			logger.warning('Tried to start a service (%s) which is already running: %s', service, ','.join(pids))
 		return
 
 	# The service is not running, start it
@@ -293,7 +294,7 @@ def keep():
 
 		for service in services:
 			try:
-				start(service)
+				start(service, warnIfAlreadyStarted = False)
 			except Exception as e:
 				logger.error(e)
 
@@ -317,13 +318,10 @@ def startKeeper():
 
 	logger.info('Started keeper: %s', os.getpid())
 
-	# Kill other keepers if they are running
-	stopKeeper(warning = True)
-
 	keep()
 
 
-def stopKeeper(warning = False):
+def stopKeeper():
 	'''Stops the keeper (it stops all keepers found).
 	'''
 
@@ -332,9 +330,6 @@ def stopKeeper(warning = False):
 	if len(pids) == 0:
 		logger.warning('Tried to stop the keeper which is not running.')
 		return
-
-	if warning:
-		logger.warning('Found other keepers running. Killing them...')
 
 	for pid in pids:
 		kill(pid)
