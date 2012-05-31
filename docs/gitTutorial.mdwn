@@ -272,12 +272,12 @@ A text-based graphical representation of all commit history:
 
 A pretty looking, colored, easier to read and with more information equivalent:
 
-	git log --graph --all --abbrev-commit --date=relative --format=format:'%C(bold blue)%h%C(reset) %C(green)%cr %C(yellow)%cn%C(bold yellow)%d%C(reset)%n        %C(white)%s%n'
+	git log --graph --all --abbrev-commit --date=relative --format=format:'%C(bold blue)%h%C(reset) %C(green)%ar %C(yellow)%an%C(bold yellow)%d%C(reset)%n        %C(white)%s%n'
 
 You can set up it as an alias in your ~/.gitconfig:
 
 	[alias]
-		ll = log --graph --all --abbrev-commit --date=relative --format=format:'%C(bold blue)%h%C(reset) %C(green)%cr %C(yellow)%cn%C(bold yellow)%d%C(reset)%n        %C(white)%s%n'
+		ll = log --graph --all --abbrev-commit --date=relative --format=format:'%C(bold blue)%h%C(reset) %C(green)%ar %C(yellow)%an%C(bold yellow)%d%C(reset)%n        %C(white)%s%n'
 
 Then you can use it like:
 
@@ -294,7 +294,7 @@ Which looks in a simple case like this (with colors and some bold parts):
 
 If you prefer everything in one line (i.e. you have a wide terminal), try:
 
-	git log --graph --all --abbrev-commit --date=relative --format=format:'%C(bold blue)%h%C(reset) %C(green)%cr %C(yellow)%cn%C(bold yellow)%d%C(reset) %C(white)%s'
+	git log --graph --all --abbrev-commit --date=relative --format=format:'%C(bold blue)%h%C(reset) %C(green)%ar %C(yellow)%an%C(bold yellow)%d%C(reset) %C(white)%s'
 
 Search for string "octopus" in the last 50 commits to the "master" branch
 
