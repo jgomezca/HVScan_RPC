@@ -16,13 +16,13 @@ import config
 
 
 defaultDataDirectory = config.rootDirectory
-defaultRepositoryBase = 'ssh://lxplus.cern.ch/afs/cern.ch/cms/DB/rep'
+defaultRepositoryBase = '/afs/cern.ch/cms/DB/rep'
 defaultServicesRepository = os.path.join(defaultRepositoryBase, 'cmsDbWebServices.git')
 defaultLibsRepository = os.path.join(defaultRepositoryBase, 'cmsDbWebLibs.git')
 defaultCmsswRepository = os.path.join(defaultRepositoryBase, 'cmssw.git')
 
 # In the rsync format
-secretsSource = 'lxplus.cern.ch:/afs/cern.ch/cms/DB/conddb/internal/webServices/secrets'
+secretsSource = '/afs/cern.ch/cms/DB/conddb/internal/webServices/secrets'
 
 
 import sys
