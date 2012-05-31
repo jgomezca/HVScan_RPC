@@ -27,8 +27,7 @@ logsSize = '10M' # rotatelogs' syntax
 timeBetweenChecks = 30 # seconds
 
 
-# FIXME: Change to the proper mailing list
-startedServiceEmailAddresses = ['mojedasa@cern.ch', 'andreas.pfeiffer@cern.ch']
+startedServiceEmailAddresses = ['cms-cond-dev@cern.ch']
 
 
 productionLevels = {
