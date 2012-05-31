@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <title>Global Tag Reader</title>
+        <style type="text/css" title="currentStyle">
+            @import "lib/DataTables/media/css/demo_page.css";
+            @import "lib/DataTables/media/css/demo_table_jui.css";
+            @import "lib/DataTables/media/css/demo_table_jui.css";
+            @import "lib/fancybox/jquery.fancybox-1.3.1.css";
+            @import "lib/block.css";
+            @import "lib/examples_support/themes/smoothness/jquery-ui-1.7.2.custom.css";
+            @import "css/form.css";
+            @import "css/header.css";
+        </style>
+        <script type="text/javascript" src="lib/jquery.v1.4.4.min.js"></script>
+        <script type="text/javascript" src="js/jquery.blockUI.js"></script>
+        <script type="text/javascript" src="js/main_page.js"></script>
+        <script type="text/javascript" src="http://www.datatables.net/release-datatables/media/js/jquery.dataTables.min.js"></script>
+        <script type="text/javascript" src="lib/fancybox/jquery.fancybox-1.3.1.js"></script>
+        <script type="text/javascript" src="js/table_document_ready.js"></script>
+        <script type="text/javascript" src="js/iov_list.js"></script>
+        <script type="text/javascript" src="lib/jquery.colorize-2.0.0.js"></script>
+        <script type="text/javascript" src="lib/FixedHeader.js"></script>
+        <script type="text/javascript" src="js/refresh.js"></script>
+        <script type="text/javascript" src="js/getURL.js"></script>
+        <script type='text/javascript' src='lib/jquery.bgiframe.min.js'></script>
+        <script type='text/javascript' src='lib/jquery.ajaxQueue.js'></script>
+        <script type='text/javascript' src='lib/jquery.autocomplete.js'></script>
+        <script type='text/javascript' src='js/autocomplete_globalTag.js'></script>
+        <link rel="stylesheet" type="text/css" href="css/jquery.autocomplete.css">
+        <link rel="stylesheet" type="text/css" href="lib/thickbox.css">
+        <link href="toolbar/toolbar.css" rel="stylesheet" type="text/css" />
+        <link href="css/blocker.css" rel="stylesheet" type="text/css" />
+        <link href="toolbar/toolbar2.css" rel="stylesheet" type="text/css" />
+    </head>
+    <body id='dt_example'>
+        <p>
+            <a id="alert_link" href="#"></a>
+        </p>
+        <div id='debug' style='display:none'>
+        </div>
+        <p id="GTDiffTag">
+        </p>
+        <div class="shiftcontainer">
+            <div class="col1" id="Globa Tag Name">
+                Global Tag: <b style='font-style:italic;' id='GlobalTagNameField'></b><br><br>
+                <!--CMSSW_VERSION: -->
+                <select id='cmssw_release' >
+                </select>
+                <b style='font-style:italic;'>
+                </b>
+            </div>
+            <div class="col2">
+                <form name='GlobalTag_form' id="form1" action='#'>
+                    <p id="tagEnter">
+                    </p>
+                    <div class="msg_list">
+                        <p class="msg_head close_head">compare Global Tags </p>
+                        <div id="secondTagNAmeField" class="msg_body">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="col3">
+                last update: <?=$data_gtag?>
+            </div>
+            <div class="col4">
+                current time: <b id="currentTime"> </b>
+            </div>
+        </div>
+        <div id="container">
+        </div>
+        <div id="container2">
+        </div>
+        <script type="text/javascript" src="lib/download.jQuery.js"></script>
+        <script type="text/javascript" src="lib/jquery.DOMWindow.js"></script>
+        <div id="blocker">
+            <div>
+                <img src="image/ajaxloader.gif" alt='ajax loader' style="margin-top:10px">
+                <p>Please Stand By......</p>
+            </div>
+        </div>
+    </body>
+</html>

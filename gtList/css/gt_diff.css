@@ -1,0 +1,27 @@
+#ver-minimalist
+{
+        font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-Serif;
+        font-size: 12px;
+        margin: 0px;
+        text-align: left;
+        border-collapse: collapse;
+}
+#ver-minimalist th
+{
+        padding: 2px 2px;
+        font-weight: bold;
+        font-size: 12px;
+        border-bottom: 2px solid #6678b1;
+        border-right: 3px solid #fff;
+        border-left: 3px solid #fff;
+        color: #000;
+}
+#ver-minimalist td
+{
+        padding: 2px 2px 0px 2px;
+        border-right: 3px solid #fff;
+        border-left: 3px solid #fff;
+        color: #000;
+        border-top: 1px solid transparent;
+        border-bottom: 1px solid #fff;
+}

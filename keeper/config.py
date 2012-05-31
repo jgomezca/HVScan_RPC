@@ -73,6 +73,11 @@ servicesConfiguration = {
 		'listeningPort':  8086,
 	},
 
+	'gtList': {
+		'filename':       'GTServerStarter.py',
+		'listeningPort':  8081,
+	},
+
 	'popcon': {
 		'filename':       'popconBackend.py',
 		'listeningPort':  8082,

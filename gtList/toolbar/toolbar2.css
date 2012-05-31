@@ -1,0 +1,17 @@
+span.menu_title2 {
+  background: #e4e4e4;
+  border-left: 1px solid #a4a4a4;
+  padding: 10px;
+}
+
+span.menu_title2 a {
+  font-size: 12px;
+  line-height: 34px;
+  color: #9a9a9a;
+  font-weight:bold;
+}
+.quickmenu {
+  position: absolute; /* important */
+  top: -201px !important;
+  height: 200px !important;
+}

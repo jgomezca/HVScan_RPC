@@ -1,0 +1,30 @@
+#dt_example .login_form{
+ width: 275px;
+ padding-left: 20px;
+ padding-top: 20px;
+}
+.login_input{
+ width: 36%;
+ float: left;
+ text-align: right;
+}
+.login_input{
+ float: left;
+ text-align: right;
+}
+.login_submit{
+ float: right;
+}
+div.box{width:100%!important;width /**/:auto;
+    height:190px !important;height /**/: 200px;
+    overflow:auto;padding: 0px;
+    border:0px solid #EEE;border-right:0 solid;
+    background:url(gradient.png) repeat-x fixed top left
+	}
+
+div.box p{margin-top:0}
+
+
+#example{
+    border-spacing: 0px!important;
+}
