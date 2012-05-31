@@ -85,7 +85,7 @@ def main():
 	titleRE = re.compile('^# (.*)$', re.MULTILINE)
 	sectionsRE = re.compile('^<h2 id="(.*)">(.*)</h2>$', re.MULTILINE)
 
-	for inputFilename in os.listdir('.'):
+	for inputFilename in sorted(os.listdir('.')):
 		match = inputFilenameRE.match(inputFilename)
 		if not match:
 			continue
@@ -134,13 +134,22 @@ def main():
 	# Generate a simple docs' index (i.e. a list of the files)
 	outputFilename = os.path.join(options['outputDirectory'], indexFilename)
 	logger.info('Generating: ' + outputFilename)
+	developmentMailingList = open('developmentMailingList.txt').read()
+	gitWeb = open('gitWeb.txt').read()
 	bodyText = '''
 		<h1>%s</h1>
+		<p>This is the development mailing list (you need to be subscribed):</p>
+		<ul><li><a href="mailto:%s">%s</a></li></ul>
+		<p>This is the git web:</p>
+		<ul><li><a href="%s">%s</a></li></ul>
 		<p>These are the documents available:
 		<ul>
-	''' % indexTitle
+	''' % (indexTitle, developmentMailingList, developmentMailingList, gitWeb, gitWeb)
 	bodyText += indexList
-	bodyText += '</ul>'
+	bodyText += '''
+		</ul>
+		<p>If it is your first time, please start by reading Developing.</p>
+	'''
 	outputText = docsTemplate % (indexTitle, docsFilename, bodyText)
 	write(outputFilename, outputText)
 

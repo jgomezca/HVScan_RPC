@@ -1,0 +1,167 @@
+
+# Pushing to the official repositories
+
+
+Explains how to apply patches from the mailing list and push them to
+the official repository.
+
+This document is meant for those who have the privileges and responsibility
+for doing so. For starters, Andreas and Miguel; later on we may switch
+the responsibility to the shifter.
+
+
+## Checkout to a new branch
+
+First, if you don't have a clean repository somewhere, clone a new one:
+
+	$ git clone /afs/cern.ch/cms/DB/rep/cmsDbWebServices.git services
+	Initialized empty Git repository in /afs/cern.ch/user/m/mojedasa/scratch0/apply/services/.git/
+	
+	$ cd services
+
+Now create a branch to apply the patch on it. If you are using this repository just for applying a patch, you don't need a branch; however, if you are working with your normal repository, you just need to create a new branch. The name does not matter, it is a temporal branch that you will delete later:
+
+	$ git branch officialCmssw
+
+And check it out (i.e. switch to it):
+
+	$ git checkout officialCmssw 
+	Switched to branch 'officialCmssw'
+
+Let's check what is the log at the moment (you can use git log here; 'git ll' is an alias for a custom command that you can read on [gitTutorial.html](gitTutorial.html)):
+
+	$ git ll
+	* 2b98c89 4 days ago Miguel Ojeda (HEAD, tag: v0.1, origin/master, origin/HEAD, officialCmssw, master)
+	          Initial commit with the new infrastructure for the CMS DB Web Services. Includes the docs, getLumi, popcon and regressionTest services, as well as the keeper of this services.
+
+
+## Check, apply and commit the patch
+
+If you don't know, check which are the changes in the patch:
+
+	$ git apply --stat ../patches/officialCmssw.patch
+	 keeper/deploy.py |   35 +++++++++++++++++++++++------------
+	 1 files changed, 23 insertions(+), 12 deletions(-)
+
+Now *try* to apply the patch:
+
+	$ git apply --check ../patches/officialCmssw.patch
+
+If the patch does not apply cleanly, please verify that your branch is at the HEAD (if the patch is meant for the HEAD -- usually it should be in our case) and that the patch is properly formatted (many email clients mess up the formatting when sending).
+
+If the patch applies cleanly, now you can proceed to apply and commit it. The following command applies the patch and commits the changes with the information in the file. This requires that the patch was created with git format-patch (instead of a simple diff). It takes the information from the subject and date of the email to use it for the commit, and saves the author (whoever sent the email) and the committer (you). This means that in Git you see who committed and who actually wrote the code. It also adds a Signed-off-by line with your name and email (from git's config) at the end of the commit changelog.
+
+	$ git am --signoff ../patches/officialCmssw.patch
+	Applying: Use the official CMSSW repository in AFS as we moved it from vocms146. Also have an option for each repository.
+
+Let's check what happened:
+
+	$ git ll
+	* de3e199 2 seconds ago Miguel Ojeda (HEAD, officialCmssw)
+	|         Use the official CMSSW repository in AFS as we moved it from vocms146. Also have an option for each repository.
+	|  
+	* 2b98c89 4 days ago Miguel Ojeda (tag: v0.1, origin/master, origin/HEAD, master)
+	          Initial commit with the new infrastructure for the CMS DB Web Services. Includes the docs, getLumi, popcon and regressionTest services, as well as the keeper of this services.
+
+As you can see, there is a new commit and your working copy (HEAD) points to it, as well as the branch.
+
+
+## Merge the changes back to the master branch
+
+Switch back to the master branch:
+
+	$ git checkout master
+	Switched to branch 'master'
+
+Now your working copy (HEAD), points to the original commit.
+
+	$ git ll
+	* de3e199 2 seconds ago Miguel Ojeda (officialCmssw)
+	|         Use the official CMSSW repository in AFS as we moved it from vocms146. Also have an option for each repository.
+	|  
+	* 2b98c89 4 days ago Miguel Ojeda (HEAD, tag: v0.1, origin/master, origin/HEAD, master)
+	          Initial commit with the new infrastructure for the CMS DB Web Services. Includes the docs, getLumi, popcon and regressionTest services, as well as the keeper of this services.
+
+As everything seems fine, you can now merge the changes you did (i.e. the patch) into the master branch.
+
+	$ git merge officialCmssw
+	Updating 2b98c89..de3e199
+	Fast-forward
+	 keeper/deploy.py |   35 +++++++++++++++++++++++------------
+	 1 files changed, 23 insertions(+), 12 deletions(-)
+
+Git says fast-forward because it could merge the changes by just moving where the branch points to another commit (i.e. it didn't need to actually merge anything as it was already done).
+
+	$ git ll
+	* de3e199 3 minutes ago Miguel Ojeda (HEAD, officialCmssw, master)
+	|         Use the official CMSSW repository in AFS as we moved it from vocms146. Also have an option for each repository.
+	|  
+	* 2b98c89 4 days ago Miguel Ojeda (tag: v0.1, origin/master, origin/HEAD)
+	          Initial commit with the new infrastructure for the CMS DB Web Services. Includes the docs, getLumi, popcon and regressionTest services, as well as the keeper of this services.
+
+You are finished with the branch, so delete it:
+
+	$ git branch -d officialCmssw
+	Deleted branch officialCmssw (was de3e199).
+
+This is what happened:
+
+	$ git ll
+	* de3e199 4 minutes ago Miguel Ojeda (HEAD, master)
+	|         Use the official CMSSW repository in AFS as we moved it from vocms146. Also have an option for each repository.
+	|  
+	* 2b98c89 4 days ago Miguel Ojeda (tag: v0.1, origin/master, origin/HEAD)
+	          Initial commit with the new infrastructure for the CMS DB Web Services. Includes the docs, getLumi, popcon and regressionTest services, as well as the keeper of this services.
+
+
+## Push the new commit to the official repository
+
+Now, everything is done in your local repository. The final step is to push the changes into the official repository. Be careful, this is the step that you can't easily reserve (you can, but depending on what you are pushing it might be not trivial; and remember that as soon as you pushed, other developers might be fetching your changes at that very moment). If you think you messed up somehow, please write a mail to the mailing list as soon as possible. We are a small private team, so it should not be a big problem to undo most things, do not worry:
+
+	$ git push
+	Counting objects: 7, done.
+	Delta compression using up to 4 threads.
+	Compressing objects: 100% (4/4), done.
+	Writing objects: 100% (4/4), 404 bytes, done.
+	Total 4 (delta 2), reused 0 (delta 0)
+	Unpacking objects: 100% (4/4), done.
+	To /afs/cern.ch/cms/DB/rep/cmsDbWebServices.git
+	   2b98c89..de3e199  master -> master
+
+If you ask for the logs again, you see that the origin's master and HEAD moved:
+
+	$ git ll
+	* de3e199 4 minutes ago Miguel Ojeda (HEAD, origin/master, origin/HEAD, master)
+	|         Use the official CMSSW repository in AFS as we moved it from vocms146. Also have an option for each repository.
+	|  
+	* 2b98c89 4 days ago Miguel Ojeda (tag: v0.1)
+        	  Initial commit with the new infrastructure for the CMS DB Web Services. Includes the docs, getLumi, popcon and regressionTest services, as well as the keeper of this services.
+
+
+## Push a new tag (i.e. make a new version/release for deploying on -dev)
+
+If you need to make a new version/release for deploying on -dev, you will need to tag the commit (please use -a, i.e. annotated tag):
+
+	$ git tag -a v0.2 -m'Tag with the official CMSSW repository.'
+
+See how it points to the correct commit:
+
+	$ git ll
+	* de3e199 6 minutes ago Miguel Ojeda (HEAD, tag: v0.2, origin/master, origin/HEAD, master)
+	|         Use the official CMSSW repository in AFS as we moved it from vocms146. Also have an option for each repository.
+	|  
+	* 2b98c89 4 days ago Miguel Ojeda (tag: v0.1)
+	          Initial commit with the new infrastructure for the CMS DB Web Services. Includes the docs, getLumi, popcon and regressionTest services, as well as the keeper of this services.
+
+Now you can finally push the tag into the official repository. As before, be careful, this step is not easily reversed if others already fetched the tag. Check the git-tag's manpage, section DISCUSSION, "On Re-Tagging", to learn more about this.
+
+	$ git push --tags
+	Counting objects: 1, done.
+	Writing objects: 100% (1/1), 185 bytes, done.
+	Total 1 (delta 0), reused 0 (delta 0)
+	Unpacking objects: 100% (1/1), done.
+	To /afs/cern.ch/cms/DB/rep/cmsDbWebServices.git
+	 * [new tag]         v0.2 -> v0.2
+
+Finally, you can check in the gitweb all what you did.
+

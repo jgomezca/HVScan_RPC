@@ -25,8 +25,7 @@
     - For starters, only Andreas and Miguel have git push rights.
     - See [gitTutorial.html](gitTutorial.html) for more details about the workflow.
 
-* The mailing list for patches is still to be decided.
-    - doc/patchesMailingList.txt will contain the email address.
+* docs/developmentMailingList.txt contains the mailing list for patches.
 
 * The git repositories will send automatic emails to the mailing list
   whenever something is pushed into them, using git's hooks.
@@ -47,7 +46,7 @@
     - Why: Libs.git's contents are (mostly) external and they will be updated
       less frequently than the code in Services.git.
 
-* Add a doc/ folder for the Documentation.
+* Add a docs/ folder for the Documentation.
     - Iteration: First.
     - Why: This way it is revision controlled, will be alongside the code
       (i.e. never get lost) and easily readable/modificable.

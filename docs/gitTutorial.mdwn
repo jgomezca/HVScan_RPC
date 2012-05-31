@@ -120,10 +120,10 @@ how hard you worked yet :)
 For that to happen, there are several possibilities, depending on your
 privileges and/or how the workflow is setup in the project you are working on:
 
-	1. "git push" your changes into the server, if you have privileges.
-	2. Ask someone with privileges to "git pull" your changes
-	   from your repository to the server.
-	3. Send a patch to a mailing list (and get blamed for your code ;).
+ 1. "git push" your changes into the main repository, if you have privileges.
+ 2. Ask someone with privileges to "git pull" your changes from your
+    repository to the main repository.
+ 3. Send a patch to a mailing list (and get blamed for your code ;).
 
 In our group, we are taking the same approach as the kernel guys: Everyone
 send their patches to a common mailing list so that we can all review
@@ -169,7 +169,7 @@ master repository, called 'origin':
 	1.7.2.5
 
 Just copy paste from the Subject line to your email client and send it to
-<yet-to-be-decided-egroup@cern.ch>.
+the development mailing list.
 
 Another option is to open the output in your email client as a message,
 it will automatically fill the email. You can use:
@@ -270,18 +270,31 @@ A text-based graphical representation of all commit history:
 
 	git log --oneline --graph --all
 
-A pretty looking equivalent:
-
-	git log --graph --all --abbrev-commit --date=relative --format=format:'%C(bold blue)%h%C(reset) %C(green)%cr %C(yellow)%cn%C(bold yellow)%d%C(reset) %C(white)%s'
-
-For small terminals you might prefer:
+A pretty looking, colored, easier to read and with more information equivalent:
 
 	git log --graph --all --abbrev-commit --date=relative --format=format:'%C(bold blue)%h%C(reset) %C(green)%cr %C(yellow)%cn%C(bold yellow)%d%C(reset)%n        %C(white)%s%n'
 
-You can set up these as aliases in your ~/.gitconfig:
+You can set up it as an alias in your ~/.gitconfig:
 
 	[alias]
-		llog = log --graph --all --abbrev-commit --date=relative --format=format:'%C(bold blue)%h%C(reset) %C(green)%cr %C(yellow)%cn%C(bold yellow)%d%C(reset)%n        %C(white)%s%n'
+		ll = log --graph --all --abbrev-commit --date=relative --format=format:'%C(bold blue)%h%C(reset) %C(green)%cr %C(yellow)%cn%C(bold yellow)%d%C(reset)%n        %C(white)%s%n'
+
+Then you can use it like:
+
+	git ll
+
+Which looks in a simple case like this (with colors and some bold parts):
+
+	$ git ll
+	* de3e199 4 minutes ago Miguel Ojeda (HEAD, master)
+	|         Use the official CMSSW repository in AFS as we moved it from vocms146. Also have an option for each repository.
+	|  
+	* 2b98c89 4 days ago Miguel Ojeda (tag: v0.1, origin/master, origin/HEAD)
+	          Initial commit with the new infrastructure for the CMS DB Web Services. Includes the docs, getLumi, popcon and regressionTest services, as well as the keeper of this services.
+
+If you prefer everything in one line (i.e. you have a wide terminal), try:
+
+	git log --graph --all --abbrev-commit --date=relative --format=format:'%C(bold blue)%h%C(reset) %C(green)%cr %C(yellow)%cn%C(bold yellow)%d%C(reset) %C(white)%s'
 
 Search for string "octopus" in the last 50 commits to the "master" branch
 
