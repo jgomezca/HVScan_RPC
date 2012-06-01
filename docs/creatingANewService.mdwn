@@ -7,7 +7,7 @@ Creating a new service for CMS DB Web services is really easy with the new infra
 
 ## Quick setup
 
-First of all, login to your private virtual machine for development and deploy CMS DB Web services. See the related documentation for this.
+First of all, login to your private virtual machine for development and deploy CMS DB Web services. See the [related documentation](developing.html) for this.
 
 Next, create a new folder for your service. The name is arbitrary, but try to follow the camelCase convention:
 
