@@ -138,6 +138,13 @@ def execute(command):
 	return check_output(command, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 
 
+def getSecrets():
+	'''Gets the secrets.
+	'''
+
+	execute('rsync -az ' + secretsSource + ' .')
+
+
 def generateDocs():
 	'''Generates the docs by calling services/docs/generate.py.
 
@@ -167,7 +174,7 @@ def checkRequirementsUpdate(options):
 def update(options):
 	'''Updates an existing instance of the CMS DB Web Services:
 		- Stops the keeper and the services.
-		- Rsync\'s the secrets.
+		- Gets the secrets.
 		- Git fetchs on services/, libs/ and cmssw/.
 		- Checks out the gitTreeish on services/.
 		- Checks out the dependencies in libs/ and cmssw/.
@@ -186,8 +193,8 @@ def update(options):
 	execute('services/keeper/keeper.py stop keeper')
 	execute('services/keeper/keeper.py stop all')
 
-	# Rsync the secrets
-	execute('rsync -az ' + secretsSource + ' .')
+	# Get the secrets
+	getSecrets()
 
 	# Git fetch on services/, libs/ and cmssw/
 	execute('cd services && git fetch')
@@ -311,7 +318,7 @@ def deploy(options):
 			execute('mkdir -p ' + os.path.join('logs', head))
 
 	# Get the secrets
-	execute('rsync -az ' + secretsSource + ' .')
+	getSecrets()
 
 	# Create symlink if /data is not the dataDirectory
 	if options['dataDirectory'] != defaultDataDirectory:
