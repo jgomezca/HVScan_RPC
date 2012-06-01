@@ -1,0 +1,2041 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+	<head>
+		<title>The PdmV Validation DB</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<link href="media/bootstrap.css" rel="stylesheet">
+	<link href="media/bootstrap-responsive.css" rel="stylesheet">
+		<link href="media/menu.css" rel="stylesheet">
+		<script type="text/javascript" src="media/jquery-1.7.1.js"></script>
+
+
+
+<!--Modals for pop-up information-->
+<!--Default modal for showing information-->
+          <div id="myModal" class="modal hide fade">
+	    <div class="modal-header">
+	      <h2>Release: <text id="modalReleaseName"></text></h2>
+	      <h4><text id="modalHeaderTree"></text><h4>
+	      <h3>Author: <text id = "author"></text></h3>
+
+	    </div>
+	    <div id ="modalkunas" class="modal-body">
+	      <h4>Validation Status: <text id ="valStat"></text> </h4>
+	      <p>Comments:</br> <text id ="comments" style="width: 454px; height:129px;"></text> </p>
+	      <p>Links: <text id = "links"></text> </p>
+
+	    </div>
+	    <div class="modal-footer">
+	      <p> Date: <text id = "comdate"></text></p>
+	      <a href="#" class="btn btn-primary" data-dismiss="modal" >Close</a>
+	      <a onclick="editModalInfo();" data-dismiss="modal" class="btn btn-danger" id="btnEditInfo"> Edit Information </a>
+	    </div>
+
+	  </div>
+
+<!-- MODAL for admin to add new Release into dataBase-->
+          <div id="newReleaseModal" class="modal hide fade">
+	    <div class="modal-header">
+	      <form>
+		<label class="span2">Category:</label>
+		<select id="newCatName" onchange= "addStats('#newCatName')"> 
+		  <option value="------">------</option>
+
+          <option value="Reconstruction">Reconstruction</option>
+		  <option value="HLT">HLT</option>
+		  <option value="PAGs">PAGs</option>
+		  <option value="All">All</option>
+		</select><br/>
+		<label class="span2">SubCategory:</label> 
+		<select id="editSubCategories">
+		  <option value="Data"> Data </option>
+		  <option value="FullSim">FullSim </option>
+		  <option value="FastSim">FastSim </option>
+		  <option value="All">All</option>
+		</select><br/>
+		<label class="span2">Release Name:</label> 
+		<input type="text" id="newRelName"/> <br/>
+		<div id="newStats">
+		</div>
+
+	      </form>
+	    </div>
+	    <div class="modal-footer">
+	      <a onclick="closedNewReleaseModal(this);" class="btn btn-primary" data-dismiss="modal" >Close</a>
+	      <a onclick="addNewRelease(this);" class="btn btn-success" id="newModalSaveBTN"> Save Information </a>
+	    </div>
+	  </div>
+
+<!--MODAL to edit available release stats information-->
+          <div id="editModal" class="modal hide fade">
+	    <div class="modal-header">
+	      <h2>Release: <text type="text" id="modalEditReleaseName"/><br/></h2>
+	      <h4> <text id="editModalHeaderTree"> </text><h4>
+	      <h3>Author: <text type="text" id="modalEditAuthor"/><br/></h3>
+	    </div>
+
+	    <div id ="modalkunas" class="modal-body">
+		<h4> <text id="valStatName"></text>
+		     Validation Status:<h4>
+		    <select id="editDropdown">
+			<option value='NOT YET DONE'>NOT YET DONE</option>
+			<option value='OK'>OK</option>
+			<option value='FAILURE'>FAILURE</option>
+
+			<option value='CHANGES EXPECTED'>CHANGES EXPECTED</option>
+			<option value='IN PROGRESS'>IN PROGRESS</option>
+			<option value='OK TO BE SIGNED-OFF BY THE VALIDATORS'>OK TO BE SIGNED-OFF BY THE VALIDATORS</option>
+			<option value='FAILURE TO BE SIGNED-OFF BY THE VALIDATORS'>FAILURE TO BE SIGNED-OFF BY THE VALIDATORS</option>
+		    </select>
+		<p>Comments:</br><textarea id ="modalEditComments" rows="3" name="comment" cols="24" style="width: 454px; height:129px;"></textarea> <br/></p>
+
+		<p>Links: </br><textarea id="modalEditLinks" style="width: 362px; height:60px;"></textarea> </p>
+	    </div>
+	    <div class="modal-footer" id="editModalFooter">
+		<a onclick="clearEditModalValues();" class="btn btn-primary" data-dismiss="modal" >Close</a>
+		<input id="btnSave" class="btn" type="submit" value="Save information" onclick="notEmpty();" />
+	    </div>
+	  </div>
+
+<!-- MODAL TO get history selection -->
+          <div id="historyModal" class="modal hide fade">
+	    <div class="modal-header">
+	      <form>
+		Reconstruction:
+			      <ul id="recoStatList"style=" height: 100px; overflow: auto; width: 200px; border: 1px solid #000;">
+				<li ><input type="checkbox" id="TK">Tk</li>
+				<li ><input type="checkbox" id="ECAL">Ecal</li>
+				<li ><input type="checkbox" id="HCAL" >Hcal</li>
+
+				<li ><input type="checkbox" id="DT" >DT</li>
+				<li ><input type="checkbox" id="CSC">CSC</li>
+				<li ><input type="checkbox" id="RPC" >RPC</li>
+				<li ><input type="checkbox" id="TRACKING">Tracking</li>
+				<li ><input type="checkbox" id="ELECTRON">Electron</li>
+				<li ><input type="checkbox" id="PHOTON">Photon</li>
+
+				<li ><input type="checkbox" id="MUON">Muon</li>
+				<li ><input type="checkbox" id="JET">Jet</li>
+				<li ><input type="checkbox" id="MET">MET</li>
+				<li ><input type="checkbox" id="Tag">BTag</li>
+				<li ><input type="checkbox" id="TAU">Tau</li>
+				<li ><input type="checkbox" id="SUMMARY">Summary</li>
+
+			      </ul>
+		HLT:
+			      <ul id="hltStatList"style=" height: 100px; overflow: auto; width: 200px; border: 1px solid #000;">
+				<li ><input type="checkbox" id="ELECTRON">Electron</li>
+				<li ><input type="checkbox" id="PHOTON">Photon</li>
+				<li ><input type="checkbox" id="MUON" >Muon</li>
+				<li ><input type="checkbox" id="JET" >Jet</li>
+
+				<li ><input type="checkbox" id="MET">MET</li>
+				<li ><input type="checkbox" id="TAU" >Tau</li>
+				<li ><input type="checkbox" id="TOP">Top</li>
+				<li ><input type="checkbox" id="HIGGS">Higgs</li>
+				<li ><input type="checkbox" id="HEAVYFLAVOR">HeavyFlavor</li>
+				<li ><input type="checkbox" id="SUSY">Susy</li>
+
+				<li ><input type="checkbox" id="EXOTICA">Exotica</li>
+				<li ><input type="checkbox" id="SUMMARY">Summary</li>
+			      </ul>
+		PAGs:
+			      <ul id="pagsStatList"style=" height: 100px; overflow: auto; width: 200px; border: 1px solid #000;">
+				<li ><input type="checkbox" id="SMP">SMP</li>
+				<li ><input type="checkbox" id="HIGGS">Higgs</li>
+
+				<li ><input type="checkbox" id="TOP" >Top</li>
+				<li ><input type="checkbox" id="SUSY" >Susy</li>
+				<li ><input type="checkbox" id="EXOTICA">Exotica</li>
+				<li ><input type="checkbox" id="B" >B</li>
+				<li ><input type="checkbox" id="FWD">Fwd</li>
+				<li ><input type="checkbox" id="SUMMARY">Summary</li>
+
+			      </ul>
+		SubCategories:			      
+			      <ul id="subCatList"style=" height: 100px; overflow: auto; width: 200px; border: 1px solid #000;">
+				<li ><input type="checkbox" id="Data">Data</li>
+				<li ><input type="checkbox" id="FullSim">FullSim</li>
+				<li ><input type="checkbox" id="FastSim" >FastSim </li>
+			      </ul>
+		Releases: 
+			      <ul id="historyList"style=" height: 100px; overflow: auto; width: 200px; border: 1px solid #000;">
+
+			      </ul>
+	      </form>
+	    </div>
+	    <div class="modal-footer">
+	      <a onclick="clearHistoryModal();" class="btn btn-primary" data-dismiss="modal" >Close</a>
+	      <a onclick="getHistoryBtn(this);" class="btn btn-success" data-dismiss="modal"> Get History </a>
+	    </div>
+
+	  </div>
+<!--MODAL to REMOVE user-->
+          <div id="rmUserModal" class="modal hide fade">
+	    <div class="modal-header">
+	      <h4>Remove user</h4>
+	    </div>
+	    <div class="modal-body">
+	      <h3>User name to be removed: <input type="text" id="userNameToBeRemoved"/><br/></h3>
+
+	    </div>
+	    <div class="modal-footer" id="rmUserModalFooter">
+	      <a class="btn btn-primary" data-dismiss="modal" >Close</a>
+	      <a onclick="rmUser(this);" class="btn btn-danger" data-dismiss="modal"> Remove User </a>
+	    </div>
+	  </div>
+
+<!-- Modal to Add new User -->
+
+          <div id="addUserModal" class="modal hide fade">
+	    <div class="modal-header">
+	      <h2>Add new user</h2>
+	    </div>
+	    <div class="modal-body">
+	    <form>
+	      User name: <input type="text" id="newUsrName"/> <br/>
+
+		<h4> User type:</h4>
+		    <select id="userTypeList" onchange='showUserForm(this)'>
+			<option value='------'>------</option>
+			<option value='Validator'>Validator</option>
+			<option value='Admin'>Admin</option>
+		    </select> 
+	      </br>
+
+	    </form>
+	      <form class="showM" id="usrFormList">
+		<b>Reconstruction/Data:</b>
+			      <ul id="usrRDataStatList"style=" height: 100px; overflow: auto; width: 200px; border: 1px solid #000;">
+				<li ><input type="checkbox" id="TK">Tk</li>
+				<li ><input type="checkbox" id="ECAL">Ecal</li>
+				<li ><input type="checkbox" id="HCAL" >Hcal</li>
+				<li ><input type="checkbox" id="DT" >DT</li>
+
+				<li ><input type="checkbox" id="CSC">CSC</li>
+				<li ><input type="checkbox" id="RPC" >RPC</li>
+				<li ><input type="checkbox" id="TRACKING">Tracking</li>
+				<li ><input type="checkbox" id="ELECTRON">Electron</li>
+				<li ><input type="checkbox" id="PHOTON">Photon</li>
+				<li ><input type="checkbox" id="MUON">Muon</li>
+
+				<li ><input type="checkbox" id="JET">Jet</li>
+				<li ><input type="checkbox" id="MET">MET</li>
+				<li ><input type="checkbox" id="Tag">BTag</li>
+				<li ><input type="checkbox" id="TAU">Tau</li>
+				<li ><input type="checkbox" id="SUMMARY">Summary</li>
+			      </ul>
+		 <b>Reconstruction/FastSim:</b>
+			      <ul id="usrRFastStatList"style=" height: 100px; overflow: auto; width: 200px; border: 1px solid #000;">
+				<li ><input type="checkbox" id="TK">Tk</li>
+				<li ><input type="checkbox" id="ECAL">Ecal</li>
+				<li ><input type="checkbox" id="HCAL" >Hcal</li>
+				<li ><input type="checkbox" id="DT" >DT</li>
+
+				<li ><input type="checkbox" id="CSC">CSC</li>
+				<li ><input type="checkbox" id="RPC" >RPC</li>
+				<li ><input type="checkbox" id="TRACKING">Tracking</li>
+				<li ><input type="checkbox" id="ELECTRON">Electron</li>
+				<li ><input type="checkbox" id="PHOTON">Photon</li>
+				<li ><input type="checkbox" id="MUON">Muon</li>
+
+				<li ><input type="checkbox" id="JET">Jet</li>
+				<li ><input type="checkbox" id="MET">MET</li>
+				<li ><input type="checkbox" id="Tag">BTag</li>
+				<li ><input type="checkbox" id="TAU">Tau</li>
+				<li ><input type="checkbox" id="SUMMARY">Summary</li>
+			      </ul>
+		 <b>Reconstruction/FullSim:</b>
+			      <ul id="usrRFullStatList"style=" height: 100px; overflow: auto; width: 200px; border: 1px solid #000;">
+				<li ><input type="checkbox" id="TK">Tk</li>
+				<li ><input type="checkbox" id="ECAL">Ecal</li>
+				<li ><input type="checkbox" id="HCAL" >Hcal</li>
+				<li ><input type="checkbox" id="DT" >DT</li>
+
+				<li ><input type="checkbox" id="CSC">CSC</li>
+				<li ><input type="checkbox" id="RPC" >RPC</li>
+				<li ><input type="checkbox" id="TRACKING">Tracking</li>
+				<li ><input type="checkbox" id="ELECTRON">Electron</li>
+				<li ><input type="checkbox" id="PHOTON">Photon</li>
+				<li ><input type="checkbox" id="MUON">Muon</li>
+
+				<li ><input type="checkbox" id="JET">Jet</li>
+				<li ><input type="checkbox" id="MET">MET</li>
+				<li ><input type="checkbox" id="Tag">BTag</li>
+				<li ><input type="checkbox" id="TAU">Tau</li>
+				<li ><input type="checkbox" id="SUMMARY">Summary</li>
+			      </ul>
+
+		<b>HLT/Data:</b>
+			      <ul id="usrHDataStatList"style=" height: 100px; overflow: auto; width: 200px; border: 1px solid #000;">
+				<li ><input type="checkbox" id="ELECTRON">Electron</li>
+				<li ><input type="checkbox" id="PHOTON">Photon</li>
+				<li ><input type="checkbox" id="MUON" >Muon</li>
+				<li ><input type="checkbox" id="JET" >Jet</li>
+				<li ><input type="checkbox" id="MET">MET</li>
+
+				<li ><input type="checkbox" id="TAU" >Tau</li>
+				<li ><input type="checkbox" id="TOP">Top</li>
+				<li ><input type="checkbox" id="HIGGS">Higgs</li>
+				<li ><input type="checkbox" id="HEAVYFLAVOR">HeavyFlavor</li>
+				<li ><input type="checkbox" id="SUSY">Susy</li>
+				<li ><input type="checkbox" id="EXOTICA">Exotica</li>
+
+				<li ><input type="checkbox" id="SUMMARY">Summary</li>
+			      </ul>
+		<b>HLT/FastSim:</b>
+			      <ul id="usrHFastStatList"style=" height: 100px; overflow: auto; width: 200px; border: 1px solid #000;">
+				<li ><input type="checkbox" id="ELECTRON">Electron</li>
+				<li ><input type="checkbox" id="PHOTON">Photon</li>
+				<li ><input type="checkbox" id="MUON" >Muon</li>
+				<li ><input type="checkbox" id="JET" >Jet</li>
+				<li ><input type="checkbox" id="MET">MET</li>
+
+				<li ><input type="checkbox" id="TAU" >Tau</li>
+				<li ><input type="checkbox" id="TOP">Top</li>
+				<li ><input type="checkbox" id="HIGGS">Higgs</li>
+				<li ><input type="checkbox" id="HEAVYFLAVOR">HeavyFlavor</li>
+				<li ><input type="checkbox" id="SUSY">Susy</li>
+				<li ><input type="checkbox" id="EXOTICA">Exotica</li>
+
+				<li ><input type="checkbox" id="SUMMARY">Summary</li>
+			      </ul>
+	    <b>HLT/FullSim:</b>
+			      <ul id="usrHFullStatList"style=" height: 100px; overflow: auto; width: 200px; border: 1px solid #000;">
+				<li ><input type="checkbox" id="ELECTRON">Electron</li>
+				<li ><input type="checkbox" id="PHOTON">Photon</li>
+				<li ><input type="checkbox" id="MUON" >Muon</li>
+				<li ><input type="checkbox" id="JET" >Jet</li>
+				<li ><input type="checkbox" id="MET">MET</li>
+
+				<li ><input type="checkbox" id="TAU" >Tau</li>
+				<li ><input type="checkbox" id="TOP">Top</li>
+				<li ><input type="checkbox" id="HIGGS">Higgs</li>
+				<li ><input type="checkbox" id="HEAVYFLAVOR">HeavyFlavor</li>
+				<li ><input type="checkbox" id="SUSY">Susy</li>
+				<li ><input type="checkbox" id="EXOTICA">Exotica</li>
+
+				<li ><input type="checkbox" id="SUMMARY">Summary</li>
+			      </ul>
+		<b>PAGs/Data:</b>
+			      <ul id="usrPDataStatList"style=" height: 100px; overflow: auto; width: 200px; border: 1px solid #000;">
+				<li ><input type="checkbox" id="SMP">SMP</li>
+				<li ><input type="checkbox" id="HIGGS">Higgs</li>
+				<li ><input type="checkbox" id="TOP" >Top</li>
+
+				<li ><input type="checkbox" id="SUSY" >Susy</li>
+				<li ><input type="checkbox" id="EXOTICA">Exotica</li>
+				<li ><input type="checkbox" id="B" >B</li>
+				<li ><input type="checkbox" id="FWD">Fwd</li>
+				<li ><input type="checkbox" id="SUMMARY">Summary</li>
+			      </ul>			      
+		<b>PAGs/FastSim:</b>
+			      <ul id="usrPFastStatList"style=" height: 100px; overflow: auto; width: 200px; border: 1px solid #000;">
+				<li ><input type="checkbox" id="SMP">SMP</li>
+				<li ><input type="checkbox" id="HIGGS">Higgs</li>
+				<li ><input type="checkbox" id="TOP" >Top</li>
+
+				<li ><input type="checkbox" id="SUSY" >Susy</li>
+				<li ><input type="checkbox" id="EXOTICA">Exotica</li>
+				<li ><input type="checkbox" id="B" >B</li>
+				<li ><input type="checkbox" id="FWD">Fwd</li>
+				<li ><input type="checkbox" id="SUMMARY">Summary</li>
+			      </ul>
+		<b>PAGs/FullSim:</b>
+			      <ul id="usrPFullStatList"style=" height: 100px; overflow: auto; width: 200px; border: 1px solid #000;">
+				<li ><input type="checkbox" id="SMP">SMP</li>
+				<li ><input type="checkbox" id="HIGGS">Higgs</li>
+				<li ><input type="checkbox" id="TOP" >Top</li>
+
+				<li ><input type="checkbox" id="SUSY" >Susy</li>
+				<li ><input type="checkbox" id="EXOTICA">Exotica</li>
+				<li ><input type="checkbox" id="B" >B</li>
+				<li ><input type="checkbox" id="FWD">Fwd</li>
+				<li ><input type="checkbox" id="SUMMARY">Summary</li>
+			      </ul>
+                 </form>
+	    </div>
+	    <div class="modal-footer">
+	      <a class="btn btn-primary" data-dismiss="modal" >Close</a>
+	      <a onclick="addUserButtonModal();" class="btn btn-success" data-dismiss="modal"> Add User </a>
+	    </div>
+	  </div>
+<!--Modal to search for Validators information-->
+      <div id="srchUserModal" class="modal hide fade">
+	    <div class="modal-header">
+	      <h4>Search for Validator(-s) editing information</h4>
+	    </div>
+	    <div class="modal-body">
+	      <h3>Username: <input type="text" id="userNameToSearch"/><br/></h3>
+
+	    </div>
+	    <div class="modal-footer" id="rmUserModalFooter">
+	      <a class="btn btn-primary" data-dismiss="modal" >Close</a>
+	      <a onclick="srchUser();" class="btn btn-success" data-dismiss="modal"> Search </a>
+	    </div>
+	  </div>
+<!--Modals for pop-up information-->
+
+</head>
+	<body>
+	
+		<body style="background-color: #ADD8E6">
+		<br>
+                 <div class="container">
+		  <div class="row">
+		    <div class="span11">
+		      <h1  id="title" style="text-align:center; font-family:verdana">ValDb: The PdmV Validation DB</h1>
+		    </div>
+
+		    <div class="span1">
+		      <input name = "logOutBTN" class="btn" type="button" value="Logout" onclick="logoutUser();"/>
+		    </div>
+		  </div>
+		</div>
+		<br>
+		<br>	
+	
+	
+<div class="container">
+		<div class="row">
+
+			<div class="span8">
+				<div>
+					<label style="font-family:verdana; font-size:18px"><br></label>
+					<form id="searchform" action="#" method="post">
+							<label for="releaseName" style="display:inline; font-family:verdana; font-size:18px">Select one release  </label>
+							<input type="text" id="releaseName" />
+							<input class="btnOK" type="submit" value="OK" onclick="clearSelectList();"/>
+							<output id="buttonOk">
+
+					</form>
+				</div>
+					<hr align="left" width="100%" size="4" style="background-color:black">
+				<div>
+					<label style="font-family:verdana; font-size:18px; display:inline">Validation Tables</label>
+					<input name = "addReleaseBTN" class="btn" type="button" value="Add Release" onclick="addRelease();"/>
+					<br>
+					
+				</div>
+
+				<div>
+				  <h3 id="legend" style="text-align:left; font-family:verdana">Legend</h3>
+				    <ul>
+				      <li> 
+					  <img width="16" alt="target" align="top" src="media/target.gif" height="16" border="0" /> : Changes are expected;
+				      </li> 
+				      <li> 
+					  <img width="16" alt="choice-no" align="top" src="media/choice-no.gif" height="16" border="0" /> : Failure;
+				      </li> 
+				      <li> 
+					  <img width="16" alt="choice-yes" align="top" src="media/choice-yes.gif" height="16" border="0" /> : OK;
+				      </li> 
+				      <li> 
+					  <img width="16" alt="wip" align="top" src="media/wip.gif" height="16" border="0" /> : In progress;
+				      </li> 
+				      <li> 
+					  <img width="16" alt="minus" align="top" src="media/minus.gif" height="16" border="0" /> : Not yet done;
+				      </li> 
+				      <li> 
+					  <img width="16" alt="stop" align="top" src="media/thumbs-up.gif" height="16" border="0" /> : OK - to be signed-off by the validators;
+				      </li>
+
+ 
+				      <li> 
+					  <img width="16" alt="stop" align="top" src="media/thumbs-down.gif" height="16" border="0" /> : Failure - to be signed-off by the validators;
+				      </li>
+				    </ul>
+				</div>
+				<div>
+				<div>
+					<a href="javascript:showMenu('RECO')" class="Group">Reconstruction</a>
+						<div class="showM" id="RECO">
+
+							<a class="SubCategory" href="javascript:showMenu('iRData');"> Data</a>
+							<div class="showM" id="iRData">
+								<table name = "infoTable" class="table table-striped table-bordered table-condensed" style="border-color:black;" id= "RData" border="0">
+									<tbody>
+									<th>Release Name</th>
+									<th>Tk</th>
+									<th>Ecal</th>
+
+									<th>Hcal</th>
+									<th>DT</th>
+									<th>CSC</th>
+									<th>RPC</th>
+									<th>Tracking</th>
+									<th>Electron</th>
+
+									<th>Photon</th>
+									<th>Muon</th>
+									<th>Jet</th>
+									<th>MET</th>
+									<th>BTag</th>
+									<th>Tau</th>
+
+									<th><b>Summary</th>
+									</tbody>
+								</table>
+							</div>
+							<a href="javascript:showMenu('iRFull')" class="SubCategory"> FullSim</a>
+							<div class="showM" id="iRFull">
+								<table name= "infoTable" class="table table-striped table-bordered table-condensed" style="border-color:black;" id='RFull' border="0">
+
+									<tr>
+									<th>Release Name</th>
+									<th>Tk</th>
+									<th>Ecal</th>
+									<th>Hcal</th>
+									<th>DT</th>
+
+									<th>CSC</th>
+									<th>RPC</th>
+									<th>Tracking</th>
+									<th>Electron</th>
+									<th>Photon</th>
+									<th>Muon</th>
+
+									<th>Jet</th>
+									<th>MET</th>
+									<th>BTag</th>
+									<th>Tau</th>
+									<th>Summary</th>
+								</table>
+
+							</div>
+							<a href="javascript:showMenu('iRFast')" class="SubCategory"> FastSim</a>
+							<div class="showM" id="iRFast">
+								<table name = "infoTable" class="table table-striped table-bordered table-condensed" style="border-color:black;" id='RFast' border="0">
+									<tr>
+									<th>Release Name</th>
+									<th>Tk</th>
+
+									<th>Ecal</th>
+									<th>Hcal</th>
+									<th>DT</th>
+									<th>CSC</th>
+									<th>RPC</th>
+									<th>Tracking</th>
+
+									<th>Electron</th>
+									<th>Photon</th>
+									<th>Muon</th>
+									<th>Jet</th>
+									<th>MET</th>
+									<th>BTag</th>
+
+									<th>Tau</th>
+									<th>Summary</th>
+								</table>
+							</div>
+						</div>
+					<a href="javascript:showMenu('HLT')" class="Group">HLT</a>
+						<div class="showM" id="HLT">
+
+							<a href="javascript:showMenu('iHData')" class="SubCategory"> Data</a>
+							<div class="showM" id="iHData">
+								<table name="infoTable" class="table table-striped table-bordered table-condensed" style="border-color:black;" id='HData' border="0">
+									<tr>
+									<th>Release Name</th>
+									<th>Electron</th>
+									<th>Photon</th>
+
+									<th>Muon</th>
+									<th>Jet</th>
+									<th>MET</th>
+									<th>Tau</th>
+									<th>Top</th>
+									<th>Higgs</th>
+
+									<th>HeavyFlavor</th>
+									<th>Susy</th>
+									<th>Exotica</th>
+									<th>Summary</th>
+								</table>
+							</div>
+							<a href="javascript:showMenu('iHFull')" class="SubCategory"> FullSim</a>
+
+								<div class="showM" id="iHFull">
+									<table name="infoTable" class="table table-striped table-bordered table-condensed" style="border-color:black;" id='HFull' border="0">
+										<tr>
+										<th>Release Name</th>
+										<th>Electron</th>
+										<th>Photon</th>
+										<th>Muon</th>
+
+										<th>Jet</th>
+										<th>MET</th>
+										<th>Tau</th>
+										<th>Top</th>
+										<th>Higgs</th>
+										<th>HeavyFlavor</th>
+
+										<th>Susy</th>
+										<th>Exotica</th>
+										<th>Summary</th>
+									</table>
+								</div>	
+							<a href="javascript:showMenu('iHFast')" class="SubCategory"> FastSim</a>
+								<div class="showM" id="iHFast">
+
+									<table name="infoTable" class="table table-striped table-bordered table-condensed" style="border-color:black;" id='HFast' border="0">
+										<tr>
+										<th>Release Name</th>
+										<th>Electron</th>
+										<th>Photon</th>
+										<th>Muon</th>
+										<th>Jet</th>
+
+										<th>MET</th>
+										<th>Tau</th>
+										<th>Top</th>
+										<th>Higgs</th>
+										<th>HeavyFlavor</th>
+										<th>Susy</th>
+
+										<th>Exotica</th>
+										<th>Summary</th>
+									</table>
+								</div>
+						</div>
+					<a href="javascript:showMenu('PAGs')" class="Group">PAGs</a>
+						<div class="showM" id="PAGs">
+
+						<a href="javascript:showMenu('iPData')" class="SubCategory"> Data</a>
+							<div class="showM" id="iPData">
+								<table name="infoTable" class="table table-striped table-bordered table-condensed" style="border-color:black;" id='PData' border="0">
+									<tr>
+									<th>Release Name</th>
+									<th>SMP</th>
+									<th>Higgs</th>
+
+									<th>Top</th>
+									<th>Susy</th>
+									<th>Exotica</th>
+									<th>B</th>
+									<th>Fwd</th>
+									<th>Summary</th>
+
+								</table>
+							</div>
+						<a href="javascript:showMenu('iPFull')" class="SubCategory"> FullSim</a>
+							<div class="showM" id="iPFull">
+								<table name="infoTable" class="table table-striped table-bordered table-condensed" style="border-color:black;" id='PFull' border="0">
+									<tr>
+									<th>Release Name</th>
+
+									<th>SMP</th>
+									<th>Higgs</th>
+									<th>Top</th>
+									<th>Susy</th>
+									<th>Exotica</th>
+									<th>B</th>
+
+									<th>Fwd</th>
+									<th>Summary</th>
+								</table>
+							</div>
+						<a href="javascript:showMenu('iPFast')" class="SubCategory"> FastSim</a>
+							<div class="showM" id="iPFast">
+								<table name="infoTable" class="table table-striped table-bordered table-condensed" style="border-color:black;" id='PFast' border="0">
+
+									<tr>
+									<th>Release Name</th>
+									<th>SMP</th>
+									<th>Higgs</th>
+									<th>Top</th>
+									<th>Susy</th>
+
+									<th>Exotica</th>
+									<th>B</th>
+									<th>Fwd</th>
+									<th>Summary</th>
+								</table>
+							</div>
+						</div>
+
+				</div>
+				</div>
+			</div>
+			<div class="span4">
+				<div>
+					<label style="font-family:verdana; font-size:18px">List of releases</label>
+					<select id = "releaseList" style="width:300px">
+					<option value="------">------</option>
+
+					</select>
+					<img src="media/add_icon.png" alt="Add" style="vertical-align: center;" onclick="selectList($(this).prev().get(0));" />
+					<label style="font-family:verdana; font-size:18px"><br></label>
+					<label style="font-family:verdana; font-size:18px">Selected releases:</label>
+					<br>
+					<ul id="list" style="list-style:none;">
+					</ul>
+				</div>
+
+			<div align="center"><input name = "historyBTN" class="btn" type="button" value="Get History" align="right" onclick="getHistory();"/></div>
+			<div align="center"><input name = "historyAllBTN" class="btn" type="button" value="Get All History" align="right" onclick="getAllHistory();"/></div>
+			<div align="center"><input name = "getUserListBTN" class="btn" type="button" value="Get User info" align="right" onclick="getUserList();"/></div>
+			<div align="center"><input name = "addUserBTN" class="btn" type="button" value="Add User" align="right" onclick="addUser();"/></div>
+			<div align="center"><input name = "rmUserBTN" class="btn" type="button" value="Remove User" align="right" onclick="removeUser();"/></div>
+			</div>
+		</div>
+	</div>
+
+</select>
+        <br>
+        <br>
+
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+         <br>
+       <br> 
+	</body>
+
+		
+		
+	<script type="text/javascript">
+		function selectList(select)
+		{
+		  var option = select.options[select.selectedIndex];
+		  var ul = select.parentNode.getElementsByTagName('ul')[0]; 
+		  var choices = ul.getElementsByTagName('input');
+		  if (option.value == '------')
+			return;
+		  for (var i = 0; i < choices.length; i++)
+			if (choices[i].value == option.value)
+			  return;  
+		  var li = document.createElement('li');
+		  var input = document.createElement('input');
+		  var img = document.createElement('img');
+		  var text = document.createTextNode(option.firstChild.data);
+		  var url = option.firstChild.data + "=addnew&";
+		  window.location.hash = window.location.hash+ url;			
+		  input.type = 'hidden';
+		  input.value = option.value;
+		  
+		  img.src = "media/remove_icon.png";
+		  img.alt="Remove";
+		  img.style.verticalAlign = "bottom";
+		  img.setAttribute('onclick', 'deleteChildTableRow (this.parentNode);');
+
+		  li.appendChild(input);
+		  li.appendChild(img);
+		  li.appendChild(text);
+		  li.setAttribute('name', 'selectedList');
+		  li.style.backgroundColor = "#AFEEEE";
+		  li.style.width = "275px";
+		  
+		  var relN = $(text).text();
+
+			$.ajax({
+					type: 'POST',
+					url: 'mainInformation',
+					data: {catSubCat: "RData", relName: relN },
+					dataType: 'json',
+					success: function (data) {if (data.link) {
+                                                  window.location.href = data.link;
+                                        } else {createdinamictable($(eval("'#" + "RData" +"'")), data, relN, "RData");}},
+					error: function() { alert("Error in data send"); }
+			});
+			$.ajax({
+					type: 'POST',
+					url: 'mainInformation',
+					data: {catSubCat: "HData", relName: relN },
+					dataType: 'json',
+					success: function (data) {if (data.link) {
+                                                  window.location.href = data.link;
+                                        } else {createdinamictable($(eval("'#" + "HData" +"'")), data, relN, "HData");}},
+					error: function() { alert("Error in data send"); }
+			});
+			$.ajax({
+					type: 'POST',
+					url: 'mainInformation',
+					data: {catSubCat: "PData", relName: relN },
+					dataType: 'json',
+					success: function (data) {if (data.link) {
+                                                  window.location.href = data.link;
+                                        } else {createdinamictable($(eval("'#" + "PData" +"'")), data, relN, "PData");}},
+					error: function() { alert("Error in data send"); }
+			});
+			$.ajax({
+					type: 'POST',
+					url: 'mainInformation',
+					data: {catSubCat: "RFull", relName: relN },
+					dataType: 'json',
+					success: function (data) {if (data.link) {
+                                                  window.location.href = data.link;
+                                        } else {createdinamictable($(eval("'#" + "RFull" +"'")), data, relN, "RFull");}},
+					error: function() { alert("Error in data send"); }
+			});
+			$.ajax({
+					type: 'POST',
+					url: 'mainInformation',
+					data: {catSubCat: "HFull", relName: relN },
+					dataType: 'json',
+					success: function (data) {if (data.link) {
+                                                  window.location.href = data.link;
+                                        } else {createdinamictable($(eval("'#" + "HFull" +"'")), data, relN, "HFull");}},
+					error: function() { alert("Error in data send"); }
+			});
+			$.ajax({
+					type: 'POST',
+					url: 'mainInformation',
+					data: {catSubCat: "PFull", relName: relN },
+					dataType: 'json',
+					success: function (data) {if (data.link) {
+                                                  window.location.href = data.link;
+                                        } else {createdinamictable($(eval("'#" + "PFull" +"'")), data, relN, "PFull");}},
+					error: function() { alert("Error in data send"); }
+			});
+			$.ajax({
+					type: 'POST',
+					url: 'mainInformation',
+					data: {catSubCat: "RFast", relName: relN },
+					dataType: 'json',
+					success: function (data) {if (data.link) {
+                                                  window.location.href = data.link;
+                                        } else {createdinamictable($(eval("'#" + "RFast" +"'")), data, relN, "RFast");}},
+					error: function() { alert("Error in data send"); }
+			});
+			$.ajax({
+					type: 'POST',
+					url: 'mainInformation',
+					data: {catSubCat: "HFast", relName: relN },
+					dataType: 'json',
+					success: function (data) {if (data.link) {
+                                                  window.location.href = data.link;
+                                        } else {createdinamictable($(eval("'#" + "HFast" +"'")), data, relN, "HFast");}},
+					error: function() { alert("Error in data send"); }
+			});
+			$.ajax({
+					type: 'POST',
+					url: 'mainInformation',
+					data: {catSubCat: "PFast", relName: relN },
+					dataType: 'json',
+					success: function (data) {if (data.link) {
+                                                  window.location.href = data.link;
+                                        } else {createdinamictable($(eval("'#" + "PFast" +"'")), data, relN, "PFast");}},
+					error: function() { alert("Error in data send"); }
+			});
+		  
+		  ul.appendChild(li);
+		}
+	</script>
+	
+	<script type="text/javascript">
+		function clearSelectList()
+		{
+			list = document.getElementById("list");
+			rdata = document.getElementById("RData");
+			rfull = document.getElementById("RFull");
+			rfast = document.getElementById("RFast");
+			hdata = document.getElementById("HData");
+			hfull = document.getElementById("HFull");
+			hfast = document.getElementById("HFast");
+			pdata = document.getElementById("PData");
+			pfull = document.getElementById("PFull");
+			pfast = document.getElementById("PFast");
+			while ( list.childNodes.length >= 1 )
+			{
+				list.removeChild( list.firstChild );
+			}
+			while (rdata.firstChild.nextSibling.rows[1] != null) 
+			{
+				deleteChildTableRow(rdata.firstChild.nextSibling.rows[1]);
+			}
+			while (hdata.firstChild.nextSibling.rows[1] != null) 
+			{
+				deleteChildTableRow(hdata.firstChild.nextSibling.rows[1]);
+			}
+			while (pdata.firstChild.nextSibling.rows[1] != null) 
+			{
+				deleteChildTableRow(pdata.firstChild.nextSibling.rows[1]);
+			}
+		}
+	</script>
+		
+           <script type="text/javascript">
+            $(function() {
+                // When the insertform is submitted...
+                $("#searchform").submit(function() {
+		      //Clear release info into document
+		      var url = window.location.hash;
+		      var releaseSearch = document.getElementById("releaseName");
+			  releaseSearch = releaseSearch.value;
+		      if(window.location.hash.indexOf("srch") != -1){
+			var tmp1 = window.location.hash.substring(0, url.indexOf("srch="));
+			var tmp2 = window.location.hash.substring(url.indexOf("&&")+2, url.length);
+			window.location.hash = tmp1+tmp2;
+		      }
+			  window.location.hash = window.location.hash+"srch=" +releaseSearch + "&&";
+                    
+                    // post the form values via AJAX...
+                     $("#buttonOk").empty().html('<img src="media/loading.gif" />');
+                      $.ajax({
+  							type: 'POST',
+  							url: 'submit',
+  							data: {releaseName: $("#releaseName").val()},
+							dataType: 'json',
+  							success: function (data) {
+								if (data.link) {
+									window.location.href = data.link;
+								} else {
+                            						document.getElementById("releaseList").innerHTML = "";
+                            						appendOptionLast(data);
+                            						$("#buttonOk").css('display', 'none');
+								}
+                           				 },
+                           	error: function() { alert("Error in data send") }
+                           });
+                    return false ;
+                    });
+            });
+
+	</script>
+	
+	<!--Create and perform action with table-->
+
+<script  type="text/javascript">
+function createdinamictable(tbody, data1, releaseName, subCat){
+  var colnumb;
+  var keys;
+  if (subCat == 'RData'|| subCat == 'RFull' || subCat == 'RFast'){
+    colnumb = 16;
+    keys = ["CSC", "TAU", "TRACKING", "BTAG", "JET", "ECAL", "RPC", "PHOTON", "MUON", "MET", "ELECTRON", "TK", "HCAL", "DT", "SUMMARY"];
+  }
+  if (subCat == 'HData'||subCat == 'HFull'||subCat == 'HFast'){
+    colnumb = 13;
+    keys = ["TAU", "JET", "HIGGS", "TOP", "MUON", "PHOTON", "MET", "ELECTRON", "EXOTICA", "SUSY", "HEAVYFLAVOR", "SUMMARY"];
+  }
+  if (subCat == 'PData'||subCat == 'PFull'||subCat == 'PFast'){
+    colnumb = 9;
+    keys = ["B", "HIGGS", "FWD", "TOP", "SMP", "EXOTICA", "SUSY", "SUMMARY"];
+  }
+  var text;
+  if(tbody == null || tbody.length <1) return;
+  for(var i = 1; i <= 1; i++){
+    var trow = $("<tr>");
+    for(var j = 0; j < colnumb; j++){
+      if(i==1 && j==0){
+      text = releaseName;
+	  $("<td>")
+	    .addClass("tableCell")
+	    .text(releaseName)
+	    .attr('id', releaseName)
+	    .data("col", j)
+	    .data("row",i)
+	    .appendTo(trow);
+	}
+	else{
+	  if (! isEmpty(data1)) {
+	  	return;
+	  } else {
+	var headValue = $(tbody)[0];
+	var tmpchild = $(headValue).children()[0];
+	headValue = $(tmpchild).children()[0];
+	var ilgiauchild = $(headValue).children();
+	var key = ilgiauchild[j].textContent.toUpperCase();
+	text = data1[key];
+	var src
+	switch(text){
+	case "OK" : 
+	      src =  "<img src='media/choice-yes.gif'/>";
+	      break;
+	case "FAILURE":
+	      src =  "<img src='media/choice-no.gif'/>";
+	      break;
+	case "CHANGES EXPECTED":
+	      src =  "<img src='media/target.gif'/>";
+	      break;
+	case "IN PROGRESS":
+	      src =  "<img src='media/wip.gif'/>";
+	      break;
+	case "OK TO BE SIGNED-OFF BY THE VALIDATORS":
+	      src =  "<img src='media/thumbs-up.gif'/>";
+	      break;
+	case "FAILURE TO BE SIGNED-OFF BY THE VALIDATORS":
+	      src =  "<img src='media/thumbs-down.gif'/>";
+	      break;
+	default:
+	      src = "<img src='media/minus.gif'/>";
+	      break;
+	}
+	  }
+	$("<td>")
+	    .addClass("tableCell")
+	    .append(src)
+	    .attr('value', key)
+	    .attr('onclick', 'javascript:showModal("'+subCat+'", this)')
+	    .data("col", j)
+	    .data("row",i)
+	    .appendTo(trow);  
+	}
+      } 
+      trow.appendTo(tbody);
+    }
+  }
+  
+  function isEmpty(object) {
+	for(var i in object) {
+		return true;
+	}
+	return false;
+  }
+  
+</script>
+
+<script>
+function showModal(subcategory, obj){
+	var statName = obj.value;
+	document.getElementById('valStatName').textContent = ("name", statName);
+	var rn = $(obj).parent()[0];
+	var releaseName = $(rn).children()[0].textContent;
+	var column = $(obj).data("col");
+	var reiksm = $(obj).parent().parent()[0];
+	var tmpval = $(reiksm).children()[0];
+	var statvalue = $(tmpval).children()[column].textContent;
+	var category;
+	var releaseDetails = ["VALIDATION_STATUS","USER_NAME","LINKS","COMMENTS","META_DATE", "RELEASE_NAME"];
+	switch (subcategory[0]){
+	 case "R":
+	      category = "Reconstruction";
+	      break;
+	 case "H":
+	      category = "HLT";
+	      break;
+	 case "P":
+	      category = "PAGs";
+	      break;
+	 default:
+	      category = "";
+	      break;
+	}
+	var subCat = subcategory.substring(1,subcategory.length);
+	switch(subCat){
+	  case "Full":
+		subCat = subCat + "Sim";
+		break;
+	  case "Fast":
+		subCat=subCat + "Sim";
+	  default:
+		break;
+	}
+	$.ajax({
+		type: 'POST',
+            url: 'getDetailInformation',
+        	data: {catSubCat: subcategory, relName: releaseName, state: statvalue.toUpperCase() },
+		dataType: 'json',
+            success: function (data) {	if (data.link) {
+                                                  window.location.href = data.link;
+                                        } else {
+						$('#myModal').bind('show', function () { 
+				document.getElementById('modalHeaderTree').innerHTML = category +"/"+subCat;
+				document.getElementById('author').innerHTML = data[releaseDetails[1]];
+				document.getElementById('valStat').innerHTML = data[releaseDetails[0]];
+				document.getElementById('comments').innerHTML = data[releaseDetails[3]];
+				document.getElementById('links').innerHTML = data[releaseDetails[2]];
+				document.getElementById('comdate').innerHTML = data[releaseDetails[4]];
+				document.getElementById('modalReleaseName').innerHTML = data[releaseDetails[5]];
+				
+			}),
+				$('#myModal').modal('toggle');
+					}},
+            error: function() { alert("Error in data send"); }
+	});
+}
+</script>
+
+<script>
+function showMenu(category){
+	var whichcategory = document.getElementById(category);
+	var url = window.location.hash;
+	if(whichcategory.className == "showM"){
+		whichcategory.className="hideM";
+		if(url.indexOf(category) ==-1){
+		  window.location.hash = window.location.hash + category + "=show&";
+		  } else{
+		    var tmp1 = window.location.hash.substring(0, url.indexOf(category));
+		    var tmp2 = window.location.hash.substring(url.indexOf(category)+category.length+6, url.length);
+		    window.location.hash = tmp1+tmp2;
+		    }
+	}
+	else{
+	whichcategory.className="showM";
+	var tmp1 = window.location.hash.substring(0, url.indexOf(category));
+	var tmp2 = window.location.hash.substring(url.indexOf(category)+category.length+6, url.length);
+	window.location.hash = tmp1+tmp2;
+    }
+}
+</script>
+
+<script src="media/bootstrap-modal.js"></script>
+
+<script>
+function deleteChildTableRow (obj){
+  var name = obj.textContent;
+  var url = window.location.hash;
+  var tmp1 = window.location.hash.substring(0, url.indexOf(name));
+  var tmp2 = window.location.hash.substring(url.indexOf(name)+name.length+8, url.length);
+  window.location.hash = tmp1+tmp2;
+  obj.parentNode.removeChild(obj);
+
+//delete information of release from all tables;
+  for(i=0; i<9; i++){
+    var row = document.getElementById(obj.textContent);
+    if(row !=null){
+      var elem = row.parentNode; 
+      $(elem).remove();
+    }
+  }      
+}
+</script>
+
+<script>
+  function addRelease(){
+  var modal = document.getElementById('newReleaseModal');
+  clearModal(modal);
+  document.getElementById('newCatName').value = "------";
+  document.getElementById('editSubCategories').value = "Data";  
+    $('#newReleaseModal').bind('show', function (){
+	});
+    $('#newReleaseModal').modal('toggle');    
+}
+
+function addStats(obj){
+clearModal2(obj);
+var inp = obj.textContent;
+var release = $(obj).val();
+var keys;
+if(release.toUpperCase() == "RECONSTRUCTION")
+    keys = ["CSC", "TAU", "TRACKING", "BTAG", "JET", "ECAL", "RPC", "PHOTON", "MUON", "MET", "ELECTRON", "TK", "HCAL", "DT", "SUMMARY"];
+if(release.toUpperCase() == "HLT")
+    keys = ["TAU", "JET", "HIGGS", "TOP", "MUON", "PHOTON", "MET", "ELECTRON", "EXOTICA", "SUSY", "HEAVYFLAVOR", "SUMMARY"];
+if(release.toUpperCase() == "PAGS")
+    keys = ["B", "HIGGS", "FWD", "TOP", "SMP", "EXOTICA", "SUSY", "SUMMARY"];
+if(release == "------")
+    keys = 0;
+if(release.toUpperCase() == "ALL")
+    keys = 0;
+
+for(i=0; i<keys.length; i++){
+	  var newdiv = document.createElement('div');
+	  newdiv.setAttribute('name', keys[i]);
+          newdiv.innerHTML = keys[i] +" "+
+	      "<select name='mydropdown' onchange='displayExtraInfo(this);'>" +
+	      "<option selected='selected' value='NOT YET DONE'>NOT YET DONE</option>" +
+	      "<option value='OK'>OK</option>"+
+	      "<option value='CHANGES EXPECTED'>CHANGES EXPECTED</option>"+
+	      "<option value='IN PROGRESS'>IN PROGRESS</option>"+
+	      "<option value='FAILURE'>FAILURE</option>"+
+	      "<option value='OK TO BE SIGNED-OFF BY THE VALIDATORS'>OK TO BE SIGNED-OFF BY THE VALIDATORS</option>"+
+	      "<option value='FAILURE TO BE SIGNED-OFF BY THE VALIDATORS'>FAILURE TO BE SIGNED-OFF BY THE VALIDATORS</option>"+
+	      "</select>"+
+	      "<div class='showM' name='detailInfoTab'>"+
+		    "<form>"+
+			"Author name:<input type='text' id='releaseCommentAuthor'/><br/>"+
+			"Comment:</br><textarea rows='3' name='comment' cols='24' style= 'width: 454px; height:129px;'></textarea><br/>"+
+			"Links:</br><textarea id='releaseCommentLinks' style='width: 362px; height:60px;'> </textarea><br/>"+
+			"<input name = 'detailOKBTN' class='btn' type='button' value='OK' onclick='hideExtraInfo(this);'/>" +
+		    "</form>"+
+	      "</div>";
+          document.getElementById('newStats').appendChild(newdiv)
+  }
+}
+function displayExtraInfo(obj){
+    var stuff= obj.nextElementSibling;
+    stuff.className="hideM";
+  //  var tmp = document.getElementsByTagName('detailInfoTab'); //SHOULD stay?
+}
+function hideExtraInfo(obj){
+    var stuff = $(obj).parent().parent()[0];
+    stuff.className="showM";
+}
+function addNewRelease(obj){
+    objCpy = obj;
+   var stats = $(obj).parent();  //get modal footer object
+   var stasChild = $(stats).parent()[0]; //get whole modal object
+   stats = $(stasChild).children()[0]; //get modal HEADER object
+
+    stasChild= $(stats).children()[0]; //get FORM object from modal
+  if(stasChild[0].value == "------"){
+    alert("You must select release Category!");     
+      elem = document.getElementById('newModalSaveBTN');
+      elem.removeAttribute('data-dismiss', 'modal');
+    return false;
+  }
+var Category = stasChild[0].value;
+var SubCategory = stasChild[1].value;
+var releasName = stasChild[2].value;
+
+var statName;
+var stuff;
+
+var newStatList= new Array();
+var newStatVaList= new Array();
+
+var newStatComments = new Array();
+var newStatAuthors = new Array();
+var newStatLinks = new Array();
+
+var statsEL = stasChild.lastElementChild;
+    stats = $(statsEL).children();
+    for(i=0; i< stats.length; i++){
+      statName = stats[i];
+      var statusValue = stats[i];
+      statusValue = $(statusValue).children()[0];
+      stuff = $(statName).children()[1];
+      stuff = $(stuff).children()[0];
+      var tmp = statName.getAttribute("name");
+      newStatList.push(tmp);
+      newStatVaList.push(statusValue.value);
+  
+      newStatAuthors.push(stuff[0].value);
+      newStatComments.push(stuff[1].value);
+      newStatLinks.push(stuff[2].value);
+    }
+    if (releasName.length > 20) {
+        alert("Release name too long!!! ");
+        elem = document.getElementById('newModalSaveBTN');
+        elem.removeAttribute('data-dismiss', 'modal'); 
+        return false;
+    }
+    elem = document.getElementById('newModalSaveBTN');
+    elem.setAttribute('data-dismiss', 'modal'); 
+    relNametoPut = "";
+    wasNotAdded = false;
+    if(Category == "All"){
+	  var categoryList = ["Reconstruction","HLT","PAGs"];
+	  if(SubCategory.toUpperCase() == "ALL"){ //send info for AllxAll
+	    var subCatList = ["Data", "FullSim", "FastSim"];
+	    //set default values for sending data
+	    for(i=0; i<categoryList.length;i++){
+	      if(categoryList[i] == "Reconstruction")
+	        defaultKeys = ["CSC", "TAU", "TRACKING", "BTAG", "JET", "ECAL", "RPC", "PHOTON", "MUON", "MET", "ELECTRON", "TK", "HCAL", "DT", "SUMMARY"];
+	      if(categoryList[i] == "HLT")
+	        defaultKeys = ["TAU", "JET", "HIGGS", "TOP", "MUON", "PHOTON", "MET", "ELECTRON", "EXOTICA", "SUSY", "HEAVYFLAVOR", "SUMMARY"];
+	      if(categoryList[i] == "PAGs")
+	        defaultKeys = ["B", "HIGGS", "FWD", "TOP", "SMP", "EXOTICA", "SUSY", "SUMMARY"];
+	      for(k=0; k<defaultKeys.length; k++){
+	        newStatList.push(defaultKeys[k]);
+	        newStatVaList.push("NOT YET DONE");
+	        newStatComments.push("");
+	        newStatAuthors.push("");
+	        newStatLinks.push("");
+	      }
+              for(j=0;j<subCatList.length;j++){
+		if(relNametoPut == releasName){
+			wasNotAdded = false;
+		}
+		else{
+			relNametoPut = releasName;
+			wasNotAdded = true;
+		}
+		    $.ajax({
+					type: 'POST',
+					url: 'addNewRelease',
+					data: $.param({'sendMail': wasNotAdded, 'categ': categoryList[i], 'subCat': subCatList[j], 'relName': releasName, 'statusNames': newStatList, 'statusValues': newStatVaList,
+					'statComments': newStatComments, 'statAuthors': newStatAuthors, 'statLinks': newStatLinks}, true),
+					dataType: 'json',
+					success: function (data) { if (data.link) {
+                                                			  window.location.href = data.link;
+                                   				     } else {alert(data);}},
+					error: function() {clearModal(objCpy); document.getElementById('newCatName').value = "------"; }
+			});
+	      }
+	      //clear array values
+	    	newStatList.length = 0;
+	        newStatVaList.length = 0;
+	        newStatComments.length = 0;
+	        newStatAuthors.length = 0;
+	        newStatLinks.length = 0;
+	    }
+	  }
+	 if(SubCategory.toUpperCase() != "ALL"){ //send info for AllxOne
+	   for(i=0; i< categoryList.length; i++){
+	      if(categoryList[i] == "Reconstruction")
+	        defaultKeys = ["CSC", "TAU", "TRACKING", "BTAG", "JET", "ECAL", "RPC", "PHOTON", "MUON", "MET", "ELECTRON", "TK", "HCAL", "DT", "SUMMARY"];
+	      if(categoryList[i] == "HLT")
+	        defaultKeys = ["TAU", "JET", "HIGGS", "TOP", "MUON", "PHOTON", "MET", "ELECTRON", "EXOTICA", "SUSY", "HEAVYFLAVOR", "SUMMARY"];
+	      if(categoryList[i] == "PAGs")
+	        defaultKeys = ["B", "HIGGS", "FWD", "TOP", "SMP", "EXOTICA", "SUSY", "SUMMARY"];
+	      for(k=0; k<defaultKeys.length; k++){
+	        newStatList.push(defaultKeys[k]);
+	        newStatVaList.push("NOT YET DONE");
+	        newStatComments.push("");
+	        newStatAuthors.push("");
+	        newStatLinks.push("");
+	      }
+                if(relNametoPut == releasName){
+                        wasNotAdded = true;
+                }
+                else{
+                        relNametoPut = releasName;
+                        wasNotAdded = false;
+                }
+      $.ajax({
+			type: 'POST',
+			url: 'addNewRelease',
+			data: $.param({'sendMail': wasNotAdded, 'categ': categoryList[i], 'subCat': SubCategory, 'relName': releasName, 'statusNames': newStatList, 'statusValues': newStatVaList,
+			'statComments': newStatComments, 'statAuthors': newStatAuthors, 'statLinks': newStatLinks}, true),
+			dataType: 'json',
+			success: function (data) { if (data.link) {
+                                   			  window.location.href = data.link;
+                           				     } else {alert(data);}},
+			error: function() {clearModal(objCpy); document.getElementById('newCatName').value = "------"; }
+		});  
+      //clear array values
+      newStatList.length = 0;
+      newStatVaList.length = 0;
+      newStatComments.length = 0;
+      newStatAuthors.length = 0;
+      newStatLinks.length = 0;
+	   }
+	 }
+	}
+	if(Category != "All"){ 
+	  if(SubCategory.toUpperCase() == "ALL"){ //send info for OneXAll
+		var subCatList = ["Data", "FullSim", "FastSim"];
+		for(j=0;j<subCatList.length; j++){
+		if(relNametoPut == releasName){
+                        wasNotAdded = true;
+                }
+                else{
+                        relNametoPut = releasName;
+                        wasNotAdded = false;
+                }
+          $.ajax({
+			type: 'POST',
+			url: 'addNewRelease',
+			data: $.param({'sendMail': wasNotAdded, 'categ': Category, 'subCat': subCatList[j], 'relName': releasName, 'statusNames': newStatList, 'statusValues': newStatVaList,
+			'statComments': newStatComments, 'statAuthors': newStatAuthors, 'statLinks': newStatLinks}, true),
+			dataType: 'json',
+			success: function (data) { if (data.link) {
+                                   			  window.location.href = data.link;
+                           				     } else {alert(data);}},
+			error: function() {clearModal(objCpy); document.getElementById('newCatName').value = "------"; }
+		  }); 
+		}
+	  }
+	}
+          if(Category != "All" && SubCategory.toUpperCase() != "ALL"){
+	  $.ajax({ //send info OneXOne
+			  type: 'POST',
+			  url: 'addNewRelease',
+			  data: $.param({'sendMail': wasNotAdded, 'categ': Category, 'subCat': SubCategory, 'relName': releasName, 'statusNames': newStatList, 'statusValues': newStatVaList,
+			  'statComments': newStatComments, 'statAuthors': newStatAuthors, 'statLinks': newStatLinks}, true),
+			  dataType: 'json',
+			  success: function (data) { if (data.link) {
+												window.location.href = data.link;
+											  } else {alert(data);}},
+			  error: function() {clearModal(objCpy); document.getElementById('newCatName').value = "------"; }
+			});  
+		}
+     return false;
+}
+
+function clearModal(obj){
+   var stats = $(obj).parent();  //get modal footer object
+   var stasChild = $(stats).parent()[0]; //get whole modal object
+   stats = $(stasChild).children()[0]; //get modal HEADER object
+   objCpy = stats;
+   var stuff = $(objCpy).parent();
+   var kl = document.getElementById('newStats');
+
+    $(kl).children().each(function(){
+      $(this).remove();
+    });
+
+    document.getElementById('newCatName').value="";
+    document.getElementById('newRelName').value="";
+    document.getElementById('editSubCategories').value=""; 
+    stuff = document.getElementById('editSubCategories');   
+    var dataValues = $(stuff).children();
+    for(i=0; i<dataValues.length; i++){
+      if(dataValues[i].value == "Data"){ //TO DO: clear option to preselect- doesnt clear value?
+	 dataValues[i].setAttribute('selected','selected');
+	i= dataValues.length;
+      }
+    }
+}
+
+function clearModal2(obj){
+     var stats = $(obj).parent();//get modal footer object
+     var stasChild = $(stats).parent()[0]; //get whole modal object
+     stats = $(stasChild).children()[0]; //get modal HEADER object
+     objCpy = stats;
+     var stuff = $(objCpy).parent();
+     var kl = document.getElementById('newStats');
+
+     $(kl).children().each(function(){
+        $(this).remove();
+     });
+
+}
+
+function editModalInfo(){
+    var obj = document.getElementById('modalHeaderTree').textContent;
+
+    var statusName = document.getElementById('valStatName').textContent;
+    var category = obj.substring(0, obj.indexOf('/'));
+    var subCategory = obj.substring(obj.indexOf('/')+1, obj.length);
+
+    var gali = true;
+
+    $.ajax({
+               type: 'POST',
+               url: 'getLogedUserName',
+               data: {},
+		dataType: 'json',
+               success: function(data) { if (data.link) {
+                                                  window.location.href = data.link;
+                                        } else {document.getElementById('modalEditAuthor').textContent = data;}},
+               error: function() { alert("Error in data send") }
+         });
+
+$('#editModal').bind('show', function (){});
+	                                            $('#editModal').modal('toggle');  
+	                                            setEditModal();
+	                                            elem = document.getElementById('btnEditInfo');
+	                                            elem.setAttribute('data-dismiss', 'modal');
+	                                            return true;
+
+}
+
+function setEditModal(){
+   var obj = document.getElementById('valStat').textContent;
+   var stuff = document.getElementById('editDropdown');
+   var dataValues = $(stuff).children();
+    for(i=0; i<dataValues.length; i++){
+      if(dataValues[i].text == obj){
+	 dataValues[i].setAttribute('selected','selected');
+	 dataValues[i].value = obj;
+	i= dataValues.length;
+      }
+    }
+ 
+   var tmpInfo = document.getElementById('modalReleaseName').innerHTML
+   document.getElementById('modalEditReleaseName').textContent = tmpInfo;
+   document.getElementById('modalEditComments').value = document.getElementById('comments').innerHTML;
+   document.getElementById('modalEditLinks').value = document.getElementById('links').innerHTML;
+   tmpInfo = document.getElementById('modalHeaderTree').textContent;
+   document.getElementById('editModalHeaderTree').textContent = tmpInfo;  
+}
+
+function notEmpty(){
+  elem = document.getElementById('editDropdown');
+	if(elem.value.length == 0){
+		alert("Status value MUST be selected");
+		elem.focus(); // set the focus to this input
+		return false;
+	}
+  clearEditModal();
+  elem = document.getElementById('btnSave');
+  elem.setAttribute('data-dismiss', 'modal');
+  return true;
+}
+ function updateTableValues(relName, catSubCatName){
+    var table = document.getElementById(catSubCatName);
+    tbBody = $(table).children(); //get <tbody> tag obj
+    tableId = table.id; //get <table> id name as a string
+    $(tbBody).children().each(function(){
+          if($(this).children()[0].id == relName)
+                  $(this).remove();
+          });
+  $.ajax({
+                type: 'POST',
+                url: 'mainInformation',
+                data: {catSubCat: catSubCatName, relName: relName },
+                success: function (data) {createdinamictable($(eval("'#" + catSubCatName +"'")), data, relName, catSubCatName)},
+                error: function() { alert("Error in data send"); }
+  });
+}
+
+function clearEditModal(){
+  var releasName = document.getElementById('modalEditReleaseName').textContent;
+  var editAuthor = document.getElementById('modalEditAuthor').textContent;
+  var editComments = document.getElementById('modalEditComments').value;
+  var editSatusValue = document.getElementById('editDropdown').value;
+  var editLinks = document.getElementById('modalEditLinks').value;
+  var cat = document.getElementById('modalHeaderTree').textContent;
+  var tmpCategoryName = cat[0];
+  var tmpSubCatVal = cat.substring(cat.indexOf('/')+1,cat.indexOf('/')+5);
+  cat = tmpCategoryName + tmpSubCatVal;  
+  var statusName = document.getElementById('valStatName').textContent;
+ $.ajax({
+					type: 'POST',
+					url: 'updateReleaseInfo',
+					data: {comentAuthor: editAuthor, stateValue: editSatusValue, relName: releasName, newComment: editComments, newLinks: editLinks, catSubCat: cat, statusKind: statusName},
+					dataType: 'json',
+                                        success: function (data) {if (data.link) {
+                                                  window.location.href = data.link;
+                                        } else {alert(data); clearEditModalValues(); updateTableValues(releasName, cat);}},
+					error: function() {alert("Data send failure"); clearEditModalValues();}
+			});
+
+
+
+}
+function clearEditModalValues(){
+  document.getElementById('modalEditReleaseName').textContent="";
+  document.getElementById('modalEditAuthor').textContent="";
+  document.getElementById('modalEditComments').value="";
+  document.getElementById('modalEditLinks').value="";
+  document.getElementById('valStatName').textContent="";
+  var stuff = document.getElementById('editDropdown');
+  stuff.value="";
+  var dataValues = $(stuff).children();
+  for(i=0; i<dataValues.length; i++){
+	 dataValues[i].removeAttribute('selected',0); 
+   }
+}
+
+function closedNewReleaseModal(obj){
+  clearModal(obj);
+  document.getElementById('newCatName').value = "------";
+  document.getElementById('modalEditReleaseName').value=""
+  document.getElementById('modalEditAuthor').value=""
+  document.getElementById('modalEditComments').value=""
+  document.getElementById('modalEditLinks').value="" //TO-DO how to delete seleted list value//
+  var stuff = document.getElementById('editDropdown');
+  var dataValues = $(stuff).children();
+  for(i=0; i<dataValues.length; i++){
+	 dataValues[i].removeAttribute('selected',0); 
+  }
+  var elem = document.getElementById('btnSave');
+  elem.removeAttribute('data-dismiss', 0);
+}
+</script>
+
+<script>
+function appendOptionLast(data){
+  var select = document.getElementById("releaseList");
+  var lngth = select.options.length;
+	
+  if(lngth == 0){
+    select.options[lngth] = new Option('------');
+    select.options[lngth].value = '------';
+  }
+  for(index in data){
+    	select.options[select.options.length] = new Option(data[index], index);
+  }
+}
+
+function getHistory(){
+  var modal = document.getElementById('historyModal');
+  var list = document.getElementById('list');
+  var tmp;
+  clearHistoryModal();
+
+  $('#historyModal').bind('show', function (){
+      });
+  $('#historyModal').modal('toggle');   
+
+    $(list).children().each(function(){
+	var li = document.createElement('li');
+	var tmp = document.createElement('input');
+	var text = document.createTextNode(this.textContent);
+	tmp.setAttribute('type', 'checkbox');
+	tmp.appendChild(text);
+	li.appendChild(tmp);
+	li.appendChild(text);    
+	tmp = document.getElementById('historyList');
+	tmp.appendChild(li);
+    });
+  list = document.getElementById('recoStatList');
+}
+
+function getHistoryBtn(){
+  var statusList= [""];
+  var subCatList= [""];
+  var recoStatsChecked = [""];
+  var hltStatsChecked = [""];
+  var pagsStatsChecked = [""];
+  var releaseList = [""];
+
+    $(document.getElementById('recoStatList')).children().each(function(){
+      var stuff = $(this).children()[0];
+      if(stuff.checked == true){
+	var catSub= stuff.getAttribute("id");
+	recoStatsChecked.push(catSub);
+      }  
+    });
+    $(document.getElementById('hltStatList')).children().each(function(){
+      var stuff = $(this).children()[0];
+      if(stuff.checked == true){
+	var catSub= stuff.getAttribute("id");
+	hltStatsChecked.push(catSub);
+      }
+    });
+    $(document.getElementById('pagsStatList')).children().each(function(){
+      var stuff = $(this).children()[0];
+      if(stuff.checked == true){
+	var catSub= stuff.getAttribute("id");
+	pagsStatsChecked.push(catSub);
+      }
+    });
+    $(document.getElementById('historyList')).children().each(function(){
+      var stuff = $(this).children()[0];
+      if(stuff.checked == true){
+	var catSub= this.textContent;
+	releaseList.push(catSub);
+      }
+    });
+    $(document.getElementById('subCatList')).children().each(function(){
+      var stuff = $(this).children()[0];
+      if(stuff.checked == true){
+	var catSub= stuff.getAttribute("id");
+	subCatList.push(catSub);
+      }
+    });
+
+
+//$('<form action="' + $("showHistory").data($.param({'statusList': statusList, 'subCatList': subCatList, 'recoStatsChecked': recoStatsChecked, 'hltStatsChecked': hltStatsChecked, 'pagsStatsChecked': pagsStatsChecked, 'releaseList': releaseList})) + '" method="post"><form>').appendTo('body').submit();
+
+window.open('showHistory?' + $.param({'statusList': statusList, 'subCatList': subCatList, 'recoStatsChecked': recoStatsChecked, 'hltStatsChecked': hltStatsChecked, 'pagsStatsChecked': pagsStatsChecked, 'releaseList': releaseList}, true));
+
+//    $.ajax({
+//               type: 'POST',
+//               url: '/showHistory',
+//               data: $.param({'statusList': statusList, 'subCatList': subCatList, 'recoStatsChecked': recoStatsChecked, 'hltStatsChecked': hltStatsChecked, 'pagsStatsChecked': pagsStatsChecked, 'releaseList': releaseList}, true),
+//               success: function (data) {clearHistoryModal();},
+//               error: function() {clearHistoryModal();}
+//          });
+}
+
+function clearHistoryModal(){
+    $(document.getElementById('recoStatList')).children().each(function(){
+      var stuff = $(this).children()[0];
+      stuff.checked = false;
+    });
+    $(document.getElementById('hltStatList')).children().each(function(){
+      var stuff = $(this).children()[0];
+      stuff.checked = false;
+    });
+    $(document.getElementById('pagsStatList')).children().each(function(){
+      var stuff = $(this).children()[0];
+      stuff.checked = false;
+    });
+    $(document.getElementById('historyList')).children().each(function(){
+      $(this).remove();
+    });
+    $(document.getElementById('subCatList')).children().each(function(){
+      var stuff = $(this).children()[0];
+      stuff.checked = false;
+    });
+}
+
+function addReleaseURL(releaseURLName){
+  var ul = document.getElementById('list'); 
+  var choices = ul.getElementsByTagName('input');
+  var li = document.createElement('li');
+  var input = document.createElement('input');
+  var img = document.createElement('img');
+  var text = document.createTextNode(releaseURLName);
+  input.type = 'hidden';
+  input.value = releaseURLName
+	  
+  img.src = "media/remove_icon.png";
+  img.alt="Remove";
+  img.style.verticalAlign = "bottom";
+  img.setAttribute('onclick', 'deleteChildTableRow(this.parentNode);');
+
+  li.appendChild(input);
+  li.appendChild(img);
+  li.appendChild(text);
+  li.setAttribute('name', 'selectedList');
+  li.style.backgroundColor = "#AFEEEE";
+  li.style.width = "275px";
+		  
+  var relN = $(text).text();
+
+  $.ajax({
+		type: 'POST',
+		url: 'mainInformation',
+		data: {catSubCat: "RData", relName: relN },
+		dataType: 'json',
+		success: function (data) { if (data.link) {
+                                                  window.location.href = data.link;
+                                        } else {createdinamictable($(eval("'#" + "RData" +"'")), data, relN, "RData");}},
+		error: function() { alert("Error in data send"); }
+  });
+  $.ajax({
+		type: 'POST',
+		url: 'mainInformation',
+		data: {catSubCat: "HData", relName: relN },
+		dataType: 'json',
+		success: function (data) {if (data.link) {
+                                                  window.location.href = data.link;
+                                        } else {createdinamictable($(eval("'#" + "HData" +"'")), data, relN, "HData");}},
+		error: function() { alert("Error in data send"); }
+  });
+  $.ajax({
+		type: 'POST',
+		url: 'mainInformation',
+		data: {catSubCat: "PData", relName: relN },
+		dataType: 'json',
+		success: function (data) { if (data.link) {
+                                                  window.location.href = data.link;
+                                        } else {createdinamictable($(eval("'#" + "PData" +"'")), data, relN, "PData");}},
+		error: function() { alert("Error in data send"); }
+  });
+  $.ajax({
+		type: 'POST',
+		url: 'mainInformation',
+		data: {catSubCat: "RFull", relName: relN },
+		dataType: 'json',
+		success: function (data) {if (data.link) {
+                                                  window.location.href = data.link;
+                                        } else {createdinamictable($(eval("'#" + "RFull" +"'")), data, relN, "RFull");}},
+		error: function() { alert("Error in data send"); }
+  });
+  $.ajax({
+		type: 'POST',
+		url: 'mainInformation',
+		data: {catSubCat: "HFull", relName: relN },
+		dataType: 'json',
+		success: function (data) {if (data.link) {
+                                                  window.location.href = data.link;
+                                        } else {createdinamictable($(eval("'#" + "HFull" +"'")), data, relN, "HFull");}},
+		error: function() { alert("Error in data send"); }
+  });
+  $.ajax({
+		type: 'POST',
+		url: 'mainInformation',
+		data: {catSubCat: "PFull", relName: relN },
+		dataType: 'json',
+		success: function (data) {if (data.link) {
+                                                  window.location.href = data.link;
+                                        } else {createdinamictable($(eval("'#" + "PFull" +"'")), data, relN, "PFull");}},
+		error: function() { alert("Error in data send"); }
+  });
+  $.ajax({
+		type: 'POST',
+		url: 'mainInformation',
+		data: {catSubCat: "RFast", relName: relN },
+		dataType: 'json',
+		success: function (data) {if (data.link) {
+                                                  window.location.href = data.link;
+                                        } else {createdinamictable($(eval("'#" + "RFast" +"'")), data, relN, "RFast");}},
+		error: function() { alert("Error in data send"); }
+  });
+  $.ajax({
+		type: 'POST',
+		url: 'mainInformation',
+		data: {catSubCat: "HFast", relName: relN },
+		dataType: 'json',
+		success: function (data) {if (data.link) {
+                                                  window.location.href = data.link;
+                                        } else {createdinamictable($(eval("'#" + "HFast" +"'")), data, relN, "HFast");}},
+		error: function() { alert("Error in data send"); }
+  });
+  $.ajax({
+		type: 'POST',
+		url: 'mainInformation',
+		data: {catSubCat: "PFast", relName: relN },
+		dataType: 'json',
+		success: function (data) {if (data.link) {
+                                                  window.location.href = data.link;
+                                        } else {createdinamictable($(eval("'#" + "PFast" +"'")), data, relN, "PFast");}},
+		error: function() { alert("Error in data send"); }
+  });
+		  
+  ul.appendChild(li);
+}
+
+function getCookie(c_name)
+{
+var i,x,y,ARRcookies=document.cookie.split(";");
+for (i=0;i<ARRcookies.length;i++)
+{
+ x=ARRcookies[i].substr(0,ARRcookies[i].indexOf("="));
+ y=ARRcookies[i].substr(ARRcookies[i].indexOf("=")+1);
+ x=x.replace(/^\s+|\s+$/g,"");
+ if (x==c_name)
+ {
+ return unescape(y);
+ }
+ }
+}
+function createCookie(name,value,days) {
+    if (days) {
+        var date = new Date();
+        date.setTime(date.getTime()+(days*24*60*60*1000));
+        var expires = "; expires="+date.toGMTString();
+    }
+    else var expires = "";
+    document.cookie = name+"="+value+expires+"; path=/";
+}
+
+function eraseCookie(name) {
+    createCookie(name,"",-1);
+}
+
+$(document).ready(function(){
+  var coockieValue = getCookie("redirectionLink");
+  if (coockieValue !=null){
+  window.location.hash = window.location.hash + coockieValue.substring(1,coockieValue.length-1);
+  }
+  eraseCookie("redirectionLink");
+  var i, variables = window.location.hash.substring(1).split('&');
+  var tmp = window.location.hash.substring(1);
+  tmp = tmp.split('&');
+
+  if (variables.length > 1) {
+      for (i = 0; i < variables.length; i++) {
+	  keyValuePair = variables[i].split('=');
+	    if(keyValuePair[1] == 'show'){
+	      showMenuURL(keyValuePair[0]);
+	    }
+	    if(keyValuePair[1] == 'addnew'){
+		addReleaseURL(keyValuePair[0]);
+	    }
+	    if(keyValuePair[0] == 'srch'){
+	      document.getElementById('releaseName').value = keyValuePair[1];
+                      $.ajax({
+					type: 'POST',
+					url: 'submit',
+					data: {releaseName: keyValuePair[1]},
+					dataType: 'json',
+					success: function (data) {if (data.link) {
+                                                  window.location.href = data.link;
+                                        } else { 
+                        		document.getElementById("releaseList").innerHTML = "";
+                        		appendOptionLast(data);
+                        		 }},
+					error: function() { alert("Error in data send") }
+                      });
+	  }
+
+      }
+  }
+});
+
+function showMenuURL(category){
+	var whichcategory = document.getElementById(category);
+	if(whichcategory.className == "showM"){
+		whichcategory.className="hideM";
+	}
+	else{
+	whichcategory.className="showN";
+    }
+}
+
+function removeUser(){
+  document.getElementById('userNameToBeRemoved').value =""; //clear field so old value wont be shown
+      $('#rmUserModal').bind('show', function (){
+	  });
+      $('#rmUserModal').modal('toggle');  
+
+}
+
+function rmUser(obj){
+  var userName = document.getElementById('userNameToBeRemoved').value;
+$.ajax({
+               type: 'POST',
+               url: 'removeUser',
+               data: {'user_Name': userName},
+		dataType: 'json',
+               success: function (data) {if (data.link) {
+                                                  window.location.href = data.link;
+                                        } else {alert(data)}},
+               error: function() {alert("Error removing user")}
+          });
+}
+
+function addUser(){
+clearAddUserModal();
+  document.getElementById('userNameToBeRemoved').value ="";
+      $('#addUserModal').bind('show', function (){
+	  });
+      $('#addUserModal').modal('toggle');  
+
+}
+
+function showUserForm(obj){
+  var userTypeValue = obj.value;
+  if(userTypeValue == "Validator"){
+    document.getElementById('usrFormList').className = "hideM";
+  }
+  else{
+      document.getElementById('usrFormList').className = "showM";
+  }
+}
+
+function addUserButtonModal(obj){
+  var userName = document.getElementById('newUsrName').value;
+  var userTypeValue = document.getElementById('userTypeList').value;
+  
+  var usrRDataStatsChecked = [""];
+  var usrRFastStatsChecked = [""];
+  var usrRFullStatsChecked = [""];
+  var usrHDataStatsChecked = [""];
+  var usrHFastStatsChecked = [""];
+  var usrHFullStatsChecked = [""];
+  var usrPDataStatsChecked = [""];
+  var usrPFastStatsChecked = [""];
+  var usrPFullStatsChecked = [""];
+
+  if(userTypeValue == "Validator"){
+	//Get Reconstruction category values
+      $(document.getElementById('usrRDataStatList')).children().each(function(){
+	var stuff = $(this).children()[0];
+	if(stuff.checked == true){
+	  var catSub= stuff.getAttribute("id");
+	  usrRDataStatsChecked.push(catSub);
+	}  
+      });
+        $(document.getElementById('usrRFastStatList')).children().each(function(){
+	var stuff = $(this).children()[0];
+	if(stuff.checked == true){
+	  var catSub= stuff.getAttribute("id");
+	  usrRFastStatsChecked.push(catSub);
+	}  
+      });
+      $(document.getElementById('usrRFullStatList')).children().each(function(){
+	var stuff = $(this).children()[0];
+	if(stuff.checked == true){
+	  var catSub= stuff.getAttribute("id");
+	  usrRFullStatsChecked.push(catSub);
+	}  
+      });
+   //Get HLT category values
+      $(document.getElementById('usrHDataStatList')).children().each(function(){
+	var stuff = $(this).children()[0];
+	if(stuff.checked == true){
+	  var catSub= stuff.getAttribute("id");
+	  usrHDataStatsChecked.push(catSub);
+	}
+      });
+      $(document.getElementById('usrHFastStatList')).children().each(function(){
+	var stuff = $(this).children()[0];
+	if(stuff.checked == true){
+	  var catSub= stuff.getAttribute("id");
+	  usrHFastStatsChecked.push(catSub);
+	}
+      });
+      $(document.getElementById('usrHFullStatList')).children().each(function(){
+	var stuff = $(this).children()[0];
+	if(stuff.checked == true){
+	  var catSub= stuff.getAttribute("id");
+	  usrHFullStatsChecked.push(catSub);
+	}
+      });
+  //Get PAGS category values
+      $(document.getElementById('usrPDataStatList')).children().each(function(){
+	var stuff = $(this).children()[0];
+	if(stuff.checked == true){
+	  var catSub= stuff.getAttribute("id");
+	  usrPDataStatsChecked.push(catSub);
+	}
+      });
+      $(document.getElementById('usrPFastStatList')).children().each(function(){
+	var stuff = $(this).children()[0];
+	if(stuff.checked == true){
+	  var catSub= stuff.getAttribute("id");
+	  usrPFastStatsChecked.push(catSub);
+	}
+      });
+      $(document.getElementById('usrPFullStatList')).children().each(function(){
+	var stuff = $(this).children()[0];
+	if(stuff.checked == true){
+	  var catSub= stuff.getAttribute("id");
+	  usrPFullStatsChecked.push(catSub);
+	}
+      });
+  }
+$.ajax({
+               type: 'POST',
+               url: 'addNewUser',
+               data: $.param({'user_Name': userName, 'userTypeValue': userTypeValue, 'usrRDataStatList': usrRDataStatsChecked, 'usrRFastStatList': usrRFastStatsChecked, 'usrRFullStatList': usrRFullStatsChecked, 'usrHDataStatList': usrHDataStatsChecked, 'usrHFastStatList': usrHFastStatsChecked, 'usrHFullStatList': usrHFullStatsChecked, 'usrPDataStatList': usrPDataStatsChecked, 'usrPFastStatList': usrPFastStatsChecked, 'usrPFullStatList': usrPFullStatsChecked}, true),
+                dataType: 'json',
+		success: function (data) {if (data.link) {
+                                                  window.location.href = data.link;
+                                        } else {alert(data)}},
+               error: function() {alert("Error adding user")}
+          });
+}
+
+function clearAddUserModal(){
+  //clear Reco/Data selected list values
+    $(document.getElementById('usrRDataStatList')).children().each(function(){
+      var stuff = $(this).children()[0];
+      stuff.checked = false;
+    });
+    //clear Reco/FastSim
+    $(document.getElementById('usrRFastStatList')).children().each(function(){
+      var stuff = $(this).children()[0];
+      stuff.checked = false;
+    });
+    //clear Reco/FullSim
+    $(document.getElementById('usrRFullStatList')).children().each(function(){
+      var stuff = $(this).children()[0];
+      stuff.checked = false;
+    });
+  //clear HLT/Data selected list values
+    $(document.getElementById('usrHDataStatList')).children().each(function(){
+      var stuff = $(this).children()[0];
+      stuff.checked = false;
+    });
+    //clear HLT/FastSim
+    $(document.getElementById('usrHFastStatList')).children().each(function(){
+      var stuff = $(this).children()[0];
+      stuff.checked = false;
+    });
+    //clear HLT/FullSim
+    $(document.getElementById('usrHFullStatList')).children().each(function(){
+      var stuff = $(this).children()[0];
+      stuff.checked = false;
+    });
+  //clear PAGs/Data selected list values
+    $(document.getElementById('usrPDataStatList')).children().each(function(){
+      var stuff = $(this).children()[0];
+      stuff.checked = false;
+    });
+    //clear PAGs/FastSim
+    $(document.getElementById('usrPFastStatList')).children().each(function(){
+      var stuff = $(this).children()[0];
+      stuff.checked = false;
+    });
+    //clear PAGs/FullSim
+    $(document.getElementById('usrPFullStatList')).children().each(function(){
+      var stuff = $(this).children()[0];
+      stuff.checked = false;
+    });
+    document.getElementById('userTypeList').value = "------";
+    document.getElementById('usrFormList').className = "showM";
+    document.getElementById('newUsrName').value = "";
+}
+
+ function logoutUser(){
+    $.ajax({
+                type: 'POST',
+                url: 'logoutUser',
+                data: { },
+                dataType: 'json',
+                success: function (data) {if (data.link) {
+                                                  window.location.href = data.link;
+                                        } else {alert(data);}},
+                error: function() { alert("Error in data send"); }
+  });
+}
+function getUserList(){
+  document.getElementById('userNameToSearch').value=""
+      $('#srchUserModal').bind('show', function (){
+	  });
+      $('#srchUserModal').modal('toggle'); 
+}
+function srchUser(){
+  var userName = document.getElementById('userNameToSearch').value;
+  window.open('showUsers?' + $.param({'userName': userName}, true));
+}
+function getAllHistory(){
+  window.open('showAllHistory');
+}
+</script>
+</html>
+

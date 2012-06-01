@@ -78,6 +78,11 @@ servicesConfiguration = {
 		'listeningPort':  8081,
 	},
 
+	'PdmV/valdb': {
+		'filename':       'ajax_app.py',
+		'listeningPort':  8080,
+	},
+
 	'popcon': {
 		'filename':       'popconBackend.py',
 		'listeningPort':  8082,

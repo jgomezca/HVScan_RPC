@@ -1,0 +1,52 @@
+<html>
+<header>
+<title>{{ title }}</title>
+</header>
+<body>
+<style type="text/css">
+   table {width: 950px}
+   ul.relyzas {width:1000px}
+   td, th { border: 1px solid gray; width:30px;}
+   /*li { border: 1px solid #ccc}*/
+   li{padding:0px}
+   li.category {padding:0px; background-color:#EEE}
+   li.subcategory {background-color:#DDD}
+   li.subcategory1 {background-color:#E0FFFF}
+   .container{width:1000px}
+   .version{border-bottom:2px solid #383838 ;}
+</style>
+<h1 style="font-variant: small-caps">{{ header }}</h1>
+<div class="container">
+{% for rel_pav, rel_data in history | dictsort(true)  %}
+  		{% for category, category_data in rel_data | dictsort(true) %}	    
+  		        <div>
+					{% for subCat, subCat_data in category_data | dictsort(true) %}
+						<div class="subcategory"><h3>{{ rel_pav }} / {{ category }} / {{ subCat }}</h3>
+							{% for version, version_data in subCat_data | dictsort(true) %}
+									<div class="version" style="margin-left:20px; font-weight: bold">{{ version }}</div>
+									<div style="margin-left:40px; font-weight: bold; font-family:TIMES NEW ROMAN">
+									{% for column, column_data in version_data | dictsort(true) %}
+										{{ column }}	
+											<table style="border:1px solid black;margin-left:20px">
+												<tr style="background-color:#D8D8D8">
+													{% for information in column_data.keys() %}
+													 <th>{{ information }}</th>  		                                    
+													{% endfor %}
+												</tr>
+												<tr>
+													{% for information_val in column_data.values() %}
+													 <td>{{ information_val }}</td>  		                                    
+													{% endfor %}
+												</tr>
+											  </table>
+										
+										{% endfor %}
+									</div>
+								{% endfor %}
+						</div> 
+					{% endfor %}
+  		        </div>
+  		{% endfor %}
+{% endfor %}
+</div>
+</body>

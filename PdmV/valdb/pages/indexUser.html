@@ -1,0 +1,901 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+	<head>
+		<title>The PdmV Validation DB</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<link href="media/bootstrap.css" rel="stylesheet">
+		<link href="media/bootstrap-responsive.css" rel="stylesheet">
+		<link href="media/menu.css" rel="stylesheet">
+		<script type="text/javascript" src="media/jquery-1.7.1.js"></script>
+
+<!--Modals for pop-up information-->
+<!--Default modal for showing information-->
+          <div id="myModal" class="modal hide fade">
+	    <div class="modal-header">
+	      <h2>Release: <text id="modalReleaseName"></text></h2>
+	      <h4><text id="modalHeaderTree"></text><h4>
+		<h3>Author: <text id = "author"></text></h3>
+	    </div>
+	    <div id ="modalkunas" class="modal-body">
+	      <h4>Validation Status: <text id ="valStat"></text> </h4>
+	      <p>Comments:</br> <text id ="comments" style="width: 454px; height:129px;"></text> </p>
+	      <p>Links: <text id = "links"></text> </p>
+	    </div>
+	    <div class="modal-footer">
+	      <p> Date: <text id = "comdate"></text></p>
+	      <a href="#" class="btn btn-primary" data-dismiss="modal" >Close</a>
+	    </div>
+	  </div>
+
+
+<!--Modals for pop-up information-->
+
+</head>
+	<body>
+	
+		<body style="background-color: #ADD8E6">
+		<br>
+                 <div class="container">
+		  <div class="row">
+		    <div class="span11">
+		      <h1  id="title" style="text-align:center; font-family:verdana">ValDb: The PdmV Validation DB</h1>
+		    </div>
+		    <div class="span1">
+		      <input name = "logOutBTN" class="btn" type="button" value="Logout" onclick="logoutUser();"/>
+		    </div>
+		  </div>
+		</div>
+		<br>
+		<br>	
+	
+	
+<div class="container">
+		<div class="row">
+			<div class="span8">
+				<div>
+					<label style="font-family:verdana; font-size:18px"><br></label>
+					<form id="searchform" action="#" method="post">
+							<label for="releaseName" style="display:inline; font-family:verdana; font-size:18px">Select one release  </label>
+							<input type="text" id="releaseName" />
+							<input class="btnOK" type="submit" value="OK" onclick="clearSelectList();"/>
+							<output id="buttonOk">
+					</form>
+				</div>
+					<hr align="left" width="100%" size="4" style="background-color:black">
+				<div>
+					<label style="font-family:verdana; font-size:18px; display:inline">Validation Tables</label>
+					<br>
+					
+				</div>
+				<div>
+				  <h3 id="legend" style="text-align:left; font-family:verdana">Legend</h3>
+				    <ul>
+				      <li> 
+					  <img width="16" alt="target" align="top" src="media/target.gif" height="16" border="0" /> : Changes are expected;
+				      </li> 
+				      <li> 
+					  <img width="16" alt="choice-no" align="top" src="media/choice-no.gif" height="16" border="0" /> : Failure;
+				      </li> 
+				      <li> 
+					  <img width="16" alt="choice-yes" align="top" src="media/choice-yes.gif" height="16" border="0" /> : OK;
+				      </li> 
+				      <li> 
+					  <img width="16" alt="wip" align="top" src="media/wip.gif" height="16" border="0" /> : In progress;
+				      </li> 
+				      <li> 
+					  <img width="16" alt="minus" align="top" src="media/minus.gif" height="16" border="0" /> : Not yet done;
+				      </li> 
+				      <li> 
+					  <img width="16" alt="stop" align="top" src="media/thumbs-up.gif" height="16" border="0" /> : OK - to be signed-off by the validators;
+				      </li>
+ 
+				      <li> 
+					  <img width="16" alt="stop" align="top" src="media/thumbs-down.gif" height="16" border="0" /> : Failure - to be signed-off by the validators;
+				      </li>
+				    </ul>
+				</div>
+				<div>
+				<div>
+					<a href="javascript:showMenu('RECO')" class="Group">Reconstruction</a>
+						<div class="showM" id="RECO">
+							<a class="SubCategory" href="javascript:showMenu('iRData');"> Data</a>
+							<div class="showM" id="iRData">
+								<table name = "infoTable" class="table table-striped table-bordered table-condensed" style="border-color:black;" id= "RData" border="0">
+									<tbody>
+									<th>Release Name</th>
+									<th>Tk</th>
+									<th>Ecal</th>
+									<th>Hcal</th>
+									<th>DT</th>
+									<th>CSC</th>
+									<th>RPC</th>
+									<th>Tracking</th>
+									<th>Electron</th>
+									<th>Photon</th>
+									<th>Muon</th>
+									<th>Jet</th>
+									<th>MET</th>
+									<th>BTag</th>
+									<th>Tau</th>
+									<th><b>Summary</th>
+									</tbody>
+								</table>
+							</div>
+							<a href="javascript:showMenu('iRFull')" class="SubCategory"> FullSim</a>
+							<div class="showM" id="iRFull">
+								<table name= "infoTable" class="table table-striped table-bordered table-condensed" style="border-color:black;" id='RFull' border="0">
+									<tr>
+									<th>Release Name</th>
+									<th>Tk</th>
+									<th>Ecal</th>
+									<th>Hcal</th>
+									<th>DT</th>
+									<th>CSC</th>
+									<th>RPC</th>
+									<th>Tracking</th>
+									<th>Electron</th>
+									<th>Photon</th>
+									<th>Muon</th>
+									<th>Jet</th>
+									<th>MET</th>
+									<th>BTag</th>
+									<th>Tau</th>
+									<th>Summary</th>
+								</table>
+							</div>
+							<a href="javascript:showMenu('iRFast')" class="SubCategory"> FastSim</a>
+							<div class="showM" id="iRFast">
+								<table name = "infoTable" class="table table-striped table-bordered table-condensed" style="border-color:black;" id='RFast' border="0">
+									<tr>
+									<th>Release Name</th>
+									<th>Tk</th>
+									<th>Ecal</th>
+									<th>Hcal</th>
+									<th>DT</th>
+									<th>CSC</th>
+									<th>RPC</th>
+									<th>Tracking</th>
+									<th>Electron</th>
+									<th>Photon</th>
+									<th>Muon</th>
+									<th>Jet</th>
+									<th>MET</th>
+									<th>BTag</th>
+									<th>Tau</th>
+									<th>Summary</th>
+								</table>
+							</div>
+						</div>
+					<a href="javascript:showMenu('HLT')" class="Group">HLT</a>
+						<div class="showM" id="HLT">
+							<a href="javascript:showMenu('iHData')" class="SubCategory"> Data</a>
+							<div class="showM" id="iHData">
+								<table name="infoTable" class="table table-striped table-bordered table-condensed" style="border-color:black;" id='HData' border="0">
+									<tr>
+									<th>Release Name</th>
+									<th>Electron</th>
+									<th>Photon</th>
+									<th>Muon</th>
+									<th>Jet</th>
+									<th>MET</th>
+									<th>Tau</th>
+									<th>Top</th>
+									<th>Higgs</th>
+									<th>HeavyFlavor</th>
+									<th>Susy</th>
+									<th>Exotica</th>
+									<th>Summary</th>
+								</table>
+							</div>
+							<a href="javascript:showMenu('iHFull')" class="SubCategory"> FullSim</a>
+								<div class="showM" id="iHFull">
+									<table name="infoTable" class="table table-striped table-bordered table-condensed" style="border-color:black;" id='HFull' border="0">
+										<tr>
+										<th>Release Name</th>
+										<th>Electron</th>
+										<th>Photon</th>
+										<th>Muon</th>
+										<th>Jet</th>
+										<th>MET</th>
+										<th>Tau</th>
+										<th>Top</th>
+										<th>Higgs</th>
+										<th>HeavyFlavor</th>
+										<th>Susy</th>
+										<th>Exotica</th>
+										<th>Summary</th>
+									</table>
+								</div>	
+							<a href="javascript:showMenu('iHFast')" class="SubCategory"> FastSim</a>
+								<div class="showM" id="iHFast">
+									<table name="infoTable" class="table table-striped table-bordered table-condensed" style="border-color:black;" id='HFast' border="0">
+										<tr>
+										<th>Release Name</th>
+										<th>Electron</th>
+										<th>Photon</th>
+										<th>Muon</th>
+										<th>Jet</th>
+										<th>MET</th>
+										<th>Tau</th>
+										<th>Top</th>
+										<th>Higgs</th>
+										<th>HeavyFlavor</th>
+										<th>Susy</th>
+										<th>Exotica</th>
+										<th>Summary</th>
+									</table>
+								</div>
+						</div>
+					<a href="javascript:showMenu('PAGs')" class="Group">PAGs</a>
+						<div class="showM" id="PAGs">
+						<a href="javascript:showMenu('iPData')" class="SubCategory"> Data</a>
+							<div class="showM" id="iPData">
+								<table name="infoTable" class="table table-striped table-bordered table-condensed" style="border-color:black;" id='PData' border="0">
+									<tr>
+									<th>Release Name</th>
+									<th>SMP</th>
+									<th>Higgs</th>
+									<th>Top</th>
+									<th>Susy</th>
+									<th>Exotica</th>
+									<th>B</th>
+									<th>Fwd</th>
+									<th>Summary</th>
+								</table>
+							</div>
+						<a href="javascript:showMenu('iPFull')" class="SubCategory"> FullSim</a>
+							<div class="showM" id="iPFull">
+								<table name="infoTable" class="table table-striped table-bordered table-condensed" style="border-color:black;" id='PFull' border="0">
+									<tr>
+									<th>Release Name</th>
+									<th>SMP</th>
+									<th>Higgs</th>
+									<th>Top</th>
+									<th>Susy</th>
+									<th>Exotica</th>
+									<th>B</th>
+									<th>Fwd</th>
+									<th>Summary</th>
+								</table>
+							</div>
+						<a href="javascript:showMenu('iPFast')" class="SubCategory"> FastSim</a>
+							<div class="showM" id="iPFast">
+								<table name="infoTable" class="table table-striped table-bordered table-condensed" style="border-color:black;" id='PFast' border="0">
+									<tr>
+									<th>Release Name</th>
+									<th>SMP</th>
+									<th>Higgs</th>
+									<th>Top</th>
+									<th>Susy</th>
+									<th>Exotica</th>
+									<th>B</th>
+									<th>Fwd</th>
+									<th>Summary</th>
+								</table>
+							</div>
+						</div>
+				</div>
+				</div>
+			</div>
+			<div class="span4">
+				<div>
+					<label style="font-family:verdana; font-size:18px">List of releases</label>
+					<select id = "releaseList" style="width:300px">
+					<option value="------">------</option>
+					</select>
+					<img src="media/add_icon.png" alt="Add" style="vertical-align: center;" onclick="selectList($(this).prev().get(0));" />
+					<label style="font-family:verdana; font-size:18px"><br></label>
+					<label style="font-family:verdana; font-size:18px">Selected releases:</label>
+					<br>
+					<ul id="list" style="list-style:none;">
+					</ul>
+				</div>
+			</div>
+		</div>
+	</div>
+
+</select> 
+    	</body>
+		
+<script type="text/javascript">
+  function selectList(select)
+		{
+		  var option = select.options[select.selectedIndex];
+		  var ul = select.parentNode.getElementsByTagName('ul')[0]; 
+		  var choices = ul.getElementsByTagName('input');
+		  if (option.value == '------')
+			return;
+		  for (var i = 0; i < choices.length; i++)
+			if (choices[i].value == option.value)
+			  return;  
+		  var li = document.createElement('li');
+		  var input = document.createElement('input');
+		  var img = document.createElement('img');
+		  var text = document.createTextNode(option.firstChild.data);
+		  var url = option.firstChild.data + "=addnew&";
+		  window.location.hash = window.location.hash+ url;			
+		  input.type = 'hidden';
+		  input.value = option.value;
+		  
+		  img.src = "media/remove_icon.png";
+		  img.alt="Remove";
+		  img.style.verticalAlign = "bottom";
+		  img.setAttribute('onclick', 'deleteChildTableRow (this.parentNode);');
+
+		  li.appendChild(input);
+		  li.appendChild(img);
+		  li.appendChild(text);
+		  li.setAttribute('name', 'selectedList');
+		  li.style.backgroundColor = "#AFEEEE";
+		  li.style.width = "275px";
+		  
+		  var relN = $(text).text();
+
+			$.ajax({
+					type: 'POST',
+					url: 'mainInformation',
+					data: {catSubCat: "RData", relName: relN },
+					dataType: 'json',
+					success: function (data) {if (data.link) {
+                                                  window.location.href = data.link;
+                                        } else {createdinamictable($(eval("'#" + "RData" +"'")), data, relN, "RData")}},
+					error: function() { alert("Error in data send"); }
+			});
+			$.ajax({
+					type: 'POST',
+					url: 'mainInformation',
+					data: {catSubCat: "HData", relName: relN },
+					dataType: 'json',
+					success: function (data) {if (data.link) {
+                                                  window.location.href = data.link;
+                                        } else {createdinamictable($(eval("'#" + "HData" +"'")), data, relN, "HData")}},
+					error: function() { alert("Error in data send"); }
+			});
+			$.ajax({
+					type: 'POST',
+					url: 'mainInformation',
+					data: {catSubCat: "PData", relName: relN },
+					dataType: 'json',
+					success: function (data) {if (data.link) {
+                                                  window.location.href = data.link;
+                                        } else {createdinamictable($(eval("'#" + "PData" +"'")), data, relN, "PData")}},
+					error: function() { alert("Error in data send"); }
+			});
+			$.ajax({
+					type: 'POST',
+					url: 'mainInformation',
+					data: {catSubCat: "RFull", relName: relN },
+					dataType: 'json',
+					success: function (data) {if (data.link) {
+                                                  window.location.href = data.link;
+                                        } else {createdinamictable($(eval("'#" + "RFull" +"'")), data, relN, "RFull")}},
+					error: function() { alert("Error in data send"); }
+			});
+			$.ajax({
+					type: 'POST',
+					url: 'mainInformation',
+					data: {catSubCat: "HFull", relName: relN },
+					dataType: 'json',
+					success: function (data) {if (data.link) {
+                                                  window.location.href = data.link;
+                                        } else {createdinamictable($(eval("'#" + "HFull" +"'")), data, relN, "HFull")}},
+					error: function() { alert("Error in data send"); }
+			});
+			$.ajax({
+					type: 'POST',
+					url: 'mainInformation',
+					data: {catSubCat: "PFull", relName: relN },
+					dataType: 'json',
+					success: function (data) {if (data.link) {
+                                                  window.location.href = data.link;
+                                        } else {createdinamictable($(eval("'#" + "PFull" +"'")), data, relN, "PFull")}},
+					error: function() { alert("Error in data send"); }
+			});
+			$.ajax({
+					type: 'POST',
+					url: 'mainInformation',
+					data: {catSubCat: "RFast", relName: relN },
+					dataType: 'json',
+					success: function (data) {if (data.link) {
+                                                  window.location.href = data.link;
+                                        } else {createdinamictable($(eval("'#" + "RFast" +"'")), data, relN, "RFast")}},
+					error: function() { alert("Error in data send"); }
+			});
+			$.ajax({
+					type: 'POST',
+					url: 'mainInformation',
+					data: {catSubCat: "HFast", relName: relN },
+					dataType: 'json',
+					success: function (data) {if (data.link) {
+                                                  window.location.href = data.link;
+                                        } else {createdinamictable($(eval("'#" + "HFast" +"'")), data, relN, "HFast")}},
+					error: function() { alert("Error in data send"); }
+			});
+			$.ajax({
+					type: 'POST',
+					url: 'mainInformation',
+					data: {catSubCat: "PFast", relName: relN },
+					dataType: 'json',
+					success: function (data) {if (data.link) {
+                                                  window.location.href = data.link;
+                                        } else {createdinamictable($(eval("'#" + "PFast" +"'")), data, relN, "PFast")}},
+					error: function() { alert("Error in data send"); }
+			});
+		  
+		  ul.appendChild(li);
+		}
+	</script>
+	
+<script type="text/javascript">
+  function clearSelectList()
+		{
+			list = document.getElementById("list");
+			rdata = document.getElementById("RData");
+			rfull = document.getElementById("RFull");
+			rfast = document.getElementById("RFast");
+			hdata = document.getElementById("HData");
+			hfull = document.getElementById("HFull");
+			hfast = document.getElementById("HFast");
+			pdata = document.getElementById("PData");
+			pfull = document.getElementById("PFull");
+			pfast = document.getElementById("PFast");
+			while ( list.childNodes.length >= 1 )
+			{
+				list.removeChild( list.firstChild );
+			}
+			while (rdata.firstChild.nextSibling.rows[1] != null) 
+			{
+				deleteChildTableRow(rdata.firstChild.nextSibling.rows[1]);
+			}
+			while (hdata.firstChild.nextSibling.rows[1] != null) 
+			{
+				deleteChildTableRow(hdata.firstChild.nextSibling.rows[1]);
+			}
+			while (pdata.firstChild.nextSibling.rows[1] != null) 
+			{
+				deleteChildTableRow(pdata.firstChild.nextSibling.rows[1]);
+			}
+		}
+	</script>
+		
+           <script type="text/javascript">
+            $(function() {
+                // When the insertform is submitted...
+                $("#searchform").submit(function() {
+		      //Clear release info into document
+		      var url = window.location.hash;
+		      var releaseSearch = document.getElementById("releaseName");
+			  releaseSearch = releaseSearch.value;
+		      if(window.location.hash.indexOf("srch") != -1){
+			var tmp1 = window.location.hash.substring(0, url.indexOf("srch="));
+			var tmp2 = window.location.hash.substring(url.indexOf("&&")+2, url.length);
+			window.location.hash = tmp1+tmp2;
+		      }
+			  window.location.hash = window.location.hash+"srch=" +releaseSearch + "&&";
+                    
+                    // post the form values via AJAX...
+                     $("#buttonOk").empty().html('<img src="media/loading.gif" />');
+                      $.ajax({
+  							type: 'POST',
+  							url: 'submit',
+  							data: {releaseName: $("#releaseName").val()},
+							dataType: 'json',
+  							success: function (data) { if (data.link) {
+                                                 					 window.location.href = data.link;
+                                       						 } else {
+                            								document.getElementById("releaseList").innerHTML = "";
+                            								appendOptionLast(data);
+                            								$("#buttonOk").css('display', 'none');
+										}
+                           				 },
+                           	error: function() { alert("Error in data send") }
+                           });
+                    return false ;
+                    });
+            });
+
+	</script>
+	
+	<!--Create and perform action with table-->
+
+<script  type="text/javascript">
+function createdinamictable(tbody, data1, releaseName, subCat){
+  var colnumb;
+  var keys;
+  if (subCat == 'RData'|| subCat == 'RFull' || subCat == 'RFast'){
+    colnumb = 16;
+    keys = ["CSC", "TAU", "TRACKING", "BTAG", "JET", "ECAL", "RPC", "PHOTON", "MUON", "MET", "ELECTRON", "TK", "HCAL", "DT", "SUMMARY"];
+  }
+  if (subCat == 'HData'||subCat == 'HFull'||subCat == 'HFast'){
+    colnumb = 13;
+    keys = ["TAU", "JET", "HIGGS", "TOP", "MUON", "PHOTON", "MET", "ELECTRON", "EXOTICA", "SUSY", "HEAVYFLAVOR", "SUMMARY"];
+  }
+  if (subCat == 'PData'||subCat == 'PFull'||subCat == 'PFast'){
+    colnumb = 9;
+    keys = ["B", "HIGGS", "FWD", "TOP", "SMP", "EXOTICA", "SUSY", "SUMMARY"];
+  }
+  var text;
+  if(tbody == null || tbody.length <1) return;
+  for(var i = 1; i <= 1; i++){
+    var trow = $("<tr>");
+    for(var j = 0; j < colnumb; j++){
+      if(i==1 && j==0){
+      text = releaseName;
+	  $("<td>")
+	    .addClass("tableCell")
+	    .text(releaseName)
+	    .attr('id', releaseName)
+	    .data("col", j)
+	    .data("row",i)
+	    .appendTo(trow);
+	}
+	else{
+	  if (! isEmpty(data1)) {
+	  	return;
+	  } else {
+	var headValue = $(tbody)[0];
+	var tmpchild = $(headValue).children()[0];
+	headValue = $(tmpchild).children()[0];
+	var ilgiauchild = $(headValue).children();
+	var key = ilgiauchild[j].textContent.toUpperCase();
+	text = data1[key];
+	var src
+	switch(text){
+	case "OK" : 
+	      src =  "<img src='media/choice-yes.gif'/>";
+	      break;
+	case "FAILURE":
+	      src =  "<img src='media/choice-no.gif'/>";
+	      break;
+	case "CHANGES EXPECTED":
+	      src =  "<img src='media/target.gif'/>";
+	      break;
+	case "IN PROGRESS":
+	      src =  "<img src='media/wip.gif'/>";
+	      break;
+	case "OK TO BE SIGNED-OFF BY THE VALIDATORS":
+	      src =  "<img src='media/thumbs-up.gif'/>";
+	      break;
+	case "FAILURE TO BE SIGNED-OFF BY THE VALIDATORS":
+	      src =  "<img src='media/thumbs-down.gif'/>";
+	      break;
+	default:
+	      src = "<img src='media/minus.gif'/>";
+	      break;
+	}
+	  }
+	$("<td>")
+	    .addClass("tableCell")
+	    .append(src)
+	    .attr('value', key)
+	    .attr('onclick', 'javascript:showModal("'+subCat+'", this)')
+	    .data("col", j)
+	    .data("row",i)
+	    .appendTo(trow);  
+	}
+      } 
+      trow.appendTo(tbody);
+    }
+  }
+  
+  function isEmpty(object) {
+	for(var i in object) {
+		return true;
+	}
+	return false;
+  }
+</script>
+
+<script>
+function showModal(subcategory, obj){
+	var statName = obj.value;
+	var rn = $(obj).parent()[0];
+	var releaseName = $(rn).children()[0].textContent;
+	var column = $(obj).data("col");
+	var reiksm = $(obj).parent().parent()[0];
+	var tmpval = $(reiksm).children()[0];
+	var statvalue = $(tmpval).children()[column].textContent;
+	var category;
+	var releaseDetails = ["VALIDATION_STATUS","USER_NAME","LINKS","COMMENTS","META_DATE", "RELEASE_NAME"];
+	switch (subcategory[0]){
+	 case "R":
+	      category = "Reconstruction";
+	      break;
+	 case "H":
+	      category = "HLT";
+	      break;
+	 case "P":
+	      category = "PAGs";
+	      break;
+	 default:
+	      category = "";
+	      break;
+	}
+	var subCat = subcategory.substring(1,subcategory.length);
+	switch(subCat){
+	  case "Full":
+		subCat = subCat + "Sim";
+		break;
+	  case "Fast":
+		subCat=subCat + "Sim";
+	  default:
+		break;
+	}
+	$.ajax({
+		type: 'POST',
+            	url: 'getDetailInformation',
+        	data: {catSubCat: subcategory, relName: releaseName, state: statvalue.toUpperCase() },
+		dataType: 'json',
+            	success: function (data) {if (data.link) {
+                                                  window.location.href = data.link;
+                                        } else {	
+				$('#myModal').bind('show', function () { 
+				document.getElementById('modalHeaderTree').innerHTML = category +"/"+subCat;
+				document.getElementById('author').innerHTML = data[releaseDetails[1]];
+				document.getElementById('valStat').innerHTML = data[releaseDetails[0]];
+				document.getElementById('comments').innerHTML = data[releaseDetails[3]];
+				document.getElementById('links').innerHTML = data[releaseDetails[2]];
+				document.getElementById('comdate').innerHTML = data[releaseDetails[4]];
+				document.getElementById('modalReleaseName').innerHTML = data[releaseDetails[5]];
+				}),
+				$('#myModal').modal('toggle');}},
+            error: function() { alert("Error in data send"); }
+	});
+}
+</script>
+
+<script>
+function showMenu(category){
+	var whichcategory = document.getElementById(category);
+	var url = window.location.hash;
+	if(whichcategory.className == "showM"){
+		whichcategory.className="hideM";
+		if(url.indexOf(category) ==-1){
+		  window.location.hash = window.location.hash + category + "=show&";
+		  } else{
+		    var tmp1 = window.location.hash.substring(0, url.indexOf(category));
+		    var tmp2 = window.location.hash.substring(url.indexOf(category)+category.length+6, url.length);
+		    window.location.hash = tmp1+tmp2;
+		    }
+	}
+	else{
+	whichcategory.className="showM";
+	var tmp1 = window.location.hash.substring(0, url.indexOf(category));
+	var tmp2 = window.location.hash.substring(url.indexOf(category)+category.length+6, url.length);
+	window.location.hash = tmp1+tmp2;
+    }
+}
+</script>
+<script src="media/bootstrap-modal.js"></script>
+
+<script>
+function deleteChildTableRow (obj){
+  var name = obj.textContent;
+  var url = window.location.hash;
+  var tmp1 = window.location.hash.substring(0, url.indexOf(name));
+  var tmp2 = window.location.hash.substring(url.indexOf(name)+name.length+8, url.length);
+  window.location.hash = tmp1+tmp2;
+  obj.parentNode.removeChild(obj);
+
+//delete information of release from all tables;
+  for(i=0; i<9; i++){
+    var row = document.getElementById(obj.textContent);
+    if(row !=null){
+      var elem = row.parentNode; 
+      $(elem).remove();
+    }
+  }	      
+}
+</script>
+
+<script>
+function appendOptionLast(data){
+  var select = document.getElementById("releaseList");
+  var lngth = select.options.length;
+	
+  if(lngth == 0){
+    select.options[lngth] = new Option('------');
+    select.options[lngth].value = '------';
+  }
+  for(index in data){
+	select.options[select.options.length] = new Option(data[index], index);
+  }
+}
+
+function addReleaseURL(releaseURLName){
+  var ul = document.getElementById('list'); 
+  var choices = ul.getElementsByTagName('input');
+  var li = document.createElement('li');
+  var input = document.createElement('input');
+  var img = document.createElement('img');
+  var text = document.createTextNode(releaseURLName);
+  input.type = 'hidden';
+  input.value = releaseURLName
+  
+  img.src = "media/remove_icon.png";
+  img.alt="Remove";
+  img.style.verticalAlign = "bottom";
+  img.setAttribute('onclick', 'deleteChildTableRow(this.parentNode);');
+
+  li.appendChild(input);
+  li.appendChild(img);
+  li.appendChild(text);
+  li.setAttribute('name', 'selectedList');
+  li.style.backgroundColor = "#AFEEEE";
+  li.style.width = "275px";
+		  
+  var relN = $(text).text();
+
+  $.ajax({
+		type: 'POST',
+		url: 'mainInformation',
+		data: {catSubCat: "RData", relName: relN },
+		dataType: 'json',
+		success: function (data) {if (data.link) {
+                                                  window.location.href = data.link;
+                                        } else {createdinamictable($(eval("'#" + "RData" +"'")), data, relN, "RData")}},
+		error: function() { alert("Error in data send"); }
+  });
+  $.ajax({
+		type: 'POST',
+		url: 'mainInformation',
+		data: {catSubCat: "HData", relName: relN },
+		dataType: 'json',
+		success: function (data) {if (data.link) {
+                                                  window.location.href = data.link;
+                                        } else {createdinamictable($(eval("'#" + "HData" +"'")), data, relN, "HData")}},
+		error: function() { alert("Error in data send"); }
+  });
+  $.ajax({
+		type: 'POST',
+		url: 'mainInformation',
+		data: {catSubCat: "PData", relName: relN },
+		dataType: 'json',
+		success: function (data) {if (data.link) {
+                                                  window.location.href = data.link;
+                                        } else {createdinamictable($(eval("'#" + "PData" +"'")), data, relN, "PData")}},
+		error: function() { alert("Error in data send"); }
+  });
+  $.ajax({
+		type: 'POST',
+		url: 'mainInformation',
+		data: {catSubCat: "RFull", relName: relN },
+		dataType: 'json',
+		success: function (data) {if (data.link) {
+                                                  window.location.href = data.link;
+                                        } else {createdinamictable($(eval("'#" + "RFull" +"'")), data, relN, "RFull")}},
+		error: function() { alert("Error in data send"); }
+  });
+  $.ajax({
+		type: 'POST',
+		url: 'mainInformation',
+		data: {catSubCat: "HFull", relName: relN },
+		dataType: 'json',
+		success: function (data) {if (data.link) {
+                                                  window.location.href = data.link;
+                                        } else {createdinamictable($(eval("'#" + "HFull" +"'")), data, relN, "HFull")}},
+		error: function() { alert("Error in data send"); }
+  });
+  $.ajax({
+		type: 'POST',
+		url: 'mainInformation',
+		data: {catSubCat: "PFull", relName: relN },
+		dataType: 'json',
+		success: function (data) {if (data.link) {
+                                                  window.location.href = data.link;
+                                        } else {createdinamictable($(eval("'#" + "PFull" +"'")), data, relN, "PFull")}},
+		error: function() { alert("Error in data send"); }
+  });
+  $.ajax({
+		type: 'POST',
+		url: 'mainInformation',
+		data: {catSubCat: "RFast", relName: relN },
+		dataType: 'json',
+		success: function (data) {if (data.link) {
+                                                  window.location.href = data.link;
+                                        } else {createdinamictable($(eval("'#" + "RFast" +"'")), data, relN, "RFast")}},
+		error: function() { alert("Error in data send"); }
+  });
+  $.ajax({
+		type: 'POST',
+		url: 'mainInformation',
+		data: {catSubCat: "HFast", relName: relN },
+		dataType: 'json',
+		success: function (data) {if (data.link) {
+                                                  window.location.href = data.link;
+                                        } else {createdinamictable($(eval("'#" + "HFast" +"'")), data, relN, "HFast")}},
+		error: function() { alert("Error in data send"); }
+  });
+  $.ajax({
+		type: 'POST',
+		url: 'mainInformation',
+		data: {catSubCat: "PFast", relName: relN },
+		dataType: 'json',
+		success: function (data) {if (data.link) {
+                                                  window.location.href = data.link;
+                                        } else {createdinamictable($(eval("'#" + "PFast" +"'")), data, relN, "PFast")}},
+		error: function() { alert("Error in data send"); }
+  });
+		  
+  ul.appendChild(li);
+}
+
+function getCookie(c_name)
+{
+var i,x,y,ARRcookies=document.cookie.split(";");
+for (i=0;i<ARRcookies.length;i++)
+{
+ x=ARRcookies[i].substr(0,ARRcookies[i].indexOf("="));
+ y=ARRcookies[i].substr(ARRcookies[i].indexOf("=")+1);
+ x=x.replace(/^\s+|\s+$/g,"");
+ if (x==c_name)
+ {
+ return unescape(y);
+ }
+ }
+}
+
+$(document).ready(function(){
+  var coockieValue = getCookie("redirectionLink");
+  if (coockieValue !=null){
+  window.location.hash = window.location.hash + coockieValue.substring(1,coockieValue.length-1);
+  }
+  var i, variables = window.location.hash.substring(1).split('&');
+  var tmp = window.location.hash.substring(1);
+  tmp = tmp.split('&');
+
+  if (variables.length > 1) {
+      for (i = 0; i < variables.length; i++) {
+	  keyValuePair = variables[i].split('=');
+	    if(keyValuePair[1] == 'show'){
+	      showMenuURL(keyValuePair[0]);
+	    }
+	    if(keyValuePair[1] == 'addnew'){
+		addReleaseURL(keyValuePair[0]);
+	    }
+	    if(keyValuePair[0] == 'srch'){
+	      document.getElementById('releaseName').value = keyValuePair[1];
+                      $.ajax({
+					type: 'POST',
+					url: 'submit',
+					data: {releaseName: keyValuePair[1]},
+					dataType: 'json',
+					success: function (data) {if (data.link) {
+                                                  			window.location.href = data.link;
+                                        			} else { 
+                        						document.getElementById("releaseList").innerHTML = "";
+                        						appendOptionLast(data);
+								}
+                        		},
+					error: function() { alert("Error in data send") }
+                      });
+	  }
+
+      }
+  }
+});
+
+function showMenuURL(category){
+	var whichcategory = document.getElementById(category);
+	if(whichcategory.className == "showM"){
+		whichcategory.className="hideM";
+	}
+	else{
+	whichcategory.className="showM";
+    }
+}
+function logoutUser(){
+    $.ajax({
+                type: 'POST',
+                url: 'logoutUser',
+                data: { },
+                dataType: 'json',
+                success: function (data) {if (data.link) {
+                                                  window.location.href = data.link;
+                                        } else {alert(data);}},
+                error: function() { alert("Error in data send"); }
+  });
+}
+</script>
+</html>

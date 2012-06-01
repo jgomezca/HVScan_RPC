@@ -1,0 +1,57 @@
+body {
+  font-family: Arial, Verdana, Tahoma, Helvetica, sans-serif;
+  font-size: 12px;
+}
+.Group{
+  display: block;
+  height: 28px;
+  width: 173px;
+  background-image: url(Button_Group.jpg);
+  line-height: 27px;
+  padding-left: 27px;
+  color: white;
+  text-decoration: none;
+  font-family: verdana;
+}
+.Group:hover{
+  color:#FFFF66;
+  text-decoration: underline;
+}
+.SubCategory{
+  display: block;
+  height: 28px;
+  width: 173px;
+  background-image: url(Button_Option.jpg);
+  line-height: 27px;
+  padding-left: 27px;
+  color: white;
+  text-decoration: none;
+  font-family: verdana;
+}
+.SubCategory:hover{
+  color: #FFFF66;
+  text-decoration: underline;
+}
+
+.Releases{
+  display: table;
+  line-height: 27px;
+  padding-left: 27px;
+  text-decoration: none;
+}
+.Releases:hover{
+
+}
+.showM{
+  display:none;
+}
+.hideM{
+  display:block;
+}
+td.tableCell{
+  padding: 5px;
+}
+
+.label { 
+	clear: both; 
+}

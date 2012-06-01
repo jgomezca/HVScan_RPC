@@ -1,0 +1,47 @@
+<html>
+<header>
+<title>{{ title }}</title>
+</header>
+<body>
+<style type="text/css">
+   table {width: 950px}
+   ul.relyzas {width:1000px}
+   td, th { border: 1px solid gray; width:30px;}
+   /*li { border: 1px solid #ccc}*/
+   li{padding:0px}
+   li.category {padding:0px; background-color:#EEE}
+   li.subcategory {background-color:#DDD}
+   li.subcategory1 {background-color:#E0FFFF}
+   .container{width:1000px}
+   .version{border-bottom:2px solid #383838 ;}
+</style>
+<h1 style="font-variant: small-caps">{{ header }}</h1>
+<div class="container">
+<div class="subcategory"> <h3> ADMINS: 
+{% for admin in admins %}
+    {{ admin }}, 
+{% endfor %}
+</h3>
+<h3>VALIDATORS: </h3>
+{% for user_kind, user_data in users | dictsort(true)  %}
+	<div class="subcategory"><h3> {{ user_kind }} </h3>
+	{% for category, category_data in user_data | dictsort(true) %}
+		<div class="version" style="margin-left:20px; font-weight: bold">{{ category }}</div>
+		<div style="margin-left:40px; font-weight: bold; font-family:TIMES NEW ROMAN">
+		{% for column, column_data in category_data | dictsort(true) %}
+			{{ column }}
+			<table style="border:1px solid black;margin-left:20px">
+				<tr style="background-color:#D8D8D8">
+				{% for information in column_data %}
+			 		<th>{{ information }}</th>  		                                    
+				{% endfor %}
+				</tr>
+			</table>
+		{% endfor %}
+		</div> 
+	{% endfor %}
+	</div> 
+{% endfor %} 
+</div>
+</div>
+</body>
