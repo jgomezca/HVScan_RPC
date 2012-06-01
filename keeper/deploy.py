@@ -303,8 +303,12 @@ def deploy(options):
 		# for easy development).
 		execute('rm -rf cmssw cmsswNew libs secrets services')
 
-	# Create the logs folder if it does not exist
+	# Create the logs folder if it does not exist and subdirectories
 	execute('mkdir -p logs')
+	for service in config.servicesConfiguration:
+		(head, tail) = os.path.split(service)
+		if head != '':
+			execute('mkdir -p ' + os.path.join('logs', head))
 
 	# Get the secrets
 	execute('rsync -az ' + secretsSource + ' .')

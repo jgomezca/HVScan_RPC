@@ -216,7 +216,7 @@ def start(service, warnIfAlreadyStarted = True):
 		# Ensure that the path is absolute (although at the moment config returns
 		# all paths as absolute)
 		serviceConfiguration = config.servicesConfiguration[service]
-		commandLine += 'python ' + serviceConfiguration['filename'] + ' --rootDirectory ' + os.path.abspath(os.path.join(config.servicesDirectory, service)) + ' --listeningPort ' + str(serviceConfiguration['listeningPort']) + ' --productionLevel ' + config.getProductionLevel()
+		commandLine += 'python ' + serviceConfiguration['filename'] + ' --name ' + service + ' --rootDirectory ' + os.path.abspath(os.path.join(config.servicesDirectory, service)) + ' --listeningPort ' + str(serviceConfiguration['listeningPort']) + ' --productionLevel ' + config.getProductionLevel()
 
 		# And pipe its output to rotatelogs
 		# FIXME: Fix the services so that they do proper logging themselves

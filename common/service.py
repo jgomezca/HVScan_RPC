@@ -17,23 +17,8 @@ import cherrypy
 import secrets
 
 
-_name = None
 _settings = None
 _secrets = None
-
-
-def getName():
-	'''Returns the name of a service.
-	'''
-	
-	return _name
-
-
-def getSecrets():
-	'''Returns the secrets of a service.
-	'''
-
-	return _secrets
 
 
 def getSettings():
@@ -41,6 +26,13 @@ def getSettings():
 	'''
 
 	return _settings
+
+
+def getSecrets():
+	'''Returns the secrets of a service.
+	'''
+
+	return _secrets
 
 
 def start(mainObject):
@@ -54,12 +46,17 @@ def start(mainObject):
 		'engine.autoreload_on': False,
 		},
 	})
-	cherrypy.quickstart(mainObject, config = 'server.conf', script_name = '/' + getName())
+	cherrypy.quickstart(mainObject, config = 'server.conf', script_name = '/' + getSettings()['name'])
 
 
 def _init():
 	# Parse the command line options
 	parser = optparse.OptionParser()
+
+	parser.add_option('-n', '--name', type = 'str',
+		dest = 'name',
+		help = 'The name of the service.'
+	)
 
 	parser.add_option('-r', '--rootDirectory', type = 'str',
 		dest = 'rootDirectory',
@@ -78,21 +75,19 @@ def _init():
 
 	options = parser.parse_args()[0]
 
+	# Set the settings
 	global _settings
 	_settings = {
+		'name': options.name,
 		'rootDirectory': options.rootDirectory,
 		'listeningPort': options.listeningPort,
 		'productionLevel': options.productionLevel,
 	}
 
-	# Get the name of the service
-	global _name
-	_name = os.path.basename(getSettings()['rootDirectory'])
-
-	# Get the secrets
+	# Set the secrets
 	global _secrets
-	if getName() in secrets.secrets:
-		_secrets = secrets.secrets[getName()]
+	if getSettings()['name'] in secrets.secrets:
+		_secrets = secrets.secrets[getSettings()['name']]
 
 
 _init()
