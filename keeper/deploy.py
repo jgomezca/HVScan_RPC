@@ -25,9 +25,6 @@ defaultCmsswRepository = os.path.join(defaultRepositoryBase, 'cmssw.git')
 secretsSource = '/afs/cern.ch/cms/DB/conddb/internal/webServices/secrets'
 gridSecuritySource = '/etc/grid-security'
 
-utilitiesDirectory = '/afs/cern.ch/cms/DB/utilities'
-utilitiesPythonPackages = os.path.join(utilitiesDirectory, 'python-packages')
-
 
 import sys
 import pwd
@@ -162,7 +159,7 @@ def generateDocs():
 	Uses the markdown Python module installed in utilitiesPythonPackages.
 	'''
 
-	execute('cd services/docs && PYTHONPATH=' + utilitiesPythonPackages + ' ./generate.py')
+	execute('cd services/docs && ./generate.py')
 
 
 def checkRequirementsUpdate(options):
