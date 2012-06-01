@@ -16,6 +16,7 @@ import socket
 
 rootDirectory = '/data'
 servicesDirectory = os.path.join(rootDirectory, 'services')
+secretsDirectory = os.path.join(rootDirectory, 'secrets')
 logsDirectory = os.path.join(rootDirectory, 'logs')
 cmsswDirectory = os.path.join(rootDirectory, 'cmsswNew')
 cmsswSetupEnvScript = os.path.join(cmsswDirectory, 'setupEnv.sh')

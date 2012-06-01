@@ -38,12 +38,17 @@ def getSecrets():
 def start(mainObject):
 	'''Starts the service.
 	'''
+
+	gridSecurityDirectory = os.path.join(getSettings()['secretsDirectory'], 'grid-security')
+
 	cherrypy.config.update({
 		'global': {
 		'server.socket_host': socket.gethostname(),
 		'server.socket_port': getSettings()['listeningPort'],
 		'tools.staticdir.root': getSettings()['rootDirectory'],
 		'engine.autoreload_on': False,
+		'server.ssl_certificate': os.path.join(gridSecurityDirectory, 'hostcert.pem'),
+		'server.ssl_private_key': os.path.join(gridSecurityDirectory, 'hostkey.pem'),
 		},
 	})
 	cherrypy.quickstart(mainObject, config = 'server.conf', script_name = '/' + getSettings()['name'])
@@ -63,6 +68,11 @@ def _init():
 		help = 'The root directory for the service.'
 	)
 
+	parser.add_option('-s', '--secretsDirectory', type = 'str',
+		dest = 'secretsDirectory',
+		help = 'The shared secrets directory.'
+	)
+
 	parser.add_option('-p', '--listeningPort', type = 'int',
 		dest = 'listeningPort',
 		help = 'The port this service will listen to.'
@@ -80,6 +90,7 @@ def _init():
 	_settings = {
 		'name': options.name,
 		'rootDirectory': options.rootDirectory,
+		'secretsDirectory': options.secretsDirectory,
 		'listeningPort': options.listeningPort,
 		'productionLevel': options.productionLevel,
 	}

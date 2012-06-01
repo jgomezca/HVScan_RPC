@@ -195,7 +195,7 @@ def start(service, warnIfAlreadyStarted = True):
 		# This does not keep the original PYTHONPATH. There should not
 		# be anything there anyway.
 		servicePath = os.path.abspath(os.path.join(config.servicesDirectory, 'common'))
-		secretsPath = os.path.abspath(os.path.join(config.servicesDirectory, '..', 'secrets'))
+		secretsPath = config.secretsDirectory
 		os.putenv('PYTHONPATH', servicePath + ':' + secretsPath)
 
 		# Setup the command line
@@ -216,7 +216,7 @@ def start(service, warnIfAlreadyStarted = True):
 		# Ensure that the path is absolute (although at the moment config returns
 		# all paths as absolute)
 		serviceConfiguration = config.servicesConfiguration[service]
-		commandLine += 'python ' + serviceConfiguration['filename'] + ' --name ' + service + ' --rootDirectory ' + os.path.abspath(os.path.join(config.servicesDirectory, service)) + ' --listeningPort ' + str(serviceConfiguration['listeningPort']) + ' --productionLevel ' + config.getProductionLevel()
+		commandLine += 'python ' + serviceConfiguration['filename'] + ' --name ' + service + ' --rootDirectory ' + os.path.abspath(os.path.join(config.servicesDirectory, service)) + ' --secretsDirectory ' + config.secretsDirectory + ' --listeningPort ' + str(serviceConfiguration['listeningPort']) + ' --productionLevel ' + config.getProductionLevel()
 
 		# And pipe its output to rotatelogs
 		# FIXME: Fix the services so that they do proper logging themselves
@@ -362,7 +362,7 @@ def status():
 		if len(pids) > 0:
 			status = ' RUNNING: ' + ','.join(pids)
 			if service != 'keeper':
-				status += ' at http://' + socket.gethostname() + ':' +  str(config.servicesConfiguration[service]['listeningPort']) + '/' + service + '/'
+				status += ' at https://' + socket.gethostname() + ':' +  str(config.servicesConfiguration[service]['listeningPort']) + '/' + service + '/'
 		else:
 			status = ' --------'
 
