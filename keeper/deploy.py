@@ -23,6 +23,7 @@ defaultCmsswRepository = os.path.join(defaultRepositoryBase, 'cmssw.git')
 
 # In the rsync format
 secretsSource = '/afs/cern.ch/cms/DB/conddb/internal/webServices/secrets'
+gridSecuritySource = '/etc/grid-security'
 
 utilitiesDirectory = '/afs/cern.ch/cms/DB/utilities'
 utilitiesPythonPackages = os.path.join(utilitiesDirectory, 'python-packages')
@@ -139,10 +140,20 @@ def execute(command):
 
 
 def getSecrets():
-	'''Gets the secrets.
+	'''Gets the secrets and the grid-security host certificates.
 	'''
 
 	execute('rsync -az ' + secretsSource + ' .')
+	execute('sudo rsync -az ' + gridSecuritySource + ' secrets/')
+
+	# Ensure that ownership and file mode bits are strict for secrets
+	# First change the bits so that no one from the new group (e.g. zh)
+	# can read the secrets between both commands (in any case the services
+	# should not be deployed in machines open for ssh to many people...)
+	userName = pwd.getpwuid(os.getuid())[0]
+	groupName = grp.getgrgid(os.getgid())[0]
+	execute('sudo chmod -R go-rwx secrets')
+	execute('sudo chown -R ' + userName + ':' + groupName + ' secrets')
 
 
 def generateDocs():
