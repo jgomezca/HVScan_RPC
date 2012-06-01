@@ -50,13 +50,15 @@ like this:
 Go to the keeper and start your service:
 
 	$ cd keeper
-	$ ./keeper.py start ServiceTemplate
+	$ ./keeper.py start myService
 
-And finally browse to:
+And check that it is running correctly:
 
-	http://thevirtualmachine:theport/
+	$ ./keeper.py status
 
-And you should read something like:
+And finally browse to the link that appears in the status' output.
+
+You should be able to read something like:
 
 	I am myService, I am listening on 9999, with production level "private", my root directory is /afs/cern.ch/user/m/mojedasa/scratch0/services/myService and my biggest secret is that the sky is blue!!
 
