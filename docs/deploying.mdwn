@@ -9,13 +9,17 @@ Deploying allows you to get a working full setup of the CMS DB Web services in a
 
 ## Deploying
 
-Deploying is really easy. Login into your virtual/private machine and verify that you can run Python 2.6 (if you are in SLC5, maybe you do not have it):
+Deploying is really easy. Login into your virtual/private machine and verify that you have the following programs installed. Just try to run each of them:
 
 	$ python2.6
+	$ git
+	$ /usr/sbin/rotatelogs
 
-If not, please install it:
+If not, you will need to install the missing one(s):
 
 	$ sudo yum install python26
+	$ sudo yum install git
+	$ sudo yum install httpd  # this contains rotatelogs 
 
 Then, in a temporary directory, run:
 
