@@ -20,7 +20,7 @@ import service
 #-mo FIXME: Put methods in common/ for building connection strings of all kinds
 #           for all services.
 connectionDictionary = service.getSecrets()['connections']['dev']
-connectionString = 'oracle://' + connectionDictionary['user'] + '/' + connectionDictionary['password'] + '@' + connectionDictionary['db_name']
+connectionString = 'oracle://' + connectionDictionary['user'] + ':' + connectionDictionary['password'] + '@' + connectionDictionary['db_name']
 engine = create_engine(connectionString, echo=False)
 Session = sessionmaker(bind=engine)
 
