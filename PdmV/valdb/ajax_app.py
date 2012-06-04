@@ -19,7 +19,6 @@ import service
 #           the development DB.
 #-mo FIXME: Put methods in common/ for building connection strings of all kinds
 #           for all services.
-print service.getSecrets()
 connectionDictionary = service.getSecrets()['connections']['dev']
 connectionString = 'oracle://' + connectionDictionary['user'] + '/' + connectionDictionary['password'] + '@' + connectionDictionary['db_name']
 engine = create_engine(connectionString, echo=False)
