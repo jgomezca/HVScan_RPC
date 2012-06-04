@@ -249,10 +249,8 @@ def stop(service):
 			stop(service)
 		return
 
-	if service == 'keeper':
-		return stopKeeper()
-
-	checkRegistered(service)
+	if service != 'keeper':
+		checkRegistered(service)
 
 	pids = getPIDs(service)
 
@@ -271,10 +269,7 @@ def restart(service):
 	'''Restarts a service or the keeper itself.
 	'''
 
-	if service == 'keeper':
-		return restartKeeper()
-
-	if service != 'all':
+	if service not in frozenset(['all', 'keeper']):
 		checkRegistered(service)
 
 	try:
@@ -319,34 +314,6 @@ def startKeeper():
 	logger.info('Started keeper: %s', os.getpid())
 
 	keep()
-
-
-def stopKeeper():
-	'''Stops the keeper (it stops all keepers found).
-	'''
-
-	pids = getPIDs('keeper')
-
-	if len(pids) == 0:
-		logger.warning('Tried to stop the keeper which is not running.')
-		return
-
-	for pid in pids:
-		kill(pid)
-
-	logger.info('Stopped keeper: %s', ','.join(pids))
-
-
-def restartKeeper():
-	'''Restarts the keeper.
-	'''
-
-	try:
-		stopKeeper()
-	except:
-		pass
-
-	startKeeper()
 
 
 def status():
