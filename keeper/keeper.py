@@ -64,7 +64,7 @@ def _getPIDs(string):
 	'''Returns the PIDs matching the string, without grep nor bash.
 	'''
 
-	return os.popen("ps aux | grep -F '" + string + "' | grep -F -v 'grep' | grep -F -v 'bash' | awk '{print $2}'", 'r').read().splitlines()
+	return os.popen("ps aux | grep -F '" + string + "' | grep -F 'python' | grep -F -v 'grep' | grep -F -v 'bash' | awk '{print $2}'", 'r').read().splitlines()
 
 
 def getPIDs(service):
@@ -72,7 +72,7 @@ def getPIDs(service):
 	'''
 
 	if service == 'keeper':
-		pids = set(_getPIDs('keeper.py start keeper'))
+		pids = set(_getPIDs('keeper.py'))
 		pids -= set([str(os.getpid())])
 	else:
 		pids = _getPIDs('python ' + config.servicesConfiguration[service]['filename'])
