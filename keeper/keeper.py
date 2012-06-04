@@ -240,6 +240,24 @@ def start(service, warnIfAlreadyStarted = True):
 			logger.error('The email "' + subject + '"could not be sent.')
 
 
+def wait(service, maxWaitTime = 20):
+	'''Waits until a service stops.
+	
+	Raises exception if a maximum wait time is exceeded.
+	'''
+
+	startTime = time.time()
+
+	while True:
+		if time.time() - startTime > maxWaitTime:
+			raise Exception('Service %s did not stop after %s seconds.' % (service, maxWaitTime))
+
+		if not isRunning(service):
+			return
+
+		time.sleep(1)
+
+
 def stop(service):
 	'''Stops a service or the keeper itself.
 	'''
@@ -262,6 +280,7 @@ def stop(service):
 	for pid in pids:
 		kill(pid)
 
+	wait(service)
 	logger.info('Stopped %s: %s', service, ','.join(pids))
 
 
@@ -272,11 +291,7 @@ def restart(service):
 	if service not in frozenset(['all', 'keeper']):
 		checkRegistered(service)
 
-	try:
-		stop(service)
-	except:
-		pass
-
+	stop(service)
 	start(service)
 
 
