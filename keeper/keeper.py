@@ -258,7 +258,7 @@ def stop(service):
 
 	# Service not running
 	if len(pids) == 0:
-		logger.warning('Tried to stop a service which is not running.')
+		logger.warning('Tried to stop a service (%s) which is not running.' % service)
 		return
 
 	for pid in pids:
