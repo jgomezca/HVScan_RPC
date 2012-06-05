@@ -61,7 +61,7 @@ $(document).ready(function(){
     }
 
     $('#cmssw_release').change(function(){
-        window.location.href="gtlist/?cmssw_release="+$(this).val();
+        window.location.href="?cmssw_release="+$(this).val();
     });
 
 
@@ -72,7 +72,7 @@ $(document).ready(function(){
     reloadPage($(".col3 b").html(), limitInMinutes, 1);
     updateCurrentTime();
     if(globalTagList[0]=='ServerDown'){
-       $('#alert_link').attr('href', ('gtlist/message-box.html?msg_name=Server Not Available'));
+       $('#alert_link').attr('href', ('message-box.html?msg_name=Server Not Available'));
        $('#alert_link').click();       
     }
 
@@ -90,7 +90,7 @@ $(document).ready(function(){
 
     $("#form1").submit(function() {
         var tmp = $('#suggest1').val();
-        window.location.href="gtlist?GlobalTag="+$('#suggest1').val()+"&GlobalTag2="+$('#suggest2').val()+"&filter="+$('#example_filter input').val();
+        window.location.href="?GlobalTag="+$('#suggest1').val()+"&GlobalTag2="+$('#suggest2').val()+"&filter="+$('#example_filter input').val();
         return false;
     });
 
@@ -321,7 +321,7 @@ function reloadData(creationDateString, limitInMinutes) {
     var currentDate = new Date();
     var dateDiffInMinutes = Math.round((currentDate - creationDate) / 1000 / 60 );
     if ($("#creation_time").html() && (dateDiffInMinutes > limitInMinutes) && (globalTagList[0]!='ServerDown')) {
-       $('#alert_link').attr('href', ('/gtlist/message-box.html?msg_name=Refreshing&refreshDate='+$("#creation_time").html()));
+       $('#alert_link').attr('href', ('message-box.html?msg_name=Refreshing&refreshDate='+$("#creation_time").html()));
        $('#alert_link').click();       
     }
 }
@@ -365,7 +365,7 @@ $(function(){
 function compareGT(){
     var GT1 =  $('#suggest1').val();
     var GT2 =  $('#suggest2').val();
-    $('#GTdiff').attr('href', ('gtlist/GTdiff.html?GlobalTag='+GT1+'&GlobalTag2='+GT2));
+    $('#GTdiff').attr('href', ('GTdiff.html?GlobalTag='+GT1+'&GlobalTag2='+GT2));
     $('#GTdiff').attr("title", ("difference between "+GT1+" and "+GT2));
     $('#GTdiff').click();       
 }
@@ -377,7 +377,7 @@ function blockWindow() {
 
 function refresh_backend(){
     msg    = "Refresh Global Tag<br><h2>"+$('#suggest1').val()+"</h2>"     
-    location.href="gtlist?GlobalTag="+$('#suggest1').val()+"&GlobalTag2="+$('#suggest2').val()+"&filter="+$('#example_filter input').val();
+    location.href="?GlobalTag="+$('#suggest1').val()+"&GlobalTag2="+$('#suggest2').val()+"&filter="+$('#example_filter input').val();
 }
 
 

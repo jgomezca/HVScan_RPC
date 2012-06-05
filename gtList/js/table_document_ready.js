@@ -46,14 +46,14 @@ function fnFormatDetails ( nTr )
 
 $(document).ready(function() {
         if($(document).getUrlParam("filter")=='RunInfoRcd_Bari'){
-            $('#alert_link').attr('href', ('gtlist/message-box.html?msg_name=missingRecordName'));
+            $('#alert_link').attr('href', ('message-box.html?msg_name=missingRecordName'));
             $("#alert_link").fancybox({'type'        : 'iframe','width':485,'height':290});
             $('#alert_link').click(); 
         }
         $("#example_filter input").live("keyup", function() {
             if(oTable.fnSettings().aiDisplay.length < 1){
                     rcd_name    =   $("#example_filter input").val();
-                    $('#alert_link').attr('href', ('gtlist/message-box.html?msg_name=missingRecordName'));
+                    $('#alert_link').attr('href', ('message-box.html?msg_name=missingRecordName'));
                     $('#alert_link').click();       
                     }
         });
