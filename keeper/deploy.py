@@ -228,6 +228,8 @@ def update(options):
 	# Start the keeper
 	execute('services/keeper/keeper.py start keeper')
 
+	logger.info('Update successful.')
+
 
 def checkRequirementsDeploy(options):
 	'''Checks the requirements needed for deploy().
