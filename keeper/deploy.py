@@ -178,7 +178,7 @@ def checkPackage(package):
 
 
 def checkRequirements(options):
-	'''Checks common requirements for both update() and deploy().
+	'''Checks requirements for deploy(), update() and the keeper/services.
 	'''
 
 	# Test for sudo privileges
@@ -200,6 +200,13 @@ def checkRequirements(options):
 		execute('rsync --version')
 	except:
 		raise Exception('This script requires rsync.')
+
+	# Test for rotatelogs (httpd package)
+	try:
+		checkPackage('httpd')
+		execute('echo "" | /usr/sbin/rotatelogs -t /dev/null 10M')
+	except:
+		raise Exception('This script requires rotatelogs (httpd package).')
 
 
 def update(options):
