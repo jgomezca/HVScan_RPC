@@ -172,6 +172,15 @@ def getSecrets():
 	execute('sudo chown -R ' + userName + ':' + groupName + ' secrets')
 
 
+def getDependencyTag(dependency):
+	'''Gets a dependency tag of cmsDbWebServices.
+	'''
+
+	tag = open('services/dependencies/%s.tag' % dependency).read().strip()
+	logger.info('Dependency: %s %s' % (dependency, tag))
+	return tag
+
+
 def generateDocs():
 	'''Generates the docs by calling services/docs/generate.py.
 
@@ -275,15 +284,9 @@ def update(options):
 	# Check out the treeish on services/
 	execute('cd services && git checkout -q ' + options['gitTreeish'])
 
-	# Get the dependencies' tags
-	cmsDbWebLibsTag = open('services/dependencies/cmsDbWebLibs.tag').read().strip()
-	cmsswTag = open('services/dependencies/cmssw.tag').read().strip()
-	logger.info('Dependency: cmsDbWebLibs ' + cmsDbWebLibsTag)
-	logger.info('Dependency: cmssw ' + cmsswTag)
-
-	# Checkout the tags
-	execute('cd libs && git checkout -q ' + cmsDbWebLibsTag)
-	execute('cd cmssw && git checkout -q ' + cmsswTag)
+	# Checkout the dependencies' tags
+	execute('cd libs && git checkout -q %s' % getDependencyTag('cmsDbWebLibs'))
+	execute('cd cmssw && git checkout -q %s' % getDependencyTag('cmssw'))
 
 	# Regenerate the docs
 	generateDocs()
@@ -389,19 +392,13 @@ def deploy(options):
 	execute('git clone -q ' + options['servicesRepository'] + ' services')
 	execute('cd services && git checkout -q ' + options['gitTreeish'])
 
-	# Get the dependencies' tags
-	cmsDbWebLibsTag = open('services/dependencies/cmsDbWebLibs.tag').read().strip()
-	cmsswTag = open('services/dependencies/cmssw.tag').read().strip()
-	logger.info('Dependency: cmsDbWebLibs ' + cmsDbWebLibsTag)
-	logger.info('Dependency: cmssw ' + cmsswTag)
-
 	# Clone libs and checkout the tag
 	execute('git clone -q ' + options['libsRepository'] + ' libs')
-	execute('cd libs && git checkout -q ' + cmsDbWebLibsTag)
+	execute('cd libs && git checkout -q %s' % getDependencyTag('cmsDbWebLibs'))
 
 	# Clone cmsswNew and checkout the tag
 	execute('git clone -q ' + options['cmsswRepository'] + ' cmssw')
-	execute('cd cmssw && git checkout -q ' + cmsswTag)
+	execute('cd cmssw && git checkout -q %s' % getDependencyTag('cmssw'))
 
 	# Give everything proper ownership if we are in dev/int/pro
 	# FIXME: We should use a cmsdbweb account & group
