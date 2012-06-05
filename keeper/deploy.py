@@ -23,7 +23,17 @@ defaultCmsswRepository = os.path.join(defaultRepositoryBase, 'cmssw.git')
 
 # In the rsync format
 secretsSource = '/afs/cern.ch/cms/DB/conddb/internal/webServices/secrets'
-gridSecuritySource = '/etc/grid-security'
+hostCertificateFiles = {
+	'private': {
+		'crt': '/etc/pki/tls/certs/localhost.crt',
+		'key': '/etc/pki/tls/private/localhost.key',
+	},
+
+	'devintpro': {
+		'crt': '/etc/grid-security/hostcert.pem',
+		'key': '/etc/grid-security/hostkey.pem',
+	},
+}
 
 
 import sys
@@ -137,11 +147,20 @@ def execute(command):
 
 
 def getSecrets():
-	'''Gets the secrets and the grid-security host certificates.
+	'''Gets the secrets and the host certificate.
 	'''
 
 	execute('rsync -az ' + secretsSource + ' .')
-	execute('sudo rsync -az ' + gridSecuritySource + ' secrets/')
+
+	if config.getProductionLevel() == 'private':
+		# In a private machine (e.g. VM), copy the localhost
+		# certificates installed by the mod_ssl package
+		execute('sudo rsync -a %s secrets/hostcert.pem' % hostCertificateFiles['private']['crt'])
+		execute('sudo rsync -a %s secrets/hostkey.pem'  % hostCertificateFiles['private']['key'])
+	else:
+		# In dev/int/pro, copy the grid-security certificates
+		execute('sudo rsync -a %s secrets/hostcert.pem' % hostCertificateFiles['devintpro']['crt'])
+		execute('sudo rsync -a %s secrets/hostkey.pem'  % hostCertificateFiles['devintpro']['key'])
 
 	# Ensure that ownership and file mode bits are strict for secrets
 	# First change the bits so that no one from the new group (e.g. zh)
@@ -207,6 +226,20 @@ def checkRequirements(options):
 		execute('echo "" | /usr/sbin/rotatelogs -t /dev/null 10M')
 	except:
 		raise Exception('This script requires rotatelogs (httpd package).')
+
+	# Test for the host certificate
+	level = 'devintpro'
+	if config.getProductionLevel() == 'private':
+		level = 'private'
+		try:
+			checkPackage('mod_ssl')
+		except:
+			raise Exception('This script requires mod_ssl to be installed (in private machines, the host certificate is taken from mod_ssl.')
+	try:
+		execute('test -f %s' % hostCertificateFiles[level]['crt'])
+		execute('test -f %s' % hostCertificateFiles[level]['key'])
+	except:
+		raise Exception('This script requires the host certificate to be installed: %s and %s must exist.' % (hostCertificateFiles[level]['crt'], hostCertificateFiles[level]['key']))
 
 
 def update(options):

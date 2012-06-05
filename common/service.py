@@ -63,16 +63,14 @@ def start(mainObject):
 	'''Starts the service.
 	'''
 
-	gridSecurityDirectory = os.path.join(getSettings()['secretsDirectory'], 'grid-security')
-
 	cherrypy.config.update({
 		'global': {
 		'server.socket_host': socket.gethostname(),
 		'server.socket_port': getSettings()['listeningPort'],
 		'tools.staticdir.root': getSettings()['rootDirectory'],
 		'engine.autoreload_on': False,
-		'server.ssl_certificate': os.path.join(gridSecurityDirectory, 'hostcert.pem'),
-		'server.ssl_private_key': os.path.join(gridSecurityDirectory, 'hostkey.pem'),
+		'server.ssl_certificate': os.path.join(getSettings()['secretsDirectory'], 'hostcert.pem'),
+		'server.ssl_private_key': os.path.join(getSettings()['secretsDirectory'], 'hostkey.pem'),
 		},
 	})
 	cherrypy.quickstart(mainObject, config = 'server.conf', script_name = '/' + getSettings()['name'])
