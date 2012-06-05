@@ -13,6 +13,10 @@ except ImportError, e:
 
 import service
 
+
+conn_string = service.getCxOracleConnectionString(service.getSecrets()['connections']['pro'])
+
+
 class LumiDB_SQL:
     
  def __init__(self):
@@ -26,9 +30,6 @@ class LumiDB_SQL:
         seen_add = seen.add
         return [ x for x in seq if x not in seen and not seen_add(x)]
     
- def extract(self, authfile="./auth.xml"):
-    return service.getSecrets()['connections']['pro']
-
  def lslengthsec(self, numorbit, numbx = None):
         #print numorbit, numbx
         if numbx == None:
@@ -37,9 +38,7 @@ class LumiDB_SQL:
         return l
 
  def getDeliveredLumiForRun(self, authfile="./auth.xml",runNumbers="161222,161223,161224"):
-        conn_dict = self.extract(authfile)
-        conn_string = conn_dict['user'] + '/' + conn_dict['password'] + '@' + conn_dict['db_name']
-        conn = cx_Oracle.connect(str(conn_string))
+        conn = cx_Oracle.connect(conn_string)
         runs = {}
         lumis = {}
         try:
@@ -77,9 +76,7 @@ class LumiDB_SQL:
             return [{'Run':key, 'DeliveredLumi': value} for key, value in lumis.items()]
 
  def getRunNumberExtendedInfo(self, authfile="./auth.xml",runNumbers="161222,161223,161224"):
-        conn_dict = self.extract(authfile)
-        conn_string = conn_dict['user'] + '/' + conn_dict['password'] + '@' + conn_dict['db_name']
-        conn = cx_Oracle.connect(str(conn_string))
+        conn = cx_Oracle.connect(conn_string)
         try:
             curs = conn.cursor()
             sqlstr = """
@@ -152,9 +149,7 @@ class LumiDB_SQL:
             return [{'RunNumber':key, 'Run-Info': value} for key, value in runs.items()]
 
  def getRunNumberInfo(self, authfile="./auth.xml",runNumbers="161222,161223,161224"): 
-     conn_dict = self.extract(authfile)
-     conn_string = conn_dict['user'] + '/' + conn_dict['password'] + '@' + conn_dict['db_name']
-     conn = cx_Oracle.connect(str(conn_string))
+     conn = cx_Oracle.connect(conn_string)
      jobList = []
      try:
         curs = conn.cursor()
@@ -213,9 +208,7 @@ WHERE """+runNumbers+"""
      return str(','.join(runNumbList[0]['runnumbers']))
 
  def getRunNumber(self, authfile="./auth.xml",startTime='23-Mar-11 00:00',endTime='23-Mar-11 14:00'): 
-     conn_dict = self.extract(authfile)
-     conn_string = conn_dict['user'] + '/' + conn_dict['password'] + '@' + conn_dict['db_name']
-     conn = cx_Oracle.connect(str(conn_string))
+     conn = cx_Oracle.connect(conn_string)
      startTime  =   startTime+":00.000000"
      endTime    =   endTime+":00.000000"
      jobList = []
@@ -252,9 +245,7 @@ AND runtable.runnumber = wbmrun.runnumber
          return jobList
 
  def getLumiByRun(self, authfile="./auth.xml",runNumbers="161222,161223,161224"):
-        conn_dict = self.extract(authfile)
-        conn_string = conn_dict['user'] + '/' + conn_dict['password'] + '@' + conn_dict['db_name']
-        conn = cx_Oracle.connect(str(conn_string))
+        conn = cx_Oracle.connect(conn_string)
         jobList =   []        
         try:
             curs = conn.cursor()
@@ -292,8 +283,6 @@ AND runtable.runnumber = wbmrun.runnumber
     return maxMinString
 
  def test(self, authfile="./auth.xml"): 
-    conn_dict = self.extract(authfile)
-    conn_string = conn_dict['user'] + '/' + conn_dict['password'] + '@' + conn_dict['db_name']
     conn = cx_Oracle.connect(conn_string)
     jobList = []
     try:

@@ -13,13 +13,15 @@ except ImportError, e:
 
 import service
 
+
+conn_dict = service.getSecrets()['connections']['pro']
+conn_string = service.getCxOracleConnectionString(conn_dict)
+
+
 class popconSQL:
     
  def __init__(self):
     self.__popconUtils = popconUtils.PopConUtils()
-    
- def extract(self, authfile="./auth.xml"):
-    return service.getSecrets()['connections']['pro']
     
  def get_default_date(self, what): 
     today_sec = time.time()+86500
@@ -53,8 +55,6 @@ class popconSQL:
     return time_transformed
  
  def PopConCronjobStatus(self, authfile="./auth.xml"): 
-     conn_dict = self.extract(authfile)
-     conn_string = str(conn_dict['user'] + '/' + conn_dict['password'] + '@' + conn_dict['db_name'])
      conn = cx_Oracle.connect(conn_string)
      jobList = []
      try:
@@ -85,8 +85,6 @@ class popconSQL:
          return jobList
 
  def PopConCronjobTailFetcherStatus(self, authfile="./auth.xml",serviceName="EcalDCSO2O"):
-    conn_dict = self.extract(authfile)
-    conn_string = str(conn_dict['user'] + '/' + conn_dict['password'] + '@' + conn_dict['db_name'])
     conn = cx_Oracle.connect(conn_string)
     try:
     	start = time.time()
@@ -125,8 +123,6 @@ class popconSQL:
        search_string == "where filename='EcalDCSO2O.log'" or \
        search_string == "where filename='RunInfoStop.log'" or \
        search_string == "where filename='EcalLaserTimeBasedO2O.log'":
-       conn_dict = self.extract(authfile)
-       conn_string = str(conn_dict['user'] + '/' + conn_dict['password'] + '@' + conn_dict['db_name'])
        conn = cx_Oracle.connect(conn_string)
        #map_detector    =   ['Pixel','Alig','Ecal','DT','Run','RPC','CSC','SiStrip','HLT']
        try:
@@ -187,8 +183,6 @@ class popconSQL:
         raise SystemExit
 
  def checkLongTail(self,authfile="./auth.xml",serviceName='OfflineDropBox'):
-    conn_dict = self.extract(authfile)
-    conn_string = str(conn_dict['user'] + '/' + conn_dict['password'] + '@' + conn_dict['db_name'])
     conn = cx_Oracle.connect(conn_string)
     try:
     	start = time.time()
@@ -250,9 +244,6 @@ class popconSQL:
     #start_date  =   "11/23/2009"
     #end_date    =   "12/16/2009"
 
-    conn_dict = self.extract(authfile)
-    conn_string = str(conn_dict['user']+'/'+conn_dict['password']+'@'+conn_dict['db_name'])
-    conn = cx_Oracle.connect(conn_string)
     conn = cx_Oracle.connect(conn_string)
     try:
         start = time.time()
@@ -296,8 +287,6 @@ class popconSQL:
         conn.close()
 
  def get_quotaInfo(self, authfile="./auth.xml"):
-    conn_dict = self.extract(authfile)
-    conn_string = str(conn_dict['user'] + '/' + conn_dict['password'] + '@' + conn_dict['db_name'])
     conn = cx_Oracle.connect(conn_string)
     try:
         curs = conn.cursor()
@@ -317,8 +306,6 @@ class popconSQL:
         conn.close()
 
  def get_IOVTAGs(self, authfile="./auth.xml"):
-    conn_dict = self.extract(authfile)
-    conn_string = str(conn_dict['user']+'/'+conn_dict['password']+'@'+conn_dict['db_name'])
     conn = cx_Oracle.connect(conn_string)
     try:
         curs = conn.cursor()
@@ -334,8 +321,6 @@ class popconSQL:
         conn.close()
 
  def get_DESTINATIONDBs(self, authfile="./auth.xml"):
-    conn_dict = self.extract(authfile)
-    conn_string = str(conn_dict['user'] + '/' + conn_dict['password'] + '@' + conn_dict['db_name'])
     conn = cx_Oracle.connect(conn_string)
     try:
         curs = conn.cursor()
@@ -351,8 +336,6 @@ class popconSQL:
         conn.close()
 
  def get_ACCOUNTs(self, authfile="./auth.xml"):
-    conn_dict = self.extract(authfile)
-    conn_string = str(conn_dict['user']+'/'+conn_dict['password']+'@'+conn_dict['db_name'])
     conn = cx_Oracle.connect(conn_string)
     try:
         curs = conn.cursor()
@@ -385,8 +368,6 @@ class popconSQL:
         to_date('"""+start_date+"""', 'MM/DD/YYYY') and 
         to_date('"""+end_date+"""', 'MM/DD/YYYY') 
     """
-    conn_dict = self.extract(authfile)
-    conn_string = str(conn_dict['user']+'/'+conn_dict['password']+'@'+conn_dict['db_name'])
     conn = cx_Oracle.connect(conn_string)
     try:
         start = time.time()

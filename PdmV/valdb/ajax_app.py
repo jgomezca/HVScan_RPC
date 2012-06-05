@@ -17,17 +17,11 @@ import service
 #-mo FIXME: The old code used the production DB in -int and -pro. However,
 #           as at the moment -int is the new -dev, for the moment always use
 #           the development DB.
-#-mo FIXME: Put methods in common/ for building connection strings of all kinds
-#           for all services.
 connectionDictionary = service.getSecrets()['connections']['dev']
-connectionString = 'oracle://' + connectionDictionary['user'] + ':' + connectionDictionary['password'] + '@' + connectionDictionary['db_name']
-engine = create_engine(connectionString, echo=False)
+engine = create_engine(service.getSqlAlchemyConnectionString(connectionDictionary), echo=False)
 Session = sessionmaker(bind=engine)
 
-
-def getWinServicesConnectionString():
-    winservices = service.getSecrets()['winservices']
-    return 'https://%s:%s@winservices-soap.web.cern.ch/winservices-soap/Generic/Authentication.asmx/' % (winservices['user'], winservices['password'])
+winServicesSoapBaseUrl = service.getWinServicesSoapBaseUrl(service.getSecrets()['winservices'])
 
 
 class AjaxApp(object):
@@ -136,7 +130,7 @@ class AjaxApp(object):
     def is_user_in_group(self, username):
         # return True
         try:
-            request_url = getWinServicesConnectionString() + 'GetGroupsForUser?UserName=' + username
+            request_url = winServicesSoapBaseUrl + 'GetGroupsForUser?UserName=' + username
             remote_data = urllib.urlopen(request_url).read()
             search_cms_zh = '<string>'+ 'cms-zh' +'</string>'
             search_cms_u = '<string>'+ 'cms-CERN-users' +'</string>'
@@ -153,7 +147,7 @@ class AjaxApp(object):
             "3" : "Success", \
         }
         try:
-            request_url = getWinServicesConnectionString() + 'GetUserInfo?UserName=' + username + '&Password=' + psw
+            request_url = winServicesSoapBaseUrl + 'GetUserInfo?UserName=' + username + '&Password=' + psw
             remote_data = urllib.urlopen(request_url).read()
             search_string = '</auth>'
             return dict[remote_data[remote_data.find(search_string) - 1]]
@@ -164,7 +158,7 @@ class AjaxApp(object):
 
     def get_user_full_name_username(self, username, psw):
         try:
-            request_url = getWinServicesConnectionString() + 'GetUserInfo?UserName=' + username + '&Password=' + psw
+            request_url = winServicesSoapBaseUrl + 'GetUserInfo?UserName=' + username + '&Password=' + psw
             remote_data = urllib.urlopen(request_url).read()
             user_name = remote_data[remote_data.find('<login>') + len('<login>'):remote_data.find('</login>')]
             full_name = remote_data[remote_data.find('<name>') + len('<name>'):remote_data.find('</name>')]

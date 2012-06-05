@@ -4,11 +4,8 @@
 from sqlalchemy import create_engine, DateTime, MetaData, Column, Table, ForeignKey, Integer, String , Sequence, Boolean
 from ConStrParser import *
 
-#-mo FIXME: Put methods in common/ for building connection strings of all kinds
-#           for all services.
 connectionDictionary = service.getSecrets()['connections']['dev']
-connectionString = 'oracle://' + connectionDictionary['user'] + '/' + connectionDictionary['password'] + '@' + connectionDictionary['db_name']
-engine = create_engine(connectionString, echo=False)
+engine = create_engine(service.getSqlAlchemyConnectionString(connectionDictionary), echo=False)
  
 metadata = MetaData(bind=engine)
 

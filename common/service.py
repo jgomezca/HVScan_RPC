@@ -17,6 +17,30 @@ import cherrypy
 import secrets
 
 
+def getCxOracleConnectionString(connectionDictionary):
+	'''Returns a connection string for cx_oracle given
+	a connection dictionary from the secrets file.
+	'''
+
+	return '%s/%s@%s' % (connectionDictionary['user'], connectionDictionary['password'], connectionDictionary['db_name'])
+
+
+def getSqlAlchemyConnectionString(connectionDictionary):
+	'''Returns a connection string for SQL Alchemy given
+	a connection dictionary from the secrets file.
+	'''
+
+	return 'oracle://%s:%s@%s' % (connectionDictionary['user'], connectionDictionary['password'], connectionDictionary['db_name'])
+
+
+def getWinServicesSoapBaseUrl(connectionDictionary):
+	'''Returns a winservices-soap base URL given a connection dictionary
+	from the secrets file.
+	'''
+
+	return 'https://%s:%s@winservices-soap.web.cern.ch/winservices-soap/Generic/Authentication.asmx/' % (connectionDictionary['user'], connectionDictionary['password'])
+
+
 _settings = None
 _secrets = None
 
