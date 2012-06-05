@@ -162,18 +162,35 @@ def generateDocs():
 	execute('cd services/docs && ./generate.py')
 
 
+def checkPackage(package):
+	'''Checks whether a package is installed. If not, gives the option
+	to the user to install it.
+	'''
+
+	try:
+		execute('rpm -qi %s' % package)
+	except Exception as e:
+		logger.warning('Package %s is not installed.' % package)
+		text = raw_input('Would you like to install it? [y/N] ')
+		if text != 'y':
+			raise e
+		execute('sudo yum -y install %s 1>&2' % package)
+
+
 def checkRequirements(options):
 	'''Checks common requirements for both update() and deploy().
 	'''
 
 	# Test for git
 	try:
+		checkPackage('git')
 		execute('git --version')
 	except:
 		raise Exception('This script requires git.')
 
 	# Test for rsync
 	try:
+		checkPackage('rsync')
 		execute('rsync --version')
 	except:
 		raise Exception('This script requires rsync.')
