@@ -390,8 +390,8 @@ def deploy(options):
 	execute('cd services && git checkout -q ' + options['gitTreeish'])
 
 	# Get the dependencies' tags
-	cmsDbWebLibsTag = open('services/dependencies/cmsDbWebLibs.tag').read()
-	cmsswTag = open('services/dependencies/cmssw.tag').read()
+	cmsDbWebLibsTag = open('services/dependencies/cmsDbWebLibs.tag').read().strip()
+	cmsswTag = open('services/dependencies/cmssw.tag').read().strip()
 	logger.info('Dependency: cmsDbWebLibs ' + cmsDbWebLibsTag)
 	logger.info('Dependency: cmssw ' + cmsswTag)
 
