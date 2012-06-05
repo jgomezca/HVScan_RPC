@@ -162,8 +162,8 @@ def generateDocs():
 	execute('cd services/docs && ./generate.py')
 
 
-def checkRequirementsUpdate(options):
-	'''Checks the requirements needed for update().
+def checkRequirements(options):
+	'''Checks common requirements for both update() and deploy().
 	'''
 
 	# Test for git
@@ -190,8 +190,8 @@ def update(options):
 		- Starts the keeper (which will start the services).
 	'''
 
-	# Check requirements
-	checkRequirementsUpdate(options)
+	# Check common requirements
+	checkRequirements(options)
 
 	# Chdir to the dataDirectory
 	logger.info('Working directory: ' + options['dataDirectory'])
@@ -239,17 +239,8 @@ def checkRequirementsDeploy(options):
 	except:
 		raise Exception('This script requires sudo privileges for deployment.')
 
-	# Test for git
-	try:
-		execute('git --version')
-	except:
-		raise Exception('This script requires git.')
-
-	# Test for rsync
-	try:
-		execute('rsync --version')
-	except:
-		raise Exception('This script requires rsync.')
+	# Check common requirements
+	checkRequirements(options)
 
 	# Check whether there is an existing deployment
 	if options['force']:
