@@ -363,6 +363,9 @@ def deploy(options):
 def main():
 	try:
 		options = getOptions()
+
+		logger.info('Production level: ' + config.getProductionLevel())
+
 		if options['update']:
 			update(options)
 		else:
