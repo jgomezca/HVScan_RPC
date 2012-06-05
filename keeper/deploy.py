@@ -181,6 +181,12 @@ def checkRequirements(options):
 	'''Checks common requirements for both update() and deploy().
 	'''
 
+	# Test for sudo privileges
+	try:
+		execute('sudo mkdir --version')
+	except:
+		raise Exception('This script requires sudo privileges for deployment.')
+
 	# Test for git
 	try:
 		checkPackage('git')
@@ -251,12 +257,6 @@ def update(options):
 def checkRequirementsDeploy(options):
 	'''Checks the requirements needed for deploy().
 	'''
-
-	# Test for sudo privileges
-	try:
-		execute('sudo mkdir --version')
-	except:
-		raise Exception('This script requires sudo privileges for deployment.')
 
 	# Check common requirements
 	checkRequirements(options)
