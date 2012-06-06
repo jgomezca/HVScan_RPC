@@ -5,6 +5,9 @@ import time
 import json
 import datetime
 
+import coral
+from RecoLuminosity.LumiDB import sessionManager,lumiTime,inputFilesetParser,csvSelectionParser,selectionParser,csvReporter,argparse,CommonUtil,lumiCalcAPI,lumiReport,lumiCorrections
+
 #import popconUtils
 try:
     import cx_Oracle
@@ -16,6 +19,87 @@ import service
 
 conn_string = service.getCxOracleConnectionString(service.getSecrets()['connections']['pro'])
 
+
+def formatTotDelivered(lumidata,resultlines,scalefactor=1.0,isverbose=False):
+    '''
+    input:  {run:[lumilsnum(0),cmslsnum(1),timestamp(2),beamstatus(3),beamenergy(4),deliveredlumi(5),calibratedlumierror(6),(bxidx,bxvalues,bxerrs)(7),(bxidx,b1intensities,b2intensities)(8),fillnum(9)]}
+    '''
+    result=[]
+    fieldnames = ['Run:Fill', 'N_LS', 'Delivered(/ub)','UTCTime','E(GeV)']
+    if isverbose:
+        fieldnames.append('Selected LS')
+    for rline in resultlines:
+        result.append(rline)
+    for run in lumidata.keys():
+        lsdata=lumidata[run]
+        if lsdata is None:
+            result.append([run,'n/a','n/a','n/a','n/a'])
+            if isverbose:
+                result.extend(['n/a'])
+            continue
+        nls=len(lsdata)
+        fillnum=0
+        if lsdata[0][9]:
+            fillnum=lsdata[0][9]
+        totlumival=sum([x[5] for x in lsdata])
+        beamenergyPerLS=[float(x[4]) for x in lsdata]
+        avgbeamenergy=0.0
+        if len(beamenergyPerLS):
+            avgbeamenergy=sum(beamenergyPerLS)/len(beamenergyPerLS)
+        runstarttime='n/a'
+        if nls!=0:
+            runstarttime=lsdata[0][2]
+            runstarttime=runstarttime.strftime("%m/%d/%y %H:%M:%S")
+        if isverbose:
+            selectedls='n/a'
+            if nls:
+                selectedls=[(x[0],x[1]) for x in lsdata]
+            result.append([str(run)+':'+str(fillnum),nls,totlumival*scalefactor,runstarttime,avgbeamenergy, str(selectedls)])
+        else:
+            result.append([str(run)+':'+str(fillnum),nls,totlumival*scalefactor,runstarttime,avgbeamenergy])
+    # sortedresult=sorted(result,key=lambda x : int(x[0].split(':')[0]))
+
+    return result
+
+
+def formatOverview(lumidata,resultlines,scalefactor=1.0,isverbose=False):
+    '''
+    input:
+    lumidata {run:[lumilsnum(0),cmslsnum(1),timestamp(2),beamstatus(3),beamenergy(4),deliveredlumi(5),recordedlumi(6),calibratedlumierror(7),(bxidx,bxvalues,bxerrs)(8),(bxidx,b1intensities,b2intensities)(9),fillnum(10)]}
+    resultlines [[resultrow1],[resultrow2],...,] existing result row
+    '''
+    result=[]
+    fieldnames = ['Run:Fill', 'DeliveredLS', 'Delivered(/ub)','SelectedLS','Recorded(/ub)']
+
+    for rline in resultlines:
+        result.append(rline)
+        
+    for run in lumidata.keys():
+        lsdata=lumidata[run]
+        if lsdata is None:
+            result.append([run,'n/a','n/a','n/a','n/a'])
+            continue
+        nls=len(lsdata)
+        fillnum=0
+        if lsdata[0][10]:
+            fillnum=lsdata[0][10]
+        deliveredData=[x[5] for x in lsdata]
+        recordedData=[x[6] for x in lsdata if x[6] is not None]
+        totdeliveredlumi=0.0
+        totrecordedlumi=0.0
+        if len(deliveredData)!=0:
+            totdeliveredlumi=sum(deliveredData)
+        if len(recordedData)!=0:
+            totrecordedlumi=sum(recordedData)
+        selectedcmsls=[x[1] for x in lsdata if x[1]!=0]
+        if len(selectedcmsls)==0:
+            selectedlsStr='n/a'
+        else:
+            selectedlsStr = CommonUtil.splitlistToRangeString(selectedcmsls)
+        result.append([str(run)+':'+str(fillnum),nls,totdeliveredlumi*scalefactor,selectedlsStr,totrecordedlumi*scalefactor])
+    # sortedresult=sorted(result,key=lambda x : int(x[0].split(':')[0]))
+    
+    return result
 
 class LumiDB_SQL:
     
@@ -38,115 +122,92 @@ class LumiDB_SQL:
         return l
 
  def getDeliveredLumiForRun(self, authfile="./auth.xml",runNumbers="161222,161223,161224"):
-        conn = cx_Oracle.connect(conn_string)
-        runs = {}
-        lumis = {}
-        try:
-            curs = conn.cursor()
-            sqlstr = """SELECT runnum, beamstatus, instlumi, numorbit
-            FROM CMS_LUMI_PROD.LUMISUMMARY
-            WHERE """+runNumbers+"""
-            and lumiversion = '"""+self.lumiversion+"""'"""
-            #print sqlstr
-            #sqlstr=sqlstr.decode()
-            #print sqlstr
-            curs.prepare(sqlstr)
-            #params = {"runNumbers": runNumbers.decode()}
-            curs.execute(sqlstr)
-            #ddprint 'QUERY EXECUTION DONE'
-            #print curs.fetchall()
-            for row in curs:
-                runs_lumi = runs.get(row[0], [])
-                runs_lumi.append( {"BeamStatus":row[1],"InstantaneousLumi":row[2],"NumberOfOrbit":row[3]} )
-                runs[row[0]] = runs_lumi
-            
-            for run in runs:
-                delLumi = lumis.get(run , 0.0)
-                for lumi in runs[run]:
-                    lstime = self.lslengthsec(lumi["NumberOfOrbit"])
-                    delLumi = delLumi + lumi["InstantaneousLumi"]*self.norm*lstime
-                lumis[run] = delLumi
-        except cx_Oracle.DatabaseError, e:
-            print "Unexpected error:", str(e) , sys.exc_info()
-            raise
-        except Exception, e:
-            print "Unexpected error:", str(e) , sys.exc_info()
-        finally:
-            conn.close()
-            return [{'Run':key, 'DeliveredLumi': value} for key, value in lumis.items()]
+
+     lumis = {}
+
+     allRuns = []
+     if type(runNumbers) == type("") or type(runNumbers) == type(u""):
+         for runNrIn in runNumbers.split(','):
+             if '-' in runNrIn:
+                 rStart, rEnd = runNrIn.split('-')
+                 allRuns += range( int(rStart), int(rEnd)+1 ) 
+             else:
+                 allRuns.append(runNrIn)
+
+     elif type(runNumbers) == type([]):
+         allRuns = runNumbers
+
+     else:
+         print "++> Unknown type for runNumbers found:", type(runNumbers)
+
+     for runNr in allRuns:
+         lumis[runNr] = self.getDeliveredLumiForOneRun(authfile, int(runNr))
+
+     return [{'Run':key, 'DeliveredLumi': value} for key, value in lumis.items()]
+
+ def getDeliveredLumiForOneRun(self, authfile, runNumber):
+
+        conn_string1='frontier://LumiCalc/CMS_LUMI_PROD'
+        svc=sessionManager.sessionManager(conn_string1,
+                                      authpath=authfile,
+                                      siteconfpath=None,
+                                      debugON=False)
+        session=svc.openSession(isReadOnly=True,cpp2sqltype=[('unsigned int','NUMBER(10)'),('unsigned long long','NUMBER(20)')])
+    
+        # set a few defaults (taken from lumiCalc2.py)
+        action  = 'delivered'  # 'overview' # or 'recorded'
+        fillnum = None
+        begin   = None
+        end     = None
+        amodetag = None
+        beamenergy = None
+        beamfluctuation = 0.2
+        pbeammode = 'STABLE BEAMS'
+        normfactor = None
+        scalefactor = 1.0
+
+        reqTrg = False
+        reqHlt = False
+        if action == 'recorded':
+           reqTrg = True
+           reqHlt = True
+        
+        irunlsdict={}
+        iresults=[]
+        if runNumber: # if runnumber specified, do not go through other run selection criteria
+            irunlsdict[runNumber]=None
+
+        finecorrections=None
+        driftcorrections=None
+
+        result = ""
+        if action == 'delivered':
+            session.transaction().start(True)
+            #print irunlsdict
+            result=lumiCalcAPI.deliveredLumiForRange(session.nominalSchema(),irunlsdict,amodetag=amodetag,egev=beamenergy,beamstatus=pbeammode,norm=normfactor,finecorrections=finecorrections,driftcorrections=driftcorrections,usecorrectionv2=True)
+            session.transaction().commit()
+
+            result = formatTotDelivered(result,iresults,scalefactor)[0][2]
+
+        if action == 'overview':
+           session.transaction().start(True)
+           result=lumiCalcAPI.lumiForRange(session.nominalSchema(),irunlsdict,amodetag=amodetag,egev=beamenergy,beamstatus=pbeammode,norm=normfactor,finecorrections=finecorrections,driftcorrections=driftcorrections,usecorrectionv2=True)
+           session.transaction().commit()
+
+           # [[Run:Fill,DeliveredLS,Delivered(/ub),SelectedLS,Recorded(/ub)]]
+           result = formatOverview(result,iresults,scalefactor)[0][2]
+    
+        del session
+        del svc 
+
+        # print  'got:', result, 'for ', runNumber, 'which is of type', type(runNumber)
+
+        return result
 
  def getRunNumberExtendedInfo(self, authfile="./auth.xml",runNumbers="161222,161223,161224"):
         conn = cx_Oracle.connect(conn_string)
-        try:
-            curs = conn.cursor()
-            sqlstr = """
-            WITH 
-            runsummary AS (
-            SELECT rp.name, rp.runnumber,
-            CASE
-            WHEN rp.name = 'CMS.LVL0:START_TIME_T'
-            THEN (SELECT TO_CHAR(value, 'DD-MON-YY HH24:MI:SS.FF6 TZR') FROM CMS_RUNINFO.runsession_date WHERE runsession_parameter_id = rp.id)
-            ELSE NULL
-            END AS start_time,
-            CASE
-            WHEN rp.name = 'CMS.LVL0:STOP_TIME_T'
-            THEN (SELECT TO_CHAR(value, 'DD-MON-YY HH24:MI:SS.FF6 TZR') FROM CMS_RUNINFO.runsession_date WHERE runsession_parameter_id = rp.id)
-            ELSE NULL
-            END AS stop_time,
-            CASE
-            WHEN rp.name = 'CMS.SCAL:FILLN'
-            THEN (SELECT TO_CHAR(value) FROM CMS_RUNINFO.runsession_string WHERE runsession_parameter_id = rp.id)
-            ELSE NULL
-            END AS fill,
-            CASE
-            WHEN rp.name = 'CMS.SCAL:EGEV'
-            THEN (SELECT TO_CHAR(value) FROM CMS_RUNINFO.runsession_string WHERE runsession_parameter_id = rp.id)
-            ELSE NULL
-            END AS energy
-            FROM CMS_RUNINFO.runsession_parameter rp
-            WHERE (rp.name = 'CMS.SCAL:FILLN'
-            OR rp.name = 'CMS.SCAL:EGEV'
-            OR rp.name like 'CMS.LVL0:%_TIME_T')
-            )
-            SELECT r.name, r.runnumber, r.start_time, r.stop_time, r.fill, r.energy
-            FROM runsummary r
-            /*WHERE r.runnumber IN("""+runNumbers+""")*/
-            WHERE """+runNumbers+"""
-            ORDER BY r.runnumber
-            """
-            #print sqlstr
-            #sqlstr=sqlstr.decode()
-            curs.prepare(sqlstr)
-            curs.execute(sqlstr)
-            #print curs.fetchall()
-            runs = {}
-            for row in curs:
-                runs_values = runs.get(row[1], {})
-                fills = runs_values.get("lhcfill", [])
-                energies = runs_values.get("energy", [])
-                if row[0] == 'CMS.LVL0:START_TIME_T':
-                    runs_values["start"] = row[2]
-                if row[0] == 'CMS.LVL0:STOP_TIME_T':
-                    runs_values["stop"] = row[3]
-                if row[0] == 'CMS.SCAL:FILLN':
-                    fills.append(row[4])
-                if row[0] == 'CMS.SCAL:EGEV':
-                    energies.append(row[5])
-                runs_values.update(lhcfill=fills)
-                runs_values.update(energy=energies)
-                runs[row[1]] = runs_values
-            for run in runs:
-                runs[run].update(lhcfill=self.unique(runs[run]['lhcfill']))
-                runs[run].update(energy=self.unique(runs[run]['energy']))
-        except cx_Oracle.DatabaseError, e:
-            print "Unexpected error:", str(e) , sys.exc_info()
-            raise
-        except Exception, e:
-            print "Unexpected error:", str(e) , sys.exc_info()
-            raise
-        finally:
-            conn.close()
-            return [{'RunNumber':key, 'Run-Info': value} for key, value in runs.items()]
+
+        return [{'RunNumber':key, 'Run-Info': value} for key, value in runs.items()]
 
  def getRunNumberInfo(self, authfile="./auth.xml",runNumbers="161222,161223,161224"): 
      conn = cx_Oracle.connect(conn_string)
@@ -242,38 +303,10 @@ AND runtable.runnumber = wbmrun.runnumber
          raise
      finally:
          conn.close()
-         return jobList
+         return runNumb # was: jobList
 
  def getLumiByRun(self, authfile="./auth.xml",runNumbers="161222,161223,161224"):
-        conn = cx_Oracle.connect(conn_string)
-        jobList =   []        
-        try:
-            curs = conn.cursor()
-            sqlstr = """
-            SELECT runnum , cmslsnum, flag, \"COMMENT\"
-            FROM CMS_LUMI_PROD.LUMIVALIDATION
-            WHERE """+runNumbers+"""
-            ORDER BY runnum
-            """
-            print sqlstr
-            curs.prepare(sqlstr)
-            curs.execute(sqlstr)
-            #print curs.fetchall()
-            runs={}
-            for row in curs:
-                runs_lumi = runs.get(row[0], [])
-                runs_lumi.append( {"lumisection":row[1],"flag":row[2],"comment":row[3]} )
-                runs[row[0]] = runs_lumi
-                jobList.append({"LumiByRun":{"lumisection":row[1],"flag":row[2],"comment":row[3]},"Run":row[0]}) #check 
-        except cx_Oracle.DatabaseError, e:
-            print "Unexpected error:", str(e) , sys.exc_info()
-            raise
-        except Exception, e:
-            print "Unexpected error:", str(e) , sys.exc_info()
-        finally:
-            conn.close()
-            #return jobList
-            return [{'Run':key, 'Lumi': value} for key, value in runs.items()]
+     return self.getDeliveredLumiForRun(authfile, runNumbers)
 
  def getMaxMinString(self,StringNumber="2,5,9,7"):
     maxMinString = StringNumber

@@ -14,7 +14,7 @@ f = open(serverName+".out", 'w')
 i = 0
 for test in testList:
     i+=1
-    url = "http://" + serverName + test
+    url = "https://" + serverName + test
     try:
         request = urllib2.Request(url)
         response = urllib2.urlopen(request, None, 10).read()
