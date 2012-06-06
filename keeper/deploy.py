@@ -190,6 +190,35 @@ def generateDocs():
 	execute('cd services/docs && ./generate.py')
 
 
+def updateIptables():
+	'''Updates iptables and saves the results.
+	
+	Only meant for private machines.
+	'''
+
+	# Only meant for private machines. We do not want to mess around with
+	# the quattor / NCM rules in vocms*.
+	if config.getProductionLevel() != 'private':
+		return
+
+	# Try to find the rule in iptables
+	try:
+		execute('sudo /sbin/iptables -L -n | grep -F \'state NEW tcp dpts:%s:%s\' | grep -F ACCEPT' % config.listeningPortsRange)
+	except:
+		# Ask the user whether it should be opened
+		logger.warning('The port range %s:%s does not *seem* open.' % config.listeningPortsRange)
+		command = 'sudo /sbin/iptables -I INPUT -p tcp -m state --state NEW -m tcp --dport %s:%s -j ACCEPT' % config.listeningPortsRange
+		answer = raw_input('\nWould you like to run:\n\n    %s\n\nto insert the rule in the top of the INPUT chain? [y/N] ' % command)
+		if answer == 'y':
+			execute(command)
+
+			# Ask the user whether we should save the new table
+			command = 'sudo /sbin/service iptables save'
+			answer = raw_input('\nAs the current iptables changed, would you like to run:\n\n    %s\n\nto save them? (note: this *replaces* the current /etc/sysconfig/iptables with the current table) [y/N] ' % command)
+			if answer == 'y':
+				execute(command)
+
+
 def checkPackage(package):
 	'''Checks whether a package is installed. If not, gives the option
 	to the user to install it.
@@ -259,6 +288,7 @@ def update(options):
 		- Checks out the gitTreeish on services/.
 		- Checks out the dependencies in libs/ and cmssw/.
 		- Regenerates the docs.
+		- Updates iptables.
 		- Starts the keeper (which will start the services).
 	'''
 
@@ -290,6 +320,9 @@ def update(options):
 
 	# Regenerate the docs
 	generateDocs()
+
+	# Update iptables
+	updateIptables()
 
 	# Start the keeper
 	execute('services/keeper/keeper.py start keeper')
@@ -345,6 +378,7 @@ def deploy(options):
 		- Clones the Services, Libs and CMSSW repositories.
 		- Checks out the given treeish for them.
 		- Sets the proper ownership for the files.
+		- Updates iptables.
 		- Generates the docs.
 	'''
 
@@ -410,6 +444,9 @@ def deploy(options):
 
 	# Generate docs
 	generateDocs()
+
+	# Update iptables
+	updateIptables()
 
 	logger.info('Deployment successful.')
 

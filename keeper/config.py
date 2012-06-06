@@ -31,6 +31,10 @@ timeBetweenChecks = 30 # seconds
 startedServiceEmailAddresses = ['cms-cond-dev@cern.ch']
 
 
+# Used by deploy.py to add a rule in iptables' INPUT chain in private VMs.
+listeningPortsRange = (8080, 8099)
+
+
 productionLevels = {
 	'vocms145.cern.ch': 'dev',
 	'vocms146.cern.ch': 'int',
@@ -62,6 +66,8 @@ servicesConfiguration = {
 	#
 	#    filename:      the (relative) path to the main Python script
 	#    listeningPort: the port the server will listen to
+	#                   (please keep them within the listeningPortsRange
+	#                   or update the range if needed)
 
 	'docs': {
 		'filename':       'docs.py',
