@@ -26,7 +26,7 @@ class ServiceTemplate:
 		'''My method description.
 		'''
 
-		return 'I am ' + service.getSettings()['name'] + ', I am listening on ' + str(service.getSettings()['listeningPort']) + ', with production level "' + service.getSettings()['productionLevel'] + '", my root directory is ' + service.getSettings()['rootDirectory'] + ' and my biggest secret is ' + service.getSecrets()['biggestSecret'] + '!'
+		return 'I am ' + service.getSettings()['name'] + ', I am listening on ' + str(service.getSettings()['listeningPort']) + ', with production level "' + service.getSettings()['productionLevel'] + '", my root directory is ' + service.getSettings()['rootDirectory'] + ' and I have ' + str(len(service.getSecrets())) + ' secrets hidden!'
 
 
 def main():
