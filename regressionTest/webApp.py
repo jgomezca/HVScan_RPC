@@ -3,7 +3,7 @@ import cherrypy
 import testRegression
 import service
 
-sessionsDirectory = os.path.join(service.getSettings()['rootDirectory'], 'sessions')
+sessionsDirectory = os.path.join(service.settings['rootDirectory'], 'sessions')
 
 class Server:
 	def ShowTable(self, curs, label):

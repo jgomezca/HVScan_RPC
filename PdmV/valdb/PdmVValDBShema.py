@@ -4,7 +4,7 @@
 from sqlalchemy import create_engine, DateTime, MetaData, Column, Table, ForeignKey, Integer, String , Sequence, Boolean
 from ConStrParser import *
 
-connectionDictionary = service.getSecrets()['connections']['dev']
+connectionDictionary = service.secrets['connections']['dev']
 engine = create_engine(service.getSqlAlchemyConnectionString(connectionDictionary), echo=False)
  
 metadata = MetaData(bind=engine)

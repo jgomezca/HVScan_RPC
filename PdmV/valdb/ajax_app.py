@@ -17,11 +17,11 @@ import service
 #-mo FIXME: The old code used the production DB in -int and -pro. However,
 #           as at the moment -int is the new -dev, for the moment always use
 #           the development DB.
-connectionDictionary = service.getSecrets()['connections']['dev']
+connectionDictionary = service.secrets['connections']['dev']
 engine = create_engine(service.getSqlAlchemyConnectionString(connectionDictionary), echo=False)
 Session = sessionmaker(bind=engine)
 
-winServicesSoapBaseUrl = service.getWinServicesSoapBaseUrl(service.getSecrets()['winservices'])
+winServicesSoapBaseUrl = service.getWinServicesSoapBaseUrl(service.secrets['winservices'])
 
 
 class AjaxApp(object):

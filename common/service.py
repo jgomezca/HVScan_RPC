@@ -14,70 +14,15 @@ import optparse
 import socket
 import cherrypy
 
-import secrets
 
-
-def getCxOracleConnectionString(connectionDictionary):
-	'''Returns a connection string for cx_oracle given
-	a connection dictionary from the secrets file.
-	'''
-
-	return '%s/%s@%s' % (connectionDictionary['user'], connectionDictionary['password'], connectionDictionary['db_name'])
-
-
-def getSqlAlchemyConnectionString(connectionDictionary):
-	'''Returns a connection string for SQL Alchemy given
-	a connection dictionary from the secrets file.
-	'''
-
-	return 'oracle://%s:%s@%s' % (connectionDictionary['user'], connectionDictionary['password'], connectionDictionary['db_name'])
-
-
-def getWinServicesSoapBaseUrl(connectionDictionary):
-	'''Returns a winservices-soap base URL given a connection dictionary
-	from the secrets file.
-	'''
-
-	return 'https://%s:%s@winservices-soap.web.cern.ch/winservices-soap/Generic/Authentication.asmx/' % (connectionDictionary['user'], connectionDictionary['password'])
-
-
-_settings = None
-_secrets = None
-
-
-def getSettings():
-	'''Returns the settings for the service passed through the command line.
-	'''
-
-	return _settings
-
-
-def getSecrets():
-	'''Returns the secrets of a service.
-	'''
-
-	return _secrets
-
-
-def start(mainObject):
-	'''Starts the service.
-	'''
-
-	cherrypy.config.update({
-		'global': {
-		'server.socket_host': socket.gethostname(),
-		'server.socket_port': getSettings()['listeningPort'],
-		'tools.staticdir.root': getSettings()['rootDirectory'],
-		'engine.autoreload_on': False,
-		'server.ssl_certificate': os.path.join(getSettings()['secretsDirectory'], 'hostcert.pem'),
-		'server.ssl_private_key': os.path.join(getSettings()['secretsDirectory'], 'hostkey.pem'),
-		},
-	})
-	cherrypy.quickstart(mainObject, config = 'server.conf', script_name = '/' + getSettings()['name'])
-
+settings = None
+secrets = None
 
 def _init():
-	# Parse the command line options
+	'''Setup 'settings' and 'secrets' global variables by parsing
+	the command line options.
+	'''
+
 	parser = optparse.OptionParser()
 
 	parser.add_option('-n', '--name', type = 'str',
@@ -108,8 +53,8 @@ def _init():
 	options = parser.parse_args()[0]
 
 	# Set the settings
-	global _settings
-	_settings = {
+	global settings
+	settings = {
 		'name': options.name,
 		'rootDirectory': options.rootDirectory,
 		'secretsDirectory': options.secretsDirectory,
@@ -118,10 +63,51 @@ def _init():
 	}
 
 	# Set the secrets
-	global _secrets
-	if getSettings()['name'] in secrets.secrets:
-		_secrets = secrets.secrets[getSettings()['name']]
-
+	global secrets
+	import secrets
+	if settings['name'] in secrets.secrets:
+		secrets = secrets.secrets[settings['name']]
 
 _init()
+
+
+def getCxOracleConnectionString(connectionDictionary):
+	'''Returns a connection string for cx_oracle given
+	a connection dictionary from the secrets file.
+	'''
+
+	return '%s/%s@%s' % (connectionDictionary['user'], connectionDictionary['password'], connectionDictionary['db_name'])
+
+
+def getSqlAlchemyConnectionString(connectionDictionary):
+	'''Returns a connection string for SQL Alchemy given
+	a connection dictionary from the secrets file.
+	'''
+
+	return 'oracle://%s:%s@%s' % (connectionDictionary['user'], connectionDictionary['password'], connectionDictionary['db_name'])
+
+
+def getWinServicesSoapBaseUrl(connectionDictionary):
+	'''Returns a winservices-soap base URL given a connection dictionary
+	from the secrets file.
+	'''
+
+	return 'https://%s:%s@winservices-soap.web.cern.ch/winservices-soap/Generic/Authentication.asmx/' % (connectionDictionary['user'], connectionDictionary['password'])
+
+
+def start(mainObject):
+	'''Starts the service.
+	'''
+
+	cherrypy.config.update({
+		'global': {
+		'server.socket_host': socket.gethostname(),
+		'server.socket_port': settings['listeningPort'],
+		'tools.staticdir.root': settings['rootDirectory'],
+		'engine.autoreload_on': False,
+		'server.ssl_certificate': os.path.join(settings['secretsDirectory'], 'hostcert.pem'),
+		'server.ssl_private_key': os.path.join(settings['secretsDirectory'], 'hostkey.pem'),
+		},
+	})
+	cherrypy.quickstart(mainObject, config = 'server.conf', script_name = '/' + settings['name'])
 

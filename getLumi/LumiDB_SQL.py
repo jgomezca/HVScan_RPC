@@ -17,7 +17,7 @@ except ImportError, e:
 import service
 
 
-conn_string = service.getCxOracleConnectionString(service.getSecrets()['connections']['pro'])
+conn_string = service.getCxOracleConnectionString(service.secrets['connections']['pro'])
 
 
 def formatTotDelivered(lumidata,resultlines,scalefactor=1.0,isverbose=False):

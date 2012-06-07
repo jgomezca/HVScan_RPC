@@ -14,7 +14,7 @@ except ImportError, e:
 import service
 
 
-conn_dict = service.getSecrets()['connections']['pro']
+conn_dict = service.secrets['connections']['pro']
 conn_string = service.getCxOracleConnectionString(conn_dict)
 
 
