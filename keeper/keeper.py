@@ -16,6 +16,7 @@ services = sorted(list(config.servicesConfiguration))
 
 
 import os
+import subprocess
 import sys
 import signal
 import time
@@ -84,6 +85,13 @@ def getPIDs(service):
 	return pids
 
 
+def getPath(service):
+	'''Returns the absolute path to a service.
+	'''
+
+	return os.path.abspath(os.path.join(config.servicesDirectory, service))
+
+
 def isRegistered(service):
 	'''Returns whether a service is registered in the keeper or not.
 	'''
@@ -114,7 +122,7 @@ def kill(pid):
 	os.kill(int(pid), signal.SIGTERM)
 
 
-def daemonize(stdoutFile = None, stderrFile = None, workingDirectory = '/'):
+def daemonize(stdoutFile = None, stderrFile = None, workingDirectory = None):
 	'''Daemonize the current process.
 	'''
 
@@ -123,7 +131,8 @@ def daemonize(stdoutFile = None, stderrFile = None, workingDirectory = '/'):
 		os._exit(0)
 
 	# Change working directory
-	os.chdir(workingDirectory)
+	if workingDirectory is not None:
+		os.chdir(workingDirectory)
 
 	# Get new session
 	os.setsid()
@@ -148,6 +157,66 @@ def daemonize(stdoutFile = None, stderrFile = None, workingDirectory = '/'):
 		fd = os.open(stderrFile, os.O_WRONLY | os.O_APPEND | os.O_CREAT)
 		os.dup2(fd, sys.stderr.fileno())
 		os.close(fd)
+
+
+def run(service, filename, extraCommandLine = '', replaceProcess = False):
+	'''Setups and runs a Python script in a service.
+		- Changes the working directory to the service's folder.
+		- Setups PYTHONPATH.
+		- Sources pre.sh, setupEnv.sh and post.sh as needed.
+		- Setups the arguments.
+		- Runs the Python script.
+
+	Used for starting a service and also running its test suite.
+	'''
+
+	# Change working directory
+	os.chdir(getPath(service))
+
+	# Add services/common/ to the $PYTHONPATH for access to
+	# service.py as well as secrets/ for secrets.py.
+	# 
+	# The config.cmsswSetupEnvScript must keep
+	# the contents in $PYTHONPATH.
+	#
+	# This is not elegant, but avoids guessing in the services
+	# and/or modifying the path. Another solution is
+	# to use symlinks, although that would be harder to maintain
+	# if we move the secrets to another place (i.e. we would
+	# need to fix all the symlinks or chain symlinks).
+	#
+	# This does not keep the original PYTHONPATH. There should not
+	# be anything there anyway.
+	servicePath = getPath('common')
+	secretsPath = config.secretsDirectory
+	os.putenv('PYTHONPATH', servicePath + ':' + secretsPath)
+
+	commandLine = ''
+
+	# If pre.sh is found, source it before setupEnv.sh
+	if os.path.exists('./pre.sh'):
+		commandLine += 'source ./pre.sh ; '
+
+	# Source the common CMSSW environment
+	commandLine += 'source ' + config.cmsswSetupEnvScript + ' ; '
+
+	# If post.sh is found, source it after setupEnv.sh
+	if os.path.exists('./post.sh'):
+		commandLine += 'source ./post.sh ; '
+
+	# Run the service with the environment
+	# Ensure that the path is absolute (although at the moment config returns
+	# all paths as absolute)
+	commandLine += 'python %s --name %s --rootDirectory %s --secretsDirectory %s --listeningPort %s --productionLevel %s ' % (filename, service, getPath(service), config.secretsDirectory, str(config.servicesConfiguration[service]['listeningPort']), config.getProductionLevel())
+
+	# Append the extra command line
+	commandLine += extraCommandLine
+
+	# Execute the command line on the shell
+	if replaceProcess:
+		os.execlp('bash', 'bash', '-c', commandLine)
+	else:
+		return subprocess.call(['bash', '-c', commandLine])
 
 
 def start(service, warnIfAlreadyStarted = True):
@@ -175,55 +244,12 @@ def start(service, warnIfAlreadyStarted = True):
 	# The service is not running, start it
 	pid = os.fork()
 	if pid == 0:
-		# FIXME: Fix the services so that we can chdir to /
-		daemonize(
-			workingDirectory = os.path.join(config.servicesDirectory, service),
-		)
+		daemonize()
 
-		# Add services/common/ to the $PYTHONPATH for access to
-		# service.py as well as secrets/ for secrets.py.
-		# 
-		# The config.cmsswSetupEnvScript must keep
-		# the contents in $PYTHONPATH.
-		#
-		# This is not elegant, but avoids guessing in the services
-		# and/or modifying the path. Another solution is
-		# to use symlinks, although that would be harder to maintain
-		# if we move the secrets to another place (i.e. we would
-		# need to fix all the symlinks or chain symlinks).
-		#
-		# This does not keep the original PYTHONPATH. There should not
-		# be anything there anyway.
-		servicePath = os.path.abspath(os.path.join(config.servicesDirectory, 'common'))
-		secretsPath = config.secretsDirectory
-		os.putenv('PYTHONPATH', servicePath + ':' + secretsPath)
-
-		# Setup the command line
-		commandLine = ''
-
-		# If pre.sh is found, source it before setupEnv.sh
-		if os.path.exists('./pre.sh'):
-			commandLine += 'source ./pre.sh ; '
-
-		# Source the common CMSSW environment
-		commandLine += 'source ' + config.cmsswSetupEnvScript + ' ; '
-
-		# If post.sh is found, source it after setupEnv.sh
-		if os.path.exists('./post.sh'):
-			commandLine += 'source ./post.sh ; '
-
-		# Run the service with the environment
-		# Ensure that the path is absolute (although at the moment config returns
-		# all paths as absolute)
-		serviceConfiguration = config.servicesConfiguration[service]
-		commandLine += 'python ' + serviceConfiguration['filename'] + ' --name ' + service + ' --rootDirectory ' + os.path.abspath(os.path.join(config.servicesDirectory, service)) + ' --secretsDirectory ' + config.secretsDirectory + ' --listeningPort ' + str(serviceConfiguration['listeningPort']) + ' --productionLevel ' + config.getProductionLevel()
-
-		# And pipe its output to rotatelogs
+		# Run the service's starting script piping its output to rotatelogs
 		# FIXME: Fix the services so that they do proper logging themselves
-		commandLine += ' 2>&1 | /usr/sbin/rotatelogs -L ' + config.logsFileTemplate % service  + ' ' + config.logsFileTemplate % service + ' ' + config.logsSize
-
-		# Execute the command line on the shell
-		os.execlp('bash', 'bash', '-c', commandLine)
+		extraCommandLine = '2>&1 | /usr/sbin/rotatelogs -L %s %s %s' % (config.logsFileTemplate % service, config.logsFileTemplate % service, config.logsSize)
+		run(service, config.servicesConfiguration[service]['filename'], extraCommandLine = extraCommandLine, replaceProcess = True)
 
 	logger.info('Started %s.', service)
 
@@ -295,6 +321,59 @@ def restart(service):
 	start(service)
 
 
+def test(service):
+	'''Runs the service's (or the keeper's) test suite.
+
+	Returns True if successful, False if failed, None if the suite was not run
+	(i.e. the test suite does not exists).
+	'''
+
+	if service == 'all':
+		logger.info('Testing all services.')
+		startTime = time.time()
+
+		success = []
+		failure = []
+		skipped = []
+
+		for service in services:
+			result = test(service)
+			if result is None:
+				skipped.append(service)
+			elif result:
+				success.append(service)
+			else:
+				failure.append(service)
+
+		state = (len(failure) == 0)
+
+		logger.info('Finished testing all services: %s. Took %.2f seconds.', 'SUCCESS' if state else 'FAILED', time.time() - startTime)
+		logger.info('Successful services: %s', ','.join(success))
+		logger.info('    Failed services: %s', ','.join(failure))
+		logger.info('   Skipped services: %s', ','.join(skipped))
+
+		return state
+
+	if service != 'keeper':
+		checkRegistered(service)
+
+	if not os.path.exists(os.path.join(getPath(service), 'test.py')):
+		logger.warning('Test suite for service %s does not exist.', service)
+		return None
+
+	logger.info('Testing %s.', service)
+	startTime = time.time()
+
+	# Run the test suite
+	returnCode = run(service, 'test.py')
+
+	state = (returnCode == 0)
+
+	logger.info('Finished testing %s: %s. Took %.2f seconds.', service, 'SUCCESS' if state else 'FAILED', time.time() - startTime)
+
+	return state
+
+
 def keep():
 	'''Keeps services up and running.
 	'''
@@ -362,6 +441,7 @@ def getCommand():
 		'  keeper start   <service>  Starts a service.\n'
 		'  keeper stop    <service>  Stops a service.\n'
 		'  keeper restart <service>  Restarts a service.\n'
+		'  keeper test    <service>  Runs a service\'s test suite.\n'
 		'  keeper status             Prints the status of the keeper\n'
 		'                            and all the services, with PIDs.\n'
 		'\n'
@@ -384,7 +464,7 @@ def getCommand():
 	arguments = arguments[1:]
 
 	commandsWith0Arguments = ['status']
-	commandsWith1Arguments = ['start', 'stop', 'restart']
+	commandsWith1Arguments = ['start', 'stop', 'restart', 'test']
 	commands = commandsWith0Arguments + commandsWith1Arguments
 
 	if command not in commands:

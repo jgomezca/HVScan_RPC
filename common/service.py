@@ -13,6 +13,9 @@ import os
 import optparse
 import socket
 import cherrypy
+import unittest
+import json
+import urllib2
 
 
 settings = None
@@ -71,30 +74,6 @@ def _init():
 _init()
 
 
-def getCxOracleConnectionString(connectionDictionary):
-	'''Returns a connection string for cx_oracle given
-	a connection dictionary from the secrets file.
-	'''
-
-	return '%s/%s@%s' % (connectionDictionary['user'], connectionDictionary['password'], connectionDictionary['db_name'])
-
-
-def getSqlAlchemyConnectionString(connectionDictionary):
-	'''Returns a connection string for SQL Alchemy given
-	a connection dictionary from the secrets file.
-	'''
-
-	return 'oracle://%s:%s@%s' % (connectionDictionary['user'], connectionDictionary['password'], connectionDictionary['db_name'])
-
-
-def getWinServicesSoapBaseUrl(connectionDictionary):
-	'''Returns a winservices-soap base URL given a connection dictionary
-	from the secrets file.
-	'''
-
-	return 'https://%s:%s@winservices-soap.web.cern.ch/winservices-soap/Generic/Authentication.asmx/' % (connectionDictionary['user'], connectionDictionary['password'])
-
-
 def start(mainObject):
 	'''Starts the service.
 	'''
@@ -110,4 +89,43 @@ def start(mainObject):
 		},
 	})
 	cherrypy.quickstart(mainObject, config = 'server.conf', script_name = '/' + settings['name'])
+
+
+# Functions for generating connection strings and URLs
+
+def getCxOracleConnectionString(connectionDictionary):
+	'''Returns a connection string for cx_oracle given
+	a connection dictionary from the secrets file.
+	'''
+
+	return '%s/%s@%s' % (connectionDictionary['user'], connectionDictionary['password'], connectionDictionary['db_name'])
+
+def getSqlAlchemyConnectionString(connectionDictionary):
+	'''Returns a connection string for SQL Alchemy given
+	a connection dictionary from the secrets file.
+	'''
+
+	return 'oracle://%s:%s@%s' % (connectionDictionary['user'], connectionDictionary['password'], connectionDictionary['db_name'])
+
+def getWinServicesSoapBaseUrl(connectionDictionary):
+	'''Returns a winservices-soap base URL given a connection dictionary
+	from the secrets file.
+	'''
+
+	return 'https://%s:%s@winservices-soap.web.cern.ch/winservices-soap/Generic/Authentication.asmx/' % (connectionDictionary['user'], connectionDictionary['password'])
+
+
+
+# Functions for testing
+
+baseUrl = 'https://%s:%s/%s/' % (socket.gethostname(), str(settings['listeningPort']), settings['name'])
+
+def query(url, data = None, timeout = 10):
+	return urllib2.urlopen(baseUrl + url, data, timeout).read()
+
+def queryJson(url, data = None, timeout = 10):
+	return json.loads(query(url, data, timeout))
+
+def test(TestCase):
+	return not unittest.TextTestRunner().run(unittest.defaultTestLoader.loadTestsFromTestCase(TestCase)).wasSuccessful()
 
