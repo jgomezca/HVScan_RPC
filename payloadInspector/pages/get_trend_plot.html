@@ -1,0 +1,39 @@
+<html>
+   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+   <head>
+        <script src="http://code.jquery.com/jquery-1.6.min.js"></script>
+        <script type="text/javascript" src="lib/jquery.blockUI.v2.31.js"></script>
+        <script type="text/javascript" src="js/main.js"></script>
+   </head>
+   <body>
+        <div id="container">
+            <img id='trend_plot_img' style='height:99%' />
+        </div>
+        <div id="image_processing" style="display:none;font-size:18px;margin: 20px">
+            <img src='images/loading_animation.gif'>
+            <br />
+            The loading time depends on the IOV size.
+        </div>
+   <script>
+        $(document).ready(function() {
+            getUrParams();
+            $.ajax({
+                type: 'POST',
+                url: 'get_trend_plot',
+                data : { dbName : dbName, acc : acc, tag : tag, since : since },
+                async: false,
+                success: function (data) {     
+                                           $('#trend_plot_img').append(data);
+                                          },
+                error: function() { alert("Error in data send while getting trend plot "); }
+            });
+            $.blockUI({ message: $('#image_processing')});
+            $('#trend_plot_img').load(function() {
+                    $.unblockUI({ 
+                            onUnblock: function(){ } 
+                    }); 
+            });
+        });
+   </script>
+   </body>
+</html>

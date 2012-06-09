@@ -1,0 +1,39 @@
+<html>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <head>
+        <script type="text/javascript" src="js/main.js"></script>
+    </head>
+    <body>
+        <div id="container">
+            <img style="height:99%"  id="img_id" />
+        </div>
+        <script>
+            $(document).ready(function() {
+                var dbName1 = gup('dbName1');
+                var acc1 = gup('acc1');
+                var tag1 = gup('tag1');
+                var since1 = gup('since1');
+                var fileType1 = gup('fileType1');
+                var png2 = gup('png2');
+                var dbName2 = gup('dbName2');
+                var acc2 = gup('acc2');
+                var tag2 = gup('tag2');
+                var since2 = gup('since2');
+                var fileType2 = gup('fileType2');
+                var png2 = gup('png2');
+                var type = gup('type');
+                var istkmap = gup('istkmap');
+                $.ajax({
+                    type: 'POST',
+                    url: 'get_plot_cmp',
+                    data : { dbName1 : dbName1, acc1 : acc1, tag1 : tag1, since1 : since1, dbName2 : dbName2, acc2 : acc2, tag2 : tag2, since2 : since2, type : type, istkmap : istkmap },
+                    dataType : 'image/png',
+                    async: true,
+                    success: function (data) {     $('#img_id').append(data);
+                                             },
+                    error: function() { alert("Error in data send while getting histo img "); }
+                });
+            });
+        </script>
+    </body>
+</html>

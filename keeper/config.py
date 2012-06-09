@@ -84,6 +84,11 @@ servicesConfiguration = {
 		'listeningPort':  8081,
 	},
 
+	'payloadInspector': {
+		'filename':       'PayloadInspector_backend.py',
+		'listeningPort':  8087,
+	},
+
 	'PdmV/valdb': {
 		'filename':       'ajax_app.py',
 		'listeningPort':  8080,

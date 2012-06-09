@@ -1,0 +1,24 @@
+<html>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <head>
+        <script src="lib/jquery-1.6.min.js?v=v1" type="text/javascript"></script> 
+        <script type="text/javascript" src="js/main.js"></script>
+        <link href="css/blocker.css" rel="stylesheet" type="text/css" />
+    </head>
+    <body>
+        <div id="blocker">
+            <div>
+                <img src="images/ajaxloader.gif" alt='ajax loader' style="margin-top:10px">
+                <p>Please Stand By......</p>
+            </div>
+        </div>
+        <script>
+            $(document).ready(function() {
+                getUrParams();
+                window.onupdate = function(){ alert(""); self.close(); }
+                var link = "get_xml?dbName=" + dbName + "&acc=" + acc + "&tag=" + tag + "&since=" + since;
+                parent.window.location.href = link;
+            });
+        </script>       
+    </body>
+</html>

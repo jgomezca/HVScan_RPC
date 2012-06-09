@@ -1,0 +1,31 @@
+<html>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <head>
+        <script type="text/javascript" src="js/main.js"></script>
+    </head>
+    <body>
+        <div id='container'><img width='97%' id='img_id'/></div>
+        <script>
+            $(document).ready(function() {
+                $.blockUI({ message: $('#image_processing')});
+                $('#img_id').load(function() {
+                    $.unblockUI({ 
+                        onUnblock: function(){ } 
+                    }); 
+                });
+                getUrParams ();
+                $.ajax({
+                    type: 'POST',
+                    url: 'get_plot',
+                    data : { dbName : dbName, acc : acc, tag : tag, since : since },
+                    async: false,
+                    success: function (data) {     
+                                               $('#img_id').append(data);
+                                              },
+                    error: function() { alert("Error in data send while getting plot img "); }
+                });
+            });
+        </script>
+    </body>
+</html>
+   

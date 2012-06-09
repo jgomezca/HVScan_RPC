@@ -1,0 +1,25 @@
+<html>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <head>
+        <script type="text/javascript" src="js/main.js"></script>
+    </head>
+    <body>
+        <div id="container">
+            <img id="img_id" />
+        </div>
+        <script>
+            $(document).ready(function() {
+                getUrParams ();
+                $.ajax({
+                    type: 'POST',
+                    url: 'get_histo',
+                    data : { dbName : dbName, acc : acc, tag : tag, since : since },
+                    async: true,
+                    success: function (data) {     $('#img_id').append(data);
+                                             },
+                    error: function() { alert("Error in data send while getting histo img "); }
+                });
+            });
+        </script>
+    </body>
+</html>

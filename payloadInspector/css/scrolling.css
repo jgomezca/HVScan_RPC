@@ -1,0 +1,89 @@
+table, td, a {
+	color: #000;
+	font: normal normal 12px Verdana, Geneva, Arial, Helvetica, sans-serif
+}
+
+div.tableContainer {
+	clear: both;
+	overflow: auto;
+        margin-top: 7px;
+        margin-bottom: 7px;
+        margin-left:auto;
+}
+
+html>body div.tableContainer {
+	overflow: hidden;
+}
+
+thead.fixedHeader tr {
+	position: relative
+}
+
+html>body thead.fixedHeader tr {
+	display: block
+}
+
+.hc {
+       display: visible;
+      // text-align: left !important;
+}
+
+thead.fixedHeader th {     
+       /* display: none;*/
+	background: #339999;
+        color: #FFFFFF;
+        padding: 0px 0px 0px 0px;
+}
+
+thead.fixedHeader a, thead.fixedHeader a:link, thead.fixedHeader a:visited {
+	color: #FFF;
+	display: block;
+	text-decoration: none;
+	width: 100%
+}
+
+thead.fixedHeader a:hover {
+	color: #FFF;
+	display: block;
+	text-decoration: underline;
+	width: 100%
+}
+
+html>body tbody.scrollContent {
+	display: block;
+	height: 262px;
+	overflow: auto;
+	width: 100%
+}
+
+tbody.scrollContent td, tbody.scrollContent tr.normalRow td {
+	background: #FFF;
+}
+
+tbody.scrollContent tr.alternateRow td {
+	background: #EEE !important;
+}
+
+html>body thead.fixedHeader th + th + th {
+	width: 56px;
+}
+
+html>body tbody.scrollContent td + td + td {
+       width: 38px;
+       text-align: center;
+}
+
+td.cell3 {
+        width: 38px;
+}
+.scrollContent input{
+        width: 16px;
+}
+
+table table table tbody tr td {
+  padding: 3px 0px 3px 10px !important;
+}
+
+table table table {
+  background-color: #CCCCCC;
+}

@@ -1,0 +1,65 @@
+#dt_example .login_form{
+ width: 275px;
+ padding-left: 20px;
+ padding-top: 20px;
+}
+.login_input{
+ width: 36%;
+ float: left;
+ text-align: right;
+}
+.login_input{
+ float: left;
+ text-align: right;
+}
+.login_submit{
+ float: right;
+}
+div.box{width:100%!important;width /**/:auto;
+    height:190px !important;height /**/: 200px;
+    overflow:auto;padding: 0px;
+    border:0px solid #EEE;border-right:0 solid;
+    background:url(gradient.png) repeat-x fixed top left
+	}
+
+div.box p{margin-top:0}
+
+.sort-table {
+	width:		100%;
+	font:		Icon;
+	border:		1px Solid ThreeDShadow;
+	background:	Window;
+	color:		WindowText;
+	text-align:	left;
+}
+
+.sort-table thead {
+	background:	ButtonFace;
+}
+
+.sort-table td {
+}
+
+.sort-table thead td {
+	border:			1px solid;
+	border-color:	ButtonHighlight ButtonShadow
+					ButtonShadow ButtonHighlight;
+	cursor:			default;
+}
+
+
+#leftcol {
+width:45px; 
+float:left; 
+vertical-align:top; 
+padding:4px 2px 4px 4px;
+}
+
+#rightcol {
+width:45%; float:right; 
+vertical-align:top; 
+padding:4px 4px 4px 2px;
+}
+#example {
+	border-collapse: collapse;
+}

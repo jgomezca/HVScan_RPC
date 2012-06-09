@@ -1,0 +1,37 @@
+    .listiov table {
+        border: solid #66CC99;
+        border-width: 0px 1px 1px 0px;
+        width: 400px;
+	font:		Icon;
+    }
+    .listiov th, .listiov td {
+        border: solid #66CC99;
+        border-width: 1px 0px 0px 1px;
+        padding: 4px;
+    }
+    .listiov th {
+        background-color: #339999;
+        color: #FFFFFF;
+    }
+    tr.alt td {
+        background-color: #EEEEEE;
+    }
+    tbody.main {
+        height: 300px;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+div.listiov {
+            position: relative;
+            height: 350px;
+            width: 416px;
+            overflow-y: hidden;
+            overflow-x: hidden;
+            border: solid #66CC99;
+            border-width: 0px 0px 1px 0px;
+            float: left;
+        }
+div.sub_right{
+//    float: center;
+      text-align:center;
+}
