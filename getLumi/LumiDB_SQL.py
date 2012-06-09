@@ -16,31 +16,27 @@ except ImportError, e:
 
 import service
 
-
 conn_string = service.getCxOracleConnectionString(service.secrets['connections']['pro'])
 
-
-def formatTotDelivered(lumidata,resultlines,scalefactor=1.0,isverbose=False):
+def formatDelivered(lumidata,resultlines,scalefactor=1.0,isverbose=False):
     '''
     input:  {run:[lumilsnum(0),cmslsnum(1),timestamp(2),beamstatus(3),beamenergy(4),deliveredlumi(5),calibratedlumierror(6),(bxidx,bxvalues,bxerrs)(7),(bxidx,b1intensities,b2intensities)(8),fillnum(9)]}
     '''
     result=[]
     fieldnames = ['Run:Fill', 'N_LS', 'Delivered(/ub)','UTCTime','E(GeV)']
-    if isverbose:
-        fieldnames.append('Selected LS')
+
     for rline in resultlines:
         result.append(rline)
+
     for run in lumidata.keys():
         lsdata=lumidata[run]
-        if lsdata is None:
+        if not lsdata :
             result.append([run,'n/a','n/a','n/a','n/a'])
-            if isverbose:
-                result.extend(['n/a'])
             continue
         nls=len(lsdata)
         fillnum=0
-        if lsdata[0][9]:
-            fillnum=lsdata[0][9]
+        # if lsdata[0][9]:
+        #     fillnum=lsdata[0][9]
         totlumival=sum([x[5] for x in lsdata])
         beamenergyPerLS=[float(x[4]) for x in lsdata]
         avgbeamenergy=0.0
@@ -61,7 +57,6 @@ def formatTotDelivered(lumidata,resultlines,scalefactor=1.0,isverbose=False):
 
     return result
 
-
 def formatOverview(lumidata,resultlines,scalefactor=1.0,isverbose=False):
     '''
     input:
@@ -81,8 +76,7 @@ def formatOverview(lumidata,resultlines,scalefactor=1.0,isverbose=False):
             continue
         nls=len(lsdata)
         fillnum=0
-        if lsdata[0][10]:
-            fillnum=lsdata[0][10]
+
         deliveredData=[x[5] for x in lsdata]
         recordedData=[x[6] for x in lsdata if x[6] is not None]
         totdeliveredlumi=0.0
@@ -98,6 +92,48 @@ def formatOverview(lumidata,resultlines,scalefactor=1.0,isverbose=False):
             selectedlsStr = CommonUtil.splitlistToRangeString(selectedcmsls)
         result.append([str(run)+':'+str(fillnum),nls,totdeliveredlumi*scalefactor,selectedlsStr,totrecordedlumi*scalefactor])
     # sortedresult=sorted(result,key=lambda x : int(x[0].split(':')[0]))
+    
+    return result
+
+def formatRecorded(lumidata,resultlines,scalefactor=1.0,isverbose=False):
+    '''
+    input:  {run:[lumilsnum(0),cmslsnum(1),timestamp(2),beamstatus(3),beamenergy(4),deliveredlumi(5),recordedlumi(6),calibratedlumierror(7),{hltpath:[l1name,l1prescale,hltprescale,efflumi]}(8),bxdata(9),beamdata(10),fillnum(11)]}
+    '''
+    result=[] # [run,ls,hltpath,l1bitname,hltpresc,l1presc,efflumi]
+    for rline in resultlines:
+        result.append(rline)
+         
+    for run in sorted(lumidata):#loop over runs
+        rundata=lumidata[run]
+        if rundata is None:
+            result.append([str(run),'n/a','n/a','n/a','n/a','n/a','n/a','n/a'])
+            continue
+        fillnum=0
+        if rundata[0][11]:
+            fillnum=rundata[0][11]
+        for lsdata in rundata:
+            efflumiDict=lsdata[8]# this ls has no such path?
+            if not efflumiDict:
+                continue
+            cmslsnum=lsdata[1]
+            recorded=lsdata[6]
+            if not recorded:
+                recorded=0.0
+            for hltpathname in sorted(efflumiDict):
+                pathdata=efflumiDict[hltpathname]
+                l1name=pathdata[0]
+                if l1name is None:
+                    l1name='n/a'
+                else:
+                    l1name=l1name.replace('"','')
+                l1prescale=pathdata[1]
+                hltprescale=pathdata[2]
+                lumival=pathdata[3]
+                if lumival is not None:
+                    result.append([str(run)+':'+str(fillnum),cmslsnum,hltpathname,l1name,hltprescale,l1prescale,recorded*scalefactor,lumival*scalefactor])
+                else:
+                    result.append([str(run)+':'+str(fillnum),cmslsnum,hltpathname,l1name,hltprescale,l1prescale,recorded*scalefactor,'n/a'])
+    # fieldnames = ['Run:Fill','LS','HLTpath','L1bit','HLTpresc','L1presc','Recorded(/ub)','Effective(/ub)']
     
     return result
 
@@ -124,8 +160,9 @@ class LumiDB_SQL:
  def getDeliveredLumiForRun(self, authfile="./auth.xml",runNumbers="161222,161223,161224"):
 
      lumis = {}
-
      allRuns = []
+
+     # handle request with string for run numbers:
      if type(runNumbers) == type("") or type(runNumbers) == type(u""):
          for runNrIn in runNumbers.split(','):
              if '-' in runNrIn:
@@ -133,10 +170,9 @@ class LumiDB_SQL:
                  allRuns += range( int(rStart), int(rEnd)+1 ) 
              else:
                  allRuns.append(runNrIn)
-
+     # handle requests with lists of run numbers
      elif type(runNumbers) == type([]):
          allRuns = runNumbers
-
      else:
          print "++> Unknown type for runNumbers found:", type(runNumbers)
 
@@ -155,16 +191,18 @@ class LumiDB_SQL:
         session=svc.openSession(isReadOnly=True,cpp2sqltype=[('unsigned int','NUMBER(10)'),('unsigned long long','NUMBER(20)')])
     
         # set a few defaults (taken from lumiCalc2.py)
-        action  = 'delivered'  # 'overview' # or 'recorded'
+        action  = 'overview' # 'delivered'  'overview' or 'recorded'
         fillnum = None
         begin   = None
         end     = None
-        amodetag = None
-        beamenergy = None
+        amodetag   = 'PROTPHYS'  # beamChoices=['PROTPHYS','IONPHYS','PAPHYS']
+        beamenergy = 3500.
         beamfluctuation = 0.2
-        pbeammode = 'STABLE BEAMS'
-        normfactor = None
+        pbeammode   = 'STABLE BEAMS'
+        normfactor  = None
         scalefactor = 1.0
+        finecorrections=None
+        driftcorrections=None
 
         reqTrg = False
         reqHlt = False
@@ -177,9 +215,20 @@ class LumiDB_SQL:
         if runNumber: # if runnumber specified, do not go through other run selection criteria
             irunlsdict[runNumber]=None
 
-        finecorrections=None
-        driftcorrections=None
-
+        finecorrections  = None
+        driftcorrections = None
+        correctionv3     = False
+        rruns=irunlsdict.keys()
+        schema=session.nominalSchema()
+        session.transaction().start(True)
+        if correctionv3:
+            cterms=lumiCorrections.nonlinearV3()                   
+        else: # default            
+            cterms=lumiCorrections.nonlinearV2()
+        finecorrections=lumiCorrections.correctionsForRangeV2(schema,rruns,cterms) # constant+nonlinear corrections
+        driftcorrections=lumiCorrections.driftcorrectionsForRange(schema,rruns,cterms)
+        session.transaction().commit()
+        
         result = ""
         if action == 'delivered':
             session.transaction().start(True)
@@ -187,7 +236,7 @@ class LumiDB_SQL:
             result=lumiCalcAPI.deliveredLumiForRange(session.nominalSchema(),irunlsdict,amodetag=amodetag,egev=beamenergy,beamstatus=pbeammode,norm=normfactor,finecorrections=finecorrections,driftcorrections=driftcorrections,usecorrectionv2=True)
             session.transaction().commit()
 
-            result = formatTotDelivered(result,iresults,scalefactor)[0][2]
+            result = formatDelivered(result,iresults,scalefactor)[0][2]
 
         if action == 'overview':
            session.transaction().start(True)
@@ -196,7 +245,24 @@ class LumiDB_SQL:
 
            # [[Run:Fill,DeliveredLS,Delivered(/ub),SelectedLS,Recorded(/ub)]]
            result = formatOverview(result,iresults,scalefactor)[0][2]
-    
+
+        if action == 'recorded': # recorded actually means effective because it needs to show all the hltpaths...
+            hltpath = None
+            session.transaction().start(True)
+            hltname=hltpath
+            hltpat=None
+            if hltname is not None:
+                if hltname=='*' or hltname=='all':
+                    hltname=None
+                elif 1 in [c in hltname for c in '*?[]']: #is a fnmatch pattern
+                    hltpat=hltname
+                    hltname=None
+            result=lumiCalcAPI.effectiveLumiForRange(session.nominalSchema(),irunlsdict,hltpathname=hltname,hltpathpattern=hltpat,amodetag=amodetag,egev=beamenergy,beamstatus=pbeammode,norm=normfactor,finecorrections=finecorrections,driftcorrections=driftcorrections,usecorrectionv2=True)
+            session.transaction().commit()
+
+            # that doesn't quite work, as it's one row for each HLT path ... :(
+            result = formatRecorded(result,iresults,scalefactor)[0][7]
+            
         del session
         del svc 
 
