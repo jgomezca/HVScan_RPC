@@ -169,17 +169,18 @@ class LumiDB_SQL:
                  rStart, rEnd = runNrIn.split('-')
                  allRuns += range( int(rStart), int(rEnd)+1 ) 
              else:
-                 allRuns.append(runNrIn)
+                 allRuns.append( int(runNrIn) )
      # handle requests with lists of run numbers
      elif type(runNumbers) == type([]):
-         allRuns = runNumbers
+         allRuns = [int(x) for x in runNumbers]
      else:
          print "++> Unknown type for runNumbers found:", type(runNumbers)
 
      for runNr in allRuns:
-         lumis[runNr] = self.getDeliveredLumiForOneRun(authfile, int(runNr))
+         lumis[int(runNr)] = self.getDeliveredLumiForOneRun(authfile, int(runNr))
 
-     return [{'Run':key, 'DeliveredLumi': value} for key, value in lumis.items()]
+     # return the json sorted by run numbers:
+     return [{'Run':key, 'DeliveredLumi': lumis[int(key)]} for key in sorted(allRuns)]
 
  def getDeliveredLumiForOneRun(self, authfile, runNumber):
 
