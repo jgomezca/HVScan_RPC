@@ -99,6 +99,11 @@ servicesConfiguration = {
 		'listeningPort':  8082,
 	},
 
+	'recordsProvider': {
+		'filename':       'Server.py',
+		'listeningPort':  8088,
+	},
+
 	'regressionTest': {
 		'filename':       'webApp.py',
 		'listeningPort':  8083,
