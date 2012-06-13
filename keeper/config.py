@@ -111,3 +111,10 @@ servicesConfiguration = {
 
 }
 
+
+def getServicesList():
+	'''Returns a sorted list of the services' names.
+	'''
+
+	return sorted(list(servicesConfiguration), key = str.lower)
+

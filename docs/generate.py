@@ -146,7 +146,7 @@ def main():
 	gitWeb = open('gitWeb.txt').read()
 
 	servicesList = ''
-	for service in sorted(list(config.servicesConfiguration), key = str.lower):
+	for service in config.getServicesList():
 		# On private machines there is no proxy so we need to specify the port
 		if config.getProductionLevel() == 'private':
 			servicesList += '<li><a href="https://%s:%s/%s/">%s</a></li>' % (socket.gethostname(), str(config.servicesConfiguration[service]['listeningPort']), service, service)
