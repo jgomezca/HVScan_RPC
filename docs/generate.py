@@ -14,7 +14,7 @@ defaultOutputDirectory = 'generated'
 docsFilename = 'docs.css'
 indexFilename = 'index.html'
 
-indexTitle = 'Docs\' Index'
+indexTitle = 'CMS DB Web Services'
 
 docsTemplate = '''
 	<html>
@@ -80,7 +80,7 @@ def main():
 	# Generate all the docs
 	mdwn = markdown.Markdown(safe_mode = 'escape', extensions = ['headerid'])
 
-	indexList = ''
+	documentsList = ''
 	inputFilenameRE = re.compile('^(.*)\.mdwn$')
 	titleRE = re.compile('^# (.*)$', re.MULTILINE)
 	sectionsRE = re.compile('^<h2 id="(.*)">(.*)</h2>$', re.MULTILINE)
@@ -129,27 +129,23 @@ def main():
 		write(outputFilename, outputText)
 
 		# Add the doc to the global index
-		indexList += '<li><a href="%s">%s</a></li>' % (outputName + '.html', title)
+		documentsList += '<li><a href="%s">%s</a></li>' % (outputName + '.html', title)
 
 	# Generate a simple docs' index (i.e. a list of the files)
 	outputFilename = os.path.join(options['outputDirectory'], indexFilename)
 	logger.info('Generating: ' + outputFilename)
+
 	developmentMailingList = open('developmentMailingList.txt').read()
 	gitWeb = open('gitWeb.txt').read()
+
 	bodyText = '''
 		<h1>%s</h1>
-		<p>This is the development mailing list (you need to be subscribed):</p>
-		<ul><li><a href="mailto:%s">%s</a></li></ul>
-		<p>This is the git web:</p>
-		<ul><li><a href="%s">%s</a></li></ul>
-		<p>These are the documents available:
-		<ul>
-	''' % (indexTitle, developmentMailingList, developmentMailingList, gitWeb, gitWeb)
-	bodyText += indexList
-	bodyText += '''
-		</ul>
+		<p>Development mailing list (you need to be subscribed):</p><ul><li><a href="mailto:%s">%s</a></li></ul>
+		<p>Git web:</p><ul><li><a href="%s">%s</a></li></ul>
+		<p>Documents:</p><ul>%s</ul>
 		<p>If it is your first time, please start by reading Developing.</p>
-	'''
+	''' % (indexTitle, developmentMailingList, developmentMailingList, gitWeb, gitWeb, documentsList)
+
 	outputText = docsTemplate % (indexTitle, docsFilename, bodyText)
 	write(outputFilename, outputText)
 
