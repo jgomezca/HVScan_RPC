@@ -16,6 +16,8 @@ indexFilename = 'index.html'
 
 indexTitle = 'CMS DB Web Services'
 
+adminUrl = 'admin'
+
 docsTemplate = '''
 	<html>
 		<head>
@@ -156,11 +158,12 @@ def main():
 	bodyText = '''
 		<h1>%s</h1>
 		<p>Services:</p><ul>%s</ul>
+		<p>Administration page:</p><ul><li><a href="%s">Administration</a></li></ul>
 		<p>Development mailing list (you need to be subscribed):</p><ul><li><a href="mailto:%s">%s</a></li></ul>
 		<p>Git web:</p><ul><li><a href="%s">%s</a></li></ul>
 		<p>Documents:</p><ul>%s</ul>
 		<p>If it is your first time, please start by reading Developing.</p>
-	''' % (indexTitle, servicesList, developmentMailingList, developmentMailingList, gitWeb, gitWeb, documentsList)
+	''' % (indexTitle, servicesList, adminUrl, developmentMailingList, developmentMailingList, gitWeb, gitWeb, documentsList)
 
 	outputText = docsTemplate % (indexTitle, docsFilename, bodyText)
 	write(outputFilename, outputText)
