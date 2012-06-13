@@ -12,7 +12,7 @@ __email__ = 'mojedasa@cern.ch'
 
 import config
 
-services = sorted(list(config.servicesConfiguration))
+services = sorted(list(config.servicesConfiguration), key = str.lower)
 
 
 import os
