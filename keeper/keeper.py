@@ -92,6 +92,13 @@ def getPath(service):
 	return os.path.abspath(os.path.join(config.servicesDirectory, service))
 
 
+def getLogPath(service):
+	'''Returns the absolute path to a service's latest log.
+	'''
+
+	return os.path.abspath(os.path.join(config.logsDirectory, service + '.log'))
+
+
 def isRegistered(service):
 	'''Returns whether a service is registered in the keeper or not.
 	'''
@@ -114,12 +121,18 @@ def isRunning(service):
 	return len(getPIDs(service)) > 0
 
 
-def kill(pid):
-	'''Sends SIGTERM to a process.
+def killProcess(pid, sigkill = False):
+	'''Sends SIGTERM or SIGKILL to a process.
 	'''
 
-	logger.info('Killing %s', pid)
-	os.kill(int(pid), signal.SIGTERM)
+	if sigkill:
+		logger.info('Killing -9 %s', pid)
+		s = signal.SIGKILL
+	else:
+		logger.info('Killing %s', pid)
+		s = signal.SIGTERM
+
+	os.kill(int(pid), s)
 
 
 def daemonize(stdoutFile = None, stderrFile = None, workingDirectory = None):
@@ -284,13 +297,13 @@ def wait(service, maxWaitTime = 20):
 		time.sleep(1)
 
 
-def stop(service):
+def stop(service, sigkill = False):
 	'''Stops a service or the keeper itself.
 	'''
 
 	if service == 'all':
 		for service in services:
-			stop(service)
+			stop(service, sigkill)
 		return
 
 	if service != 'keeper':
@@ -304,7 +317,7 @@ def stop(service):
 		return
 
 	for pid in pids:
-		kill(pid)
+		killProcess(pid, sigkill)
 
 	wait(service)
 	logger.info('Stopped %s: %s', service, ','.join(pids))
@@ -319,6 +332,13 @@ def restart(service):
 
 	stop(service)
 	start(service)
+
+
+def kill(service):
+	'''Kills -9 a service or the keeper itself.
+	'''
+
+	stop(service, sigkill = True)
 
 
 def test(service):
@@ -372,6 +392,30 @@ def test(service):
 	logger.info('Finished testing %s: %s. Took %.2f seconds.', service, 'SUCCESS' if state else 'FAILED', time.time() - startTime)
 
 	return state
+
+
+def less(service):
+	'''Less a service\'s log.
+	'''
+
+	if service != 'keeper':
+		checkRegistered(service)
+
+	# Replacing the process avoids the traceback when issuing ^C
+	commandLine = 'less %s' % getLogPath(service)
+	os.execlp('bash', 'bash', '-c', commandLine)
+
+
+def tail(service):
+	'''Tail -f a service\'s log.
+	'''
+
+	if service != 'keeper':
+		checkRegistered(service)
+
+	# Replacing the process avoids the traceback when issuing ^C
+	commandLine = 'tail -f %s' % getLogPath(service)
+	os.execlp('bash', 'bash', '-c', commandLine)
 
 
 def keep():
@@ -441,12 +485,19 @@ def getCommand():
 		'  keeper start   <service>  Starts a service.\n'
 		'  keeper stop    <service>  Stops a service.\n'
 		'  keeper restart <service>  Restarts a service.\n'
+		'  keeper kill    <service>  Kill -9 a service.\n'
+		'\n'
 		'  keeper test    <service>  Runs a service\'s test suite.\n'
+		'\n'
+		'  keeper less    <service>  Less a service\'s log.\n'
+		'  keeper tail    <service>  Tail -f a service\'s log.\n'
+		'\n'
 		'  keeper status             Prints the status of the keeper\n'
 		'                            and all the services, with PIDs.\n'
 		'\n'
 		'  <service> can be one of the following:\n'
 		'    all keeper ' + ' '.join(services) + '\n'
+		'    ("all" does not apply in less and tail).\n'
 		'\n'
 		'  Note: "all" does not include the keeper: this command\n'
 		'        is meant for private development, not dev/int/pro.\n'
@@ -464,7 +515,7 @@ def getCommand():
 	arguments = arguments[1:]
 
 	commandsWith0Arguments = ['status']
-	commandsWith1Arguments = ['start', 'stop', 'restart', 'test']
+	commandsWith1Arguments = ['start', 'stop', 'restart', 'kill', 'test', 'less', 'tail']
 	commands = commandsWith0Arguments + commandsWith1Arguments
 
 	if command not in commands:
