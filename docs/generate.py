@@ -30,6 +30,7 @@ docsTemplate = '''
 
 
 import os
+import socket
 import shutil
 import re
 import markdown
@@ -40,6 +41,12 @@ logging.basicConfig(
         level = logging.INFO
 )
 logger = logging.getLogger(__name__)
+
+
+# In order to print the list of services we need to exceptionally access the keeper's config
+import sys
+sys.path.append('../keeper')
+import config
 
 
 def getOptions():
@@ -138,13 +145,22 @@ def main():
 	developmentMailingList = open('developmentMailingList.txt').read()
 	gitWeb = open('gitWeb.txt').read()
 
+	servicesList = ''
+	for service in sorted(list(config.servicesConfiguration), key = str.lower):
+		# On private machines there is no proxy so we need to specify the port
+		if config.getProductionLevel() == 'private':
+			servicesList += '<li><a href="https://%s:%s/%s/">%s</a></li>' % (socket.gethostname(), str(config.servicesConfiguration[service]['listeningPort']), service, service)
+		else:
+			servicesList += '<li><a href="/%s/">%s</a></li>' % (service, service)
+
 	bodyText = '''
 		<h1>%s</h1>
+		<p>Services:</p><ul>%s</ul>
 		<p>Development mailing list (you need to be subscribed):</p><ul><li><a href="mailto:%s">%s</a></li></ul>
 		<p>Git web:</p><ul><li><a href="%s">%s</a></li></ul>
 		<p>Documents:</p><ul>%s</ul>
 		<p>If it is your first time, please start by reading Developing.</p>
-	''' % (indexTitle, developmentMailingList, developmentMailingList, gitWeb, gitWeb, documentsList)
+	''' % (indexTitle, servicesList, developmentMailingList, developmentMailingList, gitWeb, gitWeb, documentsList)
 
 	outputText = docsTemplate % (indexTitle, docsFilename, bodyText)
 	write(outputFilename, outputText)
