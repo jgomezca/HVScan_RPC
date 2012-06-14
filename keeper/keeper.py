@@ -135,6 +135,14 @@ def killProcess(pid, sigkill = False):
 	os.kill(int(pid), s)
 
 
+def getProcessEnvironment(pid):
+	'''Returns the environment of a process as a dictionary.
+	'''
+
+	with open('/proc/%s/environ' % pid, 'r') as f:
+		return dict([x.split('=', 1) for x in f.read().split('\0') if '=' in x])
+
+
 def daemonize(stdoutFile = None, stderrFile = None, workingDirectory = None):
 	'''Daemonize the current process.
 	'''
@@ -435,6 +443,26 @@ def lsof(service):
 	subprocess.call('/usr/sbin/lsof -p %s' % ','.join(pids), shell = True)
 
 
+def env(service):
+	'''Prints the environment of a service's processes.
+	'''
+
+	if service != 'keeper':
+		checkRegistered(service)
+
+	pids = getPIDs(service)
+
+	# Service not running
+	if len(pids) == 0:
+		logger.warning('Tried to env a service (%s) which is not running.' % service)
+		return
+
+	for pid in pids:
+		environment = getProcessEnvironment(pid)
+		for key in sorted(environment):
+			print '%s  %s=%s' % (pid, key, environment[key])
+
+
 def keep():
 	'''Keeps services up and running.
 	'''
@@ -509,13 +537,14 @@ def getCommand():
 		'  keeper less    <service>  "less" a service\'s log.\n'
 		'  keeper tail    <service>  "tail -f" a service\'s log.\n'
 		'  keeper lsof    <service>  "lsof" a service\'s processes.\n'
+		'  keeper env     <service>  Prints the environment of a service\'s processes.\n'
 		'\n'
 		'  keeper status             Prints the status of the keeper\n'
 		'                            and all the services, with PIDs.\n'
 		'\n'
 		'  <service> can be one of the following:\n'
 		'    all keeper ' + ' '.join(services) + '\n'
-		'    ("all" does not apply for less, tail nor lsof).\n'
+		'    ("all" does not apply for less, tail, lsof nor env).\n'
 		'\n'
 		'  Note: "all" does not include the keeper: this command\n'
 		'        is meant for private development, not dev/int/pro.\n'
@@ -533,7 +562,7 @@ def getCommand():
 	arguments = arguments[1:]
 
 	commandsWith0Arguments = ['status']
-	commandsWith1Arguments = ['start', 'stop', 'restart', 'kill', 'test', 'less', 'tail', 'lsof']
+	commandsWith1Arguments = ['start', 'stop', 'restart', 'kill', 'test', 'less', 'tail', 'lsof', 'env']
 	commands = commandsWith0Arguments + commandsWith1Arguments
 
 	if command not in commands:
