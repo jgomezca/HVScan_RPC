@@ -516,7 +516,7 @@ def status():
 		else:
 			status = ' --------'
 
-		logger.info(service + (' ' * (maxlen - len(service))) +  status)
+		print service + (' ' * (maxlen - len(service))) +  status
 
 
 def getCommand():
