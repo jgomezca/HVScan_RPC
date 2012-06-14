@@ -12,10 +12,11 @@ __email__ = 'mojedasa@cern.ch'
 import cherrypy
 import socket
 import subprocess
+import json
 
 
 import service
-from service import setResponsePlainText
+from service import setResponsePlainText, setResponseJSON
 
 
 import sys
@@ -151,6 +152,8 @@ class Docs:
 			actions = ''
 			for action in ['tail']:
 				actions += makeAction(service, action)
+			for action in ['lsof', 'env']:
+				actions += makeAction(service, action, not running)
 			for action in ['start']:
 				actions += makeAction(service, action, running or service in ['keeper', 'docs'])
 			for action in ['stop', 'restart', 'kill']:
@@ -229,6 +232,22 @@ class Docs:
 		'''
 
 		return setResponsePlainText(check_output('tail -n 1000 %s' % keeper.getLogPath(service), shell = True))
+
+
+	@checkSignedIn
+	def lsof(self, service):
+		'''"lsof" a service's processes.
+		'''
+
+		return setResponsePlainText(check_output('/usr/sbin/lsof -p %s' % ','.join(keeper.getPIDs(service)), shell = True))
+
+
+	@checkSignedIn
+	def env(self, service):
+		'''Prints the environment of a service's processes.
+		'''
+
+		return setResponseJSON(json.dumps(keeper.getEnvironment(service), sort_keys = True, indent = 4))
 
 
 	@cherrypy.expose

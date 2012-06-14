@@ -146,6 +146,18 @@ def getProcessEnvironment(pid):
 		return dict([x.split('=', 1) for x in f.read().split('\0') if '=' in x])
 
 
+def getEnvironment(service):
+	'''Returns the environment of a service's processes as a dictionary.
+	'''
+
+	ret = {}
+
+	for pid in getPIDs(service):
+		ret[pid] = getProcessEnvironment(pid)
+
+	return ret
+
+
 def daemonize(stdout = None, stderr = None):
 	'''Daemonize the current process.
 	'''
