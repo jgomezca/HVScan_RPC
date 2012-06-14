@@ -16,7 +16,8 @@ import cherrypy
 import unittest
 import json
 import urllib2
-
+import datetime
+import xml.sax.saxutils
 
 settings = None
 secrets = None
@@ -89,6 +90,53 @@ def start(mainObject):
 		},
 	})
 	cherrypy.quickstart(mainObject, config = 'server.conf', script_name = '/' + settings['name'])
+
+
+# Utility functions
+
+def setResponsePlainText(data = None):
+	cherrypy.response.headers['Content-Type'] = 'text/plain;charset=ISO-8859-1'
+	return data
+
+def setResponseJSON(data = None):
+	cherrypy.response.headers['Content-Type'] = 'application/json'
+	return data
+
+def setResponsePNG(data = None):
+	cherrypy.response.headers['Content-Type'] = 'image/png'
+	return data
+
+
+def escape(x):
+	'''Escapes data for XML/HTML.
+	'''
+
+	tx = type(x)
+
+	if x is None or tx in (bool, int, long):
+		return x
+
+	if tx in (str, unicode):
+		return xml.sax.saxutils.escape(x)
+
+	if tx in (list, tuple):
+		return [escape(y) for y in x]
+
+	if tx in (set, frozenset):
+		ret = set([])
+		for y in x:
+			ret.add(escape(y))
+		return ret
+
+	if tx == dict:
+		for y in x.items():
+			x[y[0]] = escape(y[1])
+		return x
+
+	if tx == datetime.datetime:
+		return x.replace(microsecond = 0)
+
+	raise Exception('escape(): Type %s not recognized.' % str(type(x)))
 
 
 # Functions for generating connection strings and URLs
