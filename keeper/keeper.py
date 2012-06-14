@@ -395,7 +395,7 @@ def test(service):
 
 
 def less(service):
-	'''Less a service\'s log.
+	'''"less" a service\'s log.
 	'''
 
 	if service != 'keeper':
@@ -407,7 +407,7 @@ def less(service):
 
 
 def tail(service):
-	'''Tail -f a service\'s log.
+	'''"tail -f" a service\'s log.
 	'''
 
 	if service != 'keeper':
@@ -485,19 +485,19 @@ def getCommand():
 		'  keeper start   <service>  Starts a service.\n'
 		'  keeper stop    <service>  Stops a service.\n'
 		'  keeper restart <service>  Restarts a service.\n'
-		'  keeper kill    <service>  Kill -9 a service.\n'
+		'  keeper kill    <service>  "kill -9" a service.\n'
 		'\n'
 		'  keeper test    <service>  Runs a service\'s test suite.\n'
 		'\n'
-		'  keeper less    <service>  Less a service\'s log.\n'
-		'  keeper tail    <service>  Tail -f a service\'s log.\n'
+		'  keeper less    <service>  "less" a service\'s log.\n'
+		'  keeper tail    <service>  "tail -f" a service\'s log.\n'
 		'\n'
 		'  keeper status             Prints the status of the keeper\n'
 		'                            and all the services, with PIDs.\n'
 		'\n'
 		'  <service> can be one of the following:\n'
 		'    all keeper ' + ' '.join(services) + '\n'
-		'    ("all" does not apply in less and tail).\n'
+		'    ("all" does not apply for less nor tail).\n'
 		'\n'
 		'  Note: "all" does not include the keeper: this command\n'
 		'        is meant for private development, not dev/int/pro.\n'
