@@ -13,7 +13,9 @@ import cherrypy
 import socket
 import subprocess
 
+
 import service
+from service import setResponsePlainText
 
 
 import sys
@@ -226,22 +228,7 @@ class Docs:
 		'''Tails the logs of a service.
 		'''
 
-		title = 'Tail of %s\'s log' % service
-		tail = check_output('tail -n 1000 %s' % keeper.getLogPath(service), shell = True)
-		template = '''
-			<html>
-				<head>
-					<title>%s</title>
-					<link rel="stylesheet" type="text/css" href="docs.css" />
-				</head>
-				<body>
-					<h1>%s</h1>
-					<pre>%s</pre>
-				</body>
-			</html>
-		'''
-
-		return template % (title, title, tail)
+		return setResponsePlainText(check_output('tail -n 1000 %s' % keeper.getLogPath(service), shell = True))
 
 
 	@cherrypy.expose
