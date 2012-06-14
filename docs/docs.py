@@ -247,7 +247,7 @@ class Docs:
 		'''Prints the environment of a service's processes.
 		'''
 
-		return setResponseJSON(json.dumps(keeper.getEnvironment(service), sort_keys = True, indent = 4))
+		return setResponseJSON(keeper.getEnvironment(service))
 
 
 	@cherrypy.expose
