@@ -33,6 +33,9 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+import daemon
+
+
 def sendEmail(from_address, to_addresses, cc_addresses, subject, body, smtp_server = 'cernmx.cern.ch', password = ''):
 	'''Sends and email, optionally logging in if a password for the from_address account is supplied
 	'''
@@ -143,41 +146,16 @@ def getProcessEnvironment(pid):
 		return dict([x.split('=', 1) for x in f.read().split('\0') if '=' in x])
 
 
-def daemonize(stdoutFile = None, stderrFile = None, workingDirectory = None):
+def daemonize(stdout = None, stderr = None):
 	'''Daemonize the current process.
 	'''
 
-	# Fork off and die
-	if os.fork() != 0:
-		os._exit(0)
-
-	# Change working directory
-	if workingDirectory is not None:
-		os.chdir(workingDirectory)
-
-	# Get new session
-	os.setsid()
-
-	# Use the null device as stdin
-	fd = os.open(os.devnull, os.O_RDONLY)
-	os.dup2(fd, sys.stdin.fileno())
-	os.close(fd)
-
-	# Flush fds
-	sys.stdout.flush()
-	sys.stderr.flush()
-
-	# Redirect stdout
-	if stdoutFile is not None:
-		fd = os.open(stdoutFile, os.O_WRONLY | os.O_APPEND | os.O_CREAT)
-		os.dup2(fd, sys.stdout.fileno())
-		os.close(fd)
-
-	# Redirect stderr
-	if stderrFile is not None:
-		fd = os.open(stderrFile, os.O_WRONLY | os.O_APPEND | os.O_CREAT)
-		os.dup2(fd, sys.stderr.fileno())
-		os.close(fd)
+	daemon.DaemonContext(
+		stdout = stdout,
+		stderr = stderr,
+		working_directory = os.getcwd(),
+		umask = 0077,
+	).open()
 
 
 def run(service, filename, extraCommandLine = '', replaceProcess = False):
@@ -490,8 +468,8 @@ def startKeeper():
 	logger.info('Starting keeper.')
 
 	daemonize(
-		stdoutFile = os.path.join(config.logsDirectory, 'keeper.log'),
-		stderrFile = os.path.join(config.logsDirectory, 'keeper.log'),
+		stdout = os.path.join(config.logsDirectory, 'keeper.log'),
+		stderr = os.path.join(config.logsDirectory, 'keeper.log'),
 	)
 
 	logger.info('Started keeper: %s', os.getpid())
