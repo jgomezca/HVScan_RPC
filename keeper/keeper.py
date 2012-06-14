@@ -418,6 +418,23 @@ def tail(service):
 	os.execlp('bash', 'bash', '-c', commandLine)
 
 
+def lsof(service):
+	'''"lsof" a service's processes.
+	'''
+
+	if service != 'keeper':
+		checkRegistered(service)
+
+	pids = getPIDs(service)
+
+	# Service not running
+	if len(pids) == 0:
+		logger.warning('Tried to lsof a service (%s) which is not running.' % service)
+		return
+
+	subprocess.call('/usr/sbin/lsof -p %s' % ','.join(pids), shell = True)
+
+
 def keep():
 	'''Keeps services up and running.
 	'''
@@ -491,13 +508,14 @@ def getCommand():
 		'\n'
 		'  keeper less    <service>  "less" a service\'s log.\n'
 		'  keeper tail    <service>  "tail -f" a service\'s log.\n'
+		'  keeper lsof    <service>  "lsof" a service\'s processes.\n'
 		'\n'
 		'  keeper status             Prints the status of the keeper\n'
 		'                            and all the services, with PIDs.\n'
 		'\n'
 		'  <service> can be one of the following:\n'
 		'    all keeper ' + ' '.join(services) + '\n'
-		'    ("all" does not apply for less nor tail).\n'
+		'    ("all" does not apply for less, tail nor lsof).\n'
 		'\n'
 		'  Note: "all" does not include the keeper: this command\n'
 		'        is meant for private development, not dev/int/pro.\n'
@@ -515,7 +533,7 @@ def getCommand():
 	arguments = arguments[1:]
 
 	commandsWith0Arguments = ['status']
-	commandsWith1Arguments = ['start', 'stop', 'restart', 'kill', 'test', 'less', 'tail']
+	commandsWith1Arguments = ['start', 'stop', 'restart', 'kill', 'test', 'less', 'tail', 'lsof']
 	commands = commandsWith0Arguments + commandsWith1Arguments
 
 	if command not in commands:
