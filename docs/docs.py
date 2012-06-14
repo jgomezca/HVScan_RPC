@@ -117,19 +117,23 @@ class Docs:
 			</tr>
 		'''
 
-		actionsTemplate = '''
-			<form action="tail" method="get"><input name="service" type="hidden" value="%s" /><input value="Tail" type="submit" /></form>
-			<form action="start" method="post"><input name="service" type="hidden" value="%s" /><input value="Start" type="submit" /></form>
-			<form action="stop" method="post"><input name="service" type="hidden" value="%s" /><input value="Stop" type="submit" /></form>
-			<form action="restart" method="post"><input name="service" type="hidden" value="%s" /><input value="Restart" type="submit" /></form>
-			<form action="kill" method="post"><input name="service" type="hidden" value="%s" /><input value="Kill" type="submit" /></form>
-		'''
+		def makeAction(service, action, disabled = False):
+			actionTemplate = '''
+				<form action="%s" method="get"><input name="service" type="hidden" value="%s" /><input value="%s" type="submit" %s /></form>
+			'''
+
+			disabledText = ''
+			if disabled:
+				disabledText = 'disabled="disabled"'
+
+			return actionTemplate % (action, service, action, disabledText)
 
 		for service in ['keeper'] + config.getServicesList():
 			status = ''
 			url = ''
 			pids = keeper.getPIDs(service)
-			if len(pids) > 0:
+			running = len(pids) > 0
+			if running:
 				status = 'RUNNING: ' + ','.join(pids)
 
 				# On private machines there is no proxy so we need to specify the port
@@ -143,8 +147,12 @@ class Docs:
 					url = '<a href="%s">%s</a>' % (url, url)
 
 			actions = ''
-			if service not in ['keeper', 'docs']:
-				actions = actionsTemplate % ((service, ) * 5)
+			for action in ['tail']:
+				actions += makeAction(service, action)
+			for action in ['start']:
+				actions += makeAction(service, action, running or service in ['keeper', 'docs'])
+			for action in ['stop', 'restart', 'kill']:
+				actions += makeAction(service, action, not running or service in ['keeper', 'docs'])
 
 			table += '''
 				<tr>
