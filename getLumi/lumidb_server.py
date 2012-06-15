@@ -5,7 +5,6 @@ Author: Antonio Pierro, antonio.pierro@cern.ch, Salvatore Di Guida, Aidas Tilman
 
 import re
 import time
-import json
 
 import cherrypy
 import LumiDB_SQL
@@ -131,7 +130,7 @@ class LumiDB:
     # root method
     @cherrypy.expose
     def index(self, **kwargs):
-        return self.getLumi(**kwargs)
+        return service.setResponseJSON(self.getLumi(**kwargs))
 
     def getRunInfoFromDate(self,
             startTime   =   time.strftime("%d-%b-%y %H:%M", time.localtime(time.time()-86400)), 
@@ -148,8 +147,7 @@ class LumiDB:
 #         runNumbersString    =   LDB_SQL.getMaxMinString(StringNumber=runNumbersString)
 # 	print "runNumbersString:",runNumbersString
 #         runNumbersString    =   LDB_SQL.getRunNumberWhereClause(runNumbRance=runNumbersString)
-        items =  LDB_SQL.getRunNumberExtendedInfo(runNumbers=runNumbList)
-        return json.dumps(items)
+        return LDB_SQL.getRunNumberExtendedInfo(runNumbers=runNumbList)
 
 
     def getLumiInfoFromDate(self,
@@ -166,8 +164,7 @@ class LumiDB:
 #         runNumbersString    =   LDB_SQL.getRunNumberString(runNumbList=runNumbList)
 #         runNumbersString    =   LDB_SQL.getMaxMinString(StringNumber=runNumbersString)
 #         runNumbersString    =   LDB_SQL.getRunNumberWhereClause(runNumbRance=runNumbersString,column_name='runnum')
-        items =  LumiDB_SQL.LumiDB_SQL().getLumiByRun(runNumbers=runNumbList)
-        return json.dumps(items)
+        return LumiDB_SQL.LumiDB_SQL().getLumiByRun(runNumbers=runNumbList)
         #runNumbList         =   LumiDB_SQL.LumiDB_SQL().getRunNumber(authfile="./auth.xml", startTime= startTime, endTime=endTime)
         #runNumbersString    =   LumiDB_SQL.LumiDB_SQL().getRunNumberString(runNumbList=runNumbList)
 
@@ -181,8 +178,7 @@ class LumiDB:
             raise cherrypy.HTTPError(405, "[You typed:     " + str(runList) + "] " + "     " +  self.errorMessage)
 #         runNumbersString = LumiDB_SQL.LumiDB_SQL().getRunNumberWhereClause(runNumbRance=runList)
         #items =  LumiDB_SQL.LumiDB_SQL().getRunNumberInfo(runNumbers=runNumbersString)
-        items =  LumiDB_SQL.LumiDB_SQL().getRunNumberExtendedInfo(runNumbers=runList)
-        return json.dumps(items)
+        return LumiDB_SQL.LumiDB_SQL().getRunNumberExtendedInfo(runNumbers=runList)
     
     def getLumiInfoByRunNumbers(self,
             runList="161222,161223,161224", *args, **kwargs
@@ -192,8 +188,7 @@ class LumiDB:
             runList = paramsValidationStatus
         else:
             raise cherrypy.HTTPError(405, "[You typed:     " + str(runList) + "] " + "     " +  self.errorMessage)
-        items =  LumiDB_SQL.LumiDB_SQL().getLumiByRun(runNumbers=runList)
-        return json.dumps(items)
+        return LumiDB_SQL.LumiDB_SQL().getLumiByRun(runNumbers=runList)
 
 
     def getDeliveredLumiFromDate(self,
@@ -210,8 +205,7 @@ class LumiDB:
 #         runNumbersString    =   LDB_SQL.getRunNumberString(runNumbList=runNumbList)
 #         runNumbersString    =   LDB_SQL.getMaxMinString(StringNumber=runNumbersString)
 #         runNumbersString    =   LDB_SQL.getRunNumberWhereClause(runNumbRance=runNumbersString,column_name='runnum')
-        items =  LumiDB_SQL.LumiDB_SQL().getDeliveredLumiForRun(runNumbers=runNumbList)
-        return json.dumps(items)
+        return LumiDB_SQL.LumiDB_SQL().getDeliveredLumiForRun(runNumbers=runNumbList)
         #pass
 
     def getDeliveredLumiByRunNumbers(self,
@@ -223,14 +217,12 @@ class LumiDB:
         else:
             raise cherrypy.HTTPError(405, "[You typed:     " + str(runList) + "] " + "     " +  self.errorMessage)
 #         runNumbersString = LumiDB_SQL.LumiDB_SQL().getRunNumberWhereClause(runNumbRance=runList,column_name='runnum')
-        items =  LumiDB_SQL.LumiDB_SQL().getDeliveredLumiForRun(runNumbers=runList)
-        return json.dumps(items)
+        return LumiDB_SQL.LumiDB_SQL().getDeliveredLumiForRun(runNumbers=runList)
     
     def getLumiDB(self, *args, **kwargs):
         CTF = LumiDB_SQL.LumiDB_SQL().test()
-        items = {'items' : [CTF]}
+        return {'items' : [CTF]}
         #items = {'run' : 'x'}
-        return json.dumps(items)
 
 
 def main():
