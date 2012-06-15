@@ -2,16 +2,13 @@
 Lumidb backend application
 Author: Antonio Pierro, antonio.pierro@cern.ch, Salvatore Di Guida, Aidas Tilmantas
 """
-import os, time, socket
 
-import cherrypy
+import re
+import time
 import json
 
+import cherrypy
 import LumiDB_SQL
-#import json_provider
-
-import threading
-import re
 
 import service
 

@@ -1,18 +1,9 @@
 import sys
-import os
-import re
-import time
-import json
-import datetime
+
+import cx_Oracle
 
 import coral
 from RecoLuminosity.LumiDB import sessionManager,lumiTime,inputFilesetParser,csvSelectionParser,selectionParser,csvReporter,argparse,CommonUtil,lumiCalcAPI,lumiReport,lumiCorrections
-
-#import popconUtils
-try:
-    import cx_Oracle
-except ImportError, e: 
-    print "Cannot import cx_Oracle:", e 
 
 import service
 
