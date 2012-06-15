@@ -11,12 +11,8 @@ import GTComparison
 import GTServerSettings as Settings
 
 AUTHPATH = "/afs/cern.ch/cms/DB/conddb"
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__file__)
 
-logger.warning("Warning logging enabled")
-logger.info("Info logging enabled")
-logger.debug("Debug logging enabled")
+logger = logging.getLogger(__name__)
 
 #--------
 #Playground
@@ -27,6 +23,8 @@ class UploadGTLib(object):
         '''
         authpath - place with authentication privileges
         '''
+        logger.setLevel(logging.DEBUG)
+
         self.authpath = authpath
         self.global_tag_schema = global_tag_schema
         self.log_schema = log_schema

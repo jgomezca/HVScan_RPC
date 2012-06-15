@@ -12,6 +12,7 @@ __email__ = 'mojedasa@cern.ch'
 import os
 import optparse
 import socket
+import logging
 import cherrypy
 import unittest
 import json
@@ -79,12 +80,18 @@ def start(mainObject):
 	'''Starts the service.
 	'''
 
+	logging.basicConfig(
+		format = '[%(asctime)s] %(levelname)s: %(message)s',
+		level = logging.INFO
+	)
+
 	cherrypy.config.update({
 		'global': {
 		'server.socket_host': socket.gethostname(),
 		'server.socket_port': settings['listeningPort'],
 		'tools.staticdir.root': settings['rootDirectory'],
 		'engine.autoreload_on': False,
+		'log.screen': False,
 		'server.ssl_certificate': os.path.join(settings['secretsDirectory'], 'hostcert.pem'),
 		'server.ssl_private_key': os.path.join(settings['secretsDirectory'], 'hostkey.pem'),
 		},
