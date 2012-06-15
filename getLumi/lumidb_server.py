@@ -136,18 +136,6 @@ class LumiDB:
     def index(self, **kwargs):
         return self.getLumi(**kwargs)
 
-        # FIXME: Unused. -mos
-        currentTime =   time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-        machineName =   socket.gethostname()+":"+str(cherrypy.config.get('server.socket_port'))
-        indexOutput =   """
-        <pre>
-        LumiDB backend is working!
-        Current Time:   """+currentTime+"""
-        Hostname:       """+machineName+"""
-        </pre>
-        """
-        return indexOutput
-
     def getRunInfoFromDate(self,
             startTime   =   time.strftime("%d-%b-%y %H:%M", time.localtime(time.time()-86400)), 
             endTime     =   time.strftime("%d-%b-%y %H:%M", time.localtime()), *args, **kwargs
