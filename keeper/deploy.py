@@ -238,6 +238,10 @@ def checkRequirements(options):
 	'''Checks requirements for deploy(), update() and the keeper/services.
 	'''
 
+	# Test the script is not being run as root
+	if os.geteuid() == 0:
+		raise Exception('This script should not be run as root.')
+
 	# Test for sudo privileges
 	try:
 		execute('sudo mkdir --version')
