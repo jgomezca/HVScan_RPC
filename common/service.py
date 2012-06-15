@@ -182,3 +182,21 @@ def queryJson(url, data = None, timeout = 10):
 def test(TestCase):
 	return not unittest.TextTestRunner().run(unittest.defaultTestLoader.loadTestsFromTestCase(TestCase)).wasSuccessful()
 
+
+class TestCase(unittest.TestCase):
+	'''An specialized TestCase for our services.
+	'''
+
+	def assertRaisesHTTPError(self, validCodes, callableObj, *args, **kwargs):
+		'''Like assertRaises(urllib2.HTTPError, ...), but checking that
+		the HTTP error code is in the given set.
+		'''
+
+		try:
+			callableObj(*args, **kwargs)
+		except urllib2.HTTPError as e:
+			if e.code not in validCodes:
+				raise self.failureException, "HTTPError's code %s is not in %s" % (e.code, validCodes)
+		else:
+			raise self.failureException, "HTTPError not raised"
+

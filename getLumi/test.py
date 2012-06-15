@@ -1,10 +1,7 @@
 import service
-import unittest
 import sys
 
-from urllib2 import HTTPError
-
-class GetLumiTest(unittest.TestCase):
+class GetLumiTest(service.TestCase):
 
 	def testIsServerAnswering(self):
 		self.assertEqual(type(service.queryJson('')), list)
@@ -38,19 +35,8 @@ class GetLumiTest(unittest.TestCase):
 				       ])
 
 	def testInvalidRunNumber(self):
-		try:
-			service.queryJson('/?Runs=AA167098')
-		except HTTPError, e: #  HTTP Error 405: Method Not Allowed:
-			if 'HTTP Error 405' in str(e):
-				pass
-			else:
-				print "Got unknown HTTPError: ", str(e)
-				raise
-		except:
-			print "unknown exception raised:", str(e)
-			raise
+		self.assertRaisesHTTPError([405], service.queryJson, '/?Runs=AA167098')
 
-		
 
 def main():
 	sys.exit(service.test(GetLumiTest))
