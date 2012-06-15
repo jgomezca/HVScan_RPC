@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 '''Configuration for the keeper of the CMS' DB Web services.
 '''
 
