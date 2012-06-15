@@ -379,6 +379,10 @@ def test(service):
 		logger.warning('Test suite for service %s does not exist.', service)
 		return None
 
+	if not isRunning(service):
+		logger.warning('Tried to test a service (%s) which is not running.', service)
+		return None
+
 	logger.info('Testing %s.', service)
 	startTime = time.time()
 
