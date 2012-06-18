@@ -449,22 +449,6 @@ def env(service):
 			print '%s  %s=%s' % (pid, key, environment[key])
 
 
-def keep():
-	'''Keeps services up and running.
-	'''
-
-	logger.info('Keeping services up and running...')
-
-	while True:
-		time.sleep(config.timeBetweenChecks)
-
-		for service in services:
-			try:
-				start(service, warnIfAlreadyStarted = False)
-			except Exception as e:
-				logger.error(e)
-
-
 def status():
 	'''Print the status of all services.
 	'''
@@ -483,6 +467,22 @@ def status():
 			status = ' --------'
 
 		print service + (' ' * (maxlen - len(service))) +  status
+
+
+def keep():
+	'''Keeps services up and running.
+	'''
+
+	logger.info('Keeping services up and running...')
+
+	while True:
+		time.sleep(config.timeBetweenChecks)
+
+		for service in services:
+			try:
+				start(service, warnIfAlreadyStarted = False)
+			except Exception as e:
+				logger.error(e)
 
 
 def getCommand():
