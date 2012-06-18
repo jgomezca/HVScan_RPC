@@ -156,18 +156,6 @@ def getEnvironment(service):
 	return ret
 
 
-def daemonize(stdout = None, stderr = None):
-	'''Daemonize the current process.
-	'''
-
-	daemon.DaemonContext(
-		stdout = stdout,
-		stderr = stderr,
-		working_directory = os.getcwd(),
-		umask = 0077,
-	).open()
-
-
 def run(service, filename, extraCommandLine = '', replaceProcess = False):
 	'''Setups and runs a Python script in a service.
 		- Changes the working directory to the service's folder.
@@ -237,10 +225,8 @@ def start(service, warnIfAlreadyStarted = True):
 			start(service)
 		return
 
-	if service == 'keeper':
-		return startKeeper()
-
-	checkRegistered(service)
+	if service != 'keeper':
+		checkRegistered(service)
 
 	pids = getPIDs(service)
 
@@ -253,12 +239,20 @@ def start(service, warnIfAlreadyStarted = True):
 	# The service is not running, start it
 	pid = os.fork()
 	if pid == 0:
-		daemonize()
+		daemon.DaemonContext(
+			working_directory = getPath(service),
+			umask = 0077,
+		).open()
 
 		# Run the service's starting script piping its output to rotatelogs
 		# FIXME: Fix the services so that they do proper logging themselves
 		extraCommandLine = '2>&1 | /usr/sbin/rotatelogs -L %s %s %s' % (config.logsFileTemplate % service, config.logsFileTemplate % service, config.logsSize)
-		run(service, config.servicesConfiguration[service]['filename'], extraCommandLine = extraCommandLine, replaceProcess = True)
+
+		if service == 'keeper':
+			os.execlp('bash', 'bash', '-c', './keeper.py keep ' + extraCommandLine)
+		else:
+
+			run(service, config.servicesConfiguration[service]['filename'], extraCommandLine = extraCommandLine, replaceProcess = True)
 
 	logger.info('Started %s.', service)
 
@@ -459,6 +453,8 @@ def keep():
 	'''Keeps services up and running.
 	'''
 
+	logger.info('Keeping services up and running...')
+
 	while True:
 		time.sleep(config.timeBetweenChecks)
 
@@ -467,28 +463,6 @@ def keep():
 				start(service, warnIfAlreadyStarted = False)
 			except Exception as e:
 				logger.error(e)
-
-
-def startKeeper():
-	'''Starts the keeper.
-	'''
-
-	pids = getPIDs('keeper')
-
-	if len(pids) > 0:
-		logger.warning('Tried to start the keeper which is already running: %s', ','.join(pids))
-		return
-
-	logger.info('Starting keeper.')
-
-	daemonize(
-		stdout = os.path.join(config.logsDirectory, 'keeper.log'),
-		stderr = os.path.join(config.logsDirectory, 'keeper.log'),
-	)
-
-	logger.info('Started keeper: %s', os.getpid())
-
-	keep()
 
 
 def status():
@@ -534,6 +508,9 @@ def getCommand():
 		'  keeper status             Prints the status of the keeper\n'
 		'                            and all the services, with PIDs.\n'
 		'\n'
+		'  keeper keep               Keeps the services up and running.\n'
+		'                            (this is what the keeper-service runs).\n'
+		'\n'
 		'  <service> can be one of the following:\n'
 		'    all keeper ' + ' '.join(services) + '\n'
 		'    ("all" does not apply for less, tail, lsof nor env).\n'
@@ -553,7 +530,7 @@ def getCommand():
 	command = arguments[0]
 	arguments = arguments[1:]
 
-	commandsWith0Arguments = ['status']
+	commandsWith0Arguments = ['status', 'keep']
 	commandsWith1Arguments = ['start', 'stop', 'restart', 'kill', 'test', 'less', 'tail', 'lsof', 'env']
 	commands = commandsWith0Arguments + commandsWith1Arguments
 
