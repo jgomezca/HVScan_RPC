@@ -32,12 +32,16 @@ class LastIOVSince(object):
             dbName = self.dbName
         else:
             self.dbName = dbName
-        self.rdbms = CondDB.RDBMS(authPath)
-        self.db = self.rdbms.getDB(dbName)
+        if dbName.startswith('frontier'):
+            self.rdbms = CondDB.RDBMS('')
+            self.db = self.rdbms.getReadOnlyDB(str(dbName))
+        else:
+            self.rdbms = CondDB.RDBMS(authPath)
+            self.db = self.rdbms.getDB(dbName)
 
     def getTags(self):
         listTags    =   []
-        self.db.startTransaction()
+        self.db.startReadOnlyTransaction()
         tags = self.db.allTags()
         self.db.commitTransaction()
         for tag in tags.split():
@@ -46,7 +50,7 @@ class LastIOVSince(object):
 
     def iovSequence(self, tag):
         try:
-            self.db.startTransaction()
+            self.db.startReadOnlyTransaction()
             iov =  self.db.iov(tag)
             self.db.commitTransaction()
             return iov
@@ -60,19 +64,22 @@ class LastIOVSince(object):
             lastSince = elem.since()
         return lastSince
 
-    def writeTable(self,silent=0):
-        if(silent == 1):
+    def writeTable(self, silent = False, dbName = None):
+        if dbName is None:
+            dbName = self.dbName
+
+        if silent:
             try:
-                table = self.buildTable()
+                table = self.buildTable(dbName)
             except Exception as e:
 		print e
                 table = "No data"
                 pass
         else:
-            table = self.buildTable()
+            table = self.buildTable(dbName)
         
         #try:
-        fileName = re.sub(r'(://|/)', '_', self.dbName) + '.html'
+        fileName = re.sub(r'(://|/)', '_', dbName) + '.html'
         f = open(os.path.join(self.tablePath, fileName), "w")
         f.write(table)
         f.close()
@@ -138,18 +145,20 @@ class LastIOVSince(object):
 
         return iovlist_formatted
 
-    def writeBigIOV(self,iovSince=1,tag_name="",iovBigContent=""):
-        fileName = re.sub(r'(://|/)', '_', self.dbName) +'_'+tag_name+'.html'
+    def writeBigIOV(self,iovSince=1,tag_name="",iovBigContent="", dbName = None):
+        if dbName is None:
+            dbName = self.dbName
+        fileName = re.sub(r'(://|/)', '_', dbName) +'_'+tag_name+'.html'
         f = open(os.path.join(self.tablePath, fileName), "w")
 	#print os.path.join(self.tablePath, fileName)
         f.write(iovBigContent)
         f.close()
 	return "written iovBigSize:" + os.path.join(self.tablePath, fileName)
 
-    def buildTable(self):
+    def buildTable(self, dbName):
         import time
         listTags    =   []
-        self.db.startTransaction()
+        self.db.startReadOnlyTransaction()
         tags = self.db.allTags()
         result = '<div id="dataCreation">'+str(datetime.datetime.utcnow().strftime("%d %h, %Y %H:%M"))+'</div><table class="display" id="example">'
 	result_js ="\n<script>"
@@ -181,7 +190,7 @@ class LastIOVSince(object):
 	    else:
 		iovBigContent	=	self.formatted_iovList(iovlist,tag.strip(), iov.timetype())
 		#print "\niovContent:"+
-		self.writeBigIOV(iovSince=current_since,tag_name=tag.strip(),iovBigContent=iovBigContent) #(iovContent=,)
+		self.writeBigIOV(iovSince=current_since,tag_name=tag.strip(),iovBigContent=iovBigContent, dbName = dbName) #(iovContent=,)
             result += "</tr>\n"
         result += '</tbody>'
         result += '</table>'

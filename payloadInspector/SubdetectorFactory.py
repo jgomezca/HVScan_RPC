@@ -18,7 +18,7 @@ def get_formated_db_name(dbName):
     """Return formated dbName (each '/' and '://' is replaced by '_')."""
     return re.sub(r'(://|/)', '_', dbName)  
 
-def getDirectory(dbName, tag = '', since = '', fileType = 'png', basedir = './', default = False):
+def getDirectory(dbName, tag = '', since = '', fileType = 'png', basedir = './', default = False, shortName = None):
     if default:
         return  StaticFile.get_directory(get_formated_db_name(dbName), tag = tag, since = since, fileType = fileType, basedir = basedir)
     if re.match(__striptag, os.path.basename(dbName)) != None:
@@ -67,13 +67,16 @@ def getHistoInstance(dbName, tag, since = '1', fileType = 'png', directory = './
     dir = getDirectory(dbName = dbName, tag = tag, since = since, fileType = fileType, basedir = directory)
     return EcalUtils.EcalHisto(dbName = dbName, tag = tag, since = since, fileType = fileType, directory = dir)
     
-def getXMLInstance(dbName, tag, since = '1', fileType = 'tar.gz', directory = './'):
+def getXMLInstance(dbName, tag, since = '1', fileType = 'tar.gz', directory = './', shortName = None):
     #dir = getDirectory(dbName = dbName, tag = tag, since = since, fileType = fileType, basedir = directory)
     #return EcalUtils.EcalXML(dbName = dbName, tag = tag, since = since, fileType = fileType, directory = dir)
     #ecalCondDB = EcalCondDB.EcalCondDB(dbName = dbName)
     #payload = ecalCondDB.get_payload(tag, since)
     #return payload
-    dir = getDirectory(dbName = dbName, tag = tag, since = since, fileType = fileType, basedir = directory)
+    if shortName is not None:
+        dir = getDirectory(dbName = shortName, tag = tag, since = since, fileType = fileType, basedir = directory)
+    else:
+        dir = getDirectory(dbName = dbName, tag = tag, since = since, fileType = fileType, basedir = directory)
     #if re.match(__ecaltag, os.path.basename(dbName)) != None:        
     #    return EcalUtils.EcalXML(dbName = dbName, tag = tag, since = since, fileType = fileType, directory = dir)
     return xmldump.XMLDump(dbName = dbName, tag = tag, since = since, fileType = fileType, directory = dir)

@@ -125,8 +125,8 @@ class CondDBPayloadInspector:
             return ''
 
     def check_dbName_acc(self, dbName, acc, since):
-        if dbName == "Offline Production" or dbName == "Offline Preparation": 
-            if acc in self.get_schemas(dbName):
+        if dbName in service.secrets['connections']:
+            if acc in service.secrets['connections'][dbName]['accounts']:
                 splitedSince = since.split(";");
                 p = re.compile('[0-9]*$')
                 for i in splitedSince:
@@ -195,8 +195,7 @@ class CondDBPayloadInspector:
     
     @cherrypy.expose
     def get_dbs(self):
-	c = readXML()
-	return json.dumps(c.get_dbs())
+	return json.dumps([{'DBID': x, 'DB': x} for x in service.secrets['connections'].keys()])
 
     @cherrypy.expose
     def getDBs(self):
@@ -233,16 +232,8 @@ class CondDBPayloadInspector:
         return self.__condDB_Utils.createJSON('accounts', accounts)
 
     @cherrypy.expose
-    def get_schemas(self, db=""):
-        if db == "":
-            return json.dumps([])
-        c = readXML()
-	connectionNames	=	c.get_connectionNameMasked(dbFilter=db)
-	schemas		=	[{"Account":x[1]} for x in connectionNames["connection names"]]
-	#schemas		=	sorted(schemas.items(), reverse=True)
-	#json.dumps(c.get_dbs())
-	#schemas = [{'Account': '30X_GENERAL'}, {'Account': '30X_CSC'}]
-	return json.dumps(schemas)
+    def get_schemas(self, db = ""):
+        return json.dumps([{'Account': x} for x in service.secrets['connections'][db]['accounts']])
 
     @cherrypy.expose
     #def getSchemas(self, db=""):
@@ -280,17 +271,14 @@ class CondDBPayloadInspector:
     @cherrypy.expose
     def get_lastIovTable(self, dbName='Offline Production', acc='31X_ECAL'):
         self.check_dbName_acc(dbName, acc, '1');
-        dbName = dbName.encode('utf-8')
-	c		=	readXML()
-	fileName	=	c.get_fileName(dbName,acc)
-	return 		open(os.path.join(self.tablePath, fileName), "r").read()
+        fileName = 'frontier_%s_%s.html' % (service.secrets['connections'][dbName]['frontier_name'], acc)
+        return open(os.path.join(self.tablePath, fileName), "r").read()
 
     @cherrypy.expose
     def get_iovContent(self, dbName='Offline production', acc='ECAL LAS for 311X',tagname='EcalLaserAPDPNRatios_v5_online'):
-        self.check_dbName_acc(dbName, acc, '1'); 
-	c		=	readXML()
-	fileName	=	c.get_fileNameIov(dbName,acc,tagname)
-	return 		open(os.path.join(self.tablePath, fileName), "r").read()
+        self.check_dbName_acc(dbName, acc, '1');
+        fileName = 'frontier_%s_%s_%s.html' % (service.secrets['connections'][dbName]['frontier_name'], acc, tagname)
+        return open(os.path.join(self.tablePath, fileName), "r").read()
     
     #return JSON instead of string when frontend is able to understand JSON
     @cherrypy.expose
@@ -502,21 +490,29 @@ class CondDBPayloadInspector:
 	http://webcondvm2:8083/get_xml?dbName=oracle://cms_orcoff_prod/CMS_COND_31X_ECAL&tag=EcalIntercalibConstants_EBg50_EEnoB&since=1;
         '''
         #try:
-	c = readXML()
-	db	=	str(c.dbMap_reverse[dbName]+"/CMS_COND_"+acc)
+	#c = readXML()
+	#db	=	str(c.dbMap_reverse[dbName]+"/CMS_COND_"+acc)
+        connectionString = service.getFrontierConnectionString({
+            'account': acc,
+            'frontier_name': service.secrets['connections'][dbName]['frontier_name'],
+        })
+        shortConnectionString = service.getFrontierConnectionString({
+            'account': acc,
+            'frontier_name': service.secrets['connections'][dbName]['frontier_name'],
+        }, short = True)
 	vtag	=	str(tag)
-        vsince = av.get_validated_since(value = since, db = db, tag = vtag, onlyone = False)
+        vsince = av.get_validated_since(value = since, db = connectionString, tag = vtag, onlyone = False)
         
         if len(vsince.split(';')) == 1:
-            xml = SubdetectorFactory.getXMLInstance(dbName = db, tag = vtag, 
-                                    since = vsince, fileType = 'tar.gz', directory = self.__xmldir)
+            xml = SubdetectorFactory.getXMLInstance(dbName = connectionString, tag = vtag, 
+                                    since = vsince, fileType = 'tar.gz', directory = self.__xmldir, shortName = shortConnectionString)
             data = xml.get()
         else:
             temp = tempfile.TemporaryFile(dir = self.__tmpdir)
             tar = tarfile.open(mode = "w|gz", fileobj = temp)
             for i in vsince.split(';'):
-                xml = SubdetectorFactory.getXMLInstance(dbName = db, tag = vtag, 
-                                        since = i, fileType = 'xml', directory = self.__xmldir)
+                xml = SubdetectorFactory.getXMLInstance(dbName = connectionString, tag = vtag, 
+                                        since = i, fileType = 'xml', directory = self.__xmldir, shortName = shortConnectionString)
                 name = xml.dump()
                 tar.add(name, arcname = os.path.basename(name), recursive = False)
 
@@ -553,13 +549,17 @@ class CondDBPayloadInspector:
         For testing:
         http://HOSTNAME:PORT/get_summary?dbName=oracle://cms_orcoff_prod/CMS_COND_31X_ECAL&tag=EcalIntercalibConstants_EBg50_EEnoB&since=1
         '''
-	c = readXML()
-	db	=	str(c.dbMap_reverse[dbName]+"/CMS_COND_"+acc)
+	#c = readXML()
+	#db	=	str(c.dbMap_reverse[dbName]+"/CMS_COND_"+acc)
+        connectionString = service.getFrontierConnectionString({
+            'account': acc,
+            'frontier_name': service.secrets['connections'][dbName]['frontier_name'],
+        })
 	vtag	=	str(tag)
-        sinces = av.get_validated_since(value = since, db = db, tag = vtag).split(';')
+        sinces = av.get_validated_since(value = since, db = connectionString, tag = vtag).split(';')
         rez = []
         for i in sinces:
-            inst = SubdetectorFactory.getSummaryInstance(dbName = db, tag = vtag, since = str(i))
+            inst = SubdetectorFactory.getSummaryInstance(dbName = connectionString, tag = vtag, since = str(i))
             rez.append({self.get_decorated_since(db = dbName, acc = acc, tag = tag, since = i):inst.summary()})
         return json.dumps({'summary':rez})
             #return SubdetectorFactory.getSummaryInstance().summary()

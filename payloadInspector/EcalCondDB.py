@@ -18,8 +18,12 @@ class EcalCondDB(object):
     self.authPath = authPath
     self.inf="4294967295"	
     FWIncantation()
-    self.rdbms = RDBMS(self.authPath)
-    self.db = self.rdbms.getDB(self.dbName)
+    if dbName.startswith('frontier'):
+        self.rdbms = RDBMS('')
+        self.db = self.rdbms.getReadOnlyDB(str(dbName))
+    else:
+        self.rdbms = RDBMS(self.authPath)
+        self.db = self.rdbms.getDB(self.dbName)
   
   def __fromXML(filename):
     barrel=barrelfromXML(filename)
@@ -78,7 +82,7 @@ class EcalCondDB(object):
   def listTags(self):
     '''List all available tags for a given db '''
     try:
-	self.db.startTransaction()
+	self.db.startReadOnlyTransaction()
         tags = self.db.allTags()
 	self.db.commitTransaction() 
     except:
@@ -89,7 +93,7 @@ class EcalCondDB(object):
     '''List all containers for a given db '''
     tags    =   self.listTags()
     containers  =   []
-    self.db.startTransaction()
+    self.db.startReadOnlyTransaction()
     for tag in tags:
         containers.append([str(tag),str(iter(self.db.iov(tag).payloadClasses()).next())])
 	L = self.db.iov(tag).payloadClasses();
@@ -100,10 +104,12 @@ class EcalCondDB(object):
     self.db.commitTransaction() 
     return containers #tags
 
-  def listContainers_json_writer(self,content=[['tag1', 'ContainerName1'],['tag2', 'ContainerName2']]):
+  def listContainers_json_writer(self,content=[['tag1', 'ContainerName1'],['tag2', 'ContainerName2']], dbName = None):
     '''Write Json File contaning List of all containers for a given account'''
+    if dbName is None:
+        dbName = self.dbName
     #accountName =   re.split('(\W+)', self.dbName)
-    accountName =   self.dbName.replace("/","@")
+    accountName =   dbName.replace("/","@")
     fileName    =   config.folders.json_dir+"/"+accountName+".json"
     #if os.path.exists(fileName):
 	#return "file not written because it exists \n"+fileName
@@ -111,7 +117,7 @@ class EcalCondDB(object):
     jsonContainer   =   {}
     jsonContainer["CreationTime"]       =   strftime("%d %b %Y %H:%M UTC", gmtime())
     jsonContainer["TAGvsContainerName"] =   content
-    jsonContainer["Account"]            =   self.dbName
+    jsonContainer["Account"]            =   dbName
     #print jsonContainer
     f.write(str(jsonContainer))
     f.close()
