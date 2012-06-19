@@ -449,6 +449,26 @@ def env(service):
 			print '%s  %s=%s' % (pid, key, environment[key])
 
 
+def strace(service):
+	'''"strace -ft" a service's processes, without the select, futex,
+	gettimeofday nor poll system calls.
+	'''
+
+	if service != 'keeper':
+		checkRegistered(service)
+
+	pids = getPIDs(service)
+
+	# Service not running
+	if len(pids) == 0:
+		logger.warning('Tried to strace a service (%s) which is not running.' % service)
+		return
+
+	# Replacing the process avoids the traceback when issuing ^C
+	commandLine = 'strace -fte "trace=!select,futex,gettimeofday,poll" -p %s 2>&1' % ' -p '.join(pids)
+	os.execlp('bash', 'bash', '-c', commandLine)
+
+
 def status():
 	'''Print the status of all services.
 	'''
@@ -504,6 +524,8 @@ def getCommand():
 		'  keeper tail    <service>  "tail -f" a service\'s log.\n'
 		'  keeper lsof    <service>  "lsof" a service\'s processes.\n'
 		'  keeper env     <service>  Prints the environment of a service\'s processes.\n'
+		'  keeper strace  <service>  "strace -ft" a service\'s processes, without\n'
+		'                            the select, futex, gettimeofday nor poll system calls.\n'
 		'\n'
 		'  keeper status             Prints the status of the keeper\n'
 		'                            and all the services, with PIDs.\n'
@@ -531,7 +553,7 @@ def getCommand():
 	arguments = arguments[1:]
 
 	commandsWith0Arguments = ['status', 'keep']
-	commandsWith1Arguments = ['start', 'stop', 'restart', 'kill', 'test', 'less', 'tail', 'lsof', 'env']
+	commandsWith1Arguments = ['start', 'stop', 'restart', 'kill', 'test', 'less', 'tail', 'lsof', 'env', 'strace']
 	commands = commandsWith0Arguments + commandsWith1Arguments
 
 	if command not in commands:
