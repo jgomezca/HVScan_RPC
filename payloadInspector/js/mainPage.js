@@ -47,7 +47,7 @@ function get_DBS() {
         dataType: "json",
         async: false,
         success: function (data) { 
-                                     var html = '<option value=""></option>';
+                                     var html = '';
                                      var len = data.length;
                                      for (var i = 0; i < len; i++) {
                                          html += '<option value="' + data[i].DBID+ '"';
