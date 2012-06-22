@@ -73,17 +73,18 @@ def _init():
 	if settings['name'] in secrets.secrets:
 		secrets = secrets.secrets[settings['name']]
 
+	# Initialize the logging module with a common format
+	logging.basicConfig(
+		format = '[%(asctime)s] %(levelname)s: %(message)s',
+		level = logging.INFO
+	)
+
 _init()
 
 
 def start(mainObject):
 	'''Starts the service.
 	'''
-
-	logging.basicConfig(
-		format = '[%(asctime)s] %(levelname)s: %(message)s',
-		level = logging.INFO
-	)
 
 	cherrypy.config.update({
 		'global': {
