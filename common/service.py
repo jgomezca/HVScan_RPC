@@ -19,6 +19,7 @@ import json
 import urllib2
 import datetime
 import xml.sax.saxutils
+import xml.dom.minidom
 
 settings = None
 secrets = None
@@ -167,6 +168,54 @@ def getSqlAlchemyConnectionString(connectionDictionary):
 	'''
 
 	return 'oracle://%s:%s@%s' % (connectionDictionary['user'], connectionDictionary['password'], connectionDictionary['db_name'])
+
+frontierConnectionStringTemplate = None
+def getFrontierConnectionString(connectionDictionary, short = False):
+	'''Returns a connection string for Frontier given
+	a connection dictionary from the secrets file.
+	'''
+
+	if short:
+		return 'frontier://%s/%s' % (connectionDictionary['frontier_name'], connectionDictionary['account'])
+
+	global frontierConnectionStringTemplate
+	if frontierConnectionStringTemplate is None:
+		siteLocalConfigFilename = '/afs/cern.ch/cms/SITECONF/CERN/JobConfig/site-local-config.xml'
+
+		frontierName = ''
+		dom = xml.dom.minidom.parse(siteLocalConfigFilename)
+		nodes = dom.getElementsByTagName('frontier-connect')[0].childNodes
+		for node in nodes:
+			if node.nodeType in frozenset([xml.dom.minidom.Node.TEXT_NODE, xml.dom.minidom.Node.COMMENT_NODE]):
+				continue
+
+			if node.tagName == 'proxy':
+				frontierName += '(proxyurl=%s)' % str(node.attributes['url'].nodeValue)
+
+			if node.tagName == 'server':
+				# Override the frontier name
+				frontierName += '(serverurl=%s/%s)' % (str(node.attributes['url'].nodeValue).rsplit('/', 1)[0], '%s')
+
+		dom.unlink()
+
+		frontierConnectionStringTemplate = 'frontier://%s/%s' % (frontierName, '%s')
+	
+	return frontierConnectionStringTemplate % ((frontierConnectionStringTemplate.count('%s') - 1) * (connectionDictionary['frontier_name'], ) + (connectionDictionary['account'], ))
+
+def getFrontierConnectionStringList(connectionsDictionary):
+	'''Returns a list of connection strings for Frontier given
+	a connections dictionary with multiple accounts from the secrets file.
+	'''
+
+	connectionStringList = []
+
+	for account in connectionsDictionary['accounts']:
+		connectionStringList.append(getFrontierConnectionString({
+			'account': account,
+			'frontier_name': connectionsDictionary['frontier_name']
+		}))
+
+	return connectionStringList
 
 def getWinServicesSoapBaseUrl(connectionDictionary):
 	'''Returns a winservices-soap base URL given a connection dictionary
