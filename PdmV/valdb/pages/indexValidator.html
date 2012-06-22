@@ -69,6 +69,7 @@
 		      <h1  id="title" style="text-align:center; font-family:verdana">ValDb: The PdmV Validation DB</h1>
 		    </div>
 		    <div class="span1">
+		      <span>%USERNAME</span>
 		      <input name = "logOutBTN" class="btn" type="button" value="Logout" onclick="logoutUser();"/>
 		    </div>
 		  </div>
@@ -1134,16 +1135,7 @@ function showMenuURL(category){
     }
 }
   function logoutUser(){
-    $.ajax({
-		type: 'POST',
-		url: 'logoutUser',
-		data: { },
-		dataType: 'json',
-		success: function (data) {if (data.link) {
-                                                  window.location.href = data.link;
-                                        } else {alert(data);}},
-		error: function() { alert("Error in data send"); }
-  });
+    window.location.replace('https://login.cern.ch/adfs/ls/?wa=wsignout1.0');
 }
 </script>
 </html>

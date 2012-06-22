@@ -1,5 +1,6 @@
 import cherrypy
 import os
+import pwd
 import smtplib
 import json as simplejson
 import sys
@@ -21,7 +22,13 @@ connectionDictionary = service.secrets['connections']['dev']
 engine = create_engine(service.getSqlAlchemyConnectionString(connectionDictionary), echo=False)
 Session = sessionmaker(bind=engine)
 
-winServicesSoapBaseUrl = service.getWinServicesSoapBaseUrl(service.secrets['winservices'])
+
+def loadPage(page):
+    if service.settings['productionLevel'] == 'private':
+        username = pwd.getpwuid(os.getuid())[0]
+    else:
+        username = service.getUsername()
+    return open('pages/%s.html' % page, 'rb').read().replace('%USERNAME', username)
 
 
 class AjaxApp(object):
@@ -56,23 +63,35 @@ class AjaxApp(object):
 
     @cherrypy.expose
     def index(self, *args, **kwargs):
-        returned_val = self.checkUserAndSession()
-        if returned_val:
-            cookie = cherrypy.response.cookie
-            cookie['redirectionLink'] = cherrypy.session['redirectionLink']
-            cookie['redirectionLink'] ['max-age'] = 3600
-            cherrypy.session['redirectionLink'] = ""  
-            if self.is_user_in_group(cherrypy.session.get('username')):
-                if checkAdmin(cherrypy.session.get('username'), Session):
-                    return open('pages/indexAdmin.html', "rb").read()
-                elif checkValidator(cherrypy.session.get('username'), Session):
-                    return open('pages/indexValidator.html', "rb").read()
-                else:
-                    return open('pages/indexUser.html', "rb").read()
-            else:
-                return open('pages/indexLogin.html', "rb").read()
+        cherrypy.session.regenerate()
+        cherrypy.session['redirectionLink'] = ""
+
+        # If in a private VM, take the username of the machine
+        if service.settings['productionLevel'] == 'private':
+            cherrypy.session['username'] = pwd.getpwuid(os.getuid())[0]
+            cherrypy.session['fullname'] = pwd.getpwuid(os.getuid())[0]
         else:
-            return open('pages/indexLogin.html', "rb").read()
+            cherrypy.session['username'] = service.getUsername()
+            cherrypy.session['fullname'] = service.getFullName()
+
+        cherrypy.session['userstatus'] = "Success"
+        
+        if not self.is_user_in_group(cherrypy.session.get('username')):
+            cherrypy.response.headers['Content-Type'] = 'application/json'
+            info = "You are not in cms-CERN-users group so you cannot see this page."
+            return simplejson.dumps([info])
+
+        cookie = cherrypy.response.cookie
+        cookie['redirectionLink'] = cherrypy.session['redirectionLink']
+        cookie['redirectionLink'] ['max-age'] = 3600
+        cherrypy.session['redirectionLink'] = ""
+
+        if checkAdmin(cherrypy.session.get('username'), Session):
+            return loadPage('indexAdmin')
+        elif checkValidator(cherrypy.session.get('username'), Session):
+            return loadPage('indexValidator')
+        else:
+            return loadPage('indexUser')
     
     @cherrypy.expose
     def cookieErrorMessage(self):
@@ -103,70 +122,12 @@ class AjaxApp(object):
         except Exception as e:
             raise cherrypy.InternalRedirect('/cookieErrorMessage')
 
-    @cherrypy.expose
-    def redirection(self, username, psw, adress, **kwargs):
-        try:
-            cherrypy.session.regenerate()
-            User_Status = self.user_status(username, psw)
-            User_Name, User_Full_Name = self.get_user_full_name_username(username, psw)
-            cherrypy.session['username'] = User_Name
-            cherrypy.session['fullname'] = User_Full_Name
-            cherrypy.session['userstatus'] = User_Status
-            if cherrypy.session.get('userstatus') == "Success":
-                if self.is_user_in_group(cherrypy.session.get('username')):
-		    cherrypy.session['redirectionLink'] = adress
-                    return simplejson.dumps(self.data)
-                else:
-                    cherrypy.response.headers['Content-Type'] = 'application/json'
-                    info = "You are not in cms-CERN-users group so you cannot see this page."
-                    return simplejson.dumps([info])
-            else:
-                cherrypy.response.headers['Content-Type'] = 'application/json'
-                return simplejson.dumps([str(cherrypy.session.get('userstatus'))])
-        except Exception as e:
-            print "redirection> ERROR :", e
-            print "Unknown error"
-
     def is_user_in_group(self, username):
-        # return True
-        try:
-            request_url = winServicesSoapBaseUrl + 'GetGroupsForUser?UserName=' + username
-            remote_data = urllib.urlopen(request_url).read()
-            search_cms_zh = '<string>'+ 'cms-zh' +'</string>'
-            search_cms_u = '<string>'+ 'cms-CERN-users' +'</string>'
-            if search_cms_u or search_cms_zh in remote_data:
-                return True
-        except Exception as e:
-            print "is_user_in_group> ERROR from soap auth:", e
-            return False
+        # If in a private VM, bypass
+        if service.settings['productionLevel'] == 'private':
+            return True
 
-    def user_status(self, username, psw):
-        dict = {"0" : "Account disabled or activation pending or expired", \
-            "1" : "Invalid password", \
-            "2" : "Incorrect login or E-mail", \
-            "3" : "Success", \
-        }
-        try:
-            request_url = winServicesSoapBaseUrl + 'GetUserInfo?UserName=' + username + '&Password=' + psw
-            remote_data = urllib.urlopen(request_url).read()
-            search_string = '</auth>'
-            return dict[remote_data[remote_data.find(search_string) - 1]]
-        except Exception as e:
-            print "Error in getting information about user, errno=", remote_data[remote_data.find(search_string)-1]
-            print e
-            return None
-
-    def get_user_full_name_username(self, username, psw):
-        try:
-            request_url = winServicesSoapBaseUrl + 'GetUserInfo?UserName=' + username + '&Password=' + psw
-            remote_data = urllib.urlopen(request_url).read()
-            user_name = remote_data[remote_data.find('<login>') + len('<login>'):remote_data.find('</login>')]
-            full_name = remote_data[remote_data.find('<name>') + len('<name>'):remote_data.find('</name>')]
-            return user_name, full_name
-        except Exception as e:
-            print "Error in getting information about user"
-            print e
-            return None, None
+        return 'cms-zh' in service.getGroups() or 'cms-CERN-users' in service.getGroups()
     
     @cherrypy.expose
     def getLogedUserName (self, **kwargs):

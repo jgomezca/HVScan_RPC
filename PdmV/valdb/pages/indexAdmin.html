@@ -389,6 +389,7 @@
 		    </div>
 
 		    <div class="span1">
+		      <span>%USERNAME</span>
 		      <input name = "logOutBTN" class="btn" type="button" value="Logout" onclick="logoutUser();"/>
 		    </div>
 		  </div>
@@ -2012,16 +2013,7 @@ function clearAddUserModal(){
 }
 
  function logoutUser(){
-    $.ajax({
-                type: 'POST',
-                url: 'logoutUser',
-                data: { },
-                dataType: 'json',
-                success: function (data) {if (data.link) {
-                                                  window.location.href = data.link;
-                                        } else {alert(data);}},
-                error: function() { alert("Error in data send"); }
-  });
+    window.location.replace('https://login.cern.ch/adfs/ls/?wa=wsignout1.0');
 }
 function getUserList(){
   document.getElementById('userNameToSearch').value=""

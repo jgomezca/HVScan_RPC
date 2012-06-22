@@ -230,6 +230,9 @@ def getWinServicesSoapBaseUrl(connectionDictionary):
 def getUsername():
     return cherrypy.request.headers['Adfs-Login']
 
+def getFullName():
+    return cherrypy.request.headers['Adfs-Fullname']
+
 def getGroups():
     return cherrypy.request.headers['Adfs-Group'].split(';')
 
