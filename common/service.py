@@ -225,6 +225,14 @@ def getWinServicesSoapBaseUrl(connectionDictionary):
 	return 'https://%s:%s@winservices-soap.web.cern.ch/winservices-soap/Generic/Authentication.asmx/' % (connectionDictionary['user'], connectionDictionary['password'])
 
 
+# Shibboleth functions
+
+def getUsername():
+    return cherrypy.request.headers['Adfs-Login']
+
+def getGroups():
+    return cherrypy.request.headers['Adfs-Group'].split(';')
+
 
 # Functions for testing
 
