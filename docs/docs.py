@@ -131,7 +131,7 @@ class Docs:
 
 			return actionTemplate % (action, service, action, disabledText)
 
-		for service in ['keeper'] + config.getServicesList():
+		for service in ['keeper'] + config.getServicesList(showHiddenServices = True):
 			status = ''
 			url = ''
 			pids = keeper.getPIDs(service)

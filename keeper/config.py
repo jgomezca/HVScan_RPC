@@ -67,53 +67,68 @@ servicesConfiguration = {
 	#    listeningPort: the port the server will listen to
 	#                   (please keep them within the listeningPortsRange
 	#                   or update the range if needed)
+	#    hidden:        the service will not show up in public lists
+	#                   (e.g. in the docs/index.html list)
 
 	'docs': {
 		'filename':       'docs.py',
 		'listeningPort':  8089,
+		'hidden':         False,
 	},
 
 	'getLumi': {
 		'filename':       'lumidb_server.py',
 		'listeningPort':  8086,
+		'hidden':         False,
 	},
 
 	'gtList': {
 		'filename':       'GTServerStarter.py',
 		'listeningPort':  8081,
+		'hidden':         False,
 	},
 
 	'payloadInspector': {
 		'filename':       'PayloadInspector_backend.py',
 		'listeningPort':  8087,
+		'hidden':         False,
 	},
 
 	'PdmV/valdb': {
 		'filename':       'ajax_app.py',
 		'listeningPort':  8080,
+		'hidden':         False,
 	},
 
 	'popcon': {
 		'filename':       'popconBackend.py',
 		'listeningPort':  8082,
+		'hidden':         False,
 	},
 
 	'recordsProvider': {
 		'filename':       'Server.py',
 		'listeningPort':  8088,
+		'hidden':         False,
 	},
 
 	'regressionTest': {
 		'filename':       'webApp.py',
 		'listeningPort':  8083,
+		'hidden':         False,
 	},
 
 }
 
 
-def getServicesList():
+def getServicesList(showHiddenServices = False):
 	'''Returns a sorted list of the services' names.
 	'''
 
-	return sorted(list(servicesConfiguration), key = str.lower)
+	services = list(servicesConfiguration)
+
+	if not showHiddenServices:
+		services = [service for service in services if not servicesConfiguration[service]['hidden']]
+
+	return sorted(services, key = str.lower)
 

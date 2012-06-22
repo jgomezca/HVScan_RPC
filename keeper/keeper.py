@@ -12,7 +12,7 @@ __email__ = 'mojedasa@cern.ch'
 
 import config
 
-services = config.getServicesList()
+services = config.getServicesList(showHiddenServices = True)
 
 
 import os
