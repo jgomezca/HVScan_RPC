@@ -61,6 +61,7 @@ function get_DBS() {
                                      $('#DBservice').change(function(list_item){
                                          getOptions(list_item.target.options[list_item.target.selectedIndex].text);
                                      });
+                                     $('#DBservice').change();
                                   },
         error: function() { CMSVersion = ""; alert("Error in data send while getting dbs"); }
     });
