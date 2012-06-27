@@ -388,6 +388,40 @@ def test(service):
 	return state
 
 
+def pylint(argument):
+	'''Checks a service's (or the keeper's) code or a file.
+	'''
+
+	#-mo FIXME: Add support for several files, etc. I want to improve
+	#           how arguments are passed to all keeper's commands.
+
+	files = argument
+	if isRegistered(argument) or argument == 'keeper':
+		os.chdir(getPath(argument))
+		files = '*.py'
+
+	#-mo FIXME: In the future we won't need to use the IB from AFS.
+	#-mo FIXME: The ruleset will need to be refined.
+	subprocess.call(
+		'export SCRAM_ARCH=slc5_amd64_gcc462 ; '
+		'pushd `scram l | grep -F 6_0_X | tail -1 | awk \'{print $2}\'` >/dev/null ; '
+		'eval `scramv1 runtime -sh` ; '
+		'popd >/dev/null ; '
+		'pylint '
+		'-iy '
+		'--good-names=i,j,k,e,f,s '
+		'--module-rgx="[a-z_][a-zA-Z0-9_]{2,30}$" '
+		'--const-rgx="[a-z_][a-zA-Z0-9_]{2,30}$" '
+		'--function-rgx="[a-z_][a-zA-Z0-9_]{2,30}$" '
+		'--method-rgx="[a-z_][a-zA-Z0-9_]{2,30}$" '
+		'--attr-rgx="[a-z_][a-zA-Z0-9_]{2,30}$" '
+		'--argument-rgx="[a-z_][a-zA-Z0-9_]{2,30}$" '
+		'--variable-rgx="[a-z_][a-zA-Z0-9_]{2,30}$" '
+		'%s' % files,
+		shell = True
+	)
+
+
 def less(service):
 	'''"less" a service\'s log.
 	'''
@@ -519,6 +553,8 @@ def getCommand():
 		'  keeper kill    <service>  "kill -9" a service.\n'
 		'\n'
 		'  keeper test    <service>  Runs a service\'s test suite.\n'
+		'  keeper pylint  <service>  Checks a service\'s code.\n'
+		'  keeper pylint  <file>     Checks a Python script.\n'
 		'\n'
 		'  keeper less    <service>  "less" a service\'s log.\n'
 		'  keeper tail    <service>  "tail -f" a service\'s log.\n'
@@ -553,7 +589,7 @@ def getCommand():
 	arguments = arguments[1:]
 
 	commandsWith0Arguments = ['status', 'keep']
-	commandsWith1Arguments = ['start', 'stop', 'restart', 'kill', 'test', 'less', 'tail', 'lsof', 'env', 'strace']
+	commandsWith1Arguments = ['start', 'stop', 'restart', 'kill', 'test', 'pylint', 'less', 'tail', 'lsof', 'env', 'strace']
 	commands = commandsWith0Arguments + commandsWith1Arguments
 
 	if command not in commands:
