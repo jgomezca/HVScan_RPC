@@ -354,14 +354,14 @@ proxyPass = '''
 '''
 
 proxyPassLoadBalanced = '''
-   <Proxy balancer://{url}>
+   <Proxy balancer://{balancerName}>
       {balancerMembers}
       ProxySet stickysession=ROUTEID
    </Proxy>
    <Location /{url}>
       Header add Set-Cookie "ROUTEID=.%{{BALANCER_WORKER_ROUTE}}e; path=/{url}" env=BALANCER_ROUTE_CHANGED
-      ProxyPass        balancer://{url}
-      ProxyPassReverse balancer://{url}
+      ProxyPass        balancer://{balancerName}
+      ProxyPassReverse balancer://{balancerName}
    </Location>
 '''
 
@@ -456,7 +456,13 @@ def makeApacheConfiguration(virtualHost):
                     dictCopy = dict(services[service])
                     dictCopy.update(backendHostname = backendHostname)
                     balancerMembers += balancerMember.format(route = route, **dictCopy)
-                infoMap['proxyPass'] += proxyPassLoadBalanced.format(balancerMembers = balancerMembers, **services[service])
+                infoMap['proxyPass'] += proxyPassLoadBalanced.format(
+                    balancerMembers = balancerMembers,
+                    # We can't use the url as the balancerName
+                    # if the 'url' contains slashes, e.g. PdmV/valdb.
+                    balancerName = services[service]['url'].replace('/', '_'),
+                    **services[service]
+                )
 
         if 'shibbolethGroups' in services[service]:
             services[service]['shibbolethGroupsText'] = ' '.join(['"%s"' % x for x in services[service]['shibbolethGroups']])
