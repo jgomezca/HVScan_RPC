@@ -404,9 +404,16 @@ shibbolethMatch = shibbolethTemplate.format(
 )
 
 
+class NotRegisteredError(Exception):
+    pass
+
+
 def makeApacheConfiguration(virtualHost):
     '''Returns an Apache configuration file for the given virtualHost
     '''
+
+    if virtualHost not in virtualHosts:
+        raise NotRegisteredError('Error: %s is not in the registered virtual hosts.' % virtualHost)
 
     infoMap = virtualHosts[virtualHost]
     infoMap['virtualHost'] = virtualHost
@@ -484,6 +491,9 @@ def buildApacheConfiguration(frontend):
     '''Builds all the Apache configuration files for a given frontend.
     '''
 
+    if frontend not in frontends:
+        raise NotRegisteredError('Error: %s is not in the registered frontends.' % frontend)
+
     for virtualHost in frontends[frontend]:
         with open('%s.conf' % virtualHost, 'w') as f:
             f.write(makeApacheConfiguration(virtualHost))
@@ -491,19 +501,18 @@ def buildApacheConfiguration(frontend):
 
 def main():
     '''Prints an Apache configuration file for a given virtualHost
-    (passed as a command line argument) or regenerates all the configuration
-    files for a frontend (passed as a command line argument)
+    or regenerates all the configuration files for a frontend
     or for the current one (if no arguments are passed).
     '''
 
     scriptName = os.path.basename(__file__)
 
     parser = optparse.OptionParser(usage =
-        'Usage: %s <virtualHost>\n'
+        'Usage: %s -v <virtualHost>\n'
         '  where <virtualHost> can be one of:\n'
         '  %s\n'
         '\n'
-        'or: %s <frontend>\n'
+        'or: %s -f <frontend>\n'
         '  where <frontend> can be one of:\n'
         '  %s\n'
         '\n'
@@ -516,37 +525,40 @@ def main():
         )
     )
 
-    arguments = parser.parse_args()[1]
+    parser.add_option('-v', '--virtualHost',
+        dest = 'virtualHost',
+        default = None,
+        help = 'The virtual host for which the .conf file will be printed to stdout.'
+    )
 
-    if len(arguments) == 0:
-        # Regenerates all the configuration files for the current frontend
-        frontend = socket.gethostname().rstrip('.cern.ch')
-        if frontend not in frontends:
-            print 'Error: %s is not in the registered frontends.' % frontend
-            parser.print_help()
-            sys.exit(-1)
+    parser.add_option('-f', '--frontend',
+        dest = 'frontend',
+        default = None,
+        help = 'The frontend for which all its virtual host .conf files will be written.'
+    )
 
-        buildApacheConfiguration(frontend)
+    (options, arguments) = parser.parse_args()
 
-        return
-
-    if len(arguments) == 1:
-        # Prints an Apache configuration file for a given virtualHost
-        argument = arguments[0]
-
-        if argument in frontends:
-            buildApacheConfiguration(argument)
+    try:
+        if options.virtualHost:
+            print makeApacheConfiguration(options.virtualHost),
             return
 
-        if argument in virtualHosts:
-            print makeApacheConfiguration(argument),
+        if options.frontend:
+            buildApacheConfiguration(options.frontend)
             return
 
+        if len(arguments) == 0:
+            buildApacheConfiguration(socket.gethostname().rstrip('.cern.ch'))
+            return
+    except NotRegisteredError as e:
+        print str(e)
+        print
         parser.print_help()
-        sys.exit(-2)
+        sys.exit(-1)
 
     parser.print_help()
-    sys.exit(-3)
+    sys.exit(-2)
 
 
 if __name__ == '__main__':
