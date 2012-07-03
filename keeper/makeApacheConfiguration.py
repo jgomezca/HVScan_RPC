@@ -296,7 +296,6 @@ mainTemplate = '''
 
    SSLCertificateFile    /etc/grid-security/hostcert.pem
    SSLCertificateKeyFile /etc/grid-security/hostkey.pem
-   SSLCACertificatePath  /etc/grid-security/certificates
 
    {security}
 
