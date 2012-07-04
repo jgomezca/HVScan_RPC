@@ -49,6 +49,7 @@ virtualHosts = {
         'backendHostnames': ['vocms145'],
         'services': [
             # Keeper's services
+            'admin',
             'docs', 'getLumi', 'gtList', 'payloadInspector', 'PdmV/valdb',
             'popcon', 'recordsProvider', 'regressionTest', 'shibbolethTest',
 
@@ -267,6 +268,7 @@ for service in config.servicesConfiguration:
 services['docs']['redirectRoot'] = True
 
 # Set the allowed groups for services behind Shibboleth
+services['admin']['shibbolethGroups'] = ['cms-conddb-dev']
 services['PdmV/valdb']['shibbolethGroups'] = ['cms-web-access']
 services['shibbolethTest']['shibbolethGroups'] = ['zh']
 

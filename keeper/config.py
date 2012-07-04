@@ -83,6 +83,12 @@ servicesConfiguration = {
 	#    hidden:        the service will not show up in public lists
 	#                   (e.g. in the docs/index.html list)
 
+	'admin': {
+		'filename':       'admin.py',
+		'listeningPort':  8092,
+		'hidden':         False,
+	},
+
 	'docs': {
 		'filename':       'docs.py',
 		'listeningPort':  8089,
