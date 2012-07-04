@@ -417,7 +417,7 @@ def makeApacheConfiguration(virtualHost):
 
     infoMap = virtualHosts[virtualHost]
     infoMap['virtualHost'] = virtualHost
-    infoMap['IP'] = socket.gethostbyname(socket.gethostname())
+    infoMap['IP'] = socket.gethostbyname(infoMap['virtualHost'])
     infoMap['security'] = security
     infoMap['redirectRoot'] = ''
     infoMap['addingSlashes'] = ''
