@@ -149,11 +149,7 @@ def main():
 
 	servicesList = ''
 	for service in config.getServicesList():
-		# On private machines there is no proxy so we need to specify the port
-		if config.getProductionLevel() == 'private':
-			servicesList += '<li><a href="https://%s:%s/%s/">%s</a></li>' % (socket.gethostname(), str(config.servicesConfiguration[service]['listeningPort']), service, service)
-		else:
-			servicesList += '<li><a href="/%s/">%s</a></li>' % (service, service)
+		servicesList += '<li><a href="/%s/">%s</a></li>' % (service, service)
 
 	bodyText = '''
 		<h1>%s</h1>

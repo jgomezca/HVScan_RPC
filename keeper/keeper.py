@@ -516,7 +516,12 @@ def status():
 		if len(pids) > 0:
 			status = ' RUNNING: ' + ','.join(pids)
 			if service != 'keeper':
-				status += ' at https://' + socket.gethostname() + ':' +  str(config.servicesConfiguration[service]['listeningPort']) + '/' + service + '/'
+				if config.getProductionLevel() == 'private':
+					status += ' at https://%s/%s/' % (socket.gethostname(), service)
+				else:
+					# FIXME: Report the URL of the front-end (more consistent with 'private',
+					#        and also allows us to rely on absolute paths in the future, e.g. /libs)
+					status += ' at https://%s:%s/%s/' % (socket.gethostname(), str(config.servicesConfiguration[service]['listeningPort']), service)
 		else:
 			status = ' --------'
 

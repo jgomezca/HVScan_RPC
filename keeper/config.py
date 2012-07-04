@@ -34,6 +34,19 @@ startedServiceEmailAddresses = ['cms-cond-dev@cern.ch']
 listeningPortsRange = (8080, 8099)
 
 
+hostCertificateFiles = {
+	'private': {
+		'crt': '/etc/pki/tls/certs/localhost.crt',
+		'key': '/etc/pki/tls/private/localhost.key',
+	},
+
+	'devintpro': {
+		'crt': '/etc/grid-security/hostcert.pem',
+		'key': '/etc/grid-security/hostkey.pem',
+	},
+}
+
+
 productionLevels = {
 	'vocms145.cern.ch': 'dev',
 	'vocms146.cern.ch': 'int',

@@ -23,17 +23,6 @@ defaultCmsswRepository = os.path.join(defaultRepositoryBase, 'cmssw.git')
 
 # In the rsync format
 secretsSource = '/afs/cern.ch/cms/DB/conddb/internal/webServices/secrets'
-hostCertificateFiles = {
-	'private': {
-		'crt': '/etc/pki/tls/certs/localhost.crt',
-		'key': '/etc/pki/tls/private/localhost.key',
-	},
-
-	'devintpro': {
-		'crt': '/etc/grid-security/hostcert.pem',
-		'key': '/etc/grid-security/hostkey.pem',
-	},
-}
 
 
 import sys
@@ -153,12 +142,12 @@ def getSecrets():
 	if config.getProductionLevel() == 'private':
 		# In a private machine (e.g. VM), copy the localhost
 		# certificates installed by the mod_ssl package
-		execute('sudo rsync -a %s secrets/hostcert.pem' % hostCertificateFiles['private']['crt'])
-		execute('sudo rsync -a %s secrets/hostkey.pem'  % hostCertificateFiles['private']['key'])
+		execute('sudo rsync -a %s secrets/hostcert.pem' % config.hostCertificateFiles['private']['crt'])
+		execute('sudo rsync -a %s secrets/hostkey.pem'  % config.hostCertificateFiles['private']['key'])
 	else:
 		# In dev/int/pro, copy the grid-security certificates
-		execute('sudo rsync -a %s secrets/hostcert.pem' % hostCertificateFiles['devintpro']['crt'])
-		execute('sudo rsync -a %s secrets/hostkey.pem'  % hostCertificateFiles['devintpro']['key'])
+		execute('sudo rsync -a %s secrets/hostcert.pem' % config.hostCertificateFiles['devintpro']['crt'])
+		execute('sudo rsync -a %s secrets/hostkey.pem'  % config.hostCertificateFiles['devintpro']['key'])
 
 	# Ensure that ownership and file mode bits are strict for secrets
 	# First change the bits so that no one from the new group (e.g. zh)
@@ -188,6 +177,38 @@ def generateDocs():
 	execute('cd services/docs && ./generate.py')
 
 
+def configureApache():
+	'''Generates the Apache configuration by calling services/keeper/makeApacheConfiguration.py,
+	asks for a 'graceful' restart to Apache and sets SELinux's httpd_can_network_connect to 'on'.
+	'''
+
+	# FIXME: For the moment, only meant for private machines.
+	if config.getProductionLevel() != 'private':
+		return
+
+	execute('cd /etc/httpd/conf.d && sudo %s' % os.path.join(os.getcwd(), 'services/keeper/makeApacheConfiguration.py -f private'))
+	execute('sudo /usr/sbin/setsebool -P httpd_can_network_connect on')
+	execute('sudo /etc/init.d/httpd graceful')
+
+
+def openPort(port):
+	'''Open a port in iptables. Returns True if the table was modified.
+	'''
+
+	# Try to find the rule in iptables
+	try:
+		execute('sudo /sbin/iptables -L -n | grep -F \'state NEW tcp dpt:%s\' | grep -F ACCEPT' % port)
+	except:
+		# Ask the user whether it should be opened
+		logger.warning('The port %s does not *seem* open.' % port)
+		command = 'sudo /sbin/iptables -I INPUT -p tcp -m state --state NEW -m tcp --dport %s -j ACCEPT' % port
+		answer = raw_input('\nWould you like to run:\n\n    %s\n\nto insert the rule in the top of the INPUT chain? [y/N] ' % command)
+		if answer == 'y':
+			execute(command)
+
+			return True
+
+
 def updateIptables():
 	'''Updates iptables and saves the results.
 	
@@ -199,22 +220,14 @@ def updateIptables():
 	if config.getProductionLevel() != 'private':
 		return
 
-	# Try to find the rule in iptables
-	try:
-		execute('sudo /sbin/iptables -L -n | grep -F \'state NEW tcp dpts:%s:%s\' | grep -F ACCEPT' % config.listeningPortsRange)
-	except:
-		# Ask the user whether it should be opened
-		logger.warning('The port range %s:%s does not *seem* open.' % config.listeningPortsRange)
-		command = 'sudo /sbin/iptables -I INPUT -p tcp -m state --state NEW -m tcp --dport %s:%s -j ACCEPT' % config.listeningPortsRange
-		answer = raw_input('\nWould you like to run:\n\n    %s\n\nto insert the rule in the top of the INPUT chain? [y/N] ' % command)
+	ports = [80, 443]
+
+	if any([openPort(port) for port in ports]):
+		# Ask the user whether we should save the new table
+		command = 'sudo /sbin/service iptables save'
+		answer = raw_input('\nAs the current iptables changed, would you like to run:\n\n    %s\n\nto save them? (note: this *replaces* the current /etc/sysconfig/iptables with the current table) [y/N] ' % command)
 		if answer == 'y':
 			execute(command)
-
-			# Ask the user whether we should save the new table
-			command = 'sudo /sbin/service iptables save'
-			answer = raw_input('\nAs the current iptables changed, would you like to run:\n\n    %s\n\nto save them? (note: this *replaces* the current /etc/sysconfig/iptables with the current table) [y/N] ' % command)
-			if answer == 'y':
-				execute(command)
 
 
 def checkPackage(package):
@@ -276,10 +289,10 @@ def checkRequirements(options):
 		except:
 			raise Exception('This script requires mod_ssl to be installed (in private machines, the host certificate is taken from mod_ssl.')
 	try:
-		execute('test -f %s' % hostCertificateFiles[level]['crt'])
-		execute('test -f %s' % hostCertificateFiles[level]['key'])
+		execute('test -f %s' % config.hostCertificateFiles[level]['crt'])
+		execute('test -f %s' % config.hostCertificateFiles[level]['key'])
 	except:
-		raise Exception('This script requires the host certificate to be installed: %s and %s must exist.' % (hostCertificateFiles[level]['crt'], hostCertificateFiles[level]['key']))
+		raise Exception('This script requires the host certificate to be installed: %s and %s must exist.' % (config.hostCertificateFiles[level]['crt'], config.hostCertificateFiles[level]['key']))
 
 
 def update(options):
@@ -322,6 +335,9 @@ def update(options):
 
 	# Regenerate the docs
 	generateDocs()
+
+	# Configure Apache frontend(s)
+	configureApache()
 
 	# Update iptables
 	updateIptables()
@@ -446,6 +462,9 @@ def deploy(options):
 
 	# Generate docs
 	generateDocs()
+
+	# Configure Apache frontend(s)
+	configureApache()
 
 	# Update iptables
 	updateIptables()

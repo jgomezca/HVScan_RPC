@@ -29,6 +29,8 @@ frontends = {
     # vocms{150,151} = cmsdbfe{1,2}
     'vocms150': ['cms-conddb-prod1'],
     'vocms151': ['cms-conddb-prod2'],
+
+    'private': ['private'],
 }
 
 # Aliases
@@ -99,6 +101,13 @@ virtualHosts = {
         'services': ['cms-popularity'],
     },
 }
+
+# private is a special virtual host which must be the same as -dev but
+# with the 'backendHostnames' pointing to the localhost (but using
+# the real hostname, not localhost nor 127.0.0.1, since the services only
+# listen in the real IP)
+virtualHosts['private'] = dict(virtualHosts['cms-conddb-dev'])
+virtualHosts['private']['backendHostnames'] = [socket.gethostname()]
 
 # cms-conddb-int must be exactly the same as -dev but with different
 # 'backendHostnames' and the production gtc instead of gtc-dev
@@ -294,8 +303,8 @@ mainTemplate = '''
    #AB SSLCipherSuite ALL:!ADH:!EXPORT:!SSLv2:RC4+RSA:+HIGH:+MEDIUM:+LOW
    SSLCipherSuite HIGH:MEDIUM:-LOW:-SSLv2
 
-   SSLCertificateFile    /etc/grid-security/hostcert.pem
-   SSLCertificateKeyFile /etc/grid-security/hostkey.pem
+   SSLCertificateFile    {hostcert}
+   SSLCertificateKeyFile {hostkey}
 
    {security}
 
@@ -416,7 +425,14 @@ def makeApacheConfiguration(virtualHost):
         raise NotRegisteredError('Error: %s is not in the registered virtual hosts.' % virtualHost)
 
     infoMap = virtualHosts[virtualHost]
-    infoMap['virtualHost'] = virtualHost
+    if virtualHost == 'private':
+        infoMap['virtualHost'] = socket.gethostname()
+        infoMap['hostcert'] = config.hostCertificateFiles['private']['crt']
+        infoMap['hostkey'] = config.hostCertificateFiles['private']['key']
+    else:
+        infoMap['virtualHost'] = virtualHost
+        infoMap['hostcert'] = config.hostCertificateFiles['devintpro']['crt']
+        infoMap['hostkey'] = config.hostCertificateFiles['devintpro']['key']
     infoMap['IP'] = socket.gethostbyname(infoMap['virtualHost'])
     infoMap['security'] = security
     infoMap['redirectRoot'] = ''
@@ -470,7 +486,7 @@ def makeApacheConfiguration(virtualHost):
                     **services[service]
                 )
 
-        if 'shibbolethGroups' in services[service]:
+        if 'shibbolethGroups' in services[service] and virtualHost != 'private':
             services[service]['shibbolethGroupsText'] = ' '.join(['"%s"' % x for x in services[service]['shibbolethGroups']])
 
             if 'shibbolethMatch' in services[service]:
