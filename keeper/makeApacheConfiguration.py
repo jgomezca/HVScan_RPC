@@ -329,8 +329,9 @@ mainTemplate = '''
 '''
 
 security = '''
-   # This secures the server from being used as a third party proxy server
+   # This secures the server from being used as a forward (third party) proxy server
    ProxyRequests Off
+
    ProxyPreserveHost On
    ProxyVia On
 
