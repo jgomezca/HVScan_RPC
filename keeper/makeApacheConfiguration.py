@@ -333,7 +333,7 @@ security = '''
    ProxyRequests Off
 
    ProxyPreserveHost On
-   ProxyVia On
+   ProxyVia Block
 
    ### for Computer.Security @ CERN
    RewriteEngine on
