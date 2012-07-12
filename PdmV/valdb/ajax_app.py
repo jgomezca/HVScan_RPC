@@ -2,6 +2,7 @@ import cherrypy
 import os
 import pwd
 import smtplib
+import email
 import json as simplejson
 import sys
 from database_access import *
@@ -45,11 +46,13 @@ class AjaxApp(object):
             'PFast' : ('PAGs', 'FastSim'),	
         }
 
-    MAILING_LIST = ["danilo.piparo@cern.ch", "jean-roch.vlimant@cern.ch", "a.tilmantas@gmail.com"]
+    MAILING_LIST = ["anorkus@cern.ch"]
     VALIDATION_STATUS = "VALIDATION_STATUS"
     COMMENTS = "COMMENTS"
     LINKS = "LINKS"
     USER_NAME = "USER_NAME"
+    MESSAGE_ID = 'MESSAGE_ID'
+    EMAIL_SUBJECT = 'EMAIL_SUBJECT'
     data = { "link" : "index" }
     
     @cherrypy.expose
@@ -181,24 +184,28 @@ class AjaxApp(object):
                 cherrypy.response.headers['Content-Type'] = 'text/html'
                 dictionaryFull = {}
                 returnedInformation = {}
+                mime_MSG_id = email.utils.make_msgid()
+                msgSubject = "New release " + relName + " was added"
                 for index in range(len(statusNames)):
                     tmpDictionary = {}
                     tmpDictionary[VALIDATION_STATUS] = statusValues[index]
                     tmpDictionary[COMMENTS] = statComments[index]
                     tmpDictionary[LINKS] = statLinks[index]
                     tmpDictionary[USER_NAME] = statAuthors[index]
+                    tmpDictionary[MESSAGE_ID] = mime_MSG_id
+                    tmpDictionary['EMAIL_SUBJECT'] = msgSubject
                     dictionaryFull[statusNames[index]] = tmpDictionary
                 returnedInformation = newRelease(categ, subCat, relName, simplejson.dumps(dictionaryFull), Session)
                 if returnedInformation == "True":
                     msgText = """ New release: %s In category: %s In subcategory: %s Was added. Check it!
                     """ % (relName.upper(), categ.upper(), subCat.upper())
-                    msgSubject = "New release was added"
-                    self.sendMailOnChanges(msgText, msgSubject)
+                    self.sendMailOnChanges(msgText, msgSubject, None, mime_MSG_id)
                     info = "New release added successfuly"
                     cherrypy.response.headers['Content-Type'] = 'application/json'
                     return simplejson.dumps([info])
                 else:
                     cherrypy.response.headers['Content-Type'] = 'application/json'
+                    info = 'Error. In parameters settings'
                     return simplejson.dumps([returnedInformation])
             else:
                 cherrypy.response.headers['Content-Type'] = 'application/json'
@@ -218,12 +225,15 @@ class AjaxApp(object):
             configuration = self.configuration
             cat, subCat = configuration.get(catSubCat, (None,None))
             returnedStatusValueOld = getStatus(cat, subCat, relName, statusKind, Session)
-            returnedInformation = changeStatus(cat, subCat, relName, statusKind, stateValue, newComment, comentAuthor, newLinks, Session)
+            #returnedStatusValueOld - tuple: 0 is old status, 1 is old messageID
+            #make new messageID
+            new_message_ID = email.utils.make_msgid()
+            msgSubject = "Re: "+returnedStatusValueOld[2]+""
+            returnedInformation = changeStatus(cat, subCat, relName, statusKind, stateValue, newComment, comentAuthor, newLinks, Session, new_message_ID, msgSubject)
             if returnedInformation == "True":
                 msgText = """Release: %s In category: %s In subcategory: %s In column: %s Has Changed: From status: %s To status: %s By: %s Comment: %s
-                    """ % (relName.upper(), cat.upper(), subCat.upper(), statusKind.upper(), returnedStatusValueOld.upper(), stateValue.upper(), comentAuthor.upper(), newComment)
-                msgSubject = "Release information was updated"
-                self.sendMailOnChanges(msgText, msgSubject)
+                    """ % (relName.upper(), cat.upper(), subCat.upper(), statusKind.upper(), returnedStatusValueOld[0].upper(), stateValue.upper(), comentAuthor.upper(), newComment)
+                self.sendMailOnChanges(msgText, msgSubject, returnedStatusValueOld[1], new_message_ID)
                 info = "Release information updated successfuly"
                 cherrypy.response.headers['Content-Type'] = 'application/json'
                 return simplejson.dumps([info])
@@ -341,14 +351,20 @@ class AjaxApp(object):
         else:
             cherrypy.InternalRedirect('/index')
 
-    def sendMailOnChanges(self, messageText, emailSubject, **kwargs):
+    def sendMailOnChanges(self, messageText, emailSubject, org_message_ID, new_message_ID, **kwargs):
         msg = MIMEMultipart()
+        if org_message_ID != None:
+            msg['In-Reply-To'] = org_message_ID
+            msg['References'] = org_message_ID
+            
         send_from = "PdmV.ValDb@cern.ch"
         msg['From'] = send_from
         send_to = self.MAILING_LIST
         msg['To'] = COMMASPACE.join(send_to)
         msg['Date'] = formatdate(localtime=True)
         msg['Subject'] = emailSubject
+        msg['Message-ID'] = new_message_ID
+            
         try:
             msg.attach(MIMEText(messageText))
             smtpObj = smtplib.SMTP()

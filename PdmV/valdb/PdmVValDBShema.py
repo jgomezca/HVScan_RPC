@@ -1,8 +1,16 @@
-#-mo TODO: Properly explain that this script is used to create the schema
-#           in the development DB.
+#!/usr/bin/python2.6
+'''Script used to create the DB schema.
+'''
+
+if __name__ == '__main__':
+    import sys
+    if '--productionLevel' not in sys.argv:
+        sys.path.insert(0, '/data/services/keeper')
+        import keeper
+        keeper.run('PdmV/valdb', sys.argv[0], replaceProcess = True)
 
 from sqlalchemy import create_engine, DateTime, MetaData, Column, Table, ForeignKey, Integer, String , Sequence, Boolean
-from ConStrParser import *
+import service
 
 connectionDictionary = service.secrets['connections']['dev']
 engine = create_engine(service.getSqlAlchemyConnectionString(connectionDictionary), echo=False)
@@ -32,14 +40,18 @@ status_table = Table('status', metadata,
                     Column('validation_status', String(50), default="NOT YET DONE", nullable=False),
                     Column('comments', String(2000)),
                     Column('links', String(1000)),
-                    Column('user_name', String(100), nullable=False))
+                    Column('user_name', String(100), nullable=False),
+                    Column('messageID', String(200), nullable=False),
+                    Column('email_subject', String(100), nullable=False))
                     
 status_lv_table = Table('status_lv', metadata,
                     Column('id', Integer, ForeignKey("releases_lv.id"), primary_key=True, nullable=False),
                     Column('validation_status', String(50), default="NOT YET DONE", nullable=False),
                     Column('comments', String(2000)),
                     Column('links', String(1000)),
-                    Column('user_name', String(100), nullable=False))
+                    Column('user_name', String(100), nullable=False),
+                    Column('messageID', String(200), nullable=False),
+                    Column('email_subject', String(100), nullable=False))
                    
 users_table = Table('users', metadata,
                     Column('user_name', String(100), nullable=False, primary_key=True),

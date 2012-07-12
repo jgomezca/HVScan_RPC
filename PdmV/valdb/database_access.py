@@ -59,13 +59,17 @@ class Status_Table(Base):
     comments = Column(String)
     links = Column(String)
     user_name = Column(String, nullable=False)
+    messageID = Column(String, nullable=False)
+    email_subject = Column(String, nullable=False)
 
-    def __init__(self, id, validation_status, comments, links, user_name):
+    def __init__(self, id, validation_status, comments, links, user_name, messageID, email_subject):
         self.id = id
         self.validation_status = validation_status
         self.comments = comments
         self.links = links
         self.user_name = user_name
+        self.messageID = messageID
+        self.email_subject = email_subject
 
     def __repr__(self):
        return "<Status_Table('%d','%s', '%s', '%s', '%s')>" % (self.id, self.validation_status, self.comments, self.links, self.user_name)
@@ -78,13 +82,17 @@ class Status_LV_Table(Base):
     comments = Column(String)
     links = Column(String)
     user_name = Column(String, nullable=False)
+    messageID = Column(String, nullable=False)
+    email_subject = Column(String, nullable=False)
 
-    def __init__(self, id, validation_status, comments, links, user_name):
+    def __init__(self, id, validation_status, comments, links, user_name, messageID, email_subject):
         self.id = id
         self.validation_status = validation_status
         self.comments = comments
         self.links = links
         self.user_name = user_name
+        self.messageID = messageID
+        self.email_subject = email_subject
 
     def __repr__(self):
        return "<Status_LV_Table('%d','%s', '%s', '%s', '%s')>" % (self.id, self.validation_status, self.comments, self.links, self.user_name)
@@ -130,8 +138,10 @@ COMMENTS = "COMMENTS"
 LINKS = "LINKS"
 META_DATE = "META_DATE"
 USER_NAME = "USER_NAME"
-CATEGORY = "CATEBORY"
+CATEGORY = "CATEGORY"
 SUBCATEGORY = "SUBCATEGORY"
+MESSAGE_ID = 'MESSAGE_ID'
+EMAIL_SUBJECT = 'EMAIL_SUBJECT'
     
 possible_status_list = ["OK", 
                         "NOT YET DONE", 
@@ -176,7 +186,7 @@ def getStatus(cat, sub_cat, rel_name, status_kind, Session):
             id = i.id
         for i in session.query(Status_Table).filter(Status_Table.id == id):
             session.close()
-            return i.validation_status
+            return i.validation_status, i.messageID, i.email_subject
         session.close()
         return "Error! Unknown status kind"
     except Exception as e:
@@ -345,7 +355,7 @@ def newRelease(cat, sub_cat, rel_name, dict_json, Session, *args):
             user_name = dict[status_kind][USER_NAME]
             if user_name == "":
                 user_name = "Unknown name"
-            status = Status_Table(id, dict[status_kind][VALIDATION_STATUS], dict[status_kind][COMMENTS], dict[status_kind][LINKS], user_name)
+            status = Status_Table(id, dict[status_kind][VALIDATION_STATUS], dict[status_kind][COMMENTS], dict[status_kind][LINKS], user_name, dict[status_kind][MESSAGE_ID], dict[status_kind][EMAIL_SUBJECT])
             session.add(status)
             release_lv = Releases_LV_Table(id, cat, sub_cat, rel_name, version, date, status_kind)
             session.add(release_lv)
@@ -355,7 +365,7 @@ def newRelease(cat, sub_cat, rel_name, dict_json, Session, *args):
                                                     filter(Releases_Table.release_name == rel_name).\
                                                     filter(Releases_LV_Table.status_kind == status_kind):
                 id_lv = i.id
-            status_lv = Status_LV_Table(id, dict[status_kind][VALIDATION_STATUS], dict[status_kind][COMMENTS], dict[status_kind][LINKS], user_name)
+            status_lv = Status_LV_Table(id, dict[status_kind][VALIDATION_STATUS], dict[status_kind][COMMENTS], dict[status_kind][LINKS], user_name, dict[status_kind][MESSAGE_ID], dict[status_kind][EMAIL_SUBJECT])
             session.add(status_lv)
         if len(args) > 0:
             session.commit()
@@ -370,7 +380,7 @@ def newRelease(cat, sub_cat, rel_name, dict_json, Session, *args):
         print e
 
 # Changes validation status of given release
-def changeStatus(cat, sub_cat, rel_name, status_kind, new_status, new_comment, new_user_name, new_links, Session):
+def changeStatus(cat, sub_cat, rel_name, status_kind, new_status, new_comment, new_user_name, new_links, Session, new_messageID, new_email_subject):
     session = Session()
     try:
         date = datetime.datetime.now()
@@ -395,11 +405,15 @@ def changeStatus(cat, sub_cat, rel_name, status_kind, new_status, new_comment, n
                 status_dict[COMMENTS] = j.comments
                 status_dict[USER_NAME] = j.user_name
                 status_dict[LINKS] = j.links
+                status_dict[MESSAGE_ID] = j.messageID
+                status_dict[EMAIL_SUBJECT] = j.email_subject
             dict[i.status_kind] = status_dict
         dict[status_kind][VALIDATION_STATUS] = new_status
         dict[status_kind][COMMENTS] = new_comment
         dict[status_kind][LINKS] = new_links
         dict[status_kind][USER_NAME] = new_user_name
+        dict[status_kind][MESSAGE_ID] = new_messageID
+        dict[status_kind][EMAIL_SUBJECT] = new_email_subject
         for i in status_id_for_delete:
             session.query(Status_Table).filter(Status_Table.id == i).delete()
         session.query(Releases_Table).filter(Releases_Table.category == cat).\
