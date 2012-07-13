@@ -209,10 +209,3 @@ class UploadGTServer(object):
                 exposed_attr_names[attr_name] =  self_attr.__doc__
         return exposed_attr_names
 
-    @cherrypy.expose
-    def test(self):
-        import random
-        while True:
-            random.random()
-
-
