@@ -3,19 +3,26 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import datetime
 import json
+import service
+
+
+schema_name = service.secrets['connections']['dev']["writer"]["account"] #as service uses different users DB schema, to connect we get schema name.
 
 Base = declarative_base()
 
 class Releases_Table(Base):
     __tablename__ = 'releases'
+    __table_args__ = {'schema' : schema_name}
+    
 
-    id = Column(Integer, Sequence('releases_id_seq'), primary_key=True, nullable=False)
+    id = Column(Integer, Sequence('releases_id_seq', schema = schema_name), primary_key=True, nullable=False)
     category = Column(String, nullable=False)
     subcategory = Column(String, nullable=False)
     release_name = Column(String, nullable=False)
     version = Column(Integer, nullable=False)
     date = Column(DateTime, nullable=False)
     status_kind = Column(String, nullable=False)
+
 
     def __init__(self, category, subcategory, release_name, version, date, status_kind):
         self.category = category
@@ -30,7 +37,8 @@ class Releases_Table(Base):
        
 class Releases_LV_Table(Base):
     __tablename__ = 'releases_lv'
-
+    __table_args__ = {'schema' : schema_name} 
+    
     id = Column(Integer, primary_key=True, nullable=False)
     category = Column(String, nullable=False)
     subcategory = Column(String, nullable=False)
@@ -38,6 +46,7 @@ class Releases_LV_Table(Base):
     version = Column(Integer, nullable=False)
     date = Column(DateTime, nullable=False)
     status_kind = Column(String, nullable=False)
+
 
     def __init__(self, id, category, subcategory, release_name, version, date, status_kind):
         self.id = id
@@ -53,14 +62,16 @@ class Releases_LV_Table(Base):
        
 class Status_Table(Base):
     __tablename__ = 'status'
+    __table_args__ = {'schema' : schema_name}
     
-    id = Column(Integer, ForeignKey("releases.id"), primary_key=True, nullable=False)
+    id = Column(Integer, ForeignKey(schema_name + ".releases.id"), primary_key=True, nullable=False) #as the foreign key show to other user's schema in  connection we use: schema.table.column
     validation_status = Column(String, default="NOT YET DONE", nullable=False)
     comments = Column(String)
     links = Column(String)
     user_name = Column(String, nullable=False)
     messageID = Column(String, nullable=False)
     email_subject = Column(String, nullable=False)
+
 
     def __init__(self, id, validation_status, comments, links, user_name, messageID, email_subject):
         self.id = id
@@ -76,8 +87,9 @@ class Status_Table(Base):
        
 class Status_LV_Table(Base):
     __tablename__ = 'status_lv'
+    __table_args__ = {'schema' : schema_name}
     
-    id = Column(Integer, ForeignKey("releases_lv.id"), primary_key=True, nullable=False)
+    id = Column(Integer, ForeignKey(schema_name + ".releases_lv.id"), primary_key=True, nullable=False)
     validation_status = Column(String, default="NOT YET DONE", nullable=False)
     comments = Column(String)
     links = Column(String)
@@ -99,6 +111,7 @@ class Status_LV_Table(Base):
 
 class Users_Table(Base):
     __tablename__ = 'users'
+    __table_args__ = {'schema' : schema_name}
     
     user_name = Column(String, nullable=False, primary_key=True)
     email = Column(String)
@@ -116,9 +129,10 @@ class Users_Table(Base):
        
 class User_Rights_Table(Base):
     __tablename__ = 'user_rights'
+    __table_args__ = {'schema' : schema_name}
     
-    id = Column(Integer, Sequence('id_seq'), primary_key=True, nullable=False)
-    user_name = Column(String, ForeignKey("users.user_name"), nullable=False)
+    id = Column(Integer, Sequence('id_seq', schema = schema_name), primary_key=True, nullable=False)
+    user_name = Column(String, ForeignKey(schema_name + ".users.user_name"), nullable=False)
     category = Column(String, nullable=False)
     subcategory = Column(String, nullable=False)
     status_kind = Column(String, nullable=False)

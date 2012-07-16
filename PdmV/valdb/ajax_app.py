@@ -19,7 +19,7 @@ import service
 #-mo FIXME: The old code used the production DB in -int and -pro. However,
 #           as at the moment -int is the new -dev, for the moment always use
 #           the development DB.
-connectionDictionary = service.secrets['connections']['dev']
+connectionDictionary = service.secrets['connections']['dev']["writer"]
 engine = create_engine(service.getSqlAlchemyConnectionString(connectionDictionary), echo=False)
 Session = sessionmaker(bind=engine)
 

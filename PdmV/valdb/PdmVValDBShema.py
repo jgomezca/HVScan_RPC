@@ -12,7 +12,7 @@ if __name__ == '__main__':
 from sqlalchemy import create_engine, DateTime, MetaData, Column, Table, ForeignKey, Integer, String , Sequence, Boolean
 import service
 
-connectionDictionary = service.secrets['connections']['dev']
+connectionDictionary = service.secrets['connections']['dev']["owner"]
 engine = create_engine(service.getSqlAlchemyConnectionString(connectionDictionary), echo=False)
  
 metadata = MetaData(bind=engine)
