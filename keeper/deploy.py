@@ -12,29 +12,16 @@ __email__ = 'mojedasa@cern.ch'
 
 
 import os
-import config
-
-
-defaultDataDirectory = config.rootDirectory
-defaultRepositoryBase = '/afs/cern.ch/cms/DB/rep'
-defaultServicesRepository = os.path.join(defaultRepositoryBase, 'cmsDbWebServices.git')
-defaultLibsRepository = os.path.join(defaultRepositoryBase, 'cmsDbWebLibs.git')
-defaultCmsswRepository = os.path.join(defaultRepositoryBase, 'cmssw.git')
-
-# In the rsync format
-secretsSource = '/afs/cern.ch/cms/DB/conddb/internal/webServices/secrets'
-
-
 import sys
 import pwd
 import grp
-import socket
 import subprocess
 import optparse
-
-
 import logging
-logger = logging.getLogger(__name__)
+
+
+import config
+defaultDataDirectory = config.rootDirectory
 
 
 def getOptions():
@@ -53,13 +40,19 @@ def getOptions():
 	parser.add_option('-f', '--force', action = 'store_true',
 		dest = 'force',
 		default = False,
-		help = 'Forces to deploy if /data exists. It will *remove* cmssw, cmsswNew, docs, libs, secrets and services (without trailing /, i.e. without removing the contents if it is a symlink, e.g. like the docs suggest, developers might have /data/services pointing to ~/scratch0/services for easy development to clone new clean versions of them. However, it will keep logs/, git/, and any other folders. Therefore, this option is used to re-deploy from scratch without removing logs and other files. Also, it can be used to deploy in cases where /data is a mounted device (like in dev/int/pro), so the directory is already there. This option is *not* meant for private development machines: please use git-pull on the individual repositories, as --forced would delete your local repository.'
+		help = 'Forces to deploy if /data exists. It will *remove* cmssw, cmsswNew, docs, libs, secrets and services (without trailing /, i.e. without removing the contents if it is a symlink, e.g. like the docs suggest, developers might have /data/services pointing to ~/scratch0/services for easy development to clone new clean versions of them. However, it will keep logs/, git/, and any other folders. Therefore, this option is used to re-deploy from scratch without removing logs and other files. Also, it can be used to deploy in cases where /data is a mounted device (like in dev/int/pro), so the directory is already there. This option is *not* meant for private development machines: please use git-fetch on the individual repositories, as --force would delete your local repository.'
 	)
 
 	parser.add_option('-u', '--update', action = 'store_true',
 		dest = 'update',
 		default = False,
-		help = 'Updates an existing deployment: stops the keeper and the services, rsync\'s the secrets, git fetchs on services/, libs/ and cmssw/, checks out the gitTreeish on services/, checks out the dependencies in libs/ and cmssw/ and starts the keeper (which will start the services). The other options are ignored. This is meant *only* for dev/int/pro.'
+		help = 'Updates an existing deployment (i.e. with services running): after checking the requirements, but before deploying, stop the keeper and then all the services. Later, after deployment, start the services and then the keeper.'
+	)
+
+	parser.add_option('-n', '--nosendEmail', action = 'store_false',
+		dest = 'sendEmail',
+		default = True,
+		help = 'Disables sending emails when starting the services after on --update.'
 	)
 
 	parser.add_option('-d', '--dataDirectory', type = 'str',
@@ -70,19 +63,19 @@ def getOptions():
 
 	parser.add_option('-s', '--servicesRepository', type = 'str',
 		dest = 'servicesRepository',
-		default = defaultServicesRepository,
+		default = config.servicesRepository,
 		help = 'The path to the Services Git repository.'
 	)
 
 	parser.add_option('-l', '--libsRepository', type = 'str',
 		dest = 'libsRepository',
-		default = defaultLibsRepository,
+		default = config.libsRepository,
 		help = 'The path to the Libs Git repository.'
 	)
 
 	parser.add_option('-c', '--cmsswRepository', type = 'str',
 		dest = 'cmsswRepository',
-		default = defaultCmsswRepository,
+		default = config.cmsswRepository,
 		help = 'The path to the CMSSW Git repository.'
 	)
 
@@ -92,16 +85,10 @@ def getOptions():
 		parser.print_help()
 		sys.exit(2)
 
-	return {
-		'gitTreeish': args[0],
-		'force': options.force,
-		'update': options.update,
-		'dataDirectory': options.dataDirectory,
-		'servicesRepository': options.servicesRepository,
-		'libsRepository': options.libsRepository,
-		'cmsswRepository': options.cmsswRepository,
-		'productionLevel': config.getProductionLevel()
-	}
+	options = vars(options)
+	options['gitTreeish'] = args[0]
+	options['productionLevel'] = config.getProductionLevel()
+	return options
 
 
 def check_output(*popenargs, **kwargs):
@@ -129,7 +116,7 @@ def execute(command):
 
 	# Don't redirect stderr: That way we can see the error
 	# if the command does not finish correctly
-	logger.info('Executing: ' + command)
+	logging.info('Executing: ' + command)
 	return check_output(command, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 
 
@@ -137,7 +124,7 @@ def getSecrets():
 	'''Gets the secrets and the host certificate.
 	'''
 
-	execute('rsync -az ' + secretsSource + ' .')
+	execute('rsync -az %s . ' % config.secretsSource)
 
 	if config.getProductionLevel() == 'private':
 		# In a private machine (e.g. VM), copy the localhost
@@ -164,7 +151,7 @@ def getDependencyTag(dependency):
 	'''
 
 	tag = open('services/dependencies/%s.tag' % dependency).read().strip()
-	logger.info('Dependency: %s %s' % (dependency, tag))
+	logging.info('Dependency: %s %s' % (dependency, tag))
 	return tag
 
 
@@ -186,8 +173,20 @@ def configureApache():
 	if config.getProductionLevel() != 'private':
 		return
 
-	execute('cd /etc/httpd/conf.d && sudo %s' % os.path.join(os.getcwd(), 'services/keeper/makeApacheConfiguration.py -f private'))
+	# Generate Apache configuration
+	execute('sudo services/keeper/makeApacheConfiguration.py httpd -f private')
+	execute('sudo services/keeper/makeApacheConfiguration.py vhosts -f private')
+
+	# Disable unneeded .conf files
+	execute('ls /etc/httpd/conf.d/*.conf | grep -E \'fcgid|nagios|proxy_ajp|welcome\' | xargs -n1 -Ifile sudo mv file file.original')
+
+	# Disable AddType directives in ssl.conf to avoid using mod_mime
+	execute('sudo sed -i \'s/^AddType/#AddType/g\' /etc/httpd/conf.d/ssl.conf')
+
+	# Set required SELinux policies
 	execute('sudo /usr/sbin/setsebool -P httpd_can_network_connect on')
+
+	# Restart gracefully
 	execute('sudo /etc/init.d/httpd graceful')
 
 
@@ -200,7 +199,7 @@ def openPort(port):
 		execute('sudo /sbin/iptables -L -n | grep -F \'state NEW tcp dpt:%s\' | grep -F ACCEPT' % port)
 	except:
 		# Ask the user whether it should be opened
-		logger.warning('The port %s does not *seem* open.' % port)
+		logging.warning('The port %s does not *seem* open.' % port)
 		command = 'sudo /sbin/iptables -I INPUT -p tcp -m state --state NEW -m tcp --dport %s -j ACCEPT' % port
 		answer = raw_input('\nWould you like to run:\n\n    %s\n\nto insert the rule in the top of the INPUT chain? [y/N] ' % command)
 		if answer == 'y':
@@ -238,7 +237,7 @@ def checkPackage(package):
 	try:
 		execute('rpm -qi %s' % package)
 	except Exception as e:
-		logger.warning('Package %s is not installed.' % package)
+		logging.warning('Package %s is not installed.' % package)
 		text = raw_input('Would you like to install it? [y/N] ')
 		if text != 'y':
 			raise e
@@ -246,7 +245,7 @@ def checkPackage(package):
 
 
 def checkRequirements(options):
-	'''Checks requirements for deploy(), update() and the keeper/services.
+	'''Checks the requirements needed for deploy().
 	'''
 
 	# Test the script is not being run as root
@@ -294,74 +293,13 @@ def checkRequirements(options):
 	except:
 		raise Exception('This script requires the host certificate to be installed: %s and %s must exist.' % (config.hostCertificateFiles[level]['crt'], config.hostCertificateFiles[level]['key']))
 
-
-def update(options):
-	'''Updates an existing instance of the CMS DB Web Services:
-		- Stops the keeper and the services.
-		- Gets the secrets.
-		- Git fetchs on services/, libs/ and cmssw/.
-		- Checks out the gitTreeish on services/.
-		- Checks out the dependencies in libs/ and cmssw/.
-		- Regenerates the docs.
-		- Updates iptables.
-		- Starts the keeper (which will start the services).
-	'''
-
-	# Check common requirements
-	checkRequirements(options)
-
-	# Chdir to the dataDirectory
-	logger.info('Working directory: ' + options['dataDirectory'])
-	os.chdir(options['dataDirectory'])
-
-	# Stop the keeper and the services
-	execute('services/keeper/keeper.py stop keeper')
-	execute('services/keeper/keeper.py stop all')
-
-	# Get the secrets
-	getSecrets()
-
-	# Git fetch on services/, libs/ and cmssw/
-	execute('cd services && git fetch')
-	execute('cd libs && git fetch')
-	execute('cd cmssw && git fetch')
-
-	# Check out the treeish on services/
-	execute('cd services && git checkout -q ' + options['gitTreeish'])
-
-	# Checkout the dependencies' tags
-	execute('cd libs && git checkout -q %s' % getDependencyTag('cmsDbWebLibs'))
-	execute('cd cmssw && git checkout -q %s' % getDependencyTag('cmssw'))
-
-	# Regenerate the docs
-	generateDocs()
-
-	# Configure Apache frontend(s)
-	configureApache()
-
-	# Update iptables
-	updateIptables()
-
-	# Start the keeper
-	execute('services/keeper/keeper.py start keeper')
-
-	logger.info('Update successful.')
-
-
-def checkRequirementsDeploy(options):
-	'''Checks the requirements needed for deploy().
-	'''
-
-	# Check common requirements
-	checkRequirements(options)
-
 	# Check whether there is an existing deployment
 	if options['force']:
 		# We are forced, so dataDirectory should exist beforehand.
 		# Otherwise, the user should ask for a normal deployment.
 		# (it works, but the user should know why he is using --force).
 		if not os.path.exists(options['dataDirectory']):
-			raise Exception(options['dataDirectory'] + ' does not exist. Please re-check what is happening. If you just want to do a new deployment, please do not specify the --forced option.')
+			raise Exception(options['dataDirectory'] + ' does not exist. Please re-check what is happening. If you just want to do a new deployment, please do not specify the --force option.')
 
 		if options['dataDirectory'] == defaultDataDirectory:
 			# We are forced and dataDirectory is the default,
@@ -375,7 +313,7 @@ def checkRequirementsDeploy(options):
 			# a symlink to a directory instead of a real directory,
 			# a real file or a symlink to a file.
 			if not os.path.exists(defaultDataDirectory):
-				raise Exception(defaultDataDirectory + ' does not exist. Please re-check what is happening. If you just want to do a new deployment, please do not specify the --forced option.')
+				raise Exception(defaultDataDirectory + ' does not exist. Please re-check what is happening. If you just want to do a new deployment, please do not specify the --force option.')
 
 			if not os.path.islink(defaultDataDirectory) or not os.path.isdir(defaultDataDirectory):
 				raise Exception(defaultDataDirectory + ' exists, but is not a symlink to a directory. In order to re-deploy, this script needs to set up ' + defaultDataDirectory + ' as a symlink to ' + options['dataDirectory'] + '. Please re-check what is happening. If you have an existing deployment on ' + defaultDataDirectory + ' and just want to re-deploy there, do not specify the --dataDirectory option.')
@@ -384,10 +322,10 @@ def checkRequirementsDeploy(options):
 		# nor real data directory (if the dataDirectory is the default,
 		# this check would be the same).
 		if os.path.exists(defaultDataDirectory):
-			raise Exception(defaultDataDirectory + ' exists. Please remove the existing deployment or read the documentation on --forced.')
+			raise Exception(defaultDataDirectory + ' exists. Please remove the existing deployment or read the documentation on --force.')
 
 		if os.path.exists(options['dataDirectory']):
-			raise Exception(options['dataDirectory'] + ' exists. Please remove the existing deployment or read the documentation on --forced.')
+			raise Exception(options['dataDirectory'] + ' exists. Please remove the existing deployment or read the documentation on --force.')
 
 
 def deploy(options):
@@ -400,13 +338,20 @@ def deploy(options):
 		- Generates the docs.
 	'''
 
+	logging.info('Production level: ' + config.getProductionLevel())
+
 	# Check requirements
-	checkRequirementsDeploy(options)
+	checkRequirements(options)
 
 	# Create the dataDirectory if it does not exist and chdir to it
 	execute('sudo mkdir -p ' + options['dataDirectory'])
-	logger.info('Working directory: ' + options['dataDirectory'])
+	logging.info('Working directory: ' + options['dataDirectory'])
 	os.chdir(options['dataDirectory'])
+
+	# Stop the keeper and then all the services if updating
+	if options['update']:
+		execute('services/keeper/keeper.py stop keeper')
+		execute('services/keeper/keeper.py stop all')
 
 	# Change ownership and file mode bits
 	userName = pwd.getpwuid(os.getuid())[0]
@@ -469,29 +414,33 @@ def deploy(options):
 	# Update iptables
 	updateIptables()
 
-	logger.info('Deployment successful.')
+	# Start all the services and then the keeper if updating
+	if options['update']:
+		keeperStartOptions = ''
+		if not options['sendEmail']:
+			keeperStartOptions = '--nosendEmail'
+		execute('services/keeper/keeper.py start %s all' % keeperStartOptions)
+		execute('services/keeper/keeper.py start %s keeper' % keeperStartOptions)
+
+	logging.info('Deployment successful.')
 
 
 def main():
+	'''Entry point.
+	'''
+
 	try:
-		options = getOptions()
-
-		logger.info('Production level: ' + config.getProductionLevel())
-
-		if options['update']:
-			update(options)
-		else:
-			deploy(options)
+		deploy(getOptions())
 	except Exception as e:
-		logger.error(e)
-		sys.exit(1)
+		logging.error(e)
+		return -1
 
 
 if __name__ == '__main__':
 	logging.basicConfig(
 		format = '[%(asctime)s] %(levelname)s: %(message)s',
-		level = logging.INFO
+		level = logging.INFO,
 	)
 
-	main()
+	sys.exit(main())
 

@@ -20,29 +20,25 @@ import subprocess
 import sys
 import signal
 import time
-import datetime
 import smtplib
 import email
 import socket
 import optparse
-
-
 import logging
-logger = logging.getLogger(__name__)
-
+import inspect
 
 import daemon
 
 
-def sendEmail(from_address, to_addresses, cc_addresses, subject, body, smtp_server = 'cernmx.cern.ch', password = ''):
-	'''Sends and email, optionally logging in if a password for the from_address account is supplied
+def _sendEmail(from_address, to_addresses, cc_addresses, subject, body, smtp_server = 'cernmx.cern.ch', password = ''):
+	'''Sends an email, optionally logging in if a password for the from_address account is supplied
 	'''
 
 	# cernmx.cern.ch
 	# smtp.cern.ch
 
-	logger.debug('sendEmail(): Sending email...')
-	logger.debug('sendEmail(): Email = ' + str((from_address, to_addresses, cc_addresses, subject, body)))
+	logging.debug('sendEmail(): Sending email...')
+	logging.debug('sendEmail(): Email = ' + str((from_address, to_addresses, cc_addresses, subject, body)))
 
 	mimetext = email.mime.Text.MIMEText(body)
 	mimetext['Subject'] = email.Header.Header(subject)
@@ -59,7 +55,7 @@ def sendEmail(from_address, to_addresses, cc_addresses, subject, body, smtp_serv
 	smtp.sendmail(from_address, set(to_addresses + cc_addresses), mimetext.as_string())
 	smtp.quit()
 
-	logger.debug('sendEmail(): Sending email... DONE')
+	logging.debug('sendEmail(): Sending email... DONE')
 
 
 def _getPIDs(string):
@@ -127,10 +123,10 @@ def killProcess(pid, sigkill = False):
 	'''
 
 	if sigkill:
-		logger.info('Killing -9 %s', pid)
+		logging.info('Killing -9 %s', pid)
 		s = signal.SIGKILL
 	else:
-		logger.info('Killing %s', pid)
+		logging.info('Killing %s', pid)
 		s = signal.SIGTERM
 
 	os.kill(int(pid), s)
@@ -216,13 +212,13 @@ def run(service, filename, extraCommandLine = '', replaceProcess = False):
 		return subprocess.call(['bash', '-c', commandLine])
 
 
-def start(service, warnIfAlreadyStarted = True):
+def start(service, warnIfAlreadyStarted = True, sendEmail = True):
 	'''Starts a service or the keeper itself.
 	'''
 
 	if service == 'all':
 		for service in services:
-			start(service)
+			start(service, warnIfAlreadyStarted = warnIfAlreadyStarted, sendEmail = sendEmail)
 		return
 
 	if service != 'keeper':
@@ -233,7 +229,7 @@ def start(service, warnIfAlreadyStarted = True):
 	# The service is running
 	if len(pids) > 0:
 		if warnIfAlreadyStarted:
-			logger.warning('Tried to start a service (%s) which is already running: %s', service, ','.join(pids))
+			logging.warning('Tried to start a service (%s) which is already running: %s', service, ','.join(pids))
 		return
 
 	# The service is not running, start it
@@ -254,19 +250,19 @@ def start(service, warnIfAlreadyStarted = True):
 
 			run(service, config.servicesConfiguration[service]['filename'], extraCommandLine = extraCommandLine, replaceProcess = True)
 
-	logger.info('Started %s.', service)
+	logging.info('Started %s.', service)
 
 	# Clean up the process table
 	os.wait()
 
 	# Alert users
-	if config.getProductionLevel() != 'private':
+	if sendEmail and config.getProductionLevel() != 'private':
 		subject = '[keeper@' + socket.gethostname() + '] Started ' + service + ' service.'
 		body = subject
 		try:
-			sendEmail('mojedasa@cern.ch', config.startedServiceEmailAddresses, [], subject, body)
-		except Exception as e:
-			logger.error('The email "' + subject + '"could not be sent.')
+			_sendEmail('mojedasa@cern.ch', config.startedServiceEmailAddresses, [], subject, body)
+		except Exception:
+			logging.error('The email "' + subject + '"could not be sent.')
 
 
 def wait(service, maxWaitTime = 20):
@@ -287,13 +283,13 @@ def wait(service, maxWaitTime = 20):
 		time.sleep(1)
 
 
-def stop(service, sigkill = False):
-	'''Stops a service or the keeper itself.
+def _stop(service, sigkill = False):
+	'''Stops or kills a service or the keeper itself.
 	'''
 
 	if service == 'all':
 		for service in services:
-			stop(service, sigkill)
+			_stop(service, sigkill)
 		return
 
 	if service != 'keeper':
@@ -303,14 +299,21 @@ def stop(service, sigkill = False):
 
 	# Service not running
 	if len(pids) == 0:
-		logger.warning('Tried to stop a service (%s) which is not running.' % service)
+		logging.warning('Tried to stop a service (%s) which is not running.' % service)
 		return
 
 	for pid in pids:
 		killProcess(pid, sigkill)
 
 	wait(service)
-	logger.info('Stopped %s: %s', service, ','.join(pids))
+	logging.info('Stopped %s: %s', service, ','.join(pids))
+
+
+def stop(service):
+	'''Stops a service or the keeper itself.
+	'''
+
+	_stop(service, sigkill = False)
 
 
 def restart(service):
@@ -325,10 +328,10 @@ def restart(service):
 
 
 def kill(service):
-	'''Kills -9 a service or the keeper itself.
+	'''Kills -9 (sigkill) a service or the keeper itself.
 	'''
 
-	stop(service, sigkill = True)
+	_stop(service, sigkill = True)
 
 
 def test(service):
@@ -339,7 +342,7 @@ def test(service):
 	'''
 
 	if service == 'all':
-		logger.info('Testing all services.')
+		logging.info('Testing all services.')
 		startTime = time.time()
 
 		success = []
@@ -357,10 +360,10 @@ def test(service):
 
 		state = (len(failure) == 0)
 
-		logger.info('Finished testing all services: %s. Took %.2f seconds.', 'SUCCESS' if state else 'FAILED', time.time() - startTime)
-		logger.info('Successful services: %s', ','.join(success))
-		logger.info('    Failed services: %s', ','.join(failure))
-		logger.info('   Skipped services: %s', ','.join(skipped))
+		logging.info('Finished testing all services: %s. Took %.2f seconds.', 'SUCCESS' if state else 'FAILED', time.time() - startTime)
+		logging.info('Successful services: %s', ','.join(success))
+		logging.info('    Failed services: %s', ','.join(failure))
+		logging.info('   Skipped services: %s', ','.join(skipped))
 
 		return state
 
@@ -368,14 +371,14 @@ def test(service):
 		checkRegistered(service)
 
 	if not os.path.exists(os.path.join(getPath(service), 'test.py')):
-		logger.warning('Test suite for service %s does not exist.', service)
+		logging.warning('Test suite for service %s does not exist.', service)
 		return None
 
 	if not isRunning(service):
-		logger.warning('Tried to test a service (%s) which is not running.', service)
+		logging.warning('Tried to test a service (%s) which is not running.', service)
 		return None
 
-	logger.info('Testing %s.', service)
+	logging.info('Testing %s.', service)
 	startTime = time.time()
 
 	# Run the test suite
@@ -383,7 +386,7 @@ def test(service):
 
 	state = (returnCode == 0)
 
-	logger.info('Finished testing %s: %s. Took %.2f seconds.', service, 'SUCCESS' if state else 'FAILED', time.time() - startTime)
+	logging.info('Finished testing %s: %s. Took %.2f seconds.', service, 'SUCCESS' if state else 'FAILED', time.time() - startTime)
 
 	return state
 
@@ -392,8 +395,7 @@ def pylint(argument):
 	'''Checks a service's (or the keeper's) code or a file.
 	'''
 
-	#-mo FIXME: Add support for several files, etc. I want to improve
-	#           how arguments are passed to all keeper's commands.
+	#-mo FIXME: Add support for several files, etc.
 
 	files = argument
 	if isRegistered(argument) or argument == 'keeper':
@@ -457,7 +459,7 @@ def lsof(service):
 
 	# Service not running
 	if len(pids) == 0:
-		logger.warning('Tried to lsof a service (%s) which is not running.' % service)
+		logging.warning('Tried to lsof a service (%s) which is not running.' % service)
 		return
 
 	subprocess.call('/usr/sbin/lsof -p %s' % ','.join(pids), shell = True)
@@ -474,7 +476,7 @@ def env(service):
 
 	# Service not running
 	if len(pids) == 0:
-		logger.warning('Tried to env a service (%s) which is not running.' % service)
+		logging.warning('Tried to env a service (%s) which is not running.' % service)
 		return
 
 	for pid in pids:
@@ -495,7 +497,7 @@ def strace(service):
 
 	# Service not running
 	if len(pids) == 0:
-		logger.warning('Tried to strace a service (%s) which is not running.' % service)
+		logging.warning('Tried to strace a service (%s) which is not running.' % service)
 		return
 
 	# Replacing the process avoids the traceback when issuing ^C
@@ -532,7 +534,7 @@ def keep():
 	'''Keeps services up and running.
 	'''
 
-	logger.info('Keeping services up and running...')
+	logging.info('Keeping services up and running...')
 
 	while True:
 		time.sleep(config.timeBetweenChecks)
@@ -541,90 +543,130 @@ def keep():
 			try:
 				start(service, warnIfAlreadyStarted = False)
 			except Exception as e:
-				logger.error(e)
+				logging.error(e)
 
 
-def getCommand():
-	'''Parses the arguments from the command line.
+usage = '''Usage: %%prog <command> [arguments]
+
+Commands:
+  start    <service>  Starts a service.
+  stop     <service>  Stops a service.
+  restart  <service>  Restarts a service.
+  kill     <service>  "kill -9" a service.
+
+  test     <service>  Runs a service\'s test suite.
+  pylint   <service>  Checks a service\'s code.
+  pylint   <file>     Checks a Python script.
+
+  less     <service>  "less" a service\'s log.
+  tail     <service>  "tail -f" a service\'s log.
+  lsof     <service>  "lsof" a service\'s processes.
+  env      <service>  Prints the environment of a service\'s processes.
+  strace   <service>  "strace -ft" a service\'s processes, without
+                     the select, futex, gettimeofday nor poll system calls.
+
+  status             Prints the status of the keeper
+                     and all the services, with PIDs.
+
+  keep               Keeps the services up and running.
+                     (this is what the keeper-service runs).
+
+  <service> can be one of the following:
+    all keeper %s
+    ("all" does not apply for less, tail, lsof nor env).
+
+  Each command may have additional options. Use -h to see
+  the help for them, e.g.: %%prog start -h
+
+  Note: "all" does not include the keeper: this command
+        is meant for private development, not dev/int/pro.
+        In dev/int/pro, the keeper is supposed to start
+        and stop the services itself.
+''' % ' '.join(services)
+
+
+def runCommand(command, arguments):
+	'''Runs a command after parsing its arguments, building
+	the OptionParser from the function definition.
 	'''
 
+	argspec = inspect.getargspec(command)
+	defaults = argspec.defaults
+	if defaults is None:
+		defaults = []
+		options = []
+		args = argspec.args
+	else:
+		options = argspec.args[-len(defaults):]
+		args = argspec.args[:-len(defaults)]
+
 	parser = optparse.OptionParser(usage =
-		'Usage: keeper [command] [args]\n'
-		'\n'
-		'Commands:\n'
-		'  keeper start   <service>  Starts a service.\n'
-		'  keeper stop    <service>  Stops a service.\n'
-		'  keeper restart <service>  Restarts a service.\n'
-		'  keeper kill    <service>  "kill -9" a service.\n'
-		'\n'
-		'  keeper test    <service>  Runs a service\'s test suite.\n'
-		'  keeper pylint  <service>  Checks a service\'s code.\n'
-		'  keeper pylint  <file>     Checks a Python script.\n'
-		'\n'
-		'  keeper less    <service>  "less" a service\'s log.\n'
-		'  keeper tail    <service>  "tail -f" a service\'s log.\n'
-		'  keeper lsof    <service>  "lsof" a service\'s processes.\n'
-		'  keeper env     <service>  Prints the environment of a service\'s processes.\n'
-		'  keeper strace  <service>  "strace -ft" a service\'s processes, without\n'
-		'                            the select, futex, gettimeofday nor poll system calls.\n'
-		'\n'
-		'  keeper status             Prints the status of the keeper\n'
-		'                            and all the services, with PIDs.\n'
-		'\n'
-		'  keeper keep               Keeps the services up and running.\n'
-		'                            (this is what the keeper-service runs).\n'
-		'\n'
-		'  <service> can be one of the following:\n'
-		'    all keeper ' + ' '.join(services) + '\n'
-		'    ("all" does not apply for less, tail, lsof nor env).\n'
-		'\n'
-		'  Note: "all" does not include the keeper: this command\n'
-		'        is meant for private development, not dev/int/pro.\n'
-		'        In dev/int/pro, the keeper is supposed to start\n'
-		'        and stop the services itself.'
+		'Usage: %%prog %s [options]' % ' '.join([command.__name__] + ['<%s>' % x for x in args])
 	)
 
-	(options, arguments) = parser.parse_args()
+	i = -1
+	for option in options:
+		i += 1
+		default = defaults[i]
+		if isinstance(default, bool):
+			if default:
+				name = 'no%s' % option
+				action = 'store_false'
+			else:
+				name = option
+				action = 'store_true'
 
-	if len(arguments) < 1:
+			parser.add_option('--%s' % name, action = action,
+				dest = option,
+				default = default,
+			)
+		else:
+			raise Exception('Unsupported default type.')
+
+	(options, arguments) = parser.parse_args(arguments)
+	if len(arguments) != len(args):
 		parser.print_help()
-		sys.exit(2)
+		return -2
 
-	command = arguments[0]
-	arguments = arguments[1:]
-
-	commandsWith0Arguments = ['status', 'keep']
-	commandsWith1Arguments = ['start', 'stop', 'restart', 'kill', 'test', 'pylint', 'less', 'tail', 'lsof', 'env', 'strace']
-	commands = commandsWith0Arguments + commandsWith1Arguments
-
-	if command not in commands:
-		parser.print_help()
-		sys.exit(2)
-
-	if command in commandsWith0Arguments and len(arguments) != 0:
-		parser.print_help()
-		sys.exit(2)
-
-	if command in commandsWith1Arguments and len(arguments) != 1:
-		parser.print_help()
-		sys.exit(2)
-
-	return (command, arguments)
+	command(*arguments, **vars(options))
 
 
 def main():
-	(command, arguments) = getCommand()
+	'''Entry point.
+	'''
+
+	commands = {
+		'start': start,
+		'stop': stop,
+		'restart': restart,
+		'kill': kill,
+		'test': test,
+		'pylint': pylint,
+		'less': less,
+		'tail': tail,
+		'lsof': lsof,
+		'env': env,
+		'strace': strace,
+		'status': status,
+		'keep': keep,
+	}
+
+	if len(sys.argv) < 2 or sys.argv[1] not in commands:
+		optparse.OptionParser(usage).print_help()
+		return -2
+
 	try:
-		globals()[command](*arguments)
+		return runCommand(commands[sys.argv[1]], sys.argv[2:])
 	except Exception as e:
-		logger.error(e)
+		logging.error(e)
+		return -1
 
 
 if __name__ == '__main__':
 	logging.basicConfig(
 		format = '[%(asctime)s] %(levelname)s: %(message)s',
-		level = logging.INFO
+		level = logging.INFO,
 	)
 
-	main()
+	sys.exit(main())
 

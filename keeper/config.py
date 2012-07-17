@@ -23,6 +23,14 @@ cmsswSetupEnvScript = os.path.join(cmsswDirectory, 'setupEnv.sh')
 logsFileTemplate = os.path.join(logsDirectory, '%s.log')
 logsSize = '10M' # rotatelogs' syntax
 
+repositoryBase = '/afs/cern.ch/cms/DB/rep'
+servicesRepository = os.path.join(repositoryBase, 'cmsDbWebServices.git')
+libsRepository = os.path.join(repositoryBase, 'cmsDbWebLibs.git')
+cmsswRepository = os.path.join(repositoryBase, 'cmssw.git')
+
+# In the rsync format
+secretsSource = '/afs/cern.ch/cms/DB/conddb/internal/webServices/secrets'
+
 
 timeBetweenChecks = 30 # seconds
 
