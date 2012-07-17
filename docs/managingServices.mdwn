@@ -9,15 +9,15 @@ Managing services in a private virtual/development machine is easy: you use the 
 
 In order to manage your services, you can issue:
 
-	$ /data/services/keeper.py
+	$ /data/services/keeper/keeper.py
 
 to see the available commands. For instance, you can start getLumi typing:
 
-	$ /data/services/keeper.py start getLumi
+	$ /data/services/keeper/keeper.py start getLumi
 
 Or check the status of all services and the keeper itself with:
 
-	$ /data/services/keeper.py status
+	$ /data/services/keeper/keeper.py status
 
 Also, you can script this by using keeper as a Python 2.6 module, e.g.:
 
