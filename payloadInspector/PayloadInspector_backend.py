@@ -40,6 +40,18 @@ from readXML import *
 
 PAGES_DIR = "pages"
 
+
+def getFrontierConnectionString(account, level, short = False):
+        '''Returns a connection string from the secrets given its account name
+        and the production level.
+        '''
+
+        return service.getFrontierConnectionString({
+            'account': account,
+            'frontier_name': service.secrets['connections'][level]['frontier_name'],
+        }, short = short)
+
+
 class CondDBPayloadInspector:
     ''' Sample request handler class. '''
     def __init__(self):
@@ -291,14 +303,8 @@ class CondDBPayloadInspector:
         #db = self.masker.unmask_dbname(dbName)
         #db = av.get_validated_dbname(value = db, acc = self.masker.unmask_schema(db, acc))
         #vtag = av.get_validated_tag(dbName = db, value = tag)
-        connectionString = service.getFrontierConnectionString({
-            'account': acc,
-            'frontier_name': service.secrets['connections'][dbName]['frontier_name'],
-        })
-        shortConnectionString = service.getFrontierConnectionString({
-            'account': acc,
-            'frontier_name': service.secrets['connections'][dbName]['frontier_name'],
-        }, short = True)
+        connectionString = getFrontierConnectionString(acc, dbName)
+        shortConnectionString = getFrontierConnectionString(acc, dbName, short = True)
 	#c = readXML()
 	#db	=	str(c.dbMap_reverse[dbName]+"/CMS_COND_"+acc)
 	vtag	=	str(tag)
@@ -368,14 +374,8 @@ class CondDBPayloadInspector:
         #ArgumentValidator.validateArgs(dbName = dbName, tag = tag, since = since, onesince = True)
 	#c = readXML()
 	#db	=	str(c.dbMap_reverse[dbName]+"/CMS_COND_"+acc)
-        connectionString = service.getFrontierConnectionString({
-            'account': acc,
-            'frontier_name': service.secrets['connections'][dbName]['frontier_name'],
-        })
-        shortConnectionString = service.getFrontierConnectionString({
-            'account': acc,
-            'frontier_name': service.secrets['connections'][dbName]['frontier_name'],
-        }, short = True)
+        connectionString = getFrontierConnectionString(acc, dbName)
+        shortConnectionString = getFrontierConnectionString(acc, dbName, short = True)
 	vtag	=	str(tag)
         vsince = av.get_validated_since(value = since.strip(), db = connectionString, tag = vtag, onlyone = True)
         plot = SubdetectorFactory.getPlotInstance(dbName = connectionString, tag = vtag, since = vsince, 
@@ -510,14 +510,8 @@ class CondDBPayloadInspector:
         #try:
 	#c = readXML()
 	#db	=	str(c.dbMap_reverse[dbName]+"/CMS_COND_"+acc)
-        connectionString = service.getFrontierConnectionString({
-            'account': acc,
-            'frontier_name': service.secrets['connections'][dbName]['frontier_name'],
-        })
-        shortConnectionString = service.getFrontierConnectionString({
-            'account': acc,
-            'frontier_name': service.secrets['connections'][dbName]['frontier_name'],
-        }, short = True)
+        connectionString = getFrontierConnectionString(acc, dbName)
+        shortConnectionString = getFrontierConnectionString(acc, dbName, short = True)
 	vtag	=	str(tag)
         vsince = av.get_validated_since(value = since, db = connectionString, tag = vtag, onlyone = False)
         
@@ -569,10 +563,7 @@ class CondDBPayloadInspector:
         '''
 	#c = readXML()
 	#db	=	str(c.dbMap_reverse[dbName]+"/CMS_COND_"+acc)
-        connectionString = service.getFrontierConnectionString({
-            'account': acc,
-            'frontier_name': service.secrets['connections'][dbName]['frontier_name'],
-        })
+        connectionString = getFrontierConnectionString(acc, dbName)
 	vtag	=	str(tag)
         sinces = av.get_validated_since(value = since, db = connectionString, tag = vtag).split(';')
         rez = []
