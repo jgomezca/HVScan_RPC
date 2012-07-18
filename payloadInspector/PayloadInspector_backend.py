@@ -291,17 +291,26 @@ class CondDBPayloadInspector:
         #db = self.masker.unmask_dbname(dbName)
         #db = av.get_validated_dbname(value = db, acc = self.masker.unmask_schema(db, acc))
         #vtag = av.get_validated_tag(dbName = db, value = tag)
-	c = readXML()
-	db	=	str(c.dbMap_reverse[dbName]+"/CMS_COND_"+acc)
+        connectionString = service.getFrontierConnectionString({
+            'account': acc,
+            'frontier_name': service.secrets['connections'][dbName]['frontier_name'],
+        })
+        shortConnectionString = service.getFrontierConnectionString({
+            'account': acc,
+            'frontier_name': service.secrets['connections'][dbName]['frontier_name'],
+        }, short = True)
+	#c = readXML()
+	#db	=	str(c.dbMap_reverse[dbName]+"/CMS_COND_"+acc)
 	vtag	=	str(tag)
         #sinces = av.get_validated_since(value = since, db = db, tag = vtag).split(';')
-        sinces = av.get_validated_since(value = since.strip(), db = db, tag = vtag).split(';')
+        sinces = av.get_validated_since(value = since.strip(), db = connectionString, tag = vtag).split(';')
         dict = {}
 	print self.__plotsdir
         for i in sinces:
             if i != '' or i != None:
-                plot = SubdetectorFactory.getPlotInstance(dbName = db, tag = vtag, since = i, 
-                                                          fileType = fileType, directory = self.__plotsdir)
+                plot = SubdetectorFactory.getPlotInstance(dbName = connectionString, tag = vtag, since = i, 
+                                                          fileType = fileType, directory = self.__plotsdir,
+                                                          shortName = shortConnectionString)
                 dict[i] = plot.get_names()            
         cherrypy.response.headers['Content-Type'] = 'text/plain'
         #start returning json when frontend is able do decode it
@@ -357,12 +366,21 @@ class CondDBPayloadInspector:
         '''
         #try:
         #ArgumentValidator.validateArgs(dbName = dbName, tag = tag, since = since, onesince = True)
-	c = readXML()
-	db	=	str(c.dbMap_reverse[dbName]+"/CMS_COND_"+acc)
+	#c = readXML()
+	#db	=	str(c.dbMap_reverse[dbName]+"/CMS_COND_"+acc)
+        connectionString = service.getFrontierConnectionString({
+            'account': acc,
+            'frontier_name': service.secrets['connections'][dbName]['frontier_name'],
+        })
+        shortConnectionString = service.getFrontierConnectionString({
+            'account': acc,
+            'frontier_name': service.secrets['connections'][dbName]['frontier_name'],
+        }, short = True)
 	vtag	=	str(tag)
-        vsince = av.get_validated_since(value = since.strip(), db = db, tag = vtag, onlyone = True)
-        plot = SubdetectorFactory.getPlotInstance(dbName = db, tag = vtag, since = vsince, 
-                                                fileType = fileType, directory = self.__plotsdir, image = png)
+        vsince = av.get_validated_since(value = since.strip(), db = connectionString, tag = vtag, onlyone = True)
+        plot = SubdetectorFactory.getPlotInstance(dbName = connectionString, tag = vtag, since = vsince, 
+                                                fileType = fileType, directory = self.__plotsdir, image = png,
+                                                shortName = shortConnectionString)
         plotData = plot.get()
             #return plotData
         '''except ValueError, e:

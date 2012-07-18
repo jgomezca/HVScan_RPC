@@ -29,10 +29,13 @@ def getDirectory(dbName, tag = '', since = '', fileType = 'png', basedir = './',
         return EcalUtils.get_directory(dbName = get_formated_db_name(dbName), tag = tag, since = since, fileType = fileType, basedir = basedir) 
     return StaticFile.get_directory(get_formated_db_name(dbName), tag = tag, since = since, fileType = fileType, basedir = basedir) 
 
-def getPlotInstance(dbName, tag, since = '1', fileType = 'png', directory = './', image = ''):
+def getPlotInstance(dbName, tag, since = '1', fileType = 'png', directory = './', image = '', shortName = None):
     '''Returns Plot class instance depending on dbName parameter. Other parameters are required to create instance of Plot class'''
     #print directory
-    dir = getDirectory(dbName = dbName, tag = tag, since = since, fileType = fileType, basedir = directory)
+    if shortName is not None:
+        dir = getDirectory(dbName = shortName, tag = tag, since = since, fileType = fileType, basedir = directory)
+    else:
+        dir = getDirectory(dbName = dbName, tag = tag, since = since, fileType = fileType, basedir = directory)
     #raise Exception('asdasdasdlal761523476152351263alla' + str(dir))
     if re.match(__striptag, os.path.basename(dbName)) != None:
         return StripUtils.StripPlot(dbName = dbName, tag = tag, since = since, 
