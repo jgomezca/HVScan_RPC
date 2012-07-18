@@ -62,12 +62,13 @@ def testLoadBalancer(hostname, keepCookies = defaultKeepCookies, delay = default
 
             # Try to get the route ID
             try:
+                route = '?'
                 for cookie in cookieJar:
                     if cookie.name == 'ROUTEID':
                         route = cookie.value.lstrip('.')
                         break
             except Exception:
-                route = '?'
+                pass
 
             logging.info('%s %s %s' % (route, code, responseSampleLine))
 
