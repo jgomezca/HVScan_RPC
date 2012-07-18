@@ -695,6 +695,7 @@ shibbolethXMLTemplate = '''
         -->
         <Sessions lifetime="30000" timeout="15000" checkAddress="false"
             handlerURL="/Shibboleth.sso" handlerSSL="true"
+            cookieName="{cookieName}"
             exportLocation="http://localhost/Shibboleth.sso/GetAssertion"
             idpHistory="true" idpHistoryDays="7">
 
@@ -985,6 +986,7 @@ def makeShibbolethConfiguration(frontend):
     infoMap['hostNames'] = ''
     infoMap['audiences'] = ''
     infoMap['applicationOverrides'] = ''
+    infoMap['cookieName'] = frontend
 
     for virtualHost in frontends[frontend]:
         infoMap['hostNames'] += shibbolethXMLHostName.format(virtualHost = virtualHost)
