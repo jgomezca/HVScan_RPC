@@ -1,0 +1,45 @@
+
+# How to install Fabric
+
+We use Fabric to automate the deployment of frontends and backends.
+
+You do *not* need to install fabric for deploying your private/virtual machine.
+
+## Install dependencies
+
+	# SLC5
+	sudo yum install python26-distribute python26-devel python26-nose
+
+	# SLC6
+	sudo yum install python-setuptools python-devel python-nose
+
+## Download and install
+
+	VERSION=1.4.3
+	mkdir fabric-${VERSION}
+	cd fabric-${VERSION}
+	wget https://github.com/fabric/fabric/tarball/${VERSION} -O fabric-${VERSION}.tar.gz
+	tar --strip-components 1 -xf fabric-${VERSION}.tar.gz
+	sudo python2.6 setup.py install
+
+## Test the installation
+
+	$ fab --version
+	Fabric 1.4.3
+	ssh (library) 1.7.14
+	
+	$ cd /data/services/keeper
+
+	$ fab -l
+	Fabfile used to automate deployment of frontends and backends.
+	
+	Usage example: $ fab deploy:level=pro,tag=v1.0
+	
+	Available commands:
+	
+	    deploy
+	    deployBackends
+	    deployFrontends
+	    disableBackend
+	    enableBackend
+
