@@ -868,24 +868,17 @@ def makeHttpdConfiguration(frontend):
     if frontend not in frontends:
         raise NotRegisteredError('Error: %s is not in the registered frontends.' % frontend)
 
-    # Create the list of nameVirtualHosts, without repetitions
-    nameVirtualHosts = []
-    for virtualHost in frontends[frontend]:
-        nameVirtualHost = httpdNameVirtualHost.format(IP = socket.gethostbyname(getVirtualHost(virtualHost)))
-        if nameVirtualHost not in nameVirtualHosts:
-            nameVirtualHosts.append(nameVirtualHost)
-
     infoMap = {}
-    infoMap['nameVirtualHosts'] = ''
-
-    for nameVirtualHost in nameVirtualHosts:
-        infoMap['nameVirtualHosts'] += nameVirtualHost
+    infoMap['nameVirtualHosts'] = httpdNameVirtualHost.format(IP = socket.gethostbyname(frontend))
 
     return httpdTemplate.format(**infoMap)
 
 
-def makeApacheConfiguration(virtualHost):
-    '''Returns an Apache configuration file for the given virtualHost.
+def makeApacheConfiguration(frontend, virtualHost):
+    '''Returns an Apache configuration file for the given frontend and virtualHost.
+    The frontend is required to get its IP instead of using the virtual host name,
+    which could be a load balanced DNS alias (i.e. same virtual host used in
+    several frontends).
     '''
 
     if virtualHost not in virtualHosts:
@@ -899,7 +892,7 @@ def makeApacheConfiguration(virtualHost):
     else:
         infoMap['hostcert'] = config.hostCertificateFiles['devintpro']['crt']
         infoMap['hostkey'] = config.hostCertificateFiles['devintpro']['key']
-    infoMap['IP'] = socket.gethostbyname(infoMap['virtualHost'])
+    infoMap['IP'] = socket.gethostbyname(frontend)
     infoMap['security'] = security
     infoMap['redirectRoot'] = ''
     infoMap['addingSlashes'] = ''
@@ -1055,7 +1048,7 @@ def vhosts(arguments):
     (options, arguments) = parser.parse_args(arguments)
 
     for virtualHost in frontends[options.frontend]:
-        output = makeApacheConfiguration(virtualHost)
+        output = makeApacheConfiguration(options.frontend, virtualHost)
         outputFile = os.path.join(options.outputPath, '%s.conf' % virtualHost)
         with open(outputFile, 'w') as f:
             logging.info('Generating: %s' % outputFile)
