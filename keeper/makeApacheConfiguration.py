@@ -236,6 +236,7 @@ services = {
     'SDT': {
         'backendHostnames': ['vocms12'],
         'backendPort': 443,
+        'redirectRoot': True,
     },
 
     'dev': {
