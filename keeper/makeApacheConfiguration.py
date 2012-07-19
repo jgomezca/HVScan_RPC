@@ -595,7 +595,7 @@ shibbolethTemplate = '''
 
 shibboleth = shibbolethTemplate.format(
     location = 'Location',
-    parameter = '/{url}/',
+    parameter = '/{url}',
 )
 
 shibbolethMatch = shibbolethTemplate.format(
