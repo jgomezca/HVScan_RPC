@@ -46,7 +46,7 @@ class AjaxApp(object):
             'PFast' : ('PAGs', 'FastSim'),	
         }
 
-    MAILING_LIST = ["anorkus@cern.ch"]
+    MAILING_LIST = ["anorkus@cern.ch", "jean-roch.vlimant@cern.ch", "dpiparo@cern.ch", "giovanni.franzoni@cern.ch"]
     VALIDATION_STATUS = "VALIDATION_STATUS"
     COMMENTS = "COMMENTS"
     LINKS = "LINKS"
