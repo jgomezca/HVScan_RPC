@@ -40,43 +40,43 @@ def getOptions():
 	parser.add_option('-f', '--force', action = 'store_true',
 		dest = 'force',
 		default = False,
-		help = 'Forces to deploy if /data exists. It will *remove* cmssw, cmsswNew, docs, libs, secrets and services (without trailing /, i.e. without removing the contents if it is a symlink, e.g. like the docs suggest, developers might have /data/services pointing to ~/scratch0/services for easy development to clone new clean versions of them. However, it will keep logs/, git/, and any other folders. Therefore, this option is used to re-deploy from scratch without removing logs and other files. Also, it can be used to deploy in cases where /data is a mounted device (like in dev/int/pro), so the directory is already there. This option is *not* meant for private development machines: please use git-fetch on the individual repositories, as --force would delete your local repository.'
+		help = 'Forces to deploy if /data exists. It will *remove* cmssw, cmsswNew, docs, libs, secrets and services (without trailing /, i.e. without removing the contents if it is a symlink, e.g. like the docs suggest, developers might have /data/services pointing to ~/scratch0/services for easy development to clone new clean versions of them. However, it will keep logs/, git/, and any other folders. Therefore, this option is used to re-deploy from scratch without removing logs and other files. Also, it can be used to deploy in cases where /data is a mounted device (like in dev/int/pro), so the directory is already there. This option is *not* meant for private development machines: please use git-fetch on the individual repositories, as --force would delete your local repository. Default: %default'
 	)
 
 	parser.add_option('-u', '--update', action = 'store_true',
 		dest = 'update',
 		default = False,
-		help = 'Updates an existing deployment (i.e. with services running): after checking the requirements, but before deploying, stop the keeper and then all the services. Later, after deployment, start the services and then the keeper.'
+		help = 'Updates an existing deployment (i.e. with services running): after checking the requirements, but before deploying, stop the keeper and then all the services. Later, after deployment, start the services and then the keeper. Default: %default'
 	)
 
 	parser.add_option('-n', '--nosendEmail', action = 'store_false',
 		dest = 'sendEmail',
 		default = True,
-		help = 'Disables sending emails when starting the services after on --update.'
+		help = 'Disables sending emails when starting the services after on --update. Default: %default'
 	)
 
 	parser.add_option('-d', '--dataDirectory', type = 'str',
 		dest = 'dataDirectory',
 		default = defaultDataDirectory,
-		help = 'The directory where it will be installed. If it is not /data (default), a /data symlink will be created to that location so that CMSSW works properly.'
+		help = 'The directory where it will be installed. If it is not /data (default), a /data symlink will be created to that location so that CMSSW works properly. Default: %default'
 	)
 
 	parser.add_option('-s', '--servicesRepository', type = 'str',
 		dest = 'servicesRepository',
 		default = config.servicesRepository,
-		help = 'The path to the Services Git repository.'
+		help = 'The path to the Services Git repository. Default: %default'
 	)
 
 	parser.add_option('-l', '--libsRepository', type = 'str',
 		dest = 'libsRepository',
 		default = config.libsRepository,
-		help = 'The path to the Libs Git repository.'
+		help = 'The path to the Libs Git repository. Default: %default'
 	)
 
 	parser.add_option('-c', '--cmsswRepository', type = 'str',
 		dest = 'cmsswRepository',
 		default = config.cmsswRepository,
-		help = 'The path to the CMSSW Git repository.'
+		help = 'The path to the CMSSW Git repository. Default: %default'
 	)
 
 	(options, args) = parser.parse_args()

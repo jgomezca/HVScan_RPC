@@ -619,6 +619,7 @@ def runCommand(command, arguments):
 			parser.add_option('--%s' % name, action = action,
 				dest = option,
 				default = default,
+				help = 'Default: %default'
 			)
 		else:
 			raise Exception('Unsupported default type.')
