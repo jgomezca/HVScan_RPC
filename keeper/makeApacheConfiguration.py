@@ -383,8 +383,8 @@ HostnameLookups Off
 # Logging
 ErrorLog logs/error_log
 LogLevel warn
-LogFormat "%h %l %u %t \\"%r\\" %>s %b \\"%{{Referer}}i\\" \\"%{{User-Agent}}i\\"" combined
-CustomLog logs/access_log combined
+LogFormat "%v %h %l %u %t \\"%r\\" %>s %b \\"%{{Referer}}i\\" \\"%{{User-Agent}}i\\"" combinedwithvhost
+CustomLog logs/access_log combinedwithvhost
 
 ServerSignature Off
 
