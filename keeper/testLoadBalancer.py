@@ -41,8 +41,11 @@ def testLoadBalancer(hostname, keepCookies = defaultKeepCookies, delay = default
     url = 'https://%s/docs/index.html' % hostname
     cookieJar = cookielib.CookieJar()
     opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cookieJar))
+    counter = 0
 
     while True:
+        counter += 1
+
         # If we do not keep the cookies, create a new opener each time.
         # The cookie jar is used to get the route ID, even if we do not keep
         # the cookies between requests.
@@ -70,7 +73,7 @@ def testLoadBalancer(hostname, keepCookies = defaultKeepCookies, delay = default
             except Exception:
                 pass
 
-            logging.info('%s %s %s' % (route, code, responseSampleLine))
+            logging.info('%3s %s %s %s' % (counter, route, code, responseSampleLine))
 
         except urllib2.HTTPError as e:
             code = e.code
