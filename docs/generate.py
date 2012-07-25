@@ -142,9 +142,9 @@ def main():
 	outputFilename = os.path.join(options['outputDirectory'], indexFilename)
 	logger.info('Generating: ' + outputFilename)
 
-	developmentMailingList = open('developmentMailingList.txt').read()
-	gitWeb = open('gitWeb.txt').read()
-	jiraWeb = open('jiraWeb.txt').read()
+	developmentMailingList = open('developmentMailingList.txt').read().strip()
+	gitWeb = open('gitWeb.txt').read().strip()
+	jiraWeb = open('jiraWeb.txt').read().strip()
 
 	servicesList = ''
 	for service in config.getServicesList():
