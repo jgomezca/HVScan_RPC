@@ -58,7 +58,7 @@ def getOptions():
 	parser.add_option('-o', '--outputDirectory', type='str',
 		dest='outputDirectory',
 		default=defaultOutputDirectory,
-		help='The directory where the docs will be generated. Default: /data/docs (i.e. /data/docs). Note: This is different from /data/services/docs which contains the sources and this script.'
+		help='The directory where the docs will be generated. Default: %default'
 	)
 
 	(options, args) = parser.parse_args()
