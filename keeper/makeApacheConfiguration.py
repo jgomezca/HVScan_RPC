@@ -866,6 +866,11 @@ def makeHttpdConfiguration(frontend):
         raise NotRegisteredError('Error: %s is not in the registered frontends.' % frontend)
 
     infoMap = {}
+
+    # Get the IP of the current hostname if generating the HTTP configuration in a private machine
+    if frontend == 'private':
+        frontend = socket.gethostname()
+
     infoMap['nameVirtualHosts'] = httpdNameVirtualHost.format(IP = socket.gethostbyname(frontend))
 
     return httpdTemplate.format(**infoMap)
@@ -880,6 +885,10 @@ def makeApacheConfiguration(frontend, virtualHost):
 
     if virtualHost not in virtualHosts:
         raise NotRegisteredError('Error: %s is not in the registered virtual hosts.' % virtualHost)
+
+    # Get the IP of the current hostname if generating the HTTP configuration in a private machine
+    if frontend == 'private':
+        frontend = socket.gethostname()
 
     infoMap = virtualHosts[virtualHost]
     infoMap['virtualHost'] = getVirtualHost(virtualHost)
