@@ -144,6 +144,7 @@ def main():
 
 	developmentMailingList = open('developmentMailingList.txt').read()
 	gitWeb = open('gitWeb.txt').read()
+	jiraWeb = open('jiraWeb.txt').read()
 
 	servicesList = ''
 	for service in config.getServicesList():
@@ -154,9 +155,10 @@ def main():
 		<p>Services:</p><ul>%s</ul>
 		<p>Development mailing list (you need to be subscribed):</p><ul><li><a href="mailto:%s">%s</a></li></ul>
 		<p>Git web:</p><ul><li><a href="%s">%s</a></li></ul>
+		<p>JIRA web:</p><ul><li><a href="%s">%s</a></li></ul>
 		<p>Documents:</p><ul>%s</ul>
 		<p>If it is your first time, please start by reading Developing.</p>
-	''' % (indexTitle, servicesList, developmentMailingList, developmentMailingList, gitWeb, gitWeb, documentsList)
+	''' % (indexTitle, servicesList, developmentMailingList, developmentMailingList, gitWeb, gitWeb, jiraWeb, jiraWeb, documentsList)
 
 	outputText = docsTemplate % (indexTitle, docsFilename, bodyText)
 	write(outputFilename, outputText)
