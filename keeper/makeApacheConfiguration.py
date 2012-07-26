@@ -288,11 +288,6 @@ services['shibbolethTest']['shibbolethGroups'] = ['zh']
 
 
 # Templates
-httpdNameVirtualHost = '''
-NameVirtualHost {IP}:80
-NameVirtualHost {IP}:443
-'''
-
 httpdTemplate = '''
 # August29, patch
 # Reject request when more than 5 ranges in the Range: header.
@@ -330,7 +325,36 @@ MaxRequestsPerChild  0
 Listen 80
 
 # Enable name-based virtual hosts for the following IP:port pairs
-{nameVirtualHosts}
+NameVirtualHost {IP}:80
+NameVirtualHost {IP}:443
+
+# Empty default virtual hosts: prevents wrongly matching the other ones.
+# (Apache matches the first virtual host if the others do not match).
+<VirtualHost {IP}:80>
+    ServerName x.ch
+
+    {security}
+</VirtualHost>
+
+# We need to set up the SSLEngine in the default HTTPS virtual host
+# because SSL connections are fully encrypted, therefore the Host header
+# is hidden for Apache until the SSL connection is finished, thus Apache
+# can't decide the name-based virtual host to use at that moment,
+# using the default one.
+<VirtualHost {IP}:443>
+    ServerName x.ch
+
+    SSLEngine On
+    SSLProtocol all -SSLv2
+
+    #AB SSLCipherSuite ALL:!ADH:!EXPORT:!SSLv2:RC4+RSA:+HIGH:+MEDIUM:+LOW
+    SSLCipherSuite HIGH:MEDIUM:-LOW:-SSLv2
+
+    SSLCertificateFile    {hostcert}
+    SSLCertificateKeyFile {hostkey}
+
+    {security}
+</VirtualHost>
 
 # Required for Shibboleth
 LoadModule authz_host_module modules/mod_authz_host.so
@@ -413,34 +437,6 @@ BrowserMatch "^Dreamweaver-WebDAV-SCM1" redirect-carefully
 '''
 
 mainTemplate = '''
-# Empty default virtual hosts: prevents wrongly matching the other ones.
-# (Apache matches the first virtual host if the others do not match).
-<VirtualHost {IP}:80>
-    ServerName {virtualHost}.default.ch
-
-    {security}
-</VirtualHost>
-
-# We need to set up the SSLEngine in the default HTTPS virtual host
-# because SSL connections are fully encrypted, therefore the Host header
-# is hidden for Apache until the SSL connection is finished, thus Apache
-# can't decide the name-based virtual host to use at that moment,
-# using the default one.
-<VirtualHost {IP}:443>
-    ServerName {virtualHost}.default.ch
-
-    SSLEngine On
-    SSLProtocol all -SSLv2
-
-    #AB SSLCipherSuite ALL:!ADH:!EXPORT:!SSLv2:RC4+RSA:+HIGH:+MEDIUM:+LOW
-    SSLCipherSuite HIGH:MEDIUM:-LOW:-SSLv2
-
-    SSLCertificateFile    {hostcert}
-    SSLCertificateKeyFile {hostkey}
-
-    {security}
-</VirtualHost>
-
 <VirtualHost {IP}:80>
     ServerName  {virtualHost}.cern.ch
     ServerAlias {virtualHost}
@@ -858,6 +854,30 @@ def getVirtualHost(virtualHost):
     return virtualHost
 
 
+def getBasicInfoMap(frontend):
+    '''Returns a basic info map used in both the main HTTP configuration
+    and in the virtual hosts.
+    '''
+
+    infoMap = {}
+    infoMap['security'] = security
+
+    # Get the IP of the current hostname if generating the HTTP configuration in a private machine
+    if frontend == 'private':
+        infoMap['IP'] = socket.gethostbyname(socket.gethostname())
+    else:
+        infoMap['IP'] = socket.gethostbyname(frontend)
+
+    if frontend == 'private':
+        infoMap['hostcert'] = config.hostCertificateFiles['private']['crt']
+        infoMap['hostkey'] = config.hostCertificateFiles['private']['key']
+    else:
+        infoMap['hostcert'] = config.hostCertificateFiles['devintpro']['crt']
+        infoMap['hostkey'] = config.hostCertificateFiles['devintpro']['key']
+
+    return infoMap
+
+
 def makeHttpdConfiguration(frontend):
     '''Returns the main Apache configuration file (httpd.conf) for the given frontend.
     '''
@@ -865,15 +885,7 @@ def makeHttpdConfiguration(frontend):
     if frontend not in frontends:
         raise NotRegisteredError('Error: %s is not in the registered frontends.' % frontend)
 
-    infoMap = {}
-
-    # Get the IP of the current hostname if generating the HTTP configuration in a private machine
-    if frontend == 'private':
-        frontend = socket.gethostname()
-
-    infoMap['nameVirtualHosts'] = httpdNameVirtualHost.format(IP = socket.gethostbyname(frontend))
-
-    return httpdTemplate.format(**infoMap)
+    return httpdTemplate.format(**getBasicInfoMap(frontend))
 
 
 def makeApacheConfiguration(frontend, virtualHost):
@@ -886,20 +898,9 @@ def makeApacheConfiguration(frontend, virtualHost):
     if virtualHost not in virtualHosts:
         raise NotRegisteredError('Error: %s is not in the registered virtual hosts.' % virtualHost)
 
-    # Get the IP of the current hostname if generating the HTTP configuration in a private machine
-    if frontend == 'private':
-        frontend = socket.gethostname()
-
-    infoMap = virtualHosts[virtualHost]
+    infoMap = getBasicInfoMap(frontend)
+    infoMap.update(virtualHosts[virtualHost])
     infoMap['virtualHost'] = getVirtualHost(virtualHost)
-    if virtualHost == 'private':
-        infoMap['hostcert'] = config.hostCertificateFiles['private']['crt']
-        infoMap['hostkey'] = config.hostCertificateFiles['private']['key']
-    else:
-        infoMap['hostcert'] = config.hostCertificateFiles['devintpro']['crt']
-        infoMap['hostkey'] = config.hostCertificateFiles['devintpro']['key']
-    infoMap['IP'] = socket.gethostbyname(frontend)
-    infoMap['security'] = security
     infoMap['redirectRoot'] = ''
     infoMap['addingSlashes'] = ''
     infoMap['redirectToHttps'] = ''
