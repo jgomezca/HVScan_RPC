@@ -59,7 +59,7 @@ def testLoadBalancer(hostname, keepCookies = defaultKeepCookies, delay = default
 
             # Try to get a sample line
             try:
-                responseSampleLine = response.read().splitlines()[10].strip()[:40]
+                responseSampleLine = response.read().splitlines()[10].strip()[:36]
             except Exception:
                 responseSampleLine = '???'
 
