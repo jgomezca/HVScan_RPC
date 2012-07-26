@@ -27,9 +27,10 @@ errors = {}
 # Used in command line options as well
 defaultKeepCookies = False
 defaultDelay = 1.0
+defaultSendCounter = False
 
 
-def testLoadBalancer(hostname, keepCookies = defaultKeepCookies, delay = defaultDelay):
+def testLoadBalancer(hostname, keepCookies = defaultKeepCookies, delay = defaultDelay, sendCounter = defaultSendCounter):
     '''Tests the load balancer in an infinite loop, keeping track
     of errors in the global variable so that they can be reported after
     a KeyboardInterrupt.
@@ -54,7 +55,11 @@ def testLoadBalancer(hostname, keepCookies = defaultKeepCookies, delay = default
             opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cookieJar))
 
         try:
-            response = opener.open(url)
+            finalUrl = url
+            if sendCounter:
+                finalUrl += '?%s' % counter
+
+            response = opener.open(finalUrl)
             code = response.code
 
             # Try to get a sample line
@@ -109,6 +114,12 @@ def main():
         dest = 'delay',
         default = defaultDelay,
         help = 'Delay between requests. Change to a smaller value for stress testing. Default: %default'
+    )
+
+    parser.add_option('-s', '--sendCounter', action = 'store_true',
+        dest = 'sendCounter',
+        default = defaultSendCounter,
+        help = 'Send the request counter as a request parameter (e.g. \'/url?7\', useful for distinguishing each request in the logs, preventing caching, etc.). Default: %default'
     )
 
     (options, arguments) = parser.parse_args()
