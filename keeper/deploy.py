@@ -55,6 +55,12 @@ def getOptions():
 		help = 'Disables sending emails when starting the services after on --update. Default: %default'
 	)
 
+	parser.add_option('-l', '--linkServicesRepository', action = 'store_true',
+		dest = 'linkServicesRepository',
+		default = False,
+		help = 'Instead of cloning the Services Git repository, create a symbolic link to it. This is intended to be used in private deployments where you want a symbolic link to your repository in AFS, e.g. /data/services to ~/scratch0/services. Note: git checkout is still executed. Default: %default'
+	)
+
 	parser.add_option('-d', '--dataDirectory', type = 'str',
 		dest = 'dataDirectory',
 		default = defaultDataDirectory,
@@ -67,7 +73,7 @@ def getOptions():
 		help = 'The path to the Services Git repository. Default: %default'
 	)
 
-	parser.add_option('-l', '--libsRepository', type = 'str',
+	parser.add_option('-L', '--libsRepository', type = 'str',
 		dest = 'libsRepository',
 		default = config.libsRepository,
 		help = 'The path to the Libs Git repository. Default: %default'
@@ -385,8 +391,11 @@ def deploy(options):
 			execute('sudo rm ' + defaultDataDirectory)
 		execute('sudo ln -s ' + options['dataDirectory'] + ' ' + defaultDataDirectory)
 
-	# Clone services and checkout the treeish
-	execute('git clone -q ' + options['servicesRepository'] + ' services')
+	# Clone or link services and checkout the treeish
+	if options['linkServicesRepository']:
+		execute('ln -s %s services' % options['servicesRepository'])
+	else:
+		execute('git clone -q ' + options['servicesRepository'] + ' services')
 	execute('cd services && git checkout -q ' + options['gitTreeish'])
 
 	# Clone libs and checkout the tag
