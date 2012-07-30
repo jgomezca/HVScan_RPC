@@ -13,6 +13,7 @@ import GTComparison
 from GTLib import UploadGTLib
 from GTServerCache import cache_get, cache_put
 
+import api
 
 logger = logging.getLogger(__name__)
 PAGES_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "pages"))
@@ -33,6 +34,7 @@ def jsonify(func):
     return wrapper
 
 
+@api.generateServiceApi
 class UploadGTServer(object):
     def __init__(self):     
         logger.info("Created UploadGTServer object")
@@ -197,15 +199,4 @@ class UploadGTServer(object):
             print str(e)
             data = Settings.PRODUCTION_GTS
         return data
-
-
-    @cherrypy.expose
-    @jsonify
-    def api(self):
-        exposed_attr_names = {}
-        for attr_name in dir(self):
-            self_attr = getattr(self, attr_name)
-            if hasattr(self_attr,'exposed'):
-                exposed_attr_names[attr_name] =  self_attr.__doc__
-        return exposed_attr_names
 

@@ -129,6 +129,12 @@ def start(mainObject):
 
 # Utility functions
 
+def getPrettifiedJSON(data, sortKeys = True):
+	'''Returns prettified JSON (valid and easily read JSON).
+	'''
+
+	return json.dumps(data, sort_keys = sortKeys, indent = 4)
+
 def setResponsePlainText(data = None):
 	cherrypy.response.headers['Content-Type'] = 'text/plain;charset=ISO-8859-1'
 	return data
@@ -137,8 +143,7 @@ def setResponseJSON(data = None, encode = True):
 	cherrypy.response.headers['Content-Type'] = 'application/json'
 
 	if encode and data is not None:
-		# Prettified JSON (valid and easily read JSON)
-		data = json.dumps(data, sort_keys = True, indent = 4)
+		data = getPrettifiedJSON(data)
 
 	return data
 

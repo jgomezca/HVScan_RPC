@@ -12,6 +12,7 @@ import ServerCache
 from cherrypy import expose
 
 import service
+import api
 
 #if @service - then doc and args
 #/domain/recordsprovider/api/..
@@ -20,6 +21,7 @@ import service
 def set_json_mime_type(cherrypy):
     cherrypy.response.headers["Content-Type"] = "application/json"
 
+@api.generateServiceApi
 class App(object):
 
 
@@ -189,29 +191,6 @@ class App(object):
 
         set_json_mime_type(cherrypy)
         return json.dumps(rez)
-
-    @cherrypy.expose
-    def api(self):
-        import inspect
-        exposed_attr_names = {}
-        for attr_name in dir(self):
-            self_attr = getattr(self, attr_name)
-            if hasattr(self_attr,'exposed'):
-                method_doc = {}
-                if self_attr.__doc__ is not None:
-                    method_doc['doc'] = inspect.cleandoc(self_attr.__doc__)
-                else:
-                    method_doc['doc'] = None
-                if inspect.ismethod(self_attr):
-                    inspected_arguments = inspect.getargspec(self_attr)
-                    method_doc['args'] = inspected_arguments[0][1:]
-                    method_doc['varargs'] = inspected_arguments[1]
-                    method_doc['keywords'] = inspected_arguments[2]
-                    method_doc['defaults'] = inspected_arguments[3]
-                exposed_attr_names[attr_name] = method_doc
-
-        set_json_mime_type(cherrypy)
-        return json.dumps({'header':{'type':'documentation'},'body':{'methods':exposed_attr_names}})
 
 
 def main():

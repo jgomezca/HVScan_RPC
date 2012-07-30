@@ -34,6 +34,7 @@ import config
 import re
 
 import service
+import api
 
 #from PIL import Image, ImageChops
 from readXML import *
@@ -52,6 +53,7 @@ def getFrontierConnectionString(account, level, short = False):
         }, short = short)
 
 
+@api.generateServiceApi
 class CondDBPayloadInspector:
     ''' Sample request handler class. '''
     def __init__(self):
