@@ -87,6 +87,31 @@ def start(mainObject):
 	'''Starts the service.
 	'''
 
+	def getErrorPage(status, message, traceback, version):
+		'''Returns an error page like the Apache's one, using only
+		the status (e.g. '404 Not Found') and message (e.g. 'Nothing
+		matches the given URI') and hiding everything else
+		(i.e. server, version, traceback...).
+
+		The CherryPy-defined messages may reveal that CherryPy is the server,
+		but some services are already using custom messages and, in any case,
+		they are useful for the users.
+		'''
+
+		apacheErrorPageTemplate = '''<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>%s</title>
+</head><body>
+<h1>%s</h1>
+<p>%s</p>
+</body></html>'''
+
+		# Apache writes the status without the code in the h1 header
+		# e.g. '404 Not Found' -> 'Not Found'
+		statusWithoutCode = status.partition(' ')[2]
+
+		return apacheErrorPageTemplate % (status, statusWithoutCode, message)
+
 	cherrypy.config.update({
 		'global': {
 		'server.socket_host': socket.gethostname(),
@@ -96,6 +121,7 @@ def start(mainObject):
 		'log.screen': False,
 		'server.ssl_certificate': os.path.join(settings['secretsDirectory'], 'hostcert.pem'),
 		'server.ssl_private_key': os.path.join(settings['secretsDirectory'], 'hostkey.pem'),
+		'error_page.default': getErrorPage,
 		},
 	})
 	cherrypy.quickstart(mainObject, config = 'server.conf', script_name = '/' + settings['name'])
