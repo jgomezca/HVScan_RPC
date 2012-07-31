@@ -16,6 +16,7 @@ services = config.getServicesList(showHiddenServices = True)
 
 
 import os
+import glob
 import subprocess
 import sys
 import signal
@@ -89,6 +90,16 @@ def getPath(service):
 	'''
 
 	return os.path.abspath(os.path.join(config.servicesDirectory, service))
+
+
+def _getLatestLogFile(service):
+	'''Returns the latest log file of a service, None if there is not any log file.
+	'''
+
+	try:
+		return sorted(glob.glob(os.path.join(config.logsDirectory, '%s.log.*' % service)))[-1]
+	except:
+		return None
 
 
 def getLogPath(service):
@@ -234,6 +245,11 @@ def start(service, warnIfAlreadyStarted = True, sendEmail = True):
 			logging.warning('Tried to start a service (%s) which is already running: %s', service, ','.join(pids))
 		return
 
+	# Before starting, try to get the latest log file
+	previousLatestLogFile = _getLatestLogFile(service)
+
+	logging.info('Starting %s.', service)
+
 	# The service is not running, start it
 	pid = os.fork()
 	if pid == 0:
@@ -244,7 +260,7 @@ def start(service, warnIfAlreadyStarted = True, sendEmail = True):
 
 		# Run the service's starting script piping its output to rotatelogs
 		# FIXME: Fix the services so that they do proper logging themselves
-		extraCommandLine = '2>&1 | /usr/sbin/rotatelogs -L %s %s %s' % (config.logsFileTemplate % service, config.logsFileTemplate % service, config.logsSize)
+		extraCommandLine = '2>&1 | LD_LIBRARY_PATH=/lib64:/usr/lib64 /usr/sbin/rotatelogs %s %s' % (config.logsFileTemplate % service, config.logsSize)
 
 		if service == 'keeper':
 			os.execlp('bash', 'bash', '-c', './keeper.py keep ' + extraCommandLine)
@@ -252,7 +268,8 @@ def start(service, warnIfAlreadyStarted = True, sendEmail = True):
 
 			run(service, config.servicesConfiguration[service]['filename'], extraCommandLine = extraCommandLine, replaceProcess = True)
 
-	logging.info('Started %s.', service)
+	# Wait until the service has started
+	wait(service, maxWaitTime = 5, forStart = True)
 
 	# Clean up the process table
 	os.wait()
@@ -266,20 +283,57 @@ def start(service, warnIfAlreadyStarted = True, sendEmail = True):
 		except Exception:
 			logging.error('The email "' + subject + '"could not be sent.')
 
+	# Try to remove the old hard link to the previous latest log file
+	logHardLink = os.path.join(config.logsDirectory, '%s.log' % service)
+	try:
+		os.remove(logHardLink)
+	except Exception:
+		pass
 
-def wait(service, maxWaitTime = 20):
+	# Wait until the service creates some output (i.e. until rotatelogs has created a new file)
+	startTime = time.time()
+	maxWaitTime = 10
+	while True:
+		if time.time() - startTime > maxWaitTime:
+			raise Exception('Service %s did not create any output after %s seconds.' % (service, maxWaitTime))
+
+		latestLogFile = _getLatestLogFile(service)
+
+		# If there is a log file
+		if latestLogFile is not None:
+			# If there was not a previous log file, latestLogFile is the new one.
+			# If there was a previous log file, latestLogFile should be different than the old one.
+			if previousLatestLogFile is None or previousLatestLogFile != latestLogFile:
+				break
+
+		time.sleep(1)
+
+	# Create the new hard link
+	try:
+		os.link(latestLogFile, logHardLink)
+	except Exception as e:
+		logging.warning('Could not create hard link from %s to %s: %s', latestLogFile, logHardLink, e)
+
+	logging.info('Started %s: %s', service, ','.join(getPIDs(service)))
+
+
+def wait(service, maxWaitTime = 20, forStart = False):
 	'''Waits until a service stops.
 	
 	Raises exception if a maximum wait time is exceeded.
 	'''
 
+	action = 'stop'
+	if forStart:
+		action = 'start'
+
 	startTime = time.time()
 
 	while True:
 		if time.time() - startTime > maxWaitTime:
-			raise Exception('Service %s did not stop after %s seconds.' % (service, maxWaitTime))
+			raise Exception('Service %s did not %s after %s seconds.' % (service, action, maxWaitTime))
 
-		if not isRunning(service):
+		if forStart == isRunning(service):
 			return
 
 		time.sleep(1)

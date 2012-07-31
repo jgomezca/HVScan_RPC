@@ -281,7 +281,10 @@ def checkRequirements(options):
 	# Test for rotatelogs (httpd package)
 	try:
 		checkPackage('httpd')
-		execute('echo "" | /usr/sbin/rotatelogs -t /dev/null 10M')
+		try:
+			execute('echo "" | /usr/sbin/rotatelogs /tmp/rotatelogstest 10M')
+		except subprocess.CalledProcessError:
+			pass
 	except:
 		raise Exception('This script requires rotatelogs (httpd package).')
 
