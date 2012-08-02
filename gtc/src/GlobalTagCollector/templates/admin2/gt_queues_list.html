@@ -1,0 +1,88 @@
+{% extends "app_layout.html" %}
+{# load humanize #}
+
+
+{% block title %}Global Tag Collector{% endblock %}
+
+{% block media%}
+{{ block.super }}
+<style type="text/css">
+
+
+</style>
+
+{% endblock %}
+
+{%  block content %}
+{# load tags #}
+
+
+<div class="row">
+    <div class="span6">
+        <h1>Global Tag Queues</h1>
+    </div>
+    <div class="span6" style="text-align: right;">
+        <a href="gt_queue_create" class="btn">Create GT Queue</a>
+    </div>
+</div>
+<div class="row">
+    <div class="span12">
+
+
+
+
+
+        <div class="tabbable"> <!-- Only required for left/right tabs -->
+            <ul class="nav nav-tabs">
+                <!--<li class="active"><a href="?active" data-toggle="tab">Active</a></li>-->
+                <li class="active"><a href="?all" data-toggle="tab">All</a></li>
+            </ul>
+            <!--<div class="tab-content">-->
+                <!--<div class="tab-pane active" id="tab1">-->
+                    <!--<p>I'm in Section 1.</p>-->
+                <!--</div>-->
+                <!--<div class="tab-pane" id="tab2">-->
+                    <!--<p>Howdy, I'm in Section 2.</p>-->
+                <!--</div>-->
+            <!--</div>-->
+        </div>
+
+
+
+
+
+        <table class="table table-striped table-condensed table-bordered">
+            <tr>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Is open</th>
+                <th>Last GT</th>
+                <th>gt_account</th>
+                <th>gt_type_category</th>
+                <th>Releases</th>
+                <th>Expected GT name</th>
+                <th>Action</th>
+            </tr>
+            {% for gt_queue in gt_queues %}
+            <tr>
+                <td><a href="{% url gt_queue_entries queue_id=gt_queue.id %}">{{gt_queue.name}}</a></td>
+                <td>{{gt_queue.description}}</td>
+                <td>{{gt_queue.is_open}}</td>
+                <td>{{gt_queue.last_gt}}</td>
+                <td>{{gt_queue.gt_account}}</td>
+                <td>{{gt_queue.gt_type_category}}</td>
+                <td>{{gt_queue.release_from}} - {{gt_queue.release_to}}</td>
+                <td>{{gt_queue.expected_gt_name}}</td>
+                <td><a href="gt_queue_edit/{{gt_queue.id}}">Edit</a></td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="9">No data available</td>
+            </tr>
+            {% endfor %}
+        </table>
+
+
+    </div>
+</div>
+{% endblock %}

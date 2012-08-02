@@ -62,11 +62,8 @@ virtualHosts = {
         'services': [
             # Keeper's services
             'admin',
-            'docs', 'getLumi', 'gtList', 'payloadInspector', 'PdmV/valdb',
+            'docs', 'getLumi', 'gtc', 'gtList', 'payloadInspector', 'PdmV/valdb',
             'popcon', 'recordsProvider', 'regressionTest', 'shibbolethTest',
-
-            # Other services
-            'gtc-dev',
         ],
     },
 
@@ -102,12 +99,9 @@ virtualHosts['private'] = dict(virtualHosts['cms-conddb-dev'])
 virtualHosts['private']['backendHostnames'] = [socket.gethostname()]
 
 # cms-conddb-int must be exactly the same as -dev but with different
-# 'backendHostnames' and the production gtc instead of gtc-dev
+# 'backendHostnames'
 virtualHosts['cms-conddb-int'] = dict(virtualHosts['cms-conddb-dev'])
 virtualHosts['cms-conddb-int']['backendHostnames'] = ['vocms146']
-virtualHosts['cms-conddb-int']['services'] = list(virtualHosts['cms-conddb-int']['services'])
-virtualHosts['cms-conddb-int']['services'].remove('gtc-dev')
-virtualHosts['cms-conddb-int']['services'].append('gtc')
 
 # cms-conddb-prod{,1,2} must be equal, and also the same as -int
 # but with different 'backendHostnames'.
@@ -211,18 +205,6 @@ services = {
         # serve them here.
     },
 
-    'gtc': {
-        'backendHostnames': ['gtc-prod'],
-        'backendPort': 443,
-    },
-
-    'gtc-dev': {
-        'url': 'gtc',
-        'backendHostnames': ['gtc-dev'],
-        'backendPort': 443,
-        'shibbolethGroups': ['zh'],
-    },
-
     # From the old cmstags.conf
     'tc': {
         'backendPort': 4443,
@@ -283,9 +265,12 @@ services['docs']['redirectRoot'] = True
 
 # Set the allowed groups for services behind Shibboleth
 services['admin']['shibbolethGroups'] = ['cms-cond-dev']
+services['gtc']['shibbolethGroups'] = ['zh']
 services['PdmV/valdb']['shibbolethGroups'] = ['cms-web-access']
 services['shibbolethTest']['shibbolethGroups'] = ['zh']
 
+# FIXME: gtc still uses HTTP
+services['gtc']['protocol'] = 'http'
 
 # Templates
 httpdTemplate = '''
@@ -530,8 +515,8 @@ redirectToHttps = '''
 '''
 
 proxyPass = '''
-    ProxyPass        /{url} https://{backendHostname}.cern.ch:{backendPort}{backendUrl} retry=0
-    ProxyPassReverse /{url} https://{backendHostname}.cern.ch:{backendPort}{backendUrl}
+    ProxyPass        /{url} {protocol}://{backendHostname}.cern.ch:{backendPort}{backendUrl} retry=0
+    ProxyPassReverse /{url} {protocol}://{backendHostname}.cern.ch:{backendPort}{backendUrl}
 '''
 
 proxyPassLoadBalanced = '''
@@ -547,7 +532,7 @@ proxyPassLoadBalanced = '''
 '''
 
 balancerMember = '''
-        BalancerMember https://{backendHostname}.cern.ch:{backendPort}{backendUrl} route={route} retry=0
+        BalancerMember {protocol}://{backendHostname}.cern.ch:{backendPort}{backendUrl} route={route} retry=0
 '''
 
 balancerManager = '''
@@ -915,6 +900,9 @@ def makeApacheConfiguration(frontend, virtualHost):
     for service in infoMap['services']:
         if 'url' not in services[service]:
             services[service]['url'] = service
+
+        if 'protocol' not in services[service]:
+            services[service]['protocol'] = 'https'
 
         if 'backendHostnames' in services[service]:
             backendHostnames = services[service]['backendHostnames']

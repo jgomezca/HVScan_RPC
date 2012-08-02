@@ -1,0 +1,89 @@
+<!DOCTYPE HTML>
+<html>
+
+
+<head>
+
+    {% block head %}
+        <title>{% block title %}{% endblock %}</title>
+    {%  endblock %}
+
+    {#<link rel="stylesheet" href='{{ STATIC_URL }}bootstrap/2.0.2/css/bootstrap.css'/>#}
+    {#<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/app.css" />#}
+    <style type="text/css">
+
+        html, body {height: 100%;}
+
+        #container {min-height: 100%;}
+
+        #content {overflow:auto;
+            margin-top: 40px; /*fix for menu*/
+            padding-bottom: 90px;}  /* must be same height as the footer */
+
+        #footer {position: relative;
+            margin-top: -91px; /* negative value of footer height */
+            height: 90px;
+            clear:both;}
+
+        /*Opera Fix*/
+        body:before {
+            content:"";
+            height:100%;
+            float:left;
+            width:0;
+            margin-top:-32767px;/
+        }
+
+
+
+
+  
+</style>
+
+<!--[if !IE 7]>
+	<style type="text/css">
+		#container {display:table;height:100%}
+	</style>
+<![endif]-->
+    <script language="javascript" type="text/javascript" src="http://scdn.kostast.eu/jquery/1.7.2/jquery-min.js"></script>
+    <script language="javascript" type="text/javascript" src="http://scdn.kostast.eu/chosen/0.9.8/chosen.jquery.min.js"></script>
+    <script language="javascript" type="text/javascript" src="http://scdn.kostast.eu/bootstrap/2.0.4/js/bootstrap.min.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="http://scdn.kostast.eu/bootstrap/2.0.4/css/bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="http://scdn.kostast.eu/chosen/0.9.8/chosen.css">
+    <script type="text/javascript">
+        $(document).ready(function() {
+            $('.dropdown-toggle').dropdown();
+        });
+
+    </script>
+
+    {% block media%}{% endblock %}
+
+</head>
+
+
+<body>
+{% block body %}
+    {% block header %}
+
+        {%  block project_menu  %}{% include "blocks/project_menu.html" %}{% endblock %}
+        {%  block application_menu  %}{% endblock %}
+        {%  block application_title %}{% endblock %}
+    {% endblock %}
+
+    <div id="container" class="container">
+            <div id="content" >
+                {% block content %}dsffsdfdsfdsfds{% endblock %}
+            </div>
+    </div>
+
+    {% block footer %}{% include "blocks/footer.html" %}{% endblock %}
+
+{% endblock %}
+
+
+</body>
+
+
+</html>

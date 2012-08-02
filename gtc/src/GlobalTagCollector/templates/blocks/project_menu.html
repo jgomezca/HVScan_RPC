@@ -1,0 +1,21 @@
+    <div class="navbar navbar-fixed-top">
+        <div class="navbar-inner">
+            <div class="container">
+                <a class="brand" href="/">
+                    Global Tag Collector
+                </a>
+                    <ul class="nav">
+                    <li ><a href="/gtc/">Home</a></li><!--class="active" -->
+                    <li><a href="{% url new_request %}">Submit tag</a></li>
+                    <li><a href="{% url list_view %}">My submits</a></li>
+                </ul>
+                <ul class="nav pull-right">
+                    {% if request.user.is_superuser %}
+                        <li><a href="{% url admin:index %}">Admin</a></li>
+                        <li><a href="{% url gt_queue_list %}">New Admin</a></li>
+                    {% endif %}
+                    <li><a href="https://login.cern.ch/adfs/ls/?wa=wsignout1.0">Logout</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>

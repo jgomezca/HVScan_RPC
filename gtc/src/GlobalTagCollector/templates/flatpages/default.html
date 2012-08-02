@@ -1,0 +1,35 @@
+
+
+{% extends "app_layout.html" %}
+
+{% block media%}
+
+{% endblock %}
+
+{% block content %}
+    {% block body %}
+        {% block header %}
+            {%  block project_menu  %}{% include "blocks/project_menu.html" %}{% endblock %}
+            {%  block application_menu  %}{% endblock %}
+            {%  block application_title %}{% endblock %}
+        {% endblock %}
+
+        <div id="container" class="container">
+        <div id="content" >
+            <div class="row">
+                <div class="span-24">
+                    <h2>{{ flatpage.title }}</h2>
+                        {{ flatpage.content }}
+                </div>
+            </div>
+        </div>
+        </div>
+
+        {% block footer %}{% include "blocks/footer.html" %}{% endblock %}
+
+    {% endblock %}
+
+
+
+{% endblock %}
+

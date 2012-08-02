@@ -1,0 +1,68 @@
+{% extends "admin/base_site.html" %}
+{% load i18n  adminmedia %}
+
+{% block coltype %}{% if ordered_objects %}colMS{% else %}colM{% endif %}{% endblock %}
+
+
+{% block breadcrumbs %}
+    {% if not is_popup %}
+         <div class="breadcrumbs">
+             <a href="../../../">{% trans "Home" %}</a> &rsaquo;
+             <a href="../../">{{ app_label|capfirst|escape }}</a> &rsaquo;
+             {{ opts.verbose_name_plural|capfirst }} &rsaquo; {% trans "View" %}
+
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <h1>View Tag</h1>
+
+    {% if is_popup %}<input type="hidden" name="_popup" value="1" />{% endif %}
+
+
+    <table>
+        <tr>
+            <th class="">Tag name</th>
+            <td>{{ object.name }}</td>
+        </tr>
+        <tr>
+            <th>Container</th>
+            <td>{{ object.object_r }}</td>
+        </tr>
+         <tr>
+            <th>Account name</th>
+            <td><a href="{% url admin:GlobalTagCollector_account_details object.account.pk %}">{{ object.account.name }}</a> </td>
+        </tr>
+        <tr>
+            <th>Account type</th>
+            <td><a href="{% url admin:GlobalTagCollector_accounttype_change object.account.account_type.pk %}">{{ object.account.account_type.title }}</a></td>
+        </tr>
+        <tr>
+            <th>Records</th>
+            <td>
+                {% for record in object.records.all %}
+                     <a href="{% url admin:GlobalTagCollector_record_details record.id %}">{{ record.name }}</a> <br />
+                {% endfor %}
+
+            </td>
+        </tr>
+    </table>
+</div>
+
+{% endblock %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+

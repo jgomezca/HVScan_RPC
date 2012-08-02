@@ -1,0 +1,73 @@
+{% extends "admin/base_site.html" %}
+{% load i18n  adminmedia %}
+
+{% block coltype %}{% if ordered_objects %}colMS{% else %}colM{% endif %}{% endblock %}
+
+
+{% block breadcrumbs %}
+    {% if not is_popup %}
+         <div class="breadcrumbs">
+             <a href="../../../">{% trans "Home" %}</a> &rsaquo;
+             <a href="../../">{{ app_label|capfirst|escape }}</a> &rsaquo;
+             {{ opts.verbose_name_plural|capfirst }} &rsaquo; {% trans "View" %}
+
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <h1>Global tag</h1>
+
+    {% if is_popup %}<input type="hidden" name="_popup" value="1" />{% endif %}
+
+    <table>
+        <tr>
+            <th class="">Global tag name</th>
+            <td>{{ object.name }}</td>
+        </tr>
+        <tr>
+            <th>Internal creation timestamp</th>
+            <td>{{ object.internal_creation_timestamp }}</td>
+        </tr>
+         <tr>
+            <th>External creation timestamp</th>
+            <td>{{ object.external_finding_timestamp }}</td>
+        </tr>
+        <tr>
+            <th>Creator</th>
+            <td>{{ object.creator }}</td>
+        </tr>
+        <tr>
+            <th>Global tag records</th>
+            <td>
+
+                <table>
+                    <tr>
+                        <th>Account type</th>
+                        <th>Account</th>
+                        <th>Tag</th>
+                        <th>Record</th>
+                        <th>Label</th>
+                        <th>pfn</th>
+                    </tr>
+                    {% for global_tag_record in object.globaltagrecord_set.select_related %}
+                        <tr>
+                            <td><a href="{% url admin:GlobalTagCollector_accounttype_change  global_tag_record.tag.account.account_type.id  %}">{{ global_tag_record.tag.account.account_type.title }}</a></td>
+                            <td><a href="{% url admin:GlobalTagCollector_account_details  global_tag_record.tag.account.id  %}">{{ global_tag_record.tag.account.name }}</a></td>
+                            <td><a href="{% url admin:GlobalTagCollector_tag_details  global_tag_record.tag.id  %}">{{ global_tag_record.tag.name }}</a></td>
+                            <td><a href="{% url admin:GlobalTagCollector_record_details  global_tag_record.record.id  %}">{{ global_tag_record.record.name }}</a></td>
+                            <td>{{ global_tag_record.label }}</td>
+                            <td>{{ global_tag_record.pfn }}</td>
+                        </tr>                    
+                    {% endfor %}
+                </table>
+
+            </td>
+        </tr>
+    </table>
+</div>
+
+{% endblock %}
+
+

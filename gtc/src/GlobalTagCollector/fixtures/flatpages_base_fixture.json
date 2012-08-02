@@ -1,0 +1,15 @@
+[
+    {
+        "pk": 3,
+        "model": "flatpages.flatpage",
+        "fields": {
+            "registration_required": false,
+            "title": "Global Tag Collector (GTC)",
+            "url": "/",
+            "template_name": "",
+            "sites": [1],
+            "content": "<p>Welcome on the GTC home page.<br></p><p>For help please refer to the <a href=\"https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideCalAliGTTagCollector\">GTC twiki</a>.</p><p>From this page you can:<ul><li><h3><a href=\"/new-request\">Submit new tag</a></h3></li><li><h3><a href=\"/list_view\">Browse submitted tags</a></h3></li></ul></p>",
+            "enable_comments": false
+        }
+    }
+]

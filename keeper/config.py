@@ -109,6 +109,12 @@ servicesConfiguration = {
 		'hidden':         False,
 	},
 
+	'gtc': {
+		'filename':       'gtc.py',
+		'listeningPort':  8093,
+		'hidden':         False,
+	},
+
 	'gtList': {
 		'filename':       'GTServerStarter.py',
 		'listeningPort':  8081,

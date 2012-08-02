@@ -1,0 +1,53 @@
+[
+    ["GeometryFileRcd", "GeometryFile"],
+    ["TrackerAlignmentRcd", "TrackerAlignmentRcd"],
+    ["DTKeyedConfigListRcd", "cond::KeyList"],
+    ["DTKeyedConfigListRcd", "DTKeyedConfig"],
+    ["DTKeyedConfigListRcd", "std::vector<unsigned long long>"],
+    ["DTTtrigRcd", "DTTtrigRcd"],
+    ["TauTagMVAComputerRcd", "MVAComputerContainer"],
+    ["PhotonConversionMVAComputerRcd", "MVAComputerContainer"],
+    ["BTauGenericMVAJetTagComputerRcd", "MVAComputerContainer"],
+    ["PFCalibrationRcd", "PerformancePayloadFromTFormula"],
+    ["PerformancePayloadRecord", "PerformancePayloadFromTFormula"],
+    ["PFCalibrationRcd", "PerformancePayloadFromTable"],
+    ["PerformancePayloadRecord", "PerformancePayloadFromTable"],
+    ["LumiSectionDataRcd", "LumiSectionData"],
+    ["HLTScalerRcd", "HLTScaler"],
+    ["LuminosityInfoRcd", "LuminosityInfo"],
+    ["JetCorrectionsRecord", "JetCorrectorParametersCollection"],
+    ["SiStripDeDxElectron_3D_Rcd", "Histogram3D<double,double,double,double>"],
+
+
+["DQMReferenceHistogramRootFileRcd","GeometryFile"],
+["DTAlignmentErrorRcd","DTAlignmentError"],
+["DTKeyedConfigContainerRcd","DTKeyedConfig"],
+["EcalGainRatiosRcd","EcalGainRatios"],
+["EcalIntercalibConstantsRcd","EcalIntercalibConstants"],
+["EcalLaserAlphasRcd","EcalLaserAlphas"],
+["RPCStripNoisesRcd","PCStripNoises"],
+["SiStripDeDxMip_3D_Rcd","Histogram3D<double,double,double,double>"],
+["SiStripDeDxMipRcd","SiStripDeDxMip"],
+["SiStripDeDxPion_3D_Rcd","Histogram3D<double,double,double,double>"],
+["SiStripDeDxProton_3D_Rcd","Histogram3D<double,double,double,double>"],
+
+
+    ["BTagTrackProbability2DRcd","BTagTrackProbability2D"],
+    ["BTagTrackProbability3DRcd","BTagTrackProbability3D"],
+    ["BTauGenericMVAJetTagComputerRcd","BTauGenericMVAJetTagComputer"],
+    ["DTAlignmentRcd","DTAlignment"],
+    ["EcalChannelStatusRcd","EcalChannelStatus"],
+    ["EcalIntercalibErrorsRcd","EcalIntercalibErrors"],
+    ["EcalLaserAPDPNRatiosRefRcd","EcalLaserAPDPNRatiosRef"],
+    ["EcalMappingElectronicsRcd","EcalMappingElectronics"],
+    ["EcalPedestalsRcd","EcalPedestals"],
+    ["EcalWeightXtalGroupsRcd","EcalWeightXtalGroups"],
+    ["GlobalPositionRcd","GlobalPosition"],
+    ["SiStripDeDxKaon_3D_Rcd","Histogram3D<double,double,double,double>"],
+    ["TrackerAlignmentErrorRcd","TrackerAlignmentError"],
+    ["TrackerAlignmentRcd","TrackerAlignment"],
+
+    ["LuminosityInfoRcd", "lumi::LuminosityInfo"],
+    ["HLTScalerRcd","lumi::HLTScaler"]
+
+]

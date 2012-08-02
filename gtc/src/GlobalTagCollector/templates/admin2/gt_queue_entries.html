@@ -1,0 +1,139 @@
+{% extends "app_layout.html" %}
+{# load humanize #}
+
+
+{% block title %}Global Tag Collector{% endblock %}
+
+{% block media%}
+{{ block.super }}
+<style type="text/css">
+span.entry_key_left{
+    width: 55px;
+    font-weight: bold;
+    clear: left;
+    float: left;
+}
+
+span.entry_value_left{
+    float: left;
+    /*margin-left: 30px;*/
+}
+span.entry_key_right{
+    width: 100px;
+    /*font-weight: bold;*/
+    clear: left;
+    float: left;
+}
+
+span.entry_value_right{
+    float: left;
+    /*margin-left: 50px;*/
+}
+
+</style>
+
+{% endblock %}
+
+{%  block content %}
+{% load tags %}
+
+
+<div class="row">
+    <div class="span6">
+        <h1>Global Tag Queue - {{gt_queue.name}}</h1>
+    </div>
+    <div class="span6" style="text-align: right;">
+        <a href="gt_queue_create" class="btn">Create GT Queue</a>
+    </div>
+</div>
+{% if messages %}
+    <div class="row">
+        <div class="span12 alert alert-info" >
+            <ul class="messages">
+                {% for message in messages %}
+                <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+{% endif %}
+<div class="row">
+    <div class="span12">
+
+
+
+
+
+        <div class="tabbable"> <!-- Only required for left/right tabs -->
+            <ul class="nav nav-tabs">
+                <li {% if entry_status_filter == "P" %}class="active"{% endif %}><a href="{{ request.path }}?entry_status_filter=P" >Pending</a></li>
+                <li {% if entry_status_filter == "A" %}class="active"{% endif %}><a href="{{ request.path }}?entry_status_filter=A" >Accepted</a></li>
+                <li {% if entry_status_filter == "R" %}class="active"{% endif %}><a href="{{ request.path }}?entry_status_filter=R" >Rejected</a></li>
+                <li {% if entry_status_filter == "I" %}class="active"{% endif %}><a href="{{ request.path }}?entry_status_filter=I" >Ignored</a></li>
+                <li {% if entry_status_filter == "O" %}class="active"{% endif %}><a href="{{ request.path }}?entry_status_filter=O" >Original</a></li>
+                <li {% if entry_status_filter == "ALL" %}class="active"{% endif %}><a href="{{ request.path }}?entry_status_filter=ALL" >All</a></li>
+
+
+            </ul>
+            <!--<div class="tab-content">-->
+                <!--<div class="tab-pane active" id="tab1">-->
+                    <!--<p>I'm in Section 1.</p>-->
+                <!--</div>-->
+                <!--<div class="tab-pane" id="tab2">-->
+                    <!--<p>Howdy, I'm in Section 2.</p>-->
+                <!--</div>-->
+            <!--</div>-->
+        </div>
+
+
+
+
+
+        <table class="table table-striped table-condensed table-bordered">
+            <tr>
+                <th>Status</th>
+                <th>Main info</th>
+                <th>Extra info</th>
+            </tr>
+            {% for entry in gt_queue_entries %}
+            <tr>
+                <td style="width: 100px;">
+                    <span class="badge {{ entry.status|get_badge_class }}">{{entry.get_status_display}}</span><br>
+                    <div class="btn-group">
+                        <button class="btn  dropdown-toggle" data-toggle="dropdown">New status <span class="caret"></span></button>
+                        <ul class="dropdown-menu">
+                            <li><a href="{% url gt_queue_entry_status_change gt_queue_entry_id=entry.id new_status='P' %}?entry_status_filter={{entry_status_filter}}">Pending</a></li>
+                            <li><a href="{% url gt_queue_entry_status_change gt_queue_entry_id=entry.id new_status='A' %}?entry_status_filter={{entry_status_filter}}">Accepted</a></li>
+                            <li><a href="{% url gt_queue_entry_status_change gt_queue_entry_id=entry.id new_status='R' %}?entry_status_filter={{entry_status_filter}}">Rejected</a></li>
+                            <li><a href="{% url gt_queue_entry_status_change gt_queue_entry_id=entry.id new_status='I' %}?entry_status_filter={{entry_status_filter}}">Ignored</a></li>
+                            <li><a href="{% url gt_queue_entry_status_change gt_queue_entry_id=entry.id new_status='O' %}?entry_status_filter={{entry_status_filter}}">Original</a></li>
+                            <!--<li class="divider"></li>-->
+                            <!--<li><a href="#">Separated link</a></li>-->
+                            <!--<li><button>aa</button></li>-->
+                        </ul>
+                    </div>
+
+                </td>
+                <td>
+                    <span class="entry_key_left">Tag:    </span><span class="entry_value_left">{{entry.tag}}</span>
+                    <span class="entry_key_left">Record: </span><span class="entry_value_left">{{entry.record}}</span>
+                    <span class="entry_key_left">Label:  </span><span class="entry_value_left">{{entry.label}}</span>
+                </td>
+                <td>
+                    <span class="entry_key_right">Submitter:     </span><span class="entry_value_right">{{entry.submitter}} - {{entry.submitting_time}}</span>
+                    <span class="entry_key_right">Administrator: </span><span class="entry_value_right">{{entry.administrator}} - {{entry.administration_time}}</span>
+                    <span class="entry_key_right">Comment:       </span><span class="entry_value_right">{{entry.comment}}</span>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="9">No data available</td>
+            </tr>
+            {% endfor %}
+        </table>
+
+
+    </div>
+</div>
+{% endblock %}

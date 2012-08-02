@@ -1,0 +1,55 @@
+{% extends "admin/change_form.html" %}
+
+{#{% load cache %}#}
+
+{% block content %}
+    {{ block.super }}
+{#    {{ object_id }}#}
+{#    {% cache 600 problems  %}#}
+    data is cached for 600 seconds
+    <h1>Not resolved items</h1>
+    <h2>Not resolved tags</h2>
+    <h2>Not resolved records</h2>
+
+
+        {% if report_generation_problem %}
+            <h1>Report generation failed. Problem:</h1>
+            <div>{{ report_generation_problem }}</div>
+            <div>Possible reason - GT service is not reachable nor not functioning properly </div>
+
+        {% else %}
+            <h2>Not resolved pairs</h2>
+            <div class="results">
+                <table cellspacing="0" id="result_list">
+                <thead>
+                    <tr>
+                        <th scope="col">Tag name</th>
+                        <th scope="col">Tag object name</th>
+                        <th scope="col">Record name</th>
+                        <th scope="col">Record object names</th>
+                        <th scope="col">Pfn</th>
+                    </tr>
+
+                </thead>
+                <tbody>
+                </tbody>
+                    {% for nrp in global_tag_problems.not_resolvable_pairs  %}
+                    <tr>
+                        <td>{{ nrp.0 }}</td>
+                        <td>{{ nrp.1 }}</td>
+                        <td>{{ nrp.2 }}</td>
+                        <td>{{ nrp.3 }}
+                            <ul>
+    {#                        {% for objr_name in nrp.3 %}#}
+    {#                            <li>{{ objr_name }}</li>#}
+    {#                        {% endfor %}#}
+                            </ul>
+                        </td>
+                        <td>{{ nrp.4 }}</td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        {% endif %}
+{#    {% endcache %}#}
+{% endblock %}

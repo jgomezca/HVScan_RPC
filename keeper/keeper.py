@@ -72,6 +72,8 @@ def getPIDs(service):
 	if service == 'keeper':
 		pids = set(_getPIDs('keeper.py'))
 		pids -= set([str(os.getpid())])
+	elif service == 'gtc':
+		pids = _getPIDs('bin/python src/manage.py')
 	else:
 		pids = _getPIDs('python ' + config.servicesConfiguration[service]['filename'])
 

@@ -1,0 +1,170 @@
+{% extends "admin/base_site.html" %}
+{% load i18n  adminmedia %}
+
+{% block coltype %}{% if ordered_objects %}colMS{% else %}colM{% endif %}{% endblock %}
+
+
+{% block breadcrumbs %}
+    {% if not is_popup %}
+         <div class="breadcrumbs">
+             <a href="../../../">{% trans "Home" %}</a> &rsaquo;
+             <a href="../../">{{ app_label|capfirst|escape }}</a> &rsaquo;
+             {{ opts.verbose_name_plural|capfirst }} &rsaquo; {% trans "View" %}
+
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <h1>View account</h1>
+    <a href="{{resource_url}}" target="_blank">{{ resource_url}}</a>
+    {% if is_popup %}<input type="hidden" name="_popup" value="1" />{% endif %}
+
+    <table>
+        <tr>
+            <th class="">Account type</th>
+            <td>{{ account.account_type }}</td>
+        </tr>
+         <tr>
+            <th>Public name</th>
+            <td>{{ account.name }}</td>
+        </tr>
+        <tr>
+            <th>Tags</th>
+            <td>
+                <ul>
+                    {% for tag in account.tag_set.all %}
+                    <li><a href="{% url admin:GlobalTagCollector_tag_details tag.id %}">{{ tag.name }}</a> </li>
+                    {% empty %}
+                    <li>No tags</li>
+                    {% endfor %}
+                </ul>
+            </td>
+        </tr>
+    </table>
+
+</div>
+
+{% endblock %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!--{#{% extends "admin/base_site.html" %}#}-->
+<!--{#{% load i18n  admin_modify adminmedia %}#}-->
+<!--{##}-->
+<!--{#{% block title %}View an account{% endblock %}#}-->
+<!--{##}-->
+<!--{#{% block extrastyle %}{{ block.super }}<link rel="stylesheet" type="text/css" href="{% admin_media_prefix %}css/forms.css" />{% endblock %}#}-->
+<!--{##}-->
+<!--{#{% block extrahead %}{{ block.super }}#}-->
+<!--{#{% url 'admin:jsi18n' as jsi18nurl %}#}-->
+<!--{#<script type="text/javascript" src="{{ jsi18nurl|default:"../../../jsi18n/" }}"></script>#}-->
+<!--{#{{ media }}#}-->
+<!--{#{% endblock %}#}-->
+<!--{##}-->
+<!--{##}-->
+<!--{#{% block coltype %}colM{% endblock %}#}-->
+<!--{##}-->
+<!--{#{% block bodyclass %}{{ opts.app_label }}-{{ opts.object_name.lower }} change-form{% endblock %}#}-->
+<!--{##}-->
+<!--{#{% block breadcrumbs %}#}-->
+<!--{##}-->
+<!--{#<div class="breadcrumbs">#}-->
+<!--{#     <a href="../../../">{% trans "Home" %}</a> &rsaquo;#}-->
+<!--{#     <a href="../../">{{ app_label|capfirst|escape }}</a> &rsaquo;#}-->
+<!--{#     {% trans "View" %} {{ opts.verbose_name }}#}-->
+<!--{#</div>#}-->
+<!--{##}-->
+<!--{#{% endblock %}#}-->
+<!--{##}-->
+<!--{##}-->
+<!--{#{% block content %}#}-->
+<!--{#    <div id="content-main">#}-->
+<!--{#{% block object-tools %}#}-->
+<!--{##}-->
+<!--{#  <ul class="object-tools">#}-->
+<!--{##}-->
+<!--{#    <li><a href="history/" class="historylink">{% trans "History" %}</a></li>#}-->
+<!--{#  #}-->
+<!--{# #}-->
+<!--{#  </ul>#}-->
+<!--{##}-->
+<!--{#{% endblock %}#}-->
+<!--{#    <h1>Text</h1>#}-->
+<!--{#<form>#}-->
+<!--{#<div >#}-->
+<!--{##}-->
+<!--{##}-->
+<!--{#<fieldset class="aligned module">#}-->
+<!--{##}-->
+<!--{#     <div class="description">sdaas</div>#}-->
+<!--{##}-->
+<!--{#        <div class="form-row ">#}-->
+<!--{#        #}-->
+<!--{##}-->
+<!--{#                <div class="field-box">#}-->
+<!--{#                      <label class="required">field.field.help_text|safe </label>#}-->
+<!--{#       #}-->
+<!--{##}-->
+<!--{#                           <p>Turinys</p>#}-->
+<!--{#                      #}-->
+<!--{#                #}-->
+<!--{##}-->
+<!--{#                        <p class="help"> field.field.help_text|safe </p>#}-->
+<!--{##}-->
+<!--{#                </div>#}-->
+<!--{##}-->
+<!--{##}-->
+<!--{##}-->
+<!--{##}-->
+<!--{#        #}-->
+<!--{#        </div>#}-->
+<!--{##}-->
+<!--{##}-->
+<!--{##}-->
+<!--{#     <div class="form-row ">#}-->
+<!--{##}-->
+<!--{##}-->
+<!--{#                <div >#}-->
+<!--{#                      <label class="required" for="aa">dadsaasdasd12345 asdasdas adsd</label>#}-->
+<!--{##}-->
+<!--{##}-->
+<!--{#                           <input type="text"  id="aa" value="asas">#}-->
+<!--{##}-->
+<!--{##}-->
+<!--{##}-->
+<!--{#                        <p class="help"> field.field.help_text|safe </p>#}-->
+<!--{##}-->
+<!--{#                </div>#}-->
+<!--{##}-->
+<!--{##}-->
+<!--{##}-->
+<!--{##}-->
+<!--{##}-->
+<!--{#        </div>#}-->
+<!--{#    </fieldset>#}-->
+<!--{#</div>#}-->
+<!--{##}-->
+<!--{##}-->
+<!--{##}-->
+<!--{##}-->
+<!--{##}-->
+<!--{#</form>#}-->
+<!--{#{% endblock %}#}-->
+<!--{##}-->

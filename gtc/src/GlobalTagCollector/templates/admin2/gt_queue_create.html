@@ -1,0 +1,55 @@
+{% extends "app_layout.html" %}
+{# load humanize #}
+
+
+{% block title %}Global Tag Collector{% endblock %}
+
+{% block media%}
+{{ block.super }}
+<style type="text/css">
+
+
+</style>
+<script type="text/javascript">
+    $(document).ready(function() {
+        $("select#id_release_from").chosen();
+        $("select#id_release_to").chosen();
+        $("select#id_last_gt").chosen();
+    });
+</script>
+{% endblock %}
+
+{%  block content %}
+{# load tags #}
+
+
+<div class="row">
+    <div class="span6">
+        <h1>Create GT queue</h1>
+    </div>
+    <div class="span6" style="text-align: right;">
+        <!--<a href="gt_queue_create" class="btn">Create GT Queue</a>-->
+    </div>
+</div>
+<div class="row">
+    <div class="span12">
+        <form action="" method="post">
+            {% csrf_token %}
+            <table  class="table table-condensed table-bordered">
+                {% if queue_name %}
+                <tr>
+                    <th>Queue name</th>
+                    <td>{{queue_name}}</td>
+                </tr>
+                {% endif %}
+                {{gt_queue_form}}
+            </table>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Save changes</button>
+                <!--<button class="btn">Cancel</button>-->
+            </div>
+        </form>
+
+    </div>
+</div>
+{% endblock %}

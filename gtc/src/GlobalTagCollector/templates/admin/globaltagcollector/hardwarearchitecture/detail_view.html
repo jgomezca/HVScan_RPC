@@ -1,0 +1,42 @@
+{% extends "admin/base_site.html" %}
+{% load i18n  adminmedia %}
+
+{% block coltype %}{% if ordered_objects %}colMS{% else %}colM{% endif %}{% endblock %}
+
+
+{% block breadcrumbs %}
+    {% if not is_popup %}
+        <div class="breadcrumbs">
+             <a href="../../../">{% trans "Home" %}</a> &rsaquo;
+             <a href="../../">{{ app_label|capfirst|escape }}</a> &rsaquo;
+             {{ opts.verbose_name_plural|capfirst }} &rsaquo; {% trans "View" %}
+
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <h1>Hardware arhitecture</h1>
+    <span style="font-weight:bold;">{{ object.name }}</span>
+    {% for sw in object.softwarerelease_set.all %}
+        {% ifchanged sw.major_version %}
+            <h3>CMSSW Releases: {{  sw.major_version  }} Major Version</h3>
+        {% endifchanged %}
+        <a href="{ url admin:CMSSW_softwarerelease_change sw.id %}">{{ sw }}</a> <br />
+    {% endfor %}
+
+</div>
+
+{% endblock %}
+
+
+
+
+
+
+
+
+
+
+

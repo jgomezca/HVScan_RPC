@@ -1,0 +1,203 @@
+{% extends "app_layout.html" %}
+{% load humanize %}
+
+
+{% block title %}Global Tag Collector{% endblock %}
+
+{% block media%}
+    {{ block.super }}
+    <style type="text/css">
+        td a {
+            color: #808080;
+        }
+        td a:hover {
+            color: #333;
+        }
+        .sidebar .control_box {
+            background-color: #F4F4F4;
+            border: 1px solid #E6E6E6;
+            border-top:3px solid #808080;
+            border-radius: 4px 4px 4px 4px;
+            margin-bottom: 18px;
+            padding-left: 1em;
+        }
+
+        .sidebar .control_box ul{
+            margin-left: 0px;
+        }
+        .sidebar .control_box .control_header {
+            border-bottom: 1px solid #E6E6E6;
+            /*margin-bottom: 0.5em;*/
+        }
+
+
+
+        .status[class~="P"] {
+          background-color: #ffc40d;
+          border-color: #d9a400;
+        }
+        .status[class~="R"] {
+          background-color: #f4c8c5;
+          border-color: #eca09a;
+        }
+        .status [class~="O"] {
+          background-color: #bbe2bb;
+          border-color: #97d397;
+        }
+        .status [class~="A"] {
+          background-color: #dff1df;
+          border-color: #97d397;
+        }
+        .status [class~="I"] {
+          background-color: #e6e6e6;
+          border-color: #bfbfbf;
+        }
+        
+        .control_box ul.nav li a.active{
+            background-color: #E0E0E0;
+        }
+
+    </style>
+{% endblock %}
+
+{%  block content %}
+    {% load tags %}
+
+    <!-- Page header and page menu -->
+    <div class="row">
+        <h2 class="span6" >Submits</h2>
+        <div class="span6">
+            <ul class="nav nav-pills" style="float: right; margin-bottom: 0px;"> {# pills? #}
+                <li class="{% if status == 'All' %}active{% endif %}"  ><a href="?">All</a></li>
+                <li class="{% if status == 'A' %}active{% endif %}"><a href="{% addurlparameter "status" "A" %}"   >Approved</a></li>
+                <li class="{% if status == 'R' %}active{% endif %}"><a href="{% addurlparameter "status" "R" %}"  >Rejected</a></li>
+                <li class="{% if status == 'P' %}active{% endif %}"><a href="{% addurlparameter "status" "P" %}" >Pending</a></li>
+                <li class="{% if status == 'O' %}active{% endif %}"><a href="{% addurlparameter "status" "O" %}" >Original</a></li>
+                <li class="{% if status == 'I' %}active{% endif %}"><a href="{% addurlparameter "status" "I" %}" >Ignored</a></li>
+               </ul>
+        </div>
+    </div>
+    <!-- EOF Page header and page menu -->
+
+
+
+   <div class="row">
+
+        <div class="span9">
+
+            <table class="table table-striped table-condensed table-bordered">
+
+                <thead>
+                <tr class="header">
+
+                    <th>Time &amp; status</th>
+                    <th>Queue</th>
+                    <th>Tag and record</th>
+                    <th>Label</th>
+                </tr>
+                </thead>
+
+
+                {% for user_submit in user_submits %}
+                    {% ifchanged user_submit.submitting_time.date %}
+                        <tr class="date" >
+                            <td colspan="4" style="background-color: #EEEEEE;
+                                background-image: -moz-linear-gradient(center top , #FFFFFF, #EEEEEE);
+                                background: -webkit-gradient(linear, center top, center bottom, from(white), to(#EEE));
+                                background-repeat: repeat-x;">{{ user_submit.submitting_time.date|naturalday|capfirst }}</td>
+                        </tr>
+                        {{ date.date }}
+                    {% endifchanged %}
+
+                    <tr>
+                        <td class="status"><div class="status  {{ user_submit.status }} label"><span class="status">&nbsp;{{ user_submit.get_status_display}}&nbsp;</span></div><div style="margin-top: 5px;"><span >{{ user_submit.submitting_time|date:"P" }}</span></div></td>
+                        <td><a href="{% url details_view id=user_submit.id %}">{{ user_submit.queue }}</a></td>
+                        <td><a href="{% url details_view id=user_submit.id %}">{{ user_submit.tag }}<br />{{ user_submit.record }}</a></td>
+                        <td><a href="{% url details_view id=user_submit.id %}">{{ user_submit.label }}</a></td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="5">No data to display</td></tr>
+                {% endfor %}
+
+            </table>
+
+
+            <div class="pagination">
+                <ul>
+                    {% if paginator.has_previous %}
+                        <li class="prev "><a href="{% addurlparameter "page" paginator.previous_page_number %}">&larr; Previous</a></li>
+                        <li><a href="{% addurlparameter "page" paginator.previous_page_number %}">{{ paginator.previous_page_number }}</a></li>
+                    {% else %}
+                        <li class="prev disabled"><a href="{% addurlparameter "page" paginator.previous_page_number %}">&larr; Previous</a></li>
+                    {% endif %}
+
+                    <li><a class="active" href="{% addurlparameter "page" paginator.number %}">{{ paginator.number }}</a></li>
+
+                    {% if paginator.has_next %}
+                        <li><a href="{% addurlparameter "page" paginator.next_page_number %}">{{ paginator.next_page_number }}</a></li>
+                        <li class="next"><a href="{% addurlparameter "page" paginator.next_page_number %}">Next &rarr;</a></li>
+                    {% else %}
+                        <li class="next disabled"><a href="{% addurlparameter "page" paginator.next_page_number %}">Next &rarr;</a></li>
+                    {% endif %}
+                </ul>
+            </div><!--END OF PAGINATION-->
+        </div>
+
+        <div class="sidebar span3" >
+
+            <div class="control_box" >
+                <div class="control_header" >
+                    <h5>Date</h5>
+                </div>
+                <ul class="nav nav-list">
+                    <li><a class="{% if date == 'all' %}active{% endif %}" href="{% addurlparameter "date" "all" %}">All</a></li>
+                    <li><a class="{% if date == 'today' %}active{% endif %}" href="{% addurlparameter "date" "today" %}">Today</a></li>
+                    <li><a class="{% if date == 'yesterday' %}active{% endif %}" href="{% addurlparameter "date" "yesterday" %}">Yesterday</a></li>
+                    <li><a class="{% if date == 'week' %}active{% endif %}" href="{% addurlparameter "date" "week" %}">This week</a></li>
+                    <li><a class="{% if date == 'month' %}active{% endif %}" href="{% addurlparameter "date" "month" %}">This month</a></li>
+                    <li><a class="{% if date == 'older_than_month' %}active{% endif %}" href="{% addurlparameter "date" "older_than_month" %}">Older than month</a></li>
+                </ul>
+            </div>
+
+
+
+
+             <div class="control_box" >
+                 <div class="control_header"  >
+                      <div class="row">
+                      <h5 class="span2">Queues</h5>
+                       <div class="control_menu span1" style="margin-left: 5px; ">
+                           <a style="font-weight: bold;" href="{% addurlparameter "queue" "" %}">All</a>
+                       </div>
+                      </div>
+                 </div>
+                    <form action="{% delurlparameter "queue" %}" method="get" enctype="application/x-www-form-urlencoded">
+                    <ul style="list-style-type: none; ">
+                        <li></li>
+                        {% for queue in queue_list %}
+
+                            <li><input type="checkbox" value="{{ queue.id }}" name="queue"  {% if queue.id in checked_queues %} checked="checked"  {% endif %}> <a href="{% addurlparameter "queue" queue.id %}">{{ queue.name }} </a></li>
+                        {% endfor %}
+                    </ul>
+                    <div style="text-align: right; margin-right: 1.5em">
+                        {% hiddenparameters "queue" %}
+                        <input type="submit" name=""  class="btn primary" value="Filter">
+                    </div>
+            </form>
+
+
+
+
+
+
+
+
+
+
+                </ul>
+                    </div>
+
+                
+            </div>
+   </div>
+{% endblock %}

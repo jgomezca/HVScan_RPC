@@ -1,0 +1,16 @@
+{% extends "admin/change_form.html" %}
+
+{% block object-tools-items %}
+    <li><a href="?all" class="">All</a></li>
+    <li><a href="?not_original" class="">Not original</a></li>
+    {{ block.super }}
+{% endblock %}
+
+
+{% block after_field_sets %}
+    {{ block.super }}
+    <table>
+            {{ waiting_list_form }}
+        </table>
+
+{% endblock %}

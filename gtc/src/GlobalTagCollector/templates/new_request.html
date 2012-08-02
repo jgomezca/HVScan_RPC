@@ -1,0 +1,133 @@
+{% extends "app_layout.html" %}
+{#{% load humanize %}#}
+
+
+{% block title %}Global Tag Collector{% endblock %}
+
+{% block media%}
+     {# block.super #}
+
+        {#<script type='text/javascript' src='{{ STATIC_URL }}jquery/1.7.2/jquery-min.js'></script>#}
+        {#<script type='text/javascript' src='{{ STATIC_URL }}underscore/1.3.1/underscore-min.js'></script>#}
+        {#<script type='text/javascript' src='{{ STATIC_URL }}backbone/0.9.2/backbone.js'></script>#}
+        {#<link rel="stylesheet" href="{{ STATIC_URL }}chosen/0.9.8/chosen.css" /><!--Included in app layout -->#}
+        {#<script type="text/javascript" src="{{ STATIC_URL }}chosen/0.9.8/chosen.jquery.js"></script>#}
+        {#<script type="text/javascript" src="{{ STATIC_URL }}lou-multi-select/0.3-2012-03-27/js/jquery.multi-select.js"></script>#}
+        {#<link rel="stylesheet" href="{{ STATIC_URL }}lou-multi-select/0.3-2012-03-27/css/multi-select.css"/>#}
+
+        <script type='text/javascript' src='http://scdn.kostast.eu/underscore/1.3.1/underscore-min.js'></script>
+        <script type='text/javascript' src='http://scdn.kostast.eu/backbone/0.9.2/backbone-min.js'></script>
+
+
+        <!--<script type="text/javascript" src="{{ STATIC_URL }}bootstrap-plugins/2.0.2/bootstrap-tooltip.js" ></script>-->
+        <!--<script type="text/javascript" src="{{ STATIC_URL }}bootstrap-plugins/2.0.2/bootstrap-alert.js" ></script>-->
+        <script type="text/javascript" src="http://scdn.kostast.eu/bootstrap/2.0.4/js/bootstrap.min.js" ></script>
+        <script type="text/javascript" src="http://scdn.kostast.eu/lou-multi-select/0.6.2/js/jquery.multi-select.js"></script>
+        <link rel="stylesheet" href="http://scdn.kostast.eu/lou-multi-select/0.6.2/css/multi-select.css"/>
+
+
+        <script type='text/javascript' src='{{ STATIC_URL }}application.js'></script>
+
+
+
+        <style type="text/css">
+            .ms-container {
+              width: 540px;
+                background: transparent url('/static/img/arrow.png') no-repeat 235px 83px !important;
+            }
+            .ms-selectable{
+              width: 230px;
+            }
+            .ms-selection{
+              width: 230px;
+            }
+            .ms-container ul.ms-list{
+              width: 230px;
+            }
+        </style>
+        <script type="text/javascript">
+            $(document).ready(
+                    function(){
+                        $('a[rel=tooltip]').tooltip();
+                    }
+            )
+        </script>
+
+{% endblock %}
+
+{%  block content %}
+
+
+    <h2>Submit new Tag</h2>
+
+        <div id="alert_container">
+
+        </div>
+
+        <!--<div class="alert alert-block alert-error fade in" style="display: none;">-->
+            <!--<a href="#" data-dismiss="alert" class="close">×</a>-->
+            <!--<h4 class="alert-heading">Oh snap! You got an error!</h4>-->
+            <!--<p>Change this and that and try again. Duis mollis, est non commodo luctus, nisi erat porttitor ligula, eget lacinia odio sem nec elit. Cras mattis consectetur purus sit amet fermentum.</p>-->
+            <!--<p>-->
+              <!--<a href="#" class="btn btn-danger">Take this action</a> <a href="#" class="btn">Or do this</a>-->
+            <!--</p>-->
+          <!--</div>-->
+
+    <form id="record_submit_form" method="post" action="#">
+        <input type="hidden" name="form-TOTAL_FORMS" value="1" id="id_form-TOTAL_FORMS" />
+        <input type="hidden" name="form-INITIAL_FORMS" value="1" id="id_form-INITIAL_FORMS" />
+        <input type="hidden" name="form-MAX_NUM_FORMS" id="id_form-MAX_NUM_FORMS" />
+
+        <div class="row">
+            <div class="span5">
+                <label>Account Type:</label>
+                <select id="accountType" class="span5" name="form-0-account_type">
+                    <option value=''>Select</option>
+                </select>
+                
+                <label>Account:</label>
+                <select id="account" disabled="disabled" class="span5" name="form-0-account">
+                    <option value=''>Select</option>
+                </select>
+
+                <label>Tag:</label>
+                <select id="tag" disabled="disabled" class="span5" name="form-0-tag">
+                    <option value=''>Select</option>
+                </select>
+
+                <label>Record:</label>
+                <select id="record" disabled="disabled" class="span5" name="form-0-record">
+                    <option value=''>Select</option>
+                </select>
+
+                <label>Label:</label>
+                <input id="label" class="span5" placeholder="(Optional label)" name="form-0-label"/>
+
+                <label>Comment:</label>
+                <textarea id="comment" class="span5" style="height: 7em" placeholder="(Required comment)" name="form-0-comment"></textarea>
+            </div>
+            <div class="span7">
+                <label>Queues:</label>
+                <select multiple='multiple' id="queue" name="form-0-queue_choices"></select>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="span12">
+                <input id="submit_and_view" name="submitview" type="submit" class="btn btn-primary"  value="Submit and view my submits">
+                <input id="submit_and_edit" name="submitedit" type="submit" class="btn btn-info"  value="Submit and continue editing">
+                <a class="btn btn-danger" href="{% url new_request %}">Clean</a>
+            </div>
+        </div>
+    </form>
+
+
+  </form>
+
+
+
+</body>
+
+
+
+{% endblock %}
