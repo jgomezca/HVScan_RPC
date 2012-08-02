@@ -1,5 +1,6 @@
 import datetime
 import json
+import django
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.db.models.aggregates import Count
@@ -235,6 +236,7 @@ def login(request):
     if user is None:
         return HttpResponseForbidden("User could not be authenticated")
     else:
+        django.contrib.auth.login(request, user)
         return HttpResponseRedirect(request.GET.get('next','/'))#TODO better path
 
 
@@ -304,8 +306,7 @@ class ShibbolethBackend(object):
                 is_superuser = is_superuser
 
             )
-            user.save()
-            return user
+            return user[0]
 
 
 
