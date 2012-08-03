@@ -19,6 +19,13 @@ import logging
 import config
 
 
+def getHostname():
+    '''Returns the current hostname without '.cern.ch'
+    '''
+
+    return socket.gethostname().rstrip('.cern.ch')
+
+
 # Frontends
 frontends = {
     # vocms147 = cms-conddb-dev = cms-conddb-int
@@ -96,7 +103,7 @@ virtualHosts = {
 # the real hostname, not localhost nor 127.0.0.1, since the services only
 # listen in the real IP)
 virtualHosts['private'] = dict(virtualHosts['cms-conddb-dev'])
-virtualHosts['private']['backendHostnames'] = [socket.gethostname()]
+virtualHosts['private']['backendHostnames'] = [getHostname()]
 
 # cms-conddb-int must be exactly the same as -dev but with different
 # 'backendHostnames'
@@ -834,7 +841,7 @@ def getVirtualHost(virtualHost):
     '''
 
     if virtualHost == 'private':
-        return socket.gethostname()
+        return getHostname()
 
     return virtualHost
 
@@ -849,7 +856,7 @@ def getBasicInfoMap(frontend):
 
     # Get the IP of the current hostname if generating the HTTP configuration in a private machine
     if frontend == 'private':
-        infoMap['IP'] = socket.gethostbyname(socket.gethostname())
+        infoMap['IP'] = socket.gethostbyname(getHostname())
     else:
         infoMap['IP'] = socket.gethostbyname(frontend)
 
@@ -985,13 +992,6 @@ def makeShibbolethConfiguration(frontend):
     return shibbolethXMLTemplate.format(**infoMap)
 
 
-def getCurrentFrontend():
-    '''Returns the current frontend based on the hostname.
-    '''
-
-    return socket.gethostname().rstrip('.cern.ch')
-
-
 def httpd(arguments):
     '''Generates the main Apache configuration file (httpd.conf) for the given frontend.
     '''
@@ -1002,7 +1002,7 @@ def httpd(arguments):
 
     parser.add_option('-f', '--frontend',
         dest = 'frontend',
-        default = getCurrentFrontend(),
+        default = getHostname(),
         help = 'The frontend for which the file will be generated. Default: %default'
     )
 
@@ -1030,7 +1030,7 @@ def vhosts(arguments):
 
     parser.add_option('-f', '--frontend',
         dest = 'frontend',
-        default = getCurrentFrontend(),
+        default = getHostname(),
         help = 'The frontend for which the files will be generated. Default: %default'
     )
 
@@ -1060,7 +1060,7 @@ def shib(arguments):
 
     parser.add_option('-f', '--frontend',
         dest = 'frontend',
-        default = getCurrentFrontend(),
+        default = getHostname(),
         help = 'The frontend for which the file will be generated. Default: %default'
     )
 
