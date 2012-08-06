@@ -184,7 +184,7 @@ def configureApache():
 	execute('sudo services/keeper/makeApacheConfiguration.py vhosts -f private')
 
 	# Disable unneeded .conf files
-	execute('ls /etc/httpd/conf.d/*.conf | grep -E \'fcgid|nagios|proxy_ajp|welcome\' | xargs -n1 -Ifile sudo mv file file.original')
+	execute('ls /etc/httpd/conf.d/*.conf | grep -E \'fcgid|nagios|proxy_ajp|welcome|mod_dnssd\' | xargs -n1 -Ifile sudo mv file file.original')
 
 	# Disable AddType directives in ssl.conf to avoid using mod_mime
 	execute('sudo sed -i \'s/^AddType/#AddType/g\' /etc/httpd/conf.d/ssl.conf')
