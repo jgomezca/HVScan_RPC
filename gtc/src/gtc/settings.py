@@ -2,12 +2,22 @@
 from os.path import abspath, dirname, join
 import socket
 import sys
+import json
+
+import secrets
 
 SETTINGS_ROOT = abspath(join(dirname(__file__)))
 SOURCE_ROOT = abspath(join(dirname(__file__), ".."))
 SERVICE_ROOT = abspath(join(dirname(__file__), "..", ".."))
 
-DEBUG = True
+settings_from_keeper_file = abspath(join(SETTINGS_ROOT, "keeper_settings.json"))
+f = open(settings_from_keeper_file,"rb")
+SETTINGS_FROM_KEEPER = json.load(f)
+f.close()
+
+PRODUCTION_LEVEL = SETTINGS_FROM_KEEPER["productionLevel"]
+
+DEBUG = True #TODO set debug mode according settings from keeper
 TEMPLATE_DEBUG = DEBUG
 
 ADMINS = (
@@ -16,16 +26,41 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': abspath(join(SERVICE_ROOT, "var", "db", "test.db")),                      # Or path to database file if using sqlite3.
-        'USER': '',                      # Not used with sqlite3.
-        'PASSWORD': '',                  # Not used with sqlite3.
-        'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
-        'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
+if PRODUCTION_LEVEL == "private":
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': abspath(join(SERVICE_ROOT, "var", "db", "test.db")),
+            'USER': '',
+            'PASSWORD': '',
+            'HOST': '',
+            'PORT': '',
+        }
     }
-}
+elif PRODUCTION_LEVEL == "dev" :
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.oracle',
+            'NAME': secrets.secrets["gtc"]["connections"]["dev"]["owner"]["db_name"],
+            'USER': secrets.secrets["gtc"]["connections"]["dev"]["owner"]["user"],
+            'PASSWORD': secrets.secrets["gtc"]["connections"]["dev"]["owner"]["password"],
+            'HOST': '',
+            'PORT': '',
+        }
+    }
+elif (PRODUCTION_LEVEL == "int") or (PRODUCTION_LEVEL == "pro"):
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.oracle',
+            'NAME': secrets.secrets["gtc"]["connections"]["pro"]["owner"]["db_name"],
+            'USER': secrets.secrets["gtc"]["connections"]["pro"]["owner"]["user"],
+            'PASSWORD': secrets.secrets["gtc"]["connections"]["pro"]["owner"]["password"],
+            'HOST': '',
+            'PORT': '',
+            }
+    }
+else:
+    raise Exception("Correct settings could not be detected")
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
