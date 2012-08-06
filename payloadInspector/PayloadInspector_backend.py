@@ -110,7 +110,7 @@ class CondDBPayloadInspector:
 	    print "@@@@@@@@: ",config.folders.json_dir+"/"+accountName+".json"
             tagsVScontainerContents =   open(config.folders.json_dir+"/"+accountName+".json").read()
         except IOError:
-            tagsVScontainerContents =   "{'key':'value'}"
+            raise cherrypy.HTTPError(404)
         return json.dumps(eval(tagsVScontainerContents))
     
     #don't expose this, since big number of requests for timestamp conversion might overload the server
