@@ -136,10 +136,10 @@ def killProcess(pid, sigkill = False):
 	'''
 
 	if sigkill:
-		logging.info('Killing -9 %s', pid)
+		logging.info('Killing %s', pid)
 		s = signal.SIGKILL
 	else:
-		logging.info('Killing %s', pid)
+		logging.info('Stopping %s', pid)
 		s = signal.SIGTERM
 
 	os.kill(int(pid), s)
