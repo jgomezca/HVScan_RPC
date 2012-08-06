@@ -225,7 +225,7 @@ def requeue_entry(request,gtentry_id=None):
 def gt_conf_export(request, gt_queue_name):
     queue = get_object_or_404( GTQueue, name=gt_queue_name)
     response_text = GTQueueManager(queue).queue_configuration()
-    filename = queue.last_gt.name + ".conf"
+    filename = queue.expected_gt_name + ".conf"
 
     response = HttpResponse(response_text)
     response['Content-Disposition'] = 'attachment; filename=' + filename

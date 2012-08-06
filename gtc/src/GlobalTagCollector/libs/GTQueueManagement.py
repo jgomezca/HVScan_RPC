@@ -204,7 +204,7 @@ class GTQueueManager(object):
         template_str = """
 {% autoescape off %}
 [COMMON]
-connect=sqlite_file:{{ gt_name }}.db
+connect=sqlite_file:{{ expected_gt_name }}.db
 #connect={{ gt_account }}
 
 [TAGINVENTORY]
