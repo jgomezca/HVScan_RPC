@@ -7,7 +7,6 @@
 For developing the CMS DB Web services, you will need to do the following:
 
  * Request a private (virtual) machine with SLC5 or SLC6. Do so at [https://vmm.cern.ch/](https://vmm.cern.ch/).
- * Check that git, rsync and python2.6 are installed and working properly.
  * Deploy a new instance of the CMS DB Web services. Read [deploying.html](deploying.html).
  * Learn how to manage the services. Read [managingServices.html](managingServices.html).
  * If you are new to git, read the [gitTutorial.html](gitTutorial.html).
