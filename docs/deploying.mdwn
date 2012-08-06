@@ -13,13 +13,11 @@ Deploying is really easy. Login into your virtual/private machine and verify tha
 
 	$ python2.6
 	$ git
-	$ /usr/sbin/rotatelogs
 
 If not, you will need to install the missing one(s):
 
 	$ sudo yum install python26
 	$ sudo yum install git
-	$ sudo yum install httpd  # this contains rotatelogs 
 
 Then, in a temporary directory, run:
 
