@@ -419,7 +419,7 @@ class GTQueueEntry(models.Model):
         #skip_save = False #for the following hack
         if self.__original_status:
             if self.get_status_display() != self.__original_status:
-                GTQueueEntryStatusChanged.send(self, queue_entry=self, old_status=self.__original_status)
+                pass
                 #now hack from http://stackoverflow.com/questions/1555060/how-to-save-a-model-without-sending-a-signal
                # GTQueueEntry.objects.filter(id=self.id).update(**self.__dict__)
                # skip_save = True
