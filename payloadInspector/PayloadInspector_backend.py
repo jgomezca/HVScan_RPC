@@ -103,15 +103,13 @@ class CondDBPayloadInspector:
         return self.__condDB_Utils.createJSON('tags', tags)
 
     @cherrypy.expose
-    def get_tagsVScontainer(self,dbName=config.rpcCondDB):
-        #accountName =   re.split('(\W+)', dbName)[-1]
-	accountName =   dbName.replace("/","@")
+    def get_tagsVScontainer(self, dbName = config.rpcCondDB):
+        accountName = dbName.replace('/', '@')
         try:
-	    print "@@@@@@@@: ",config.folders.json_dir+"/"+accountName+".json"
-            tagsVScontainerContents =   open(config.folders.json_dir+"/"+accountName+".json").read()
+            f = open(os.path.join(config.folders.json_dir, '%s.json' % accountName))
         except IOError:
             raise cherrypy.HTTPError(404)
-        return json.dumps(eval(tagsVScontainerContents))
+        return json.dumps(eval(f.read()))
     
     #don't expose this, since big number of requests for timestamp conversion might overload the server
     #@cherrypy.expose
