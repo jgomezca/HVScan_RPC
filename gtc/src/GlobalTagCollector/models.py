@@ -255,8 +255,7 @@ class GlobalTagRecord(models.Model):
     #TODO consistency check frontier_connection = models.CharField(blank=False, max_length=100) #Leave for consistency check
 
     def clean(self):
-        t = Tag.objects.get(pk=self.tag.pk).object_r.record_set.filter(pk=self.record.pk)
-        if len(t) != 1:
+        if not (self.tag.object_r == self.record.object_r) or (self.tag.object_r.parent_name == self.record.object_r.name):
             #raise ValidationError('Record does not belong to the tag')
             raise GlobalTagRecordValidationError(self.tag, self.record)
 
