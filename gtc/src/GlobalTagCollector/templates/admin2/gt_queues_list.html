@@ -73,7 +73,10 @@
                 <td>{{gt_queue.gt_type_category}}</td>
                 <td>{{gt_queue.release_from}} - {{gt_queue.release_to}}</td>
                 <td>{{gt_queue.expected_gt_name}}</td>
-                <td><a href="gt_queue_edit/{{gt_queue.id}}">Edit</a></td>
+                <td>
+                    <a href="gt_queue_edit/{{gt_queue.id}}">Edit</a>
+                    <a href="{% url gt_conf_export gt_queue_name=gt_queue.name %}">Download configuration</a>
+                </td>
             </tr>
             {% empty %}
             <tr>
