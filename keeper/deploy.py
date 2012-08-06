@@ -352,8 +352,16 @@ def deploy(options):
 	# Check requirements
 	checkRequirements(options)
 
-	# Create the dataDirectory if it does not exist and chdir to it
+	# Create the dataDirectory if it does not exist
 	execute('sudo mkdir -p ' + options['dataDirectory'])
+
+	# Change its ownership and file mode bits
+	userName = pwd.getpwuid(os.getuid())[0]
+	groupName = grp.getgrgid(os.getgid())[0]
+	execute('sudo chown -R %s:%s %s' % (userName, groupName, options['dataDirectory']))
+	execute('sudo chmod g-w,o-rwx %s' % options['dataDirectory'])
+
+	# Chdir to it
 	logging.info('Working directory: ' + options['dataDirectory'])
 	os.chdir(options['dataDirectory'])
 
@@ -361,12 +369,6 @@ def deploy(options):
 	if options['update']:
 		execute('services/keeper/keeper.py stop keeper')
 		execute('services/keeper/keeper.py stop all')
-
-	# Change ownership and file mode bits
-	userName = pwd.getpwuid(os.getuid())[0]
-	groupName = grp.getgrgid(os.getgid())[0]
-	execute('sudo chown -R ' + userName + ':' + groupName + ' .')
-	execute('sudo chmod g-w,o-rwx .')
 
 	# Remove folders if forced
 	if options['force']:
