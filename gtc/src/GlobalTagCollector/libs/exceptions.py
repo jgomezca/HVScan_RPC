@@ -7,7 +7,7 @@ class ResourceNotAvailable(Exception):
 
 class JsonResourceNotAvailable(Exception):
 
-    def __init__(self, url, reason, extra_information):
+    def __init__(self, url, reason, extra_information=None):
         super(JsonResourceNotAvailable, self).__init__()
         self._url = url
         self._reason = reason
