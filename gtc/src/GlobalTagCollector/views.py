@@ -240,13 +240,15 @@ def login(request):
 
         user = User.objects.get_or_create(
             username = "DevelopmentUser",
-            first_name = "DummyFirstName",
-            last_name = "DummyFirstName",
-            email = "Dummy@example.com",
-            password = django.contrib.auth.hashers.make_password("dummypsw"),
-            is_active = True,
-            is_staff = True,
-            is_superuser = True
+            defaults = dict(
+                first_name = "DummyFirstName",
+                last_name = "DummyFirstName",
+                email = "Dummy@example.com",
+                password = django.contrib.auth.hashers.make_password("dummypsw"),
+                is_active = True,
+                is_staff = True,
+                is_superuser = True
+            )
         )[0]
         #user.save()
         user = authenticate(username="DevelopmentUser", password="dummypsw")
