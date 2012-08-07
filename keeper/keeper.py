@@ -617,13 +617,13 @@ Commands:
   lsof     <service>  "lsof" a service\'s processes.
   env      <service>  Prints the environment of a service\'s processes.
   strace   <service>  "strace -ft" a service\'s processes, without
-                     the select, futex, gettimeofday nor poll system calls.
+                      the select, futex, gettimeofday nor poll system calls.
 
-  status             Prints the status of the keeper
-                     and all the services, with PIDs.
+  status              Prints the status of the keeper
+                      and all the services, with PIDs.
 
-  keep               Keeps the services up and running.
-                     (this is what the keeper-service runs).
+  keep                Keeps the services up and running.
+                      (this is what the keeper-service runs).
 
   <service> can be one of the following:
     all keeper %s
