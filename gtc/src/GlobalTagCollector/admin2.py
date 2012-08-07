@@ -1,12 +1,13 @@
 from django.contrib.auth.decorators import user_passes_test
 from django.core.urlresolvers import reverse
 from django.db import transaction
+from django.db.models.aggregates import Count
 from django.forms.models import ModelForm
 from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template.context import RequestContext
 from GlobalTagCollector.libs.GTQueueManagement import GTQueueManager
-from GlobalTagCollector.models import GTQueue, GTQueueEntry
+from GlobalTagCollector.models import GTQueue, GTQueueEntry, GlobalTag
 from django.contrib import messages
 
 #TODO move to model forms
@@ -80,3 +81,25 @@ def gt_queue_entry_status_change(request, gt_queue_entry_id, new_status):
 
     messages.add_message(request, messages.INFO, "Queue entry with with record name "+gt_queue_entry.record.name+ "changed status to "+ new_status)
     return HttpResponseRedirect(reverse('gt_queue_entries', kwargs={'queue_id':queue.id})+"?entry_status_filter="+entry_status_filter)
+
+@user_passes_test(lambda u: u.is_superuser)
+def dashboard(request):
+    global_tag_count = GlobalTag.objects.count()
+    not_imported_global_tag_count = GlobalTag.objects.filter(has_errors=True).count()
+    global_tag_queue_count = GTQueue.objects.all().count()
+    global_tag_queue_pending_elements_count = GTQueueEntry.objects.filter(status="P").count()
+    tb_name = GTQueueEntry()._meta.db_table
+    open_queues = GTQueue.objects.filter(is_open=True).extra(
+        select={'num_pending':
+                    'SELECT COUNT(*) FROM {tb_name} WHERE ({tb_name}.status =\'P\') and ({tb_name}.queue_id = globaltagcollector_gtqueue.id)'.format(tb_name=tb_name)
+        }
+    )
+
+    return render_to_response("admin2/dashboard.html", {
+        'global_tag_count':global_tag_count,
+        'global_tag_queue_count':global_tag_queue_count,
+        'not_imported_global_tag_count':not_imported_global_tag_count,
+        'global_tag_queue_pending_elements_count':global_tag_queue_pending_elements_count,
+        'open_queues':open_queues,
+        },
+        context_instance=RequestContext(request))

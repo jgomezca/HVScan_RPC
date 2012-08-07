@@ -1,0 +1,104 @@
+{% extends "app_layout.html" %}
+{# load humanize #}
+
+
+{% block title %}Global Tag Collector{% endblock %}
+
+{% block media%}
+{{ block.super }}
+<style type="text/css">
+.dashboard-container{
+    border: #CCCCCC solid 1px;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;box-sizing: border-box;
+    border-radius: 3px 3px 0px 0px;
+    -moz-border-radius: 3px 3px 0px 0px;
+    -webkit-border-radius: 3px 3px 0px 0px;
+}
+.dashboard-container h3{
+    background-color: #eef2f9;
+    border-bottom: 1px solid #CCCCCC;
+}
+
+</style>
+
+{% endblock %}
+
+{%  block content %}
+{# load tags #}
+
+
+<div class="row">
+    <div class="span6">
+        <h1>Dashboard</h1>
+    </div>
+</div>
+<div class="row">
+    <div class="span6 dashboard-container" >
+        <h3>Global Tags</h3>
+        <table class="span6">
+            <tr>
+                <td>Global Tag Count</td>
+                <td><span class="badge">{{ global_tag_count }}</span></td>
+            </tr>
+            <tr>
+                <td>Not imported Global Tag count</td>
+                <td><span class="badge badge-important">{{ not_imported_global_tag_count }}</span></td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="span6 dashboard-container">
+        <h3>Global Tags Queues</h3>
+        <table class="span6">
+            <tr>
+                <td>GT queue count</td>
+                <td><span class="badge">{{ global_tag_queue_count }}</span></td>
+            </tr>
+            <tr>
+                <td>GT queue pending elements count</td>
+                <td>
+                    {% if global_tag_queue_pending_elements_count == 0 %}
+                        <span class="badge badge-success">
+                    {% else %}
+                       <span class="badge badge-important">
+                    {% endif %}
+                        {{ global_tag_queue_pending_elements_count }}
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+
+                    <table class="table table-striped table-condensed">
+                        <caption style="text-align: left">Active Queues Statuses:</caption>
+                    <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Test status</th>
+                        <th>Test time</th>
+                        <th>Pending entries</th>
+                    </tr>
+                    </thead>
+                    {% for open_queue in open_queues %}
+                        <tr>
+                            <td>{{ open_queue.name }}</td>
+                            <td>N/A</td>
+                            <td>N/A</td>
+                            <td>{{open_queue.num_pending}}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="4">No data available</td>
+                        </tr>
+                    {% endfor %}
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+
+
+</div>
+{% endblock %}
