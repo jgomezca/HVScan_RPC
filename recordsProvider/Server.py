@@ -3,7 +3,6 @@
 Test
 ====
 """
-import json
 import cherrypy
 import datetime
 import record_lib
@@ -17,9 +16,6 @@ import api
 #if @service - then doc and args
 #/domain/recordsprovider/api/..
 
-
-def set_json_mime_type(cherrypy):
-    cherrypy.response.headers["Content-Type"] = "application/json"
 
 @api.generateServiceApi
 class App(object):
@@ -59,8 +55,7 @@ class App(object):
                 'hardware_architectures': ha,
             }
         }
-        set_json_mime_type(cherrypy)
-        return json.dumps(rez)
+        return service.setResponseJSON(rez)
 
 
     def _flat_software_releases_list(self, software_releases_list):
@@ -103,8 +98,7 @@ class App(object):
             }
 
         }
-        set_json_mime_type(cherrypy)
-        return json.dumps(rez)
+        return service.setResponseJSON(rez)
 
 
     @cherrypy.expose
@@ -138,20 +132,18 @@ class App(object):
             }
 
         }
-        set_json_mime_type(cherrypy)
-        return json.dumps(rez)
+        return service.setResponseJSON(rez)
 
 
     @cherrypy.expose
     def softwarerelease_majorversion_list(self):
-        set_json_mime_type(cherrypy)
         rez = {
             'header': {},
             'body':{
                 'software_release_major_versions':record_lib.SoftwareReleaseManager().major_version_list()
             }
         }
-        return json.dumps(rez)
+        return service.setResponseJSON(rez)
 
     @cherrypy.expose()
     def record_container_map(self, hardware_architecture_name, software_release_name, *args, **kwargs):
@@ -192,8 +184,7 @@ class App(object):
             }
         }
 
-        set_json_mime_type(cherrypy)
-        return json.dumps(rez)
+        return service.setResponseJSON(rez)
 
 
 def main():
