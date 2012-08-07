@@ -24,6 +24,9 @@ def set_json_mime_type(cherrypy):
 @api.generateServiceApi
 class App(object):
 
+    @cherrypy.expose
+    def index(self):
+        return self.apih()
 
 
     @cherrypy.expose
