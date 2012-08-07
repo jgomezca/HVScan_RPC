@@ -8,7 +8,6 @@ import datetime
 import record_lib
 import Settings
 import ServerCache
-from cherrypy import expose
 
 import service
 import api
