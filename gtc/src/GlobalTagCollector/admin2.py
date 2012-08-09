@@ -85,7 +85,7 @@ def gt_queue_entry_status_change(request, gt_queue_entry_id, new_status):
 @user_passes_test(lambda u: u.is_superuser)
 def dashboard(request):
     global_tag_count = GlobalTag.objects.count()
-    not_imported_global_tag_count = GlobalTag.objects.filter(has_errors=True).count()
+    not_imported_global_tags = GlobalTag.objects.filter(has_errors=True)
     global_tag_queue_count = GTQueue.objects.all().count()
     global_tag_queue_pending_elements_count = GTQueueEntry.objects.filter(status="P").count()
     tb_name = GTQueueEntry()._meta.db_table
@@ -98,8 +98,17 @@ def dashboard(request):
     return render_to_response("admin2/dashboard.html", {
         'global_tag_count':global_tag_count,
         'global_tag_queue_count':global_tag_queue_count,
-        'not_imported_global_tag_count':not_imported_global_tag_count,
+        'not_imported_global_tags':not_imported_global_tags,
         'global_tag_queue_pending_elements_count':global_tag_queue_pending_elements_count,
         'open_queues':open_queues,
         },
         context_instance=RequestContext(request))
+
+@user_passes_test(lambda u: u.is_superuser)
+def gt_info(request, gt_name):
+    gt_obj = get_object_or_404(GlobalTag, name=gt_name)
+    return render_to_response(
+        "admin2/gt_info.html",
+        {'gt_obj':gt_obj},
+        context_instance=RequestContext(request)
+    )

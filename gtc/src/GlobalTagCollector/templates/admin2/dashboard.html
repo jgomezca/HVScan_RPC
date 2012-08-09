@@ -43,8 +43,21 @@
             </tr>
             <tr>
                 <td>Not imported Global Tag count</td>
-                <td><span class="badge badge-important">{{ not_imported_global_tag_count }}</span></td>
+                <td><span class="badge badge-important">{{ not_imported_global_tags|length }}</span></td>
             </tr>
+            <tr>
+                <td colspan="2">
+                    {% if not_imported_global_tags %}
+                        Not imported GT list:
+                        <ul>
+                        {% for not_imported_global_tag in not_imported_global_tags %}
+                            <li><a href="{%url gt_info gt_name=not_imported_global_tag.name%}">{{not_imported_global_tag.name}}</a></li>
+                        {% endfor %}
+                        </ul>
+                    {% endif %}
+                </td>
+            </tr>
+
         </table>
     </div>
 
