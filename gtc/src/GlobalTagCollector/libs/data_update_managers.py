@@ -423,17 +423,17 @@ class GlobalUpdate(object):
         AccountsUpdateManager()._run()
         logger.info("Accounts update: Finished")
 
-#        logger.info("Tags update: Starting")
-#        TagsUpdateManager()._run()
-#        logger.info("Tags update: Finished")
-#
-#        logger.info("Software release update: Starting")
-#        SoftwareReleaseUpdateManager()._run()
-#        logger.info("Tags update: Finished")
-#
-#        logger.info("Records update: Starting")
-#        RecordsUpdateManager()._run()
-#        logger.info("Tags update: Finished")
+        logger.info("Tags update: Starting")
+        TagsUpdateManager()._run()
+        logger.info("Tags update: Finished")
+
+        logger.info("Software release update: Starting")
+        SoftwareReleaseUpdateManager()._run()
+        logger.info("Tags update: Finished")
+
+        logger.info("Records update: Starting")
+        RecordsUpdateManager()._run()
+        logger.info("Tags update: Finished")
 
         GlobalTagsUpdate()._run()
 #
