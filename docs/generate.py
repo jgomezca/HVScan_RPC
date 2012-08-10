@@ -10,6 +10,14 @@ __maintainer__ = 'Miguel Ojeda'
 __email__ = 'mojedasa@cern.ch'
 
 
+if __name__ == '__main__':
+	import sys
+	if '--productionLevel' not in sys.argv:
+		sys.path.insert(0, '/data/services/keeper')
+		import keeper
+		keeper.run('docs', sys.argv[0], replaceProcess = True)
+
+
 defaultOutputDirectory = 'generated'
 docsFilename = 'docs.css'
 indexFilename = 'index.html'
@@ -34,7 +42,6 @@ import socket
 import shutil
 import re
 import markdown
-import optparse
 import logging
 logging.basicConfig(
         format = '[%(asctime)s] %(levelname)s: %(message)s',
@@ -49,25 +56,6 @@ sys.path.append('../keeper')
 import config
 
 
-def getOptions():
-	'''Parses the arguments from the command line.
-	'''
-
-	parser = optparse.OptionParser()
-
-	parser.add_option('-o', '--outputDirectory', type='str',
-		dest='outputDirectory',
-		default=defaultOutputDirectory,
-		help='The directory where the docs will be generated. Default: %default'
-	)
-
-	(options, args) = parser.parse_args()
-
-	return {
-		'outputDirectory': options.outputDirectory
-	}	
-
-
 def write(filename, data):
 	'''Write data to a file.
 	'''
@@ -77,7 +65,9 @@ def write(filename, data):
 
 
 def main():
-	options = getOptions()
+	options = {
+		'outputDirectory': defaultOutputDirectory,
+	}
 
 	# Copy docs.css into the destination folder
 	outputFilename = os.path.join(options['outputDirectory'], docsFilename)
