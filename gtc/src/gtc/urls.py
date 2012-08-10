@@ -68,5 +68,5 @@ regular_urlpatterns = patterns('',
 urlpatterns = patterns('',
 
     (r'^gtc/', include(regular_urlpatterns)),
-    (r'^gtc/', include(staticfiles_urlpatterns()))
+    (r'', include(staticfiles_urlpatterns()))
 )
