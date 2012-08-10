@@ -22,7 +22,6 @@ LIB_DIR_LOCAL = os.path.abspath(os.path.join(SERVICE_ROOT, "lib", "local"))
 sys.path.extend(list_abs_dirs(LIB_DIR_EXTERNAL))
 sys.path.extend(list_abs_dirs(LIB_DIR_LOCAL))
 sys.path.append(os.path.abspath(os.path.join(SERVICE_ROOT, "lib", "external", "dateutil")))
-sys.path.append('/afs/cern.ch/cms/DB/utilities/python-packages/django-1.4.1/lib/python2.6/site-packages/')
 
 if __name__ == "__main__":
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "gtc.settings")
