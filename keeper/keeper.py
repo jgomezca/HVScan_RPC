@@ -193,9 +193,7 @@ def run(service, filename, extraCommandLine = '', replaceProcess = False):
 	#
 	# This does not keep the original PYTHONPATH. There should not
 	# be anything there anyway.
-	servicePath = getPath('common')
-	secretsPath = config.secretsDirectory
-	os.putenv('PYTHONPATH', servicePath + ':' + secretsPath)
+	os.putenv('PYTHONPATH', '%s:%s:%s' % (getPath('common'), config.secretsDirectory, os.path.join(config.utilitiesDirectory, 'lib', 'python2.6', 'site-packages')))
 
 	commandLine = ''
 

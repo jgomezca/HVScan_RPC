@@ -16,6 +16,7 @@ import socket
 rootDirectory = '/data'
 servicesDirectory = os.path.join(rootDirectory, 'services')
 secretsDirectory = os.path.join(rootDirectory, 'secrets')
+utilitiesDirectory = os.path.join(rootDirectory, 'utilities')
 logsDirectory = os.path.join(rootDirectory, 'logs')
 cmsswDirectory = os.path.join(rootDirectory, 'cmsswNew')
 cmsswSetupEnvScript = os.path.join(cmsswDirectory, 'setupEnv.sh')
@@ -26,6 +27,7 @@ logsSize = '10M' # rotatelogs' syntax
 repositoryBase = '/afs/cern.ch/cms/DB/rep'
 servicesRepository = os.path.join(repositoryBase, 'cmsDbWebServices.git')
 libsRepository = os.path.join(repositoryBase, 'cmsDbWebLibs.git')
+utilitiesRepository = os.path.join(repositoryBase, 'cmsDbWebUtilities.git')
 cmsswRepository = os.path.join(repositoryBase, 'cmssw.git')
 
 # In the rsync format

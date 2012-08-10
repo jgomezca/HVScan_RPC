@@ -79,6 +79,12 @@ def getOptions():
 		help = 'The path to the Libs Git repository. Default: %default'
 	)
 
+	parser.add_option('-U', '--utilitiesRepository', type = 'str',
+		dest = 'utilitiesRepository',
+		default = config.utilitiesRepository,
+		help = 'The path to the Utilities Git repository. Default: %default'
+	)
+
 	parser.add_option('-c', '--cmsswRepository', type = 'str',
 		dest = 'cmsswRepository',
 		default = config.cmsswRepository,
@@ -377,7 +383,7 @@ def deploy(options):
 		# its contents (e.g. like the docs suggest, developers might
 		# have /data/services pointing to ~/scratch0/services
 		# for easy development).
-		execute('rm -rf cmssw cmsswNew libs secrets services')
+		execute('rm -rf secrets services libs utilities cmssw cmsswNew')
 
 	# Create the logs folder if it does not exist and subdirectories
 	execute('mkdir -p logs')
@@ -406,6 +412,10 @@ def deploy(options):
 	# Clone libs and checkout the tag
 	execute('git clone -q ' + options['libsRepository'] + ' libs')
 	execute('cd libs && git checkout -q %s' % getDependencyTag('cmsDbWebLibs'))
+
+	# Clone utilities and checkout the tag
+	execute('git clone -q ' + options['utilitiesRepository'] + ' utilities')
+	execute('cd utilities && git checkout -q %s' % getDependencyTag('cmsDbWebUtilities'))
 
 	# Clone cmsswNew and checkout the tag
 	execute('git clone -q ' + options['cmsswRepository'] + ' cmssw')
