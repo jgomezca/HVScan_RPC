@@ -101,9 +101,22 @@ class Command(BaseCommand):
             queue_manager.add_queue_entry(tag_obj=tag, record_obj=record,label=data_entry["label"], comment=data_entry["description"], submitter=user, status="A")
 
         #--------
+        #extra info
+        tag = Tag.objects.get(name="EcalSampleMask_mc", account__name="CMS_COND_ECAL_000", account__account_type__title="Offline Production")
+        record = Record.objects.get(name="EcalSampleMaskRcd")
+        queue_manager.add_queue_entry(tag_obj=tag, record_obj=record,label="", comment="No description", submitter=user, status="A")
+
+
+        tag = Tag.objects.get(name="DQM_RefHisto_dummy", account__name="CMS_COND_42X_DQM", account__account_type__title="Offline Production")
+        record = Record.objects.get(name="GeometryFileRcd")
+        queue_manager.add_queue_entry(tag_obj=tag, record_obj=record,label="", comment="No description", submitter=user, status="A")
+        #-------
+        f = open(gt_queue_obj.expected_gt_name + ".conf_0","wb")
+        f.write(queue_manager.queue_configuration())
+        f.close()
 
         GlobalTagsUpdate()._process_global_tag('START52_V9A')
-        f = open("GT_TEST_GTC.conf","wb")
+        f = open(gt_queue_obj.expected_gt_name + ".conf","wb")
         f.write(queue_manager.queue_configuration())
         f.close()
 
