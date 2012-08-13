@@ -127,6 +127,51 @@ def start(mainObject):
 	cherrypy.quickstart(mainObject, config = 'server.conf', script_name = '/' + settings['name'])
 
 
+# Hostname and URL related functions
+
+def getHostname():
+	'''Returns the 'official' hostname where services are run.
+
+	In private deployments, this is the current hostname. However,
+	in official ones, could be, for instance, a DNS alias.
+
+	e.g. cms-conddb-dev.cern.ch
+	'''
+
+	hostnameByLevel = {
+		'pro': 'cms-conddb-prod.cern.ch',
+		'int': 'cms-conddb-int.cern.ch',
+		'dev': 'cms-conddb-dev.cern.ch',
+		'private': socket.getfqdn(),
+	}
+
+	return hostnameByLevel[settings['productionLevel']]
+
+
+def getBaseURL():
+	'''Returns the base URL for all the services (without trailing slash).
+
+	The hostname is the one returned by getHostname(), so the same notes
+	regarding the returned hostname apply here.
+
+	e.g. https://cms-conddb-dev.cern.ch
+	'''
+
+	return 'https://%s' % getHostname()
+
+
+def getURL():
+	'''Returns the URL of the service (without trailing slash).
+
+	The base URL is the one returned by getBaseURL(), so the same notes
+	regarding the returned hostname apply here.
+
+	e.g. https://cms-conddb-dev.cern.ch/docs
+	'''
+
+	return '%s/%s' % (getBaseURL(), settings['name'])
+
+
 # Utility functions
 
 def getPrettifiedJSON(data, sortKeys = True):
