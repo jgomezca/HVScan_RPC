@@ -177,16 +177,6 @@ class Tag(models.Model):
     def autocomplete_search_fields():
         return "id__iexact", "name__icontains",
 
-class IgnoredAccount(models.Model):
-    """Which which accounts should not be used when fetching tags"""
-    account = models.OneToOneField(Account)
-    reason = models.TextField()
-
-
-
-
-
-
 class GlobalTagRecordValidationError(ValidationError):
     def __init__(self, tag, record):
         message = "Record does not belong to the tag. "
@@ -214,6 +204,11 @@ class GlobalTag(models.Model):
 
     has_warnings = models.BooleanField(default=True)
     has_errors = models.BooleanField(default=True)
+
+    #Used with problematic GT
+    is_ignored = models.BooleanField(default=False)
+    ignoring_timestamp = models.DateTimeField(null=True)
+    ignoring_comment = models.TextField(blank=True)
 
 
     objects = models.Manager()

@@ -1,6 +1,6 @@
 # coding=utf-8
 import itertools
-from GlobalTagCollector.models import Account, Tag, Record, GlobalTag, IgnoredAccount
+from GlobalTagCollector.models import Account, Tag, Record, GlobalTag
 
 class AccountFilter(object):
 

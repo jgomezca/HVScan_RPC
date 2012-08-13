@@ -21,7 +21,6 @@ import json
 from django.core.management import call_command
 from GlobalTagCollector.models import GTTypeCategory
 import pprint
-from GlobalTagCollector.models import IgnoredAccount
 
 
 logger = logging.getLogger("print_them_all")

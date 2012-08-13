@@ -233,7 +233,6 @@ class GTQueueEntryInline(admin.StackedInline):
 #    def __init__(self, *args, **kwargs):
 #        super(GTQueueEntryInline, self).__init__(*args, **kwargs)
 #        self.fields['requeue'] =  django.forms.URLField(label='Requeue', initial="http://google.com", required=False)
-        #filter(ignoredaccount=None) or self
 
 
     def queryset(self, request):
@@ -699,7 +698,7 @@ admin.site.register(models.AccountType, AccountTypeAdmin)
 
 class AccountAdmin(admin.ModelAdmin):
  #   fields = ('account_type', 'name', )
-    list_display = ( 'link_to_account_view','link_to_account_type','isIgnored')
+    list_display = ( 'link_to_account_view','link_to_account_type')
     list_filter = ('account_type',)
     search_fields = ('name',)
 
@@ -707,16 +706,7 @@ class AccountAdmin(admin.ModelAdmin):
         """
 
         """
-        return super(AccountAdmin, self).queryset(request).select_related().select_related('account_type','ignoredaccount')
-
-    def isIgnored(self, obj):
-        """
-
-        """
-        return obj.ignoredaccount is None
-    isIgnored.boolean = True
-    isIgnored.short_description = 'Tags update allowed?'
-
+        return super(AccountAdmin, self).queryset(request).select_related().select_related('account_type')
 
     def link_to_account_type(self, obj):
         """
@@ -1069,38 +1059,3 @@ admin.site.register(models.SoftwareRelease, SoftwareReleaseAdmin)
 class AccountandTypeChoiceField(ModelChoiceField):
     def label_from_instance(self, obj):
         return "%s, %s "  % (obj.name, obj.account_type.title)
-
-
-
-#class IgnoredAccountForm(ModelForm):
-#  #  account = AccountandTypeChoiceField(models.Account.objects.select_related().order_by('name', 'account_type__title'), empty_label=None)
-#    class Meta:
-#        model = models.IgnoredAccount
-#
-#    def __init__(self, *args, **kwargs):
-#        super(IgnoredAccountForm, self).__init__(*args, **kwargs)
-#        self.fields['account'] =  AccountandTypeChoiceField(models.Account.objects.all().select_related().order_by('name', 'account_type__title'),)
-#        #filter(ignoredaccount=None) or self
-
-
-
-class IgnoredAccountAdmin(admin.ModelAdmin):
-    list_display = ('account_type','account', 'reason',)
-#    form = IgnoredAccountForm
-#        fields = ('title', 'visible_for_users',  'connection_string',)
-#        list_filter = ('visible_for_users', )
-#        search_fields = ('title',  'connection_string',)
-    list_display_links = ('account', )
-
-
-    raw_id_fields = ('account',)
-    autocomplete_lookup_fields = {
-        'fk': ['account', ],
-    }
-
-
-    def account_type(self, obj):
-        return obj.account.account_type
-
-
-admin.site.register(models.IgnoredAccount, IgnoredAccountAdmin)
