@@ -1,6 +1,6 @@
 # coding=utf-8
 import itertools
-from GlobalTagCollector.models import Account, Tag, Record, GlobalTag, IgnoredGlobalTag, IgnoredAccount
+from GlobalTagCollector.models import Account, Tag, Record, GlobalTag, IgnoredAccount
 
 class AccountFilter(object):
 
@@ -51,7 +51,7 @@ class GlobalTagListFilter(object):
 
     def leave_not_existing(self, global_tag_names):
         db_gt_names = set([name for (name,) in GlobalTag.objects.filter(has_errors=False).values_list('name')])#error
-        ignored_gt_names = set([name for (name,) in IgnoredGlobalTag.objects.filter(is_ignored=False).values('name')])
+        ignored_gt_names = set() #TODO add global tag names, tat are ignored by administrators
         return set(global_tag_names) - db_gt_names - ignored_gt_names
 
 class GlobalTagEntriesFilter(object):

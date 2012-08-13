@@ -4,8 +4,7 @@ from GlobalTagCollector.libs import utils
 from GlobalTagCollector.libs.GTManagement import RawGT
 from GlobalTagCollector.libs.data_inserters import AccountObjectCreator, TagObjectCreator
 from GlobalTagCollector.libs.data_inserters import RecordObjectCreator, SoftwareReleaseCreator
-#from GlobalTagCollector.management.commands.global_tags_update import update_ignored_global_tags
-from GlobalTagCollector.models import Account, HardwareArchitecture, GTQueue, IgnoredGlobalTag, AccountType, GTAccount, GTType, ObjectForRecords, Record, SoftwareRelease
+from GlobalTagCollector.models import Account, HardwareArchitecture, GTQueue, AccountType, GTAccount, GTType, ObjectForRecords, Record, SoftwareRelease
 from data_providers import AccountsProvider, TagsProvider, RecordProvider, SoftwareReleaseProvider, GlobalTagListProvider, DatabasesProvider
 from data_filters import AccountFilter, TagsFilter, RecordsFilter, SoftwareReleaseFilter, GlobalTagListFilter
 from GlobalTagCollector.libs.data_patchers import PatchTagContainers
@@ -153,11 +152,6 @@ class GlobalTagsUpdate(object):
         except GTQueue.DoesNotExist:
             return
 
-    def _delete_ignored_global_tag(self, global_tag_name):
-        try:
-            IgnoredGlobalTag.objects.get(name=global_tag_name).delete()
-        except IgnoredGlobalTag.DoesNotExist:
-            pass
 
     def _process_global_tag(self, global_tag_name):
         #todo details about queue

@@ -680,35 +680,6 @@ class GlobalTagAdmin(DetailsViewMixin, admin.ModelAdmin):
 
 admin.site.register(models.GlobalTag, GlobalTagAdmin)
 
-
-class IgnoredGlobalTagAdmin(admin.ModelAdmin):
-    list_display = ['name', 'reason','is_ignored','failture_count', 'is_automatic_ignoring','ignoring_started']
-    actions = ['delete_selected',]
-
-    def change_view(self, request, object_id, extra_context=None):
-        """
-
-        """
-        report_generation_problem = False
-        gtp = cache.get("global_tag_problems_%s"%object_id)
-        if gtp is None:
-            try:
-                gtp = global_tag_problems(models.IgnoredGlobalTag.objects.get(pk=object_id).name)
-                cache.set("global_tag_problems_%s"%object_id, gtp, 600)
-            except Exception as e:
-                report_generation_problem = str(e)
-        my_context = {
-            'global_tag_problems':  gtp,
-            'report_generation_problem': report_generation_problem,
-
-        }
-        #should be context update
-        return super(IgnoredGlobalTagAdmin, self).change_view(request, object_id,
-            extra_context=my_context)
-
-
-
-admin.site.register(models.IgnoredGlobalTag, IgnoredGlobalTagAdmin)
 #---------------------------
 class AccountTypeAdmin(admin.ModelAdmin):
 

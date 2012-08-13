@@ -262,20 +262,7 @@ class GlobalTagRecord(models.Model):
     def __str__(self):
         return "GT:%s Tag:%s Container:%s Record:%s label:%s" % (self.global_tag.name, self.tag.name, self.tag.object_r.name, self.record.name, self.label)
 
-class IgnoredGlobalTag(models.Model):
-    name = models.CharField(blank=False, max_length=200, unique=True)
-    reason = models.TextField()
-    is_ignored = models.BooleanField(default=True)
-    failture_count = models.IntegerField(default=0)
-    is_automatic_ignoring = models.BooleanField(default=False)
-    ignoring_started = models.DateTimeField(null=True)
-
-#    last_time_tried = models.DateTimeField()
-#    tryongs_count =
-
 #------------------------------------------------------------------------------
-
-
 
 class GTAccount(models.Model):
     """Global tags has also an accounts. Here is list of them"""

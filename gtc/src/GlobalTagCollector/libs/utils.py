@@ -3,7 +3,7 @@ import datetime
 from django.conf import  settings
 from django.core.exceptions import MultipleObjectsReturned
 import re
-from GlobalTagCollector.models import GTType, Tag, Record, IgnoredGlobalTag
+from GlobalTagCollector.models import GTType, Tag, Record
 from GlobalTagCollector.libs.exceptions import TagNotDetectedException, RecordNotDetectedException
 
 
@@ -43,27 +43,3 @@ def get_new_queue_entry_status(status, was_found_in_gt):
         return found_statuses[status]
     else:
         return not_found_statuses[status]
-
-
-#todo update mthod
-def update_ignored_global_tags(gt_name, raised_exception_or_problem):
-    #slow, but simple. 2 quieries. only first failture
-    """
-
-    """
-    (igt, created) =IgnoredGlobalTag.objects.get_or_create(
-        name = gt_name,
-        defaults=dict(
-            reason = str(raised_exception_or_problem),
-            is_ignored = False,
-            failture_count = 0,
-            is_automatic_ignoring = True, #or false?
-            ignoring_started = None
-        )
-    )
-    if not created:
-        igt.failture_count += 1
-        if igt.failture_count > 3:
-            igt.is_ignored = True
-            igt.ignoring_started = datetime.datetime.now()
-        igt.save()
