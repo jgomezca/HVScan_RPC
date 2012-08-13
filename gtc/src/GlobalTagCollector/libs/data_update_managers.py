@@ -197,8 +197,9 @@ class GlobalTagsUpdate(object):
         logging.debug("Gobal tags for update:%s" %  str(global_tag_names_for_update))
 
 
-
-        for global_tag_name in global_tag_names_for_update:
+        gt_names_count = len(global_tag_names_for_update)
+        for i, global_tag_name in enumerate(global_tag_names_for_update):
+            logger.info("Processing %d global tag out of %d. Name: %s" % (i, gt_names_count, global_tag_name))
             self._process_global_tag(global_tag_name)
 
 
