@@ -11,8 +11,18 @@
                 </ul>
                 <ul class="nav pull-right">
                     {% if request.user.is_superuser %}
-                        <li><a href="{% url admin:index %}">Admin</a></li>
-                        <li><a href="{% url gt_queue_list %}">New Admin</a></li>
+                        <li class="dropdown" id="menu1">
+                            <a class="dropdown-toggle" data-toggle="dropdown" href="#menu1">
+                                Admin
+                                <b class="caret"></b>
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a href="{% url admin_dashboard %}">Dashboard</a></li>
+                                <li><a href="{% url gt_queue_list %}">Queue list</a></li>
+                                <li class="divider"></li>
+                                <li><a href="{% url admin:index %}">Old Admin</a></li>                                                            </ul>
+                        </li>
+
                     {% endif %}
                     <li><a href="https://login.cern.ch/adfs/ls/?wa=wsignout1.0">Logout</a></li>
                 </ul>

@@ -83,7 +83,7 @@ def gt_queue_entry_status_change(request, gt_queue_entry_id, new_status):
     return HttpResponseRedirect(reverse('gt_queue_entries', kwargs={'queue_id':queue.id})+"?entry_status_filter="+entry_status_filter)
 
 @user_passes_test(lambda u: u.is_superuser)
-def dashboard(request):
+def admin_dashboard(request):
     global_tag_count = GlobalTag.objects.count()
     not_imported_global_tags = GlobalTag.objects.filter(has_errors=True)
     global_tag_queue_count = GTQueue.objects.all().count()
