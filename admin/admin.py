@@ -52,6 +52,7 @@ class Admin:
 		table = '''
 			<tr>
 				<th>Service</th>
+				<th>Jobs</th>
 				<th>Status</th>
 				<th>Link</th>
 				<th>Actions</th>
@@ -70,12 +71,18 @@ class Admin:
 			return actionTemplate % (action, service, action, disabledText)
 
 		for service in ['keeper'] + config.getServicesList(showHiddenServices = True):
+			jobs = ''
 			status = ''
 			url = ''
+
+			enabledJobs = keeper.hasEnabledJobs(service)
+			if enabledJobs:
+				jobs = 'Enabled'
+
 			pids = keeper.getPIDs(service)
 			running = len(pids) > 0
 			if running:
-				status = 'RUNNING: ' + ','.join(pids)
+				status = ','.join(pids)
 
 				url = '/%s/' % service
 				if service != 'keeper':
@@ -92,6 +99,10 @@ class Admin:
 				actions += makeAction(service, action, running or service == 'admin')
 			for action in ['stop', 'restart', 'kill']:
 				actions += makeAction(service, action, not running or service == 'admin')
+			for action in ['enableJobs']:
+				actions += makeAction(service, action, enabledJobs or service == 'keeper')
+			for action in ['disableJobs']:
+				actions += makeAction(service, action, not enabledJobs or service == 'keeper')
 
 			table += '''
 				<tr>
@@ -99,8 +110,9 @@ class Admin:
 					<td>%s</td>
 					<td>%s</td>
 					<td>%s</td>
+					<td>%s</td>
 				</tr>
-			''' % (service, status, url, actions)
+			''' % (service, jobs, status, url, actions)
 
 		template = '''
 			<html>
@@ -161,6 +173,24 @@ class Admin:
 		'''
 
 		keeper.kill(service)
+		raise cherrypy.HTTPRedirect('./')
+
+
+	@cherrypy.expose
+	def enableJobs(self, service):
+		'''Enable the jobs of a service.
+		'''
+
+		keeper.enableJobs(service)
+		raise cherrypy.HTTPRedirect('./')
+
+
+	@cherrypy.expose
+	def disableJobs(self, service):
+		'''Disable the jobs of a service.
+		'''
+
+		keeper.disableJobs(service)
 		raise cherrypy.HTTPRedirect('./')
 
 

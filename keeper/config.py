@@ -18,11 +18,16 @@ servicesDirectory = os.path.join(rootDirectory, 'services')
 secretsDirectory = os.path.join(rootDirectory, 'secrets')
 utilitiesDirectory = os.path.join(rootDirectory, 'utilities')
 logsDirectory = os.path.join(rootDirectory, 'logs')
+jobsDirectory = os.path.join(rootDirectory, 'jobs')
 cmsswDirectory = os.path.join(rootDirectory, 'cmsswNew')
 cmsswSetupEnvScript = os.path.join(cmsswDirectory, 'setupEnv.sh')
 
 logsFileTemplate = os.path.join(logsDirectory, '%s', 'log')
 logsSize = '10M' # rotatelogs' syntax
+logsJobFileTemplate = os.path.join(logsDirectory, '%s', '%s', 'log')
+
+jobsFileTemplate = os.path.join(jobsDirectory, '%s')
+crontabFile = os.path.join(jobsDirectory, 'crontab')
 
 repositoryBase = '/afs/cern.ch/cms/DB/rep'
 servicesRepository = os.path.join(repositoryBase, 'cmsDbWebServices.git')
@@ -86,12 +91,34 @@ servicesConfiguration = {
 	#
 	# The parameters for each service are:
 	#
-	#    filename:      the (relative) path to the main Python script
-	#    listeningPort: the port the server will listen to
+	#    filename       The (relative) path to the main Python script.
+	#
+	#    listeningPort  The port the server will listen to
 	#                   (please keep them within the listeningPortsRange
-	#                   or update the range if needed)
-	#    hidden:        the service will not show up in public lists
-	#                   (e.g. in the docs/index.html list)
+	#                   or update the range if needed).
+	#
+	#    hidden         The service will not show up in public lists
+	#                   (e.g. in the docs/index.html list).
+	#
+	#    jobs           List of jobs to run periodically.
+	#
+	#                   Optional, default: [].
+	#
+	#                   Each job must a tuple (when, filename):
+	#                     * when is a string in the crontab format
+	#                     * filename is the name of the Python script to run
+	#                       which must be inside the service's folder.
+	#
+	#                   The jobs are run the same way as the services:
+	#                     * With the same environment.
+	#                     * Without AFS tokens.
+	#                     * With arguments passed by the keeper.
+	#                       which means the job can import service,
+	#                       import secrets, etc.
+	#
+	#                   The output (both stdout and stderr) from each run
+	#                   of each job is saved in:
+	#                       /data/logs/service/job/log.timestamp
 
 	'admin': {
 		'filename':       'admin.py',

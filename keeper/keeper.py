@@ -165,7 +165,7 @@ def getEnvironment(service):
 	return ret
 
 
-def run(service, filename, extraCommandLine = '', replaceProcess = False):
+def run(service, filename, extraCommandLine = '', replaceProcess = True):
 	'''Setups and runs a Python script in a service.
 		- Changes the working directory to the service's folder.
 		- Setups PYTHONPATH.
@@ -175,6 +175,8 @@ def run(service, filename, extraCommandLine = '', replaceProcess = False):
 
 	Used for starting a service and also running its test suite.
 	'''
+
+	checkRegistered(service)
 
 	# Change working directory
 	os.chdir(getPath(service))
@@ -264,7 +266,7 @@ def start(service, warnIfAlreadyStarted = True, sendEmail = True):
 			os.execlp('bash', 'bash', '-c', './keeper.py keep ' + extraCommandLine)
 		else:
 
-			run(service, config.servicesConfiguration[service]['filename'], extraCommandLine = extraCommandLine, replaceProcess = True)
+			run(service, config.servicesConfiguration[service]['filename'], extraCommandLine = extraCommandLine)
 
 	# Wait until the service has started
 	wait(service, maxWaitTime = 5, forStart = True)
@@ -436,7 +438,7 @@ def test(service):
 	startTime = time.time()
 
 	# Run the test suite
-	returnCode = run(service, 'test.py')
+	returnCode = run(service, 'test.py', replaceProcess = False)
 
 	state = (returnCode == 0)
 
@@ -591,11 +593,16 @@ def status():
 	'''
 
 	matrix = [
-		['Service', 'PIDs', 'URL'],
+		['Service', 'Jobs', 'PIDs', 'URL'],
 	]
 
 	for service in ['keeper'] + services:
 		row = [service]
+
+		if service != 'keeper' and hasEnabledJobs(service):
+			row.append('Enabled')
+		else:
+			row.append('----')
 
 		pids = getPIDs(service)
 		if len(pids) > 0:
@@ -618,8 +625,129 @@ def status():
 	print formatTable(matrix)
 
 
+def _refreshCrontab():
+	'''Installs the crontab with the jobs from all services.
+	'''
+
+	crontab = 'SHELL=/bin/bash\n\n'
+	for service in services:
+		try:
+			f = open(config.jobsFileTemplate % service, 'r')
+		except IOError:
+			continue
+		crontab += f.read()
+		f.close()
+
+	with open(config.crontabFile, 'w') as f:
+		f.write(crontab)
+
+	subprocess.call(['/usr/bin/crontab', config.crontabFile])
+
+
+def hasEnabledJobs(service):
+	'''Has a service its jobs enabled?
+	'''
+
+	try:
+		with open(config.jobsFileTemplate % service) as f:
+			pass
+		return True
+	except IOError:
+		return False
+
+
+def enableJobs(service, refreshIfAlreadyEnabled = True):
+	'''Enables the jobs for a given service.
+	'''
+
+	if service == 'all':
+		for service in services:
+			enableJobs(service, refreshIfAlreadyEnabled = refreshIfAlreadyEnabled)
+		return
+
+	checkRegistered(service)
+
+	if hasEnabledJobs(service):
+		if refreshIfAlreadyEnabled:
+			logging.warning('Jobs were already enabled for %s, refreshing them.' % service)
+		else:
+			return
+
+	jobs = ''
+	for (when, filename) in config.servicesConfiguration[service].get('jobs', []):
+		jobs += '%s %s run %s %s > %s.$(date +\\%%s) 2>&1\n' % (when, os.path.join(getPath('keeper'), 'keeper.py'), service, filename, config.logsJobFileTemplate % (service, filename))
+
+	with open(config.jobsFileTemplate % service, 'w') as f:
+		f.write(jobs)
+
+	_refreshCrontab()
+
+	logging.info('Enabled jobs for %s.', service)
+
+
+def disableJobs(service):
+	'''Disables the jobs for a given service.
+	'''
+
+	if service == 'all':
+		for service in services:
+			disableJobs(service)
+		return
+
+	checkRegistered(service)
+
+	if not hasEnabledJobs(service):
+		logging.warning('Tried to disable jobs which were already disabled for %s.' % service)
+		return
+
+	try:
+		os.remove(config.jobsFileTemplate % service)
+	except OSError:
+		pass
+
+	_refreshCrontab()
+
+	logging.info('Disabled jobs for %s.', service)
+
+
+def listJobs(service):
+	'''Lists the jobs for a given service.
+	'''
+
+	if service == 'all':
+		for service in services:
+			listJobs(service)
+		return
+
+	checkRegistered(service)
+
+	try:
+		f = open(config.jobsFileTemplate % service)
+	except IOError:
+		return
+
+	jobs = f.read().rstrip()
+	if jobs:
+		print jobs
+	f.close()
+
+
+def jobs(action, service):
+	'''Manages the jobs of a service.'
+	'''
+
+	if action == 'enable':
+		enableJobs(service)
+	elif action == 'disable':
+		disableJobs(service)
+	elif action == 'list':
+		listJobs(service)
+	else:
+		raise Exception('Action should be one one of: enable, disable, list.')
+
+
 def keep():
-	'''Keeps services up and running.
+	'''Keeps services and its jobs up and running.
 	'''
 
 	logging.info('Keeping services up and running...')
@@ -630,6 +758,7 @@ def keep():
 		for service in services:
 			try:
 				start(service, warnIfAlreadyStarted = False)
+				enableJobs(service, refreshIfAlreadyEnabled = False)
 			except Exception as e:
 				logging.error(e)
 
@@ -654,10 +783,16 @@ Commands:
                       the select, futex, gettimeofday nor poll system calls.
 
   status              Prints the status of the keeper
-                      and all the services, with PIDs.
+                      and all the services, with PIDs and jobs.
 
-  keep                Keeps the services up and running.
+  jobs  enable   <service>  Enables the jobs of a service.
+  jobs  disable  <service>  Disables the jobs of a service.
+  jobs  list     <service>  Lists the current jobs of a service.
+
+  keep                Keeps the services and its jobs up and running.
                       (this is what the keeper-service runs).
+
+  run      <service>  <filename>  Runs a Python script inside a service.
 
   <service> can be one of the following:
     all keeper %s
@@ -709,6 +844,12 @@ def runCommand(command, arguments):
 				default = default,
 				help = 'Default: %default'
 			)
+		elif isinstance(default, str):
+			parser.add_option('--%s' % option, type = 'str',
+				dest = option,
+				default = default,
+				help = 'Default: %default'
+			)
 		else:
 			raise Exception('Unsupported default type.')
 
@@ -737,7 +878,9 @@ def main():
 		'env': env,
 		'strace': strace,
 		'status': status,
+		'jobs': jobs,
 		'keep': keep,
+		'run': run,
 	}
 
 	if len(sys.argv) < 2 or sys.argv[1] not in commands:

@@ -385,10 +385,18 @@ def deploy(options):
 		# for easy development).
 		execute('rm -rf secrets services libs utilities cmssw cmsswNew')
 
-	# Create the logs folder if it does not exist and subdirectories
-	execute('mkdir -p logs')
+	# Create the logs and jobs folders if they do not exist and their subdirectories
+	execute('mkdir -p logs/keeper jobs')
 	for service in config.servicesConfiguration:
+		# logs' subdirectories
 		execute('mkdir -p %s' % os.path.join('logs', service))
+		for job in config.servicesConfiguration[service].get('jobs', []):
+			execute('mkdir -p %s' % os.path.join('logs', service, job[1]))
+
+		# jobs' subdirectories
+		(head, tail) = os.path.split(service)
+		if head != '':
+			execute('mkdir -p %s' % os.path.join('jobs', head))
 
 	# Get the secrets
 	getSecrets()
