@@ -142,6 +142,9 @@ servicesConfiguration = {
 		'filename':       'gtc.py',
 		'listeningPort':  8093,
 		'hidden':         False,
+		'jobs':           [
+			('*/20 * * * *', 'global_update.py'),
+		],
 	},
 
 	'gtList': {
