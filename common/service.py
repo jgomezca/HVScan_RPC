@@ -10,6 +10,7 @@ __email__ = 'mojedasa@cern.ch'
 
 
 import os
+import sys
 import optparse
 import socket
 import logging
@@ -227,6 +228,20 @@ def escape(x):
 		return x.replace(microsecond = 0)
 
 	raise Exception('escape(): Type %s not recognized.' % str(type(x)))
+
+
+def _getPIDs(string):
+	'''Returns the PIDs matching the string, without grep nor bash.
+	'''
+
+	return os.popen("ps aux | grep -F '" + string + "' | grep -F 'python' | grep -F -v 'grep' | grep -F -v 'bash' | awk '{print $2}'", 'r').read().splitlines()
+
+
+def isAnotherInstanceRunning():
+	'''Returns whether another instance of the script is running.
+	'''
+
+	return len(_getPIDs(sys.argv[0])) > 1
 
 
 # Functions for generating connection strings and URLs
