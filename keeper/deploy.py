@@ -388,9 +388,7 @@ def deploy(options):
 	# Create the logs folder if it does not exist and subdirectories
 	execute('mkdir -p logs')
 	for service in config.servicesConfiguration:
-		(head, tail) = os.path.split(service)
-		if head != '':
-			execute('mkdir -p ' + os.path.join('logs', head))
+		execute('mkdir -p %s' % os.path.join('logs', service))
 
 	# Get the secrets
 	getSecrets()

@@ -21,7 +21,7 @@ logsDirectory = os.path.join(rootDirectory, 'logs')
 cmsswDirectory = os.path.join(rootDirectory, 'cmsswNew')
 cmsswSetupEnvScript = os.path.join(cmsswDirectory, 'setupEnv.sh')
 
-logsFileTemplate = os.path.join(logsDirectory, '%s.log')
+logsFileTemplate = os.path.join(logsDirectory, '%s', 'log')
 logsSize = '10M' # rotatelogs' syntax
 
 repositoryBase = '/afs/cern.ch/cms/DB/rep'

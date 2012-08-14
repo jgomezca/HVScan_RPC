@@ -97,7 +97,7 @@ def _getLatestLogFile(service):
 	'''
 
 	try:
-		return sorted(glob.glob(os.path.join(config.logsDirectory, '%s.log.*' % service)))[-1]
+		return sorted(glob.glob(getLogPath(service) + '.*'))[-1]
 	except:
 		return None
 
@@ -106,7 +106,7 @@ def getLogPath(service):
 	'''Returns the absolute path to a service's latest log.
 	'''
 
-	return os.path.abspath(os.path.join(config.logsDirectory, service + '.log'))
+	return os.path.abspath(config.logsFileTemplate % service)
 
 
 def isRegistered(service):
@@ -258,7 +258,7 @@ def start(service, warnIfAlreadyStarted = True, sendEmail = True):
 
 		# Run the service's starting script piping its output to rotatelogs
 		# FIXME: Fix the services so that they do proper logging themselves
-		extraCommandLine = '2>&1 | LD_LIBRARY_PATH=/lib64:/usr/lib64 /usr/sbin/rotatelogs %s %s' % (config.logsFileTemplate % service, config.logsSize)
+		extraCommandLine = '2>&1 | LD_LIBRARY_PATH=/lib64:/usr/lib64 /usr/sbin/rotatelogs %s %s' % (getLogPath(service), config.logsSize)
 
 		if service == 'keeper':
 			os.execlp('bash', 'bash', '-c', './keeper.py keep ' + extraCommandLine)
@@ -282,7 +282,7 @@ def start(service, warnIfAlreadyStarted = True, sendEmail = True):
 			logging.error('The email "' + subject + '"could not be sent.')
 
 	# Try to remove the old hard link to the previous latest log file
-	logHardLink = os.path.join(config.logsDirectory, '%s.log' % service)
+	logHardLink = getLogPath(service)
 	try:
 		os.remove(logHardLink)
 	except Exception:
