@@ -559,29 +559,63 @@ def strace(service):
 	os.execlp('bash', 'bash', '-c', commandLine)
 
 
+def formatTable(matrix, columnSeparator = '  ', rowSeparator = '\n', filler = ' '):
+	'''Returns a formatted table given a matrix.
+	'''
+
+	sizes = [0] * len(matrix[0])
+
+	for row in matrix:
+		index = 0
+		for cell in row:
+			if not cell:
+				cell = ''
+			sizes[index] = max(sizes[index], len(cell))
+			index += 1
+
+	table = []
+	for row in matrix:
+		formattedRow = []
+		index = 0
+		for cell in row:
+			formattedRow.append(cell + (filler * (sizes[index] - len(cell))))
+			index += 1
+
+		table.append(columnSeparator.join(formattedRow))
+
+	return rowSeparator.join(table)
+
+
 def status():
 	'''Print the status of all services.
 	'''
 
-	maxlen = len('keeper')
-	for service in services:
-		maxlen = max(maxlen, len(service))
+	matrix = [
+		['Service', 'PIDs', 'URL'],
+	]
 
 	for service in ['keeper'] + services:
+		row = [service]
+
 		pids = getPIDs(service)
 		if len(pids) > 0:
-			status = ' RUNNING: ' + ','.join(pids)
+			row.append(','.join(pids))
 			if service != 'keeper':
 				if config.getProductionLevel() == 'private':
-					status += ' at https://%s/%s/' % (socket.gethostname(), service)
+					row.append('https://%s/%s/' % (socket.gethostname(), service))
 				else:
 					# FIXME: Report the URL of the front-end (more consistent with 'private',
 					#        and also allows us to rely on absolute paths in the future, e.g. /libs)
-					status += ' at https://%s:%s/%s/' % (socket.gethostname(), str(config.servicesConfiguration[service]['listeningPort']), service)
+					row.append('https://%s:%s/%s/' % (socket.gethostname(), str(config.servicesConfiguration[service]['listeningPort']), service))
+			else:
+				row.append('---')
 		else:
-			status = ' --------'
+			row.append('----')
+			row.append('---')
 
-		print service + (' ' * (maxlen - len(service))) +  status
+		matrix.append(row)
+
+	print formatTable(matrix)
 
 
 def keep():
