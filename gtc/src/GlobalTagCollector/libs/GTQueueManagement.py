@@ -140,6 +140,8 @@ class GTQueueManager(object):
         #Now setting status to queue entries depending to witch list they belong
         all_queue_entries_with_status_changes = []
         with transaction.commit_on_success():
+            self.queue_obj.last_gt = gt_obj
+            self.queue_obj.save()
             for queue_entry in same_queue_entries:
                 old_status = queue_entry.status
                 new_status = utils.get_new_queue_entry_status(queue_entry.status,was_found_in_gt=True)
