@@ -4,7 +4,7 @@ from sqlalchemy.orm import sessionmaker
 import datetime
 import json
 import service
-
+import fnmatch
 
 schema_name = service.secrets['connections']['dev']["writer"]["account"] #as service uses different users DB schema, to connect we get schema name.
 
@@ -252,8 +252,12 @@ def search(regexp, Session):
             session.close()
             return json.dumps(new_list)
         else:
+            for name in release_list:
+                if fnmatch.fnmatch(name.upper(), regexp.upper()):
+                    new_list.append(name)
+            new_list.sort(key=lambda x: x.lower())
             session.close()
-            return json.dumps([])
+            return json.dumps(new_list)
     except Exception as e:
         session.close()
         print e

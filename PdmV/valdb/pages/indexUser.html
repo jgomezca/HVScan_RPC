@@ -485,6 +485,7 @@
   							success: function (data) { if (data.link) {
                                                  					 window.location.href = data.link;
                                        						 } else {
+                                       						alert(data.length +" Releases were found. Showing them in List of releases");
                             								document.getElementById("releaseList").innerHTML = "";
                             								appendOptionLast(data);
                             								$("#buttonOk").css('display', 'none');
