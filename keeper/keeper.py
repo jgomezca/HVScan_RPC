@@ -92,12 +92,39 @@ def getPath(service):
 	return os.path.abspath(os.path.join(config.servicesDirectory, service))
 
 
+def getLogsList(service):
+	'''Returns the list of available logs of a service (without including
+	the 'log' hardlink, i.e. the latest log).
+	'''
+
+	# Make sure the arguments are valid before listing folders
+	# (this is used by the admin service)
+	checkRegistered(service)
+
+	return sorted(glob.glob(getLogPath(service) + '.*'))
+
+
+def getLog(service, timestamp):
+	'''Returns a log of a service.
+	'''
+
+	# Make sure the arguments are valid before opening the file
+	# (this is used by the admin service)
+	checkRegistered(service)
+	timestamp = int(timestamp)
+
+	with open('%s.%s' % (getLogPath(service), timestamp), 'r') as f:
+		log = f.read()
+
+	return log
+
+
 def _getLatestLogFile(service):
 	'''Returns the latest log file of a service, None if there is not any log file.
 	'''
 
 	try:
-		return sorted(glob.glob(getLogPath(service) + '.*'))[-1]
+		return getLogsList(service)[-1]
 	except:
 		return None
 
@@ -105,6 +132,10 @@ def _getLatestLogFile(service):
 def getLogPath(service):
 	'''Returns the absolute path to a service's latest log.
 	'''
+
+	# Make sure the arguments are valid
+	# (this is used by the admin service)
+	checkRegistered(service)
 
 	return os.path.abspath(config.logsFileTemplate % service)
 

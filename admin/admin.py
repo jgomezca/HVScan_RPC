@@ -9,8 +9,10 @@ __maintainer__ = 'Miguel Ojeda'
 __email__ = 'mojedasa@cern.ch'
 
 
+import datetime
 import cherrypy
 import subprocess
+import jinja2
 
 
 import service
@@ -92,6 +94,8 @@ class Admin:
 			#        and returning a proper message to the user.
 			actions = ''
 			for action in ['tail']:
+				actions += makeAction(service, action)
+			for action in ['logs']:
 				actions += makeAction(service, action)
 			for action in ['lsof', 'env']:
 				actions += makeAction(service, action, not running)
@@ -192,6 +196,48 @@ class Admin:
 
 		keeper.disableJobs(service)
 		raise cherrypy.HTTPRedirect('./')
+
+
+	@cherrypy.expose
+	def log(self, service, timestamp):
+		'''Returns a log of a service.
+		'''
+
+		return setResponsePlainText(keeper.getLog(service, timestamp))
+
+
+	@cherrypy.expose
+	def logs(self, service):
+		'''Lists the logs of a service.
+		'''
+
+		template = '''
+			<!DOCTYPE html>
+			<html>
+				<head>
+					<title>{{service}}'s log list</title>
+
+				</head>
+				<body>
+					<h1>{{service}}'s log list</h1>
+					<ul>
+						{% for log in logs %}
+							<li>{{log['humanTimestamp']}} - <a href="./log?service={{service}}&amp;timestamp={{log['timestamp']}}">{{log['filename']}}</a></li>
+						{% endfor %}
+					</ul>
+				</body>
+			</html>
+		'''
+
+		logs = []
+		for filename in reversed(keeper.getLogsList(service)):
+			log = {}
+			log['filename'] = filename
+			log['timestamp'] = int(filename.split('log.')[-1])
+			log['humanTimestamp'] = datetime.datetime.fromtimestamp(log['timestamp']).strftime('%Y-%m-%d %H:%M:%S')
+			logs.append(log)
+
+		return jinja2.Template(template).render(service = service, logs = logs)
 
 
 	@cherrypy.expose
