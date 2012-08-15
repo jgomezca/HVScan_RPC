@@ -204,13 +204,6 @@ virtualHosts['cms-pop-prod2'] = dict(virtualHosts['cms-pop-prod'])
 # If 'customHttp' is found, its value will be appended in the HTTP section.
 # If 'customHttps' is found, its value will be appended in the HTTPS section.
 services = {
-    'weblibs': {
-        #-mo FIXME: Set up weblibs: deploy.py/keeper.py need to set
-        # up a server (httpd) in the backend machine to serve the files.
-        # Otherwise, deploy.py could copy the files to the frontend and
-        # serve them here.
-    },
-
     # From the old cmstags.conf
     'tc': {
         'backendPort': 4443,
