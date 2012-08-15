@@ -4,7 +4,7 @@ from django.conf import  settings
 from django.core.exceptions import MultipleObjectsReturned
 import re
 from GlobalTagCollector.models import GTType, Tag, Record
-from GlobalTagCollector.libs.exceptions import TagNotDetectedException, RecordNotDetectedException
+from GlobalTagCollector.libs.exceptions import TagNotDetectedException, RecordNotDetectedException, UnknownSoftwareReleaseNamePattern
 
 
 def software_release_name_to_version(software_release_name):
