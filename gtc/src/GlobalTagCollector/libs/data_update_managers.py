@@ -351,6 +351,12 @@ class InitialGlobalUpdate(object):
                 software_release.save()
 
 
+        #Insert starting hardware architectures
+        #TODO take hardware architectures from services
+        HardwareArchitecture.objects.get_or_create(name="slc5_amd64_gcc434")
+        HardwareArchitecture.objects.get_or_create(name="slc5_amd64_gcc451")
+        HardwareArchitecture.objects.get_or_create(name="slc5_ia32_gcc434")
+        HardwareArchitecture.objects.get_or_create(name="slc5_amd64_gcc462")
 
 
 
@@ -363,7 +369,6 @@ class InitialGlobalUpdate(object):
         self.initial_data_info()
         AccountsUpdateManager()._run()
         TagsUpdateManager()._run()
-        call_command('loaddata', 'hardware_releases_base') #todo: update
         SoftwareReleaseUpdateManager()._run()
         RecordsUpdateManager()._run()
 
