@@ -66,12 +66,7 @@ frontends['cms-conddb-prod2'] = frontends['cmsdbfe2'] = frontends['vocms151']
 virtualHosts = {
     'cms-conddb-dev': {
         'backendHostnames': ['vocms145'],
-        'services': [
-            # Keeper's services
-            'admin',
-            'docs', 'getLumi', 'gtc', 'gtList', 'payloadInspector', 'PdmV/valdb',
-            'popcon', 'recordsProvider', 'regressionTest', 'shibbolethTest',
-        ],
+        'services': [],
     },
 
     # From the old cmstags.conf
@@ -97,6 +92,10 @@ virtualHosts = {
         'services': ['cms-popularity'],
     },
 }
+
+# Add the services managed by the keeper to the cms-conddb-dev virtual host
+for service in sorted(config.servicesConfiguration, key = str.lower):
+    virtualHosts['cms-conddb-dev']['services'].append(service)
 
 # private is a special virtual host which must be the same as -dev but
 # with the 'backendHostnames' pointing to the localhost (but using
