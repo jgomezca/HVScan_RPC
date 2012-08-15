@@ -18,10 +18,26 @@ def cleanup(sender, instance, **kwargs):
 pre_save.connect(cleanup, dispatch_uid="general_presave")
 
 
-class AccountType(models.Model):
-    """
-    List of all known account types
-    """
+class ServiceData(models.Model):
+    '''
+    Abstract model, that each model should inherit if it takes data from services. It is used to store information
+    about manual changes of service information (if data entry was added or ignored manually).
+    '''
+
+    class Meta:
+        abstract = True
+
+    entry_manual_added = models.BooleanField(default=False, help_text="Was this entry added manually?")
+    entry_ignored = models.BooleanField(default=False, help_text="Was this entry ignored manually due to some problems?")
+    entry_administrator = models.ForeignKey(User, related_name="%(app_label)s_%(class)s_administrator", null=True, blank=True, help_text="Administrator, who edited this entry")
+    entry_comment = models.TextField(blank=True, help_text="Reson, why this entry was edited")
+    entry_creation_date = models.DateTimeField(auto_now_add=True, help_text="When entry was inserted?")
+    entry_editing_date = models.DateTimeField(auto_now=True, help_text="When entry was modified?")
+    entry_ignoring_canceled = models.DateTimeField(null=True, blank=True, help_text="If was ignored, when ignoring was canceled.")
+
+
+class AccountType(ServiceData):
+    '''List of all known account types'''
 
     class Meta:
         ordering = ['visible_for_users', 'name', 'title']
@@ -49,10 +65,8 @@ class AccountType(models.Model):
         return "id__iexact", "title__icontains", "connection_string__icontains",
 
 
-class Account(models.Model):
-    """
-    Defines model for managing accounts (of tags & records)
-    """
+class Account(ServiceData):
+    """Defines model for managing accounts (of tags & records)"""
 
     class Meta:
         unique_together = (
@@ -75,7 +89,7 @@ class Account(models.Model):
 
 
 
-class HardwareArchitecture(models.Model):
+class HardwareArchitecture(ServiceData):
     """List of architecures for which software is avaibable"""
 
     name = models.CharField(blank=False, max_length=200, unique=True, help_text=_("Name of hardware achitecture"))
@@ -88,7 +102,7 @@ class HardwareArchitecture(models.Model):
         return "id__iexact", "name__icontains",
 
 
-class SoftwareRelease(models.Model):
+class SoftwareRelease(ServiceData):
     """CMSSW software relases"""
 
     class Meta:
@@ -111,7 +125,7 @@ class SoftwareRelease(models.Model):
         return "id__iexact", "name__icontains",
 
 
-class ObjectForRecords(models.Model):
+class ObjectForRecords(ServiceData):
     """Object and record mapping"""
 
     name = models.CharField(blank=False, max_length=200, unique=True,
@@ -127,7 +141,7 @@ class ObjectForRecords(models.Model):
     def autocomplete_search_fields():
         return "id__iexact", "name__icontains",
 
-class Record(models.Model):
+class Record(ServiceData):
     """Record of a tag"""
 
     class Meta:
@@ -150,7 +164,7 @@ class Record(models.Model):
         return "id__iexact", "name__icontains",
 
 
-class Tag(models.Model):
+class Tag(ServiceData):
     """Tag bellonging to the account"""
     #TODO add fields to tag model
 #    #mayby should be moved to in separate table
@@ -186,7 +200,7 @@ class GlobalTagRecordValidationError(ValidationError):
         super(GlobalTagRecordValidationError, self).__init__(msg)
 
 
-class GlobalTag(models.Model):
+class GlobalTag(ServiceData):
     """Global tag names"""
 
     class Meta:
@@ -204,12 +218,6 @@ class GlobalTag(models.Model):
 
     has_warnings = models.BooleanField(default=True)
     has_errors = models.BooleanField(default=True)
-
-    #Used with problematic GT
-    is_ignored = models.BooleanField(default=False)
-    ignoring_timestamp = models.DateTimeField(null=True)
-    ignoring_comment = models.TextField(blank=True)
-
 
     objects = models.Manager()
     imported = ImportedGTByDate()
