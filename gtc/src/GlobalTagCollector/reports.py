@@ -1,5 +1,6 @@
+from django.core.mail.message import EmailMultiAlternatives
 from django.template import Context, Template
-from GlobalTagCollector.libs.mailing import send_mail
+from django.conf import settings
 from GlobalTagCollector.models import GlobalTag
 from Shibboleth_CERN.primitive_soap import list_administrator_emails
 import socket
@@ -7,6 +8,14 @@ try:
     HOSTNAME = socket.gethostname()
 except:
     HOSTNAME = 'unknown'
+
+
+def send_mail(subject, body, recipient_list, html=None):
+    from_email = settings.EMAIL_HOST_USER
+    msg = EmailMultiAlternatives(subject, body, from_email, recipient_list)
+    if html:
+        msg.attach_alternative(html, "text/html")
+    msg.send(fail_silently=False)
 
 #NOTE NO report if no data
 #-----------------------------------------------------------------------------------------------------------------------
@@ -28,7 +37,7 @@ Yesterday imported global tags:
     c = Context({'yesterday_gts':yesterday_gts})
     message_text = mail_template.render(c)
     recipients = list_administrator_emails()
-    return send_mail("GT import report", message_text, recipients, fail_silently=True)
+    return send_mail("GT import report", message_text, recipients)
 #-----------------------------------------------------------------------------------------------------------------------
 
 def report_last_7_days_global_tags():
@@ -49,7 +58,7 @@ Global tags imported during last 7 days:
     c = Context({'week_gts':week_gts})
     message_text = mail_template.render(c)
     recipients = list_administrator_emails()
-    return send_mail("GT import report", message_text, recipients, fail_silently=True)
+    return send_mail("GT import report", message_text, recipients)
 #-----------------------------------------------------------------------------------------------------------------------
 
 def report_record_queued(queue_entry):
@@ -101,12 +110,12 @@ def report_record_queued(queue_entry):
     admin_message_text = admin_mail_template.render(c)
     administrators = set(list_administrator_emails())
     title = "GT record queued"
-    send_mail(title, admin_message_text, administrators, fail_silently=True)
+    send_mail(title, admin_message_text, administrators)
 
     if queue_entry.submitter.email in administrators:
         pass
     else:
-        send_mail(title, message_text, [queue_entry.submitter.email], fail_silently=True)
+        send_mail(title, message_text, [queue_entry.submitter.email])
 
 
 
@@ -162,12 +171,12 @@ def report_record_status_changed(queue_entry, old_status):
     admin_message_text = admin_mail_template.render(c)
     administrators = set(list_administrator_emails())
     title = "GT status changes"
-    send_mail(title, admin_message_text, administrators, fail_silently=True)
+    send_mail(title, admin_message_text, administrators)
 
     if queue_entry.submitter.email in administrators:
         pass
     else:
-        send_mail(title, message_text, [queue_entry.submitter.email], fail_silently=True)
+        send_mail(title, message_text, [queue_entry.submitter.email])
 
 
 #def records_modificated_yesterday():
