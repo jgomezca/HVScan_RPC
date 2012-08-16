@@ -37,15 +37,6 @@ span.entry_value_right{
 {%  block content %}
 {% load tags %}
 
-
-<div class="row">
-    <div class="span6">
-        <h1>Global Tag Queue - {{gt_queue.name}}</h1>
-    </div>
-    <div class="span6" style="text-align: right;">
-        <a href="gt_queue_create" class="btn">Create GT Queue</a>
-    </div>
-</div>
 {% if messages %}
     <div class="row">
         <div class="span12 alert alert-info" >
