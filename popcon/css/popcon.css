@@ -67,6 +67,13 @@ margin: 0px auto;
 padding: 0px;
 width: 95%;
 }
+#errleft {
+float: left;
+margin-top: 8px;
+width: 100%;
+padding: 0 1em 1em 1em;
+padding: 0px;
+}
 #contentleft {
 float: left;
 margin-top: 8px;

@@ -26,9 +26,9 @@ class PopCon:
     #selected tab name field
     page = ""    
     #possible tabs names
-    tabsNames = ["EcalLaserExpressTimeBasedO2O", "EcalDAQO2O",
+    tabsNames = ["OfflineDropBox", "EcalLaserExpressTimeBasedO2O", "EcalDAQO2O",
                  "SiStripDetVOffTimeBasedO2O", "RunInfoStart",
-                 "OfflineDropBox", "EcalPedestalsTimeBasedO2O",
+                 "EcalPedestalsTimeBasedO2O",
                  "EcalDCSO2O", "RunInfoStop", "EcalLaserTimeBasedO2O"]
 
     @cherrypy.expose
@@ -216,6 +216,30 @@ Total [#total#]" } ], "title": { "text": "Stuff I'm thinking about, Tue May 18 2
         items = {'items' : [CTF]}
         #return information to page as json dict
         return json.dumps(items)
+
+    def _updateShortList(self, infoInLeftScreenPart, rememberTheDate, index, what):
+        foundErr = 0
+        # we go through all dates in left part of page
+        for ind in range(len(infoInLeftScreenPart)):
+            # if we found there date which we remembered earlier(above)
+            if infoInLeftScreenPart[ind].find(rememberTheDate) != -1 :
+                # if it is not marked up
+                if infoInLeftScreenPart[ind].find('<p class="'+what+'" ') == -1 and infoInLeftScreenPart[ind].find("</p>") == -1 and rememberTheDate != "":
+                    # mark up the page left part line by adding html class error
+                    tempL = '<a href="#errWarn'+str(index)+'"><p class="'+what+'">' + infoInLeftScreenPart[ind].replace(' at -----',' at:') + "</p>"
+                    # update information that error was found
+                    foundErr = 1
+                    # update data with new marked up value
+                    infoInLeftScreenPart[ind] = tempL
+                elif infoInLeftScreenPart[ind].find('<p class = "warning">') != -1  and rememberTheDate != "":
+                    tempL = '<a href="#errWarn'+str(index)+'"><p class = "'+what+'">' + infoInLeftScreenPart[ind][21:]
+                    foundErr = "1"
+                    infoInLeftScreenPart[ind] = tempL   
+            # if we did not found error and there is no line break tags
+            if not infoInLeftScreenPart[ind].endswith("<br>")  and not infoInLeftScreenPart[ind].endswith("</p>"):
+                # leave information the same as it was just add line break tag
+                infoInLeftScreenPart[ind] = infoInLeftScreenPart[ind] + "<br>"
+        return foundErr, infoInLeftScreenPart
     
     def insertWarningAndErrorMarkups(self, data, page):
         # if checks and markup is needed for OfflineDropBox information
@@ -223,6 +247,14 @@ Total [#total#]" } ], "title": { "text": "Stuff I'm thinking about, Tue May 18 2
             # split given information string to arrays by <br>
             infoInRightScreenPart = data[0][1].split("<br>")
             infoInLeftScreenPart = data[0][0].split("<br>")
+
+            newLeft = []
+            for item in infoInLeftScreenPart:
+                newLeft.append( item.replace(' at -----',' at:') )
+            infoInLeftScreenPart = newLeft
+
+            errLeft = {}
+
             temp = []
             rememberTheDate = ""
             # going through array in which we have all information which has to be checked
@@ -235,50 +267,23 @@ Total [#total#]" } ], "title": { "text": "Stuff I'm thinking about, Tue May 18 2
                     rememberTheDate = infoInRightScreenPart[index +1]
                 # if we found an error
                 if infoInRightScreenPart[index].find("ERROR:") != -1 :
-                    # we go through all dates in left part of page
-                    for ind in range(len(infoInLeftScreenPart)):
-                        # if we found there date which we remembered earlier(above)
-                        if infoInLeftScreenPart[ind].find(rememberTheDate) != -1 :
-                            # if it is not marked up
-                            if infoInLeftScreenPart[ind].find('<p class = "error">') == -1 and infoInLeftScreenPart[ind].find("</p>") == -1 and rememberTheDate != "":
-                                # mark up the page left part line by adding html class error
-                                tempL = '<p class = "error">' + infoInLeftScreenPart[ind]+ "</p>"
-                                # update information that error was found
-                                data[0][2]["error"] = "1"
-                                # update data with new marked up value
-                                infoInLeftScreenPart[ind] = tempL
-                            elif infoInLeftScreenPart[ind].find('<p class = "warning">') != -1  and rememberTheDate != "":
-                                tempL = '<p class = "error">' + infoInLeftScreenPart[ind][21:]
-                                data[0][2]["error"] = "1"
-                                infoInLeftScreenPart[ind] = tempL   
-                        # if we did not found error and there is no line break tags
-                        if not infoInLeftScreenPart[ind].endswith("<br>")  and not infoInLeftScreenPart[ind].endswith("</p>"):
-                            # leave information the same as it was just add line brake tag
-                            infoInLeftScreenPart[ind] = infoInLeftScreenPart[ind] + "<br>"
+                    item = '<a href="#errWarn'+str(index)+'"><p class="error">' + rememberTheDate + "</p></a>"
+                    if rememberTheDate not in errLeft.keys():       # store only the first link for each timestamp
+                        errLeft[rememberTheDate] = item
+                    # update the shortList (left side of page)
+                    foundErr, infoInLeftScreenPart = self._updateShortList(infoInLeftScreenPart, rememberTheDate, index, 'error')
+                    data[0][2]["error"] = foundErr
                     # mark-up right page part error line with adding html class 
-                    tempR = '<p class = "error">' + infoInRightScreenPart[index] + "</p><br>"
+                    tempR = '<a name="errWarn'+str(index)+'"><p class = "error">' + infoInRightScreenPart[index] + "</p></a><br>"
                     # append that line to data
                     temp.append(tempR)
                 # if we did not find error on that line
                 else:
                     # if there is warning in that line 
                     if infoInRightScreenPart[index].find("WARNING:") != -1 :
-                        # we go through all dates in left part of page
-                        for ind in range(len(infoInLeftScreenPart)):
-                            # if we found there date which we remembered earlier(above)
-                            if infoInLeftScreenPart[ind].find(rememberTheDate) != -1 :
-                                # if it is not marked up
-                                if infoInLeftScreenPart[ind].find('<p class = "warning">') == -1 and infoInLeftScreenPart[ind].find("</p>") == -1 and rememberTheDate != "" :
-                                    # mark up the page left part line by adding html claas warning
-                                    tempL = '<p class = "warning">' + infoInLeftScreenPart[ind] + "</p>"
-                                    # update information that warning was found
-                                    data[0][2]["error"] = "2"
-                                    # update data with new marke up value
-                                    infoInLeftScreenPart[ind] = tempL
-                            # if we did not found warning and there is no line brake tags
-                            if not infoInLeftScreenPart[ind].endswith("<br>")  and not infoInLeftScreenPart[ind].endswith("</p>"):
-                                # leave information the same as it was just add line brake tag
-                                infoInLeftScreenPart[ind] = infoInLeftScreenPart[ind] + "<br>"
+                        # update the shortList (left side of page)
+                        foundErr, infoInLeftScreenPart = self._updateShortList(infoInLeftScreenPart, rememberTheDate, index, 'warning')
+                        data[0][2]["error"] = foundErr
                         # mark-up right page part warning line with adding html class
                         tempR = '<p class = "warning">' + infoInRightScreenPart[index] + "</p><br>"
                         # append that line to data
@@ -293,15 +298,25 @@ Total [#total#]" } ], "title": { "text": "Stuff I'm thinking about, Tue May 18 2
             for ind in range(len(infoInLeftScreenPart)):
                 if not infoInLeftScreenPart[ind].endswith("<br>")  and not infoInLeftScreenPart[ind].endswith("</p>"): 
                     infoInLeftScreenPart[ind] = infoInLeftScreenPart[ind] + "<br>"
-            data[0][0] = "".join(infoInLeftScreenPart)
+
+            # prepare the return values to the browser:
+            data[0][0] = '<p class="errleft">'
+            if errLeft:
+                data[0][0] += "<br> <b> A total of "+str( len(errLeft.keys()) )+" errors found in the log, showing the last 5: </b>"
+                for k in errLeft.keys()[-5:]:
+                    data[0][0] += errLeft[k]
+            else:                
+                data[0][0] += "<br> <b> No errors found in log. </b>"
+            data[0][0] += "<br></p><nbsp><br><hr>"
+            data[0][0] += "".join(infoInLeftScreenPart)
             data[0][1] = "".join(temp)
             # return modified data
             return data
         # if selected tab name is nor OfflineDropBox
         else:
-            #for every atb in given data
+            #for every tab in given data
             for i in data:
-                #if that data is not OfflineDropBox (because for that we have to do different actions)
+                # if that data is not OfflineDropBox (because for that we have to do different actions)
                 if i != "OfflineDropBox":
                     #split given information string into array of strings by <br>
                     infoInRightScreenPart = data[i][0][1].split("<br>")
