@@ -17,6 +17,7 @@ import logging
 import traceback
 import sys
 import json
+from django.contrib.flatpages.models import FlatPage, Site
 
 from django.core.management import call_command
 from GlobalTagCollector.models import GTTypeCategory
@@ -334,6 +335,23 @@ class InitialGlobalUpdate(object):
         HardwareArchitecture.objects.get_or_create(name="slc5_amd64_gcc451")
         HardwareArchitecture.objects.get_or_create(name="slc5_ia32_gcc434")
         HardwareArchitecture.objects.get_or_create(name="slc5_amd64_gcc462")
+
+
+        try:
+            flat_page = FlatPage.objects.get(url="/gtc/")
+        except FlatPage.DoesNotExist:
+            sites = Site.objects.all()
+            flat_page = FlatPage(
+                url="/gtc/",
+                title = 'GTC start page',
+                content = 'up and running',
+                enable_comments = False,
+                registration_required = True,
+            )
+            flat_page.save()
+            for  site in sites:
+                flat_page.sites.add(site)
+            flat_page.save()
 
 
     def _add_missing_records(self):
