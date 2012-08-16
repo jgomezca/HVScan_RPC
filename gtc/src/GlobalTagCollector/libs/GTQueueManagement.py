@@ -100,11 +100,14 @@ class GTQueueManager(object):
     def change_queue_entry_status(self, queue_entry_obj, new_status, administrator):
         now = datetime.datetime.now()
         with transaction.commit_on_success():
-            self.set_other_records_to_ignored(queue_entry_obj.record, queue_entry_obj.label, new_status)
+            affected_records = self.set_other_records_to_ignored(queue_entry_obj.record, queue_entry_obj.label, new_status)
+            old_status = queue_entry_obj.status
+            old_status_display = queue_entry_obj.get_status_display()
             queue_entry_obj.status=new_status
             queue_entry_obj.administrator=administrator
             queue_entry_obj.administration_time = now
             queue_entry_obj.save()
+            return queue_entry_obj, affected_records, old_status, old_status_display
 
 
 #    def _compare_queue_and_gt_entry(self, queue_entry_obj, gt_entry_obj):
