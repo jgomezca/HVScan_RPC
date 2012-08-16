@@ -244,7 +244,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
 #=======================================================================================================================
 #SERVICE_ACCOUNT_NAMES = 'http://webcondvm2:8083/get_connectionName'
 ##SERVICE_TAGS_FOR_ACCOUNT = 'http://cms-conddb.cern.ch/payload_inspector_1.1/?getTAGvsContainer='
-SERVICE_TAGS_FOR_ACCOUNT = 'https://cms-conddb-dev.cern.ch/payloadInspector/get_tagsVScontainer?dbName='
+#SERVICE_TAGS_FOR_ACCOUNT = 'https://cms-conddb-dev.cern.ch/payloadInspector/get_tagsVScontainer?dbName='
 #SERVICE_FOR_RECORDS = 'https://kostas-conddev5.cern.ch:8088/recordsProvider/record_container_map'#?hardware_architecture_name=slc5_amd64_gcc323&software_release_name=CMSSW_5_1_0
 #SERVICE_GLOBAL_TAG_LIST = 'http://webcondvm2.cern.ch:8081/get_list_GT'
 #SERVICE_GT_INFO = 'http://webcondvm2.cern.ch:8081/getGTinfo?GT_name='
@@ -256,20 +256,36 @@ SERVICE_TAGS_FOR_ACCOUNT = 'https://cms-conddb-dev.cern.ch/payloadInspector/get_
 #SCHEMAS_LIST = "https://cms-conddb-dev.cern.ch/payloadInspector/get_schemas?"
 
 
-hostname = socket.gethostname()
+def getHostname():
+    '''Returns the 'official' hostname where services are run.
+    In private deployments, this is the current hostname. However,
+    in official ones, could be, for instance, a DNS alias.
+    e.g. cms-conddb-dev.cern.ch
+    '''
+    hostnameByLevel = {
+        'pro': 'cms-conddb-prod.cern.ch',
+        'int': 'cms-conddb-int.cern.ch',
+        'dev': 'cms-conddb-dev.cern.ch',
+        'private': socket.getfqdn(),
+        }
+
+    return hostnameByLevel[PRODUCTION_LEVEL]
+
+HOSTNAME = getHostname()
 
 SERVICE_ACCOUNT_NAMES = 'http://webcondvm2:8083/get_connectionName'
 #SERVICE_TAGS_FOR_ACCOUNT = 'http://cms-conddb.cern.ch/payload_inspector_1.1/?getTAGvsContainer='
 #SERVICE_TAGS_FOR_ACCOUNT = 'https://%s.cern.ch/payloadInspector/get_tagsVScontainer?dbName=' % hostname
-SERVICE_FOR_RECORDS = 'https://%s.cern.ch/recordsProvider/record_container_map' % hostname#?hardware_architecture_name=slc5_amd64_gcc323&software_release_name=CMSSW_5_1_0
+SERVICE_TAGS_FOR_ACCOUNT = 'https://%s/payloadInspector/get_tagsVScontainer?dbName=' % HOSTNAME
+SERVICE_FOR_RECORDS = 'https://%s/recordsProvider/record_container_map' % HOSTNAME#?hardware_architecture_name=slc5_amd64_gcc323&software_release_name=CMSSW_5_1_0
 SERVICE_GLOBAL_TAG_LIST = 'http://webcondvm2.cern.ch:8081/get_list_GT'
 SERVICE_GT_INFO = 'http://webcondvm2.cern.ch:8081/getGTinfo?GT_name='
 #SERVICE_GT_INFO = 'https://kostas-conddev5.cern.ch/gtList/getGTinfo?GT_name='
 SERVICE_GT_INFO_UPDATE = 'http://webcondvm2.cern.ch:8081/uploadGT?tag='
 RELEASES_PATH = "/afs/cern.ch/cms/{hardware_architecture}/cms/cmssw"
 SOFTWARE_RELEASE_NAME_PATTERN = "^CMSSW_(\d+)_(\d+)_(\d+)(?:_pre(\d+))?$"
-DATABASES_LIST = "https://%s.cern.ch/payloadInspector/get_dbs" % hostname
-SCHEMAS_LIST = "https://%s.cern.ch/payloadInspector/get_schemas?" % hostname
+DATABASES_LIST = "https://%s/payloadInspector/get_dbs" % HOSTNAME
+SCHEMAS_LIST = "https://%s/payloadInspector/get_schemas?" % HOSTNAME
 
 ADMIN_GROUP_NAME = 'global-tag-administrators'
 
