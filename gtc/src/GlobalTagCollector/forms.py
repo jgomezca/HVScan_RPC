@@ -93,7 +93,9 @@ class BaseQueueTagEntryFormSet(BaseFormSet): #ASK it is enought to check tags? h
                             submit.administrator = None
                         submit.administration_time = None
                         r = submit.save(force_insert=True)
-                        instances.append(submit) #actual object, not id
+                        #FIX sor some reason sumit becomes same object, when appending. in next line workaround to get list of submits
+                        instances.append(models.GTQueueEntry.objects.get(pk=submit.pk)) #actual object, not id
+            return instances
 
 
 
