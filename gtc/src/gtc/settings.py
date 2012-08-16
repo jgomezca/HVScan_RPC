@@ -37,6 +37,7 @@ if PRODUCTION_LEVEL == "private":
             'PORT': '',
         }
     }
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 elif PRODUCTION_LEVEL == "dev" :
     DATABASES = {
         'default': {
@@ -293,3 +294,9 @@ ADMIN_GROUP_NAME = 'global-tag-administrators'
 #SECURE_PROXY_SSL_HEADER  = ('HTTP_X_FORWARDED_PROTOCOL', 'https')
 
 LOGIN_URL = '/gtc/accounts/login/'
+
+EMAIL_HOST_USER = secrets.secrets["gtc"]["email"]["sender"]
+EMAIL_HOST_PASSWORD = secrets.secrets["gtc"]["email"]["password"]
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST = "smtp.cern.ch"
