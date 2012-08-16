@@ -95,7 +95,7 @@
                     </thead>
                     {% for open_queue in open_queues %}
                         <tr>
-                            <td>{{ open_queue.name }}</td>
+                            <td><a href="{% url gt_queue_entries queue_id=open_queue.id %}">{{ open_queue.name }}</a></td>
                             <td>N/A</td>
                             <td>N/A</td>
                             <td>{{open_queue.num_pending}}</td>
