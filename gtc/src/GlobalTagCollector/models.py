@@ -337,16 +337,11 @@ class GTQueue(models.Model):
     release_from = models.ForeignKey(SoftwareRelease, related_name="relase_from")
     release_to = models.ForeignKey(SoftwareRelease, related_name="relase_to", null=True, blank=True)
 
-    expected_gt_name = models.CharField(null=True, blank=True, max_length=100, unique=True, help_text=_("Expected global tag name"))
+    expected_gt_name = models.CharField(max_length=100, unique=True, help_text=_("Expected global tag name"))
 
     def clean(self):
         if (self.release_to is not None) and (self.release_from.internal_version > self.release_to.internal_version):
             raise ValidationError('Release to must be None or internal version must be not smaller than Relase from')
-
-    def save(self, force_insert=False, force_update=False, using=None):
-        if (self is not None) and (self.expected_gt_name == ""):
-            self.expected_gt_name = None
-        q = super(GTQueue, self).save(force_insert, force_update, using)
 
 
 #
