@@ -328,10 +328,18 @@ class InitialGlobalUpdate(object):
             tag_container.parent_name = record_container_name
             tag_container.save()
 
+        #Insert starting hardware architectures
+        #TODO take hardware architectures from services
+        HardwareArchitecture.objects.get_or_create(name="slc5_amd64_gcc434")
+        HardwareArchitecture.objects.get_or_create(name="slc5_amd64_gcc451")
+        HardwareArchitecture.objects.get_or_create(name="slc5_ia32_gcc434")
+        HardwareArchitecture.objects.get_or_create(name="slc5_amd64_gcc462")
 
-            #missing records
-            #(container_name, record_name)
-            # each record associated with all software releases
+
+    def _add_missing_records(self):
+        #missing records
+        #(container_name, record_name)
+        # each record associated with all software releases
 
         missing_records = [
             (u'EcalSampleMask', u'EcalSampleMaskRcd'),
@@ -350,18 +358,6 @@ class InitialGlobalUpdate(object):
                 software_release.record_set.add(*new_records)
                 software_release.save()
 
-
-        #Insert starting hardware architectures
-        #TODO take hardware architectures from services
-        HardwareArchitecture.objects.get_or_create(name="slc5_amd64_gcc434")
-        HardwareArchitecture.objects.get_or_create(name="slc5_amd64_gcc451")
-        HardwareArchitecture.objects.get_or_create(name="slc5_ia32_gcc434")
-        HardwareArchitecture.objects.get_or_create(name="slc5_amd64_gcc462")
-
-
-
-
-
     def _run(self):
 #        logger.info("Initial global data update: Started")
         AccountTypesUpdateManager()._run()
@@ -370,6 +366,7 @@ class InitialGlobalUpdate(object):
         AccountsUpdateManager()._run()
         TagsUpdateManager()._run()
         SoftwareReleaseUpdateManager()._run()
+        self._add_missing_records()
         RecordsUpdateManager()._run()
 
 #~     call_command('records_fixer')
