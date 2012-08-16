@@ -61,8 +61,9 @@ class GTQueueManager(object):
             return self.queue_obj.gtqueueentry_set.none()
 
     def set_other_records_to_ignored(self, record_obj, label, status):
-        afrecable_records = self.list_of_afectable_records_by_status_change(record_obj, label, status)
-        afrecable_records.update(status='I')
+        afectable_records = self.list_of_afectable_records_by_status_change(record_obj, label, status)
+        afectable_records.update(status='I')
+        return afectable_records
         #TODO signal
 
 
