@@ -6,11 +6,17 @@ from django.forms.models import ModelForm
 from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template.context import RequestContext
+from GlobalTagCollector import reports
 from GlobalTagCollector.libs.GTQueueManagement import GTQueueManager
 from GlobalTagCollector.models import GTQueue, GTQueueEntry, GlobalTag
 from django.contrib import messages
+import logging
+
+logger = logging.getLogger(__file__)
 
 #TODO move to model forms
+from GlobalTagCollector.reports import report_queue_created
+
 class GTQueueModelForm(ModelForm):
     class Meta:
         model = GTQueue
@@ -33,6 +39,9 @@ def gt_queue_create(request):
             with transaction.commit_on_success():
                 gt_queue_obj = gt_queue_form.save()
                 GTQueueManager(gt_queue_obj).create_children(request.user)
+                logger.info("Preparing for report")
+                report_queue_created(gt_queue_obj)
+                logger.info("Report should be sent")
             return HttpResponseRedirect(reverse('gt_queue_list')) # Redirect after POST
     else:
         gt_queue_form = GTQueueModelForm()
@@ -77,7 +86,10 @@ def gt_queue_entry_status_change(request, gt_queue_entry_id, new_status):
     gt_queue_entry = get_object_or_404(GTQueueEntry, pk=gt_queue_entry_id)
     entry_status_filter = request.GET.get('entry_status_filter','')
     queue = gt_queue_entry.queue
-    GTQueueManager(queue).change_queue_entry_status(gt_queue_entry, new_status, request.user) #TODO needed GTQueueEntryManager
+    change_results = GTQueueManager(queue).change_queue_entry_status(gt_queue_entry, new_status, request.user) #TODO needed GTQueueEntryManager
+
+    queue_entry_obj, affected_records, old_status, old_status_display = change_results
+    reports.report_queue_entry_status_changed(queue_entry_obj, affected_records, old_status, old_status_display)
 
     messages.add_message(request, messages.INFO, "Queue entry with with record name "+gt_queue_entry.record.name+ "changed status to "+ new_status)
     return HttpResponseRedirect(reverse('gt_queue_entries', kwargs={'queue_id':queue.id})+"?entry_status_filter="+entry_status_filter)

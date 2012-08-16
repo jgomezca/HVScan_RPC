@@ -15,6 +15,7 @@ from django.contrib.auth.decorators import login_required, permission_required
 
 from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import ensure_csrf_cookie
+from GlobalTagCollector import reports
 from GlobalTagCollector.libs.GTQueueManagement import GTQueueManager
 from models import *
 from django.http import HttpResponse, HttpResponseRedirect
@@ -193,7 +194,8 @@ def new_request(request):
         formset = forms.QueueTagEntryFormSet(request.POST)
         if formset.is_valid():
 #            import pdb; pdb.set_trace()
-            formset.save(request.user) #try except save error
+            formset_rez = formset.save(request.user) #try except save error
+            reports.report_queue_entry_submitted(formset_rez) #list of entries, because one entry for each queue
             return HttpResponse(json.dumps({'form':'OK', 'errors':[]}) )
         else:
             errors = formset.errors
