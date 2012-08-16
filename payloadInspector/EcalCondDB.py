@@ -95,6 +95,10 @@ class EcalCondDB(object):
     containers  =   []
     self.db.startReadOnlyTransaction()
     for tag in tags:
+        if tag in config.skippedTags:
+            print 'Skipped %s' % tag
+            continue
+
         containers.append([str(tag),str(iter(self.db.iov(tag).payloadClasses()).next())])
 	L = self.db.iov(tag).payloadClasses();
 	#i = iter(L)

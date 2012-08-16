@@ -166,6 +166,10 @@ class LastIOVSince(object):
         result += '\n<tbody>'
         id = 1
         for tag in tags.split():
+            if tag in config.skippedTags:
+                print 'Skipped %s' % tag
+                continue
+
             iov = self.db.iov(tag)
             log = self.db.lastLogEntry(tag).getState()
             listTags.append(tag)

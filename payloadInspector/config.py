@@ -28,3 +28,7 @@ db_data.auth_path = "/afs/cern.ch/cms/DB/conddb"
 general = InfoContainer()
 general.date_format = '%d/%m/%y %H:%M:%S'
 
+skippedTags = set([
+	'EcalLaserAPDPNRatios_data_20120814_2011-2012_v0',
+])
+
