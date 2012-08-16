@@ -4,8 +4,6 @@ from django.forms import ModelForm
 from  GlobalTagCollector import models
 from GlobalTagCollector.models import Account, AccountType
 
-from GlobalTagCollector.signals import GTQueueEntryAdded
-
 class QueueTagEntryForm(ModelForm):
     #todo prohibid ID fields
     class Meta:
@@ -96,8 +94,6 @@ class BaseQueueTagEntryFormSet(BaseFormSet): #ASK it is enought to check tags? h
                         submit.administration_time = None
                         r = submit.save(force_insert=True)
                         instances.append(submit) #actual object, not id
-            if len(instances) > 0:
-                GTQueueEntryAdded.send(self, instances=instances)
 
 
 

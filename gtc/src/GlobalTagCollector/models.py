@@ -4,18 +4,6 @@ from django.db import models
 from django.db.models.signals import pre_save
 from django.utils.translation import ugettext as _
 from GlobalTagCollector.managers import ImportedGTByDate
-from GlobalTagCollector.signals import GTQueueEntryStatusChanged
-
-
-def cleanup(sender, instance, **kwargs):
- #   print "cleanup", kwargs
-    if hasattr(instance,'meta'):
-        for mf in instance.meta.fields:
-            if mf.null and mf.blank:
-                f = instance.__getattribute__(mf.name)
-                if f == "":
-                    f = None
-pre_save.connect(cleanup, dispatch_uid="general_presave")
 
 
 class ServiceData(models.Model):
@@ -428,6 +416,3 @@ class GTQueueEntry(models.Model):
 
     def __str__(self):
         return "(%s) Tag:%s,  Record:%s, Label:%s" % (self.status, self.tag.name, self.record.name, self.label )
-
-
-import listeners

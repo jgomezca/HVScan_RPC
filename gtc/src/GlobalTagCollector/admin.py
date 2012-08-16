@@ -23,8 +23,6 @@ from GlobalTagCollector.libs.admin import DetailsViewMixin
 from GlobalTagCollector import models
 from django.core.cache import cache
 from django.forms import ModelChoiceField
-#from django.db.models import
-from GlobalTagCollector.signals import GTQueueEntryAdded
 
 logger = logging.getLogger(__name__)
 admin.site.disable_action('delete_selected')
@@ -538,7 +536,6 @@ class GTQueueEntryAdmin(admin.ModelAdmin):
         obj.administrator = request.user
         obj.administration_time = datetime.datetime.now()
         obj.save()
-        #GTQueueEntryAdded.send(self, instances=[obj]) #todo FIX when separate creation and changing
 
 #
 #    def add_view(self, request, form_url='', extra_context=None):
