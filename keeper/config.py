@@ -163,6 +163,9 @@ servicesConfiguration = {
 		'filename':       'PayloadInspector_backend.py',
 		'listeningPort':  8087,
 		'hidden':         False,
+		'jobs':           [
+			('*/20 * * * *', 'BuildTableFiles.py'),
+		],
 	},
 
 	'PdmV/valdb': {
