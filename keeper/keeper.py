@@ -99,7 +99,8 @@ def getLogsList(service):
 
 	# Make sure the arguments are valid before listing folders
 	# (this is used by the admin service)
-	checkRegistered(service)
+	if service != 'keeper':
+		checkRegistered(service)
 
 	return sorted(glob.glob(getLogPath(service) + '.*'))
 
@@ -110,7 +111,8 @@ def getLog(service, timestamp):
 
 	# Make sure the arguments are valid before opening the file
 	# (this is used by the admin service)
-	checkRegistered(service)
+	if service != 'keeper':
+		checkRegistered(service)
 	timestamp = int(timestamp)
 
 	with open('%s.%s' % (getLogPath(service), timestamp), 'r') as f:
@@ -135,7 +137,8 @@ def getLogPath(service):
 
 	# Make sure the arguments are valid
 	# (this is used by the admin service)
-	checkRegistered(service)
+	if service != 'keeper':
+		checkRegistered(service)
 
 	return os.path.abspath(config.logsFileTemplate % service)
 
