@@ -374,6 +374,7 @@ def deploy(options):
 	# Stop the keeper and then all the services if updating
 	if options['update']:
 		execute('services/keeper/keeper.py stop keeper')
+		execute('services/keeper/keeper.py jobs disable all')
 		execute('services/keeper/keeper.py stop all')
 
 	# Remove folders if forced
@@ -450,6 +451,7 @@ def deploy(options):
 		if not options['sendEmail']:
 			keeperStartOptions = '--nosendEmail'
 		execute('services/keeper/keeper.py start %s all' % keeperStartOptions)
+		execute('services/keeper/keeper.py jobs enable all')
 		execute('services/keeper/keeper.py start %s keeper' % keeperStartOptions)
 
 	logging.info('Deployment successful.')
