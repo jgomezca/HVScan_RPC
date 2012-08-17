@@ -7,6 +7,8 @@ import os
 import config
 from fabric.api import run, sudo, cd, task, execute, env
 
+env.use_ssh_config = True
+
 
 configuration = {
     'pro': {
