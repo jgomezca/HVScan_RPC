@@ -300,7 +300,7 @@ def start(service, warnIfAlreadyStarted = True, sendEmail = True):
 			run(service, config.servicesConfiguration[service]['filename'], extraCommandLine = extraCommandLine)
 
 	# Wait until the service has started
-	wait(service, maxWaitTime = 5, forStart = True)
+	wait(service, maxWaitTime = 10, forStart = True)
 
 	# Clean up the process table
 	os.wait()
@@ -323,7 +323,7 @@ def start(service, warnIfAlreadyStarted = True, sendEmail = True):
 
 	# Wait until the service creates some output (i.e. until rotatelogs has created a new file)
 	startTime = time.time()
-	maxWaitTime = 10
+	maxWaitTime = 20
 	while True:
 		if time.time() - startTime > maxWaitTime:
 			raise Exception('Service %s did not create any output after %s seconds.' % (service, maxWaitTime))
