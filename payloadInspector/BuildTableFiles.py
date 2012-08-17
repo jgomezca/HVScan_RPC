@@ -18,9 +18,6 @@ if __name__ == '__main__':
 		keeper.run('payloadInspector', sys.argv[0], replaceProcess = True)
 
 
-import os
-import re
-import datetime
 import logging
 logger = logging.getLogger(__name__)
 
