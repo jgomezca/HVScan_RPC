@@ -10,14 +10,6 @@ __maintainer__ = 'Miguel Ojeda'
 __email__ = 'mojedasa@cern.ch'
 
 
-if __name__ == '__main__':
-	import sys
-	if '--productionLevel' not in sys.argv:		
-		sys.path.insert(0, '/data/services/keeper')
-		import keeper
-		keeper.run('payloadInspector', sys.argv[0], replaceProcess = True)
-
-
 import logging
 
 import service
