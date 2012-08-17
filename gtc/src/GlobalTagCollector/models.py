@@ -65,7 +65,7 @@ class Account(ServiceData):
     account_type = models.ForeignKey(AccountType)
     use_in_gt_import  = models.BooleanField(default=True)
     #tags_list_hash is used to monitor if tags for account has changed in remote services
-    tags_list_hash = models.TextField(max_length=40, blank=True, db_index=True, help_text="Storing hash tag list page")
+    tags_list_hash = models.CharField(max_length=40, blank=True, db_index=True, help_text="Storing hash tag list page")
 
     def __unicode__(self):
         return self.name
