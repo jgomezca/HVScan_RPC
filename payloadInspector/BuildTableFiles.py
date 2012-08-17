@@ -30,7 +30,6 @@ from EcalCondDB import EcalCondDB
 
 
 def main():
-	lastIOVSince = LastIOVSince(authPath = '')
 	connections = service.secrets['connections']
 
 	i = 0
@@ -52,7 +51,7 @@ def main():
 
 			try:
 				logger.info(loggerPrefix + 'Building HTML...')
-				table = LastIOVSince(dbName = connectionString).writeTable(dbName = shortConnectionString)
+				LastIOVSince(dbName = connectionString).writeTable(dbName = shortConnectionString)
 			except Exception as e:
 				logger.error(loggerPrefix + 'Exception while building HTML: %s.' % str(e))
 
