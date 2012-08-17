@@ -56,7 +56,7 @@ def json_account_types(request):
 
 @login_required
 def json_accounts(request):
-    objects = Account.objects.filter(account_type=int_or_zero(request.GET.get('parent', None)), account_type__visible_for_users=True).annotate(num_tags=Count('tag')).filter(num_tags__gt = 0).order_by('name')
+    objects = Account.objects.filter(account_type=int_or_zero(request.GET.get('parent', None)), account_type__visible_for_users=True).order_by('name')
     obj_dics = [{'id': obj.id, 'name':obj.name} for obj in objects]
     return HttpResponse(json.dumps(obj_dics), mimetype="application/json")
 
