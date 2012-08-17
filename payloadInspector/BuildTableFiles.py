@@ -19,11 +19,8 @@ if __name__ == '__main__':
 
 
 import logging
-logger = logging.getLogger(__name__)
-
 
 import service
-
 
 from lastIOVSince import LastIOVSince
 from EcalCondDB import EcalCondDB
@@ -47,20 +44,20 @@ def main():
 				'frontier_name': connections[level]['frontier_name']
 			}, short = True)
 
-			loggerPrefix = '[%s/%s %s %s/%s] %s: ' % (i, len(connections), level, j, len(connectionStrings), connectionString.rsplit('/', 1)[1])
+			loggingPrefix = '[%s/%s %s %s/%s] %s: ' % (i, len(connections), level, j, len(connectionStrings), connectionString.rsplit('/', 1)[1])
 
 			try:
-				logger.info(loggerPrefix + 'Building HTML...')
+				logging.info(loggingPrefix + 'Building HTML...')
 				LastIOVSince(dbName = connectionString).writeTable(dbName = shortConnectionString)
 			except Exception as e:
-				logger.error(loggerPrefix + 'Exception while building HTML: %s.' % str(e))
+				logging.error(loggingPrefix + 'Exception while building HTML: %s.' % str(e))
 
 			try:
-				logger.info(loggerPrefix + 'Building JSON...')
+				logging.info(loggingPrefix + 'Building JSON...')
 				condDB = EcalCondDB(dbName = connectionString)
 				condDB.listContainers_json_writer(content = condDB.listContainers(), dbName = shortConnectionString)
 			except Exception as e:
-				logger.error(loggerPrefix + 'Exception while building JSON: %s.' % str(e))
+				logging.error(loggingPrefix + 'Exception while building JSON: %s.' % str(e))
 
 
 if __name__ == '__main__':
