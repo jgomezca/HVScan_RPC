@@ -10,6 +10,7 @@ __maintainer__ = 'Miguel Ojeda'
 __email__ = 'mojedasa@cern.ch'
 
 
+import sys
 import logging
 
 import service
@@ -53,5 +54,5 @@ def main():
 
 
 if __name__ == '__main__':
-	main()
+	sys.exit(main())
 
