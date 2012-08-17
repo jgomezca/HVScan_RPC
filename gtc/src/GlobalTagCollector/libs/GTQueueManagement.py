@@ -241,6 +241,12 @@ leafdata=
             item_to_render['pfn'] =  pfn
             item_to_render['object_name'] = gt_record.tag.object_r.name #ObjectForRecords.objects.get(tag=gt_record.tag, record=gt_record.record).name
             item_to_render['label'] = gt_record.label
+            #patch part
+            if item_to_render['object_name'] == "PhysicsTools::Calibration::Histogram3D<double,double,double,double>":
+                item_to_render['object_name'] = "PhysicsTools::Calibration::HistogramD3D"
+            if item_to_render['object_name'] == "PhysicsTools::Calibration::Histogram2D<double,double,double>":
+                item_to_render['object_name'] = "PhysicsTools::Calibration::HistogramD2D"
+            #end of patch part
             items_to_render.append(item_to_render)
 
         template = Template(template_string=template_str)
