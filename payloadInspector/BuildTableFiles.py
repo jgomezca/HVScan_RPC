@@ -20,6 +20,10 @@ from EcalCondDB import EcalCondDB
 
 
 def main():
+	if service.isAnotherInstanceRunning():
+		logging.info('Another instance is running, exiting...')
+		return
+
 	connections = service.secrets['connections']
 
 	i = 0
