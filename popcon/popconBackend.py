@@ -226,13 +226,13 @@ Total [#total#]" } ], "title": { "text": "Stuff I'm thinking about, Tue May 18 2
                 # if it is not marked up
                 if infoInLeftScreenPart[ind].find('<p class="'+what+'" ') == -1 and infoInLeftScreenPart[ind].find("</p>") == -1 and rememberTheDate != "":
                     # mark up the page left part line by adding html class error
-                    tempL = '<a href="#errWarn'+str(index)+'"><p class="'+what+'">' + infoInLeftScreenPart[ind].replace(' at -----',' at:') + "</p>"
+                    tempL = '<a href="#'+what+str(index)+'"><p class="'+what+'">' + infoInLeftScreenPart[ind].replace(' at -----',' at:') + "</p>"
                     # update information that error was found
                     foundErr = 1
                     # update data with new marked up value
                     infoInLeftScreenPart[ind] = tempL
                 elif infoInLeftScreenPart[ind].find('<p class = "warning">') != -1  and rememberTheDate != "":
-                    tempL = '<a href="#errWarn'+str(index)+'"><p class = "'+what+'">' + infoInLeftScreenPart[ind][21:]
+                    tempL = '<a href="#'+what+str(index)+'"><p class = "'+what+'">' + infoInLeftScreenPart[ind][21:]
                     foundErr = "1"
                     infoInLeftScreenPart[ind] = tempL   
             # if we did not found error and there is no line break tags
@@ -253,7 +253,8 @@ Total [#total#]" } ], "title": { "text": "Stuff I'm thinking about, Tue May 18 2
                 newLeft.append( item.replace(' at -----',' at:') )
             infoInLeftScreenPart = newLeft
 
-            errLeft = {}
+            errLeft  = {}
+            warnLeft = {}
 
             temp = []
             rememberTheDate = ""
@@ -267,25 +268,34 @@ Total [#total#]" } ], "title": { "text": "Stuff I'm thinking about, Tue May 18 2
                     rememberTheDate = infoInRightScreenPart[index +1]
                 # if we found an error
                 if infoInRightScreenPart[index].find("ERROR:") != -1 :
-                    item = '<a href="#errWarn'+str(index)+'"><p class="error">' + rememberTheDate + "</p></a>"
-                    if rememberTheDate not in errLeft.keys():       # store only the first link for each timestamp
-                        errLeft[rememberTheDate] = item
+                    item = '<a href="#error'+str(index)+'"><p class="error"> &nbsp; - &nbsp; '+rememberTheDate+" ("+str(index)+")</p></a>"
+                    if rememberTheDate :
+                        if rememberTheDate  in errLeft.keys():       # store only the first link for each timestamp
+                            errLeft[rememberTheDate].append( item )
+                        else:
+                            errLeft[rememberTheDate] = [item]
                     # update the shortList (left side of page)
                     foundErr, infoInLeftScreenPart = self._updateShortList(infoInLeftScreenPart, rememberTheDate, index, 'error')
                     data[0][2]["error"] = foundErr
                     # mark-up right page part error line with adding html class 
-                    tempR = '<a name="errWarn'+str(index)+'"><p class = "error">' + infoInRightScreenPart[index] + "</p></a><br>"
+                    tempR = '<a name="error'+str(index)+'"><p class = "error">' + infoInRightScreenPart[index] + "</p></a><br>"
                     # append that line to data
                     temp.append(tempR)
                 # if we did not find error on that line
                 else:
                     # if there is warning in that line 
                     if infoInRightScreenPart[index].find("WARNING:") != -1 :
+                        item = '<a href="#warning'+str(index)+'"><p class="warning"> &nbsp; - &nbsp; '+rememberTheDate+" ("+str(index)+")</p></a>"
+                        if rememberTheDate :
+                            if rememberTheDate  in warnLeft.keys():       # store only the first link for each timestamp
+                                warnLeft[rememberTheDate].append( item )
+                            else:
+                                warnLeft[rememberTheDate] = [item]
                         # update the shortList (left side of page)
                         foundErr, infoInLeftScreenPart = self._updateShortList(infoInLeftScreenPart, rememberTheDate, index, 'warning')
                         data[0][2]["error"] = foundErr
                         # mark-up right page part warning line with adding html class
-                        tempR = '<p class = "warning">' + infoInRightScreenPart[index] + "</p><br>"
+                        tempR = '<a name="warning'+str(index)+'"><p class = "warning">' + infoInRightScreenPart[index] + "</p></a><br>"
                         # append that line to data
                         temp.append(tempR)
                     # if we did not find error or warning on that line
@@ -300,15 +310,42 @@ Total [#total#]" } ], "title": { "text": "Stuff I'm thinking about, Tue May 18 2
                     infoInLeftScreenPart[ind] = infoInLeftScreenPart[ind] + "<br>"
 
             # prepare the return values to the browser:
+
+            # the errors:
             data[0][0] = '<p class="errleft">'
             if errLeft:
-                data[0][0] += "<br> <b> A total of "+str( len(errLeft.keys()) )+" errors found in the log, showing the last 5: </b>"
-                for k in errLeft.keys()[-5:]:
-                    data[0][0] += errLeft[k]
+                errKeys = errLeft.keys()
+                errKeys.sort()
+                data[0][0] += "<br> <b> Found "+str( len(errKeys) )+" jobs with errors in the log"
+                if len(errKeys) > 5: data[0][0] += ", showing the last 5"
+                data[0][0] += ":</b><br/>"
+                for k in errKeys[-5:]:
+                    data[0][0] += k+"<br/>"
+                    for item in errLeft[k]:
+                        data[0][0] += item
             else:                
                 data[0][0] += "<br> <b> No errors found in log. </b>"
             data[0][0] += "<br></p><nbsp><br><hr>"
+            
+            # the warnings (hidden)
+            data[0][0] += '<p class="warnleft">'
+            if warnLeft:
+                warnKeys = warnLeft.keys()
+                warnKeys.sort()
+                data[0][0] += "<br> <b> Found "+str( len(warnKeys) )+" jobs with warnings in the log"
+                if len(warnKeys) > 5: data[0][0] += ", showing the last 5"
+                data[0][0] += ":</b><br/>"
+                for k in warnKeys[-5:]:
+                    data[0][0] += k+"<br/>"
+                    for item in warnLeft[k]:
+                        data[0][0] += item
+            else:                
+                data[0][0] += "<br> <b> No warnings found in log. </b>"
+            data[0][0] += "<br></p><nbsp><br><hr>"
+
+            # the last few jobs:
             data[0][0] += "".join(infoInLeftScreenPart)
+
             data[0][1] = "".join(temp)
             # return modified data
             return data

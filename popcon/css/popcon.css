@@ -67,13 +67,15 @@ margin: 0px auto;
 padding: 0px;
 width: 95%;
 }
+
 #errleft {
-float: left;
-margin-top: 8px;
-width: 100%;
-padding: 0 1em 1em 1em;
-padding: 0px;
+  float: left;
+  margin-top: 8px;
+  width: 100%;
+  padding: 10 1em 1em 1em;
+  padding: 10px;
 }
+
 #contentleft {
 float: left;
 margin-top: 8px;
@@ -188,7 +190,7 @@ margin: 0;
     text-decoration: underline;
 }
 
-.error{
+.error {
     background: #DF0101;
     color: white;
 }
