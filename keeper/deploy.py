@@ -232,19 +232,27 @@ def updateIptables():
 			execute(command)
 
 
-def checkPackage(package):
+def checkPackage(package, testCommand = None):
 	'''Checks whether a package is installed. If not, gives the option
 	to the user to install it.
 	'''
 
+	logging.info('Checking package: %s', package)
+
 	try:
-		execute('rpm -qi %s' % package)
-	except Exception as e:
-		logging.warning('Package %s is not installed.' % package)
-		text = raw_input('Would you like to install it? [y/N] ')
-		if text != 'y':
-			raise e
-		execute('sudo yum -y install %s 1>&2' % package)
+		try:
+			execute('rpm -qi %s' % package)
+		except Exception as e:
+			logging.warning('Package %s is not installed.' % package)
+			text = raw_input('Would you like to install it? [y/N] ')
+			if text != 'y':
+				raise e
+			execute('sudo yum -y install %s 1>&2' % package)
+
+		if testCommand is not None:
+			execute(testCommand)
+	except:
+		raise Exception('This script requires %s.' % package)
 
 
 def checkRequirements(options):
@@ -261,23 +269,18 @@ def checkRequirements(options):
 	except:
 		raise Exception('This script requires sudo privileges for deployment.')
 
-	# Test for git
-	try:
-		checkPackage('git')
-		execute('git --version')
-	except:
-		raise Exception('This script requires git.')
+	# Test for packages
+	checkPackage('git', 'git --version')
+	checkPackage('rsync', 'rsync --version')
 
-	# Test for rsync
-	try:
-		checkPackage('rsync')
-		execute('rsync --version')
-	except:
-		raise Exception('This script requires rsync.')
+	# httpd and mod_ssl are required for private deployments
+	# (i.e. in order to set up the private frontend)
+	if config.getProductionLevel() == 'private':
+		checkPackage('httpd', '/usr/sbin/httpd -v')
+		checkPackage('mod_ssl')
 
 	# Test for rotatelogs (httpd package)
 	try:
-		checkPackage('httpd')
 		try:
 			execute('echo "" | /usr/sbin/rotatelogs /tmp/rotatelogstest 10M')
 		except subprocess.CalledProcessError:
@@ -289,10 +292,6 @@ def checkRequirements(options):
 	level = 'devintpro'
 	if config.getProductionLevel() == 'private':
 		level = 'private'
-		try:
-			checkPackage('mod_ssl')
-		except:
-			raise Exception('This script requires mod_ssl to be installed (in private machines, the host certificate is taken from mod_ssl.')
 	try:
 		execute('test -f %s' % config.hostCertificateFiles[level]['crt'])
 		execute('test -f %s' % config.hostCertificateFiles[level]['key'])
