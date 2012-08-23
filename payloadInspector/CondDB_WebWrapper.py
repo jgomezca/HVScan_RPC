@@ -11,7 +11,7 @@ import config
 class CondDB_WebWrapper(object):
 	def __init__(	self,
 			dbName		=	config.ecalCondDB,
-			authpath	=	'/afs/cern.ch/cms/DB/conddb'	
+			authpath	=	''	
 	):
 		self.dbName	=	dbName
 		self.authpath	=	authpath

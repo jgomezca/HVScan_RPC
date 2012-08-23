@@ -1,10 +1,14 @@
+import service
 import os
 class InfoContainer:
     def __init__(self):
         pass
 
 baseDBUrl = 'oracle://cms_orcon_adg'
-ecalCondDB = baseDBUrl + '/CMS_COND_31X_ECAL'
+ecalCondDB = service.getFrontierConnectionString({
+	'account': 'CMS_COND_31X_ECAL',
+	'frontier_name': 'PromptProd',
+})
 stripCondDB = baseDBUrl + '/CMS_COND_31X_STRIP'
 rpcCondDB = baseDBUrl + '/CMS_COND_31X_RPC'
 
@@ -23,7 +27,7 @@ folders.json_dir = os.environ['PI_file_dir_json']
 
 db_data = InfoContainer()
 db_data.users_db_conn_str = 'sqlite:///Users.db'
-db_data.auth_path = "/afs/cern.ch/cms/DB/conddb"
+db_data.auth_path = ''
 
 general = InfoContainer()
 general.date_format = '%d/%m/%y %H:%M:%S'

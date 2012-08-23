@@ -13,7 +13,7 @@ from math import sqrt
 class EcalCondDB(object):
   
   def __init__(self, dbName = config.ecalCondDB,
-              authPath = "/afs/cern.ch/cms/DB/conddb"):
+              authPath = ''):
     self.dbName =  dbName
     self.authPath = authPath
     self.inf="4294967295"	
@@ -72,7 +72,7 @@ class EcalCondDB(object):
       return payload
 
   def resetDB(self, dbName = config.ecalCondDB,
-            authPath = "/afs/cern.ch/cms/DB/conddb"):
+            authPath = ''):
     '''Re-initialize the database, given the database name and the authPath '''
    
     FWIncantation()
@@ -415,7 +415,7 @@ class EcalCondDB(object):
                       target_tag,
                       target_since,
                       target_until,
-                      target_authPath = "/afs/cern.ch/cms/DB/conddb",
+                      target_authPath = '',
                       opt_string = "test"):
                       #array_int = [],
                       #array_float = [],
