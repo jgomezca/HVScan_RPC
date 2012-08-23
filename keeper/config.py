@@ -50,6 +50,11 @@ jobsEmailAddress = _mailingList
 startedServiceEmailAddresses = [_mailingList]
 
 
+# For deployments in -dev/-int/-prod
+officialUserName = 'cmscdadm'
+officialGroupName = 'cmscdadm'
+
+
 # Used by deploy.py to add a rule in iptables' INPUT chain in private VMs.
 listeningPortsRange = (8080, 8099)
 

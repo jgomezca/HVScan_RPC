@@ -132,30 +132,14 @@ def execute(command):
 	return check_output(command, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 
 
-def getSecrets():
-	'''Gets the secrets and the host certificate.
+def tryExecute(command):
+	'''Tries to execute a command, printing a warning if there is an error.
 	'''
 
-	execute('rsync -az %s . ' % config.secretsSource)
-
-	if config.getProductionLevel() == 'private':
-		# In a private machine (e.g. VM), copy the localhost
-		# certificates installed by the mod_ssl package
-		execute('sudo rsync -a %s secrets/hostcert.pem' % config.hostCertificateFiles['private']['crt'])
-		execute('sudo rsync -a %s secrets/hostkey.pem'  % config.hostCertificateFiles['private']['key'])
-	else:
-		# In dev/int/pro, copy the grid-security certificates
-		execute('sudo rsync -a %s secrets/hostcert.pem' % config.hostCertificateFiles['devintpro']['crt'])
-		execute('sudo rsync -a %s secrets/hostkey.pem'  % config.hostCertificateFiles['devintpro']['key'])
-
-	# Ensure that ownership and file mode bits are strict for secrets
-	# First change the bits so that no one from the new group (e.g. zh)
-	# can read the secrets between both commands (in any case the services
-	# should not be deployed in machines open for ssh to many people...)
-	userName = pwd.getpwuid(os.getuid())[0]
-	groupName = grp.getgrgid(os.getgid())[0]
-	execute('sudo chmod -R go-rwx secrets')
-	execute('sudo chown -R ' + userName + ':' + groupName + ' secrets')
+	try:
+		execute(command)
+	except Exception as e:
+		logging.warning('Exception %s: %s', str(type(e)), e)
 
 
 def getDependencyTag(dependency):
@@ -280,9 +264,15 @@ def checkRequirements(options):
 	'''Checks the requirements needed for deploy().
 	'''
 
-	# Test the script is not being run as root
-	if os.geteuid() == 0:
-		raise Exception('This script should not be run as root.')
+	# Test the script is not being run with root capabilities in a private deployment
+	# and test that the script is being run with root capabilities in official deployments
+	# (i.e. because we need to setuid() later on).
+	if config.getProductionLevel() == 'private':
+		if os.geteuid() == 0:
+			raise Exception('This script should not be run with root capabilities in private deployments.')
+	else:
+		if os.geteuid() != 0:
+			raise Exception('This script should be run with root capabilities in official deployments.')
 
 	# Test for sudo privileges
 	try:
@@ -370,24 +360,29 @@ def deploy(options):
 	# Check requirements
 	checkRequirements(options)
 
+	# Get the user/group name and ID
+	if config.getProductionLevel() == 'private':
+		userId = os.getuid()
+		groupId = os.getgid()
+		userName = pwd.getpwuid(userId)[0]
+		groupName = grp.getgrgid(groupId)[0]
+	else:
+		userName = config.officialUserName
+		groupName = config.officialGroupName
+		userId = pwd.getpwnam(config.officialUserName)[2]
+		groupId = grp.getgrnam(config.officialGroupName)[2]
+
+	# Set a private umask
+	os.umask(077)
+
 	# Create the dataDirectory if it does not exist
 	execute('sudo mkdir -p ' + options['dataDirectory'])
 
-	# Change its ownership and file mode bits
-	userName = pwd.getpwuid(os.getuid())[0]
-	groupName = grp.getgrgid(os.getgid())[0]
-	execute('sudo chown -R %s:%s %s' % (userName, groupName, options['dataDirectory']))
-	execute('sudo chmod g-w,o-rwx %s' % options['dataDirectory'])
-
-	# Chdir to it
-	logging.info('Working directory: ' + options['dataDirectory'])
-	os.chdir(options['dataDirectory'])
-
 	# Stop the keeper and then all the services if updating
 	if options['update']:
-		execute('services/keeper/keeper.py stop keeper')
-		execute('services/keeper/keeper.py jobs disable all')
-		execute('services/keeper/keeper.py stop all')
+		tryExecute('sudo %s stop keeper' % os.path.join(options['dataDirectory'], 'services/keeper/keeper.py'))
+		tryExecute('sudo %s jobs disable all' % os.path.join(options['dataDirectory'], 'services/keeper/keeper.py'))
+		tryExecute('sudo %s stop all' % os.path.join(options['dataDirectory'], 'services/keeper/keeper.py'))
 
 	# Remove folders if forced
 	if options['force']:
@@ -396,7 +391,38 @@ def deploy(options):
 		# its contents (e.g. like the docs suggest, developers might
 		# have /data/services pointing to ~/scratch0/services
 		# for easy development).
-		execute('rm -rf secrets services libs utilities cmssw cmsswNew')
+		foldersToRemove = ['secrets', 'services', 'libs', 'utilities', 'cmssw', 'cmsswNew']
+		foldersToRemove = [os.path.join(options['dataDirectory'], x) for x in foldersToRemove]
+		execute('sudo rm -rf %s' % ' '.join(foldersToRemove))
+
+	# Get the secrets, before switching user (i.e. we need AFS tokens)
+	execute('sudo rsync -az %s %s' % (config.secretsSource, os.path.join(options['dataDirectory'], '.')))
+
+	# In a private machine (e.g. VM), copy the certificates installed by the mod_ssl package.
+	# In official deployments, copy the grid-security certificates.
+	if config.getProductionLevel() == 'private':
+		hostCertificateCrt = config.hostCertificateFiles['private']['crt']
+		hostCertificateKey = config.hostCertificateFiles['private']['key']
+	else:
+		hostCertificateCrt = config.hostCertificateFiles['devintpro']['crt']
+		hostCertificateKey = config.hostCertificateFiles['devintpro']['key']
+
+	execute('sudo rsync -a %s %s' % (hostCertificateCrt, os.path.join(options['dataDirectory'], 'secrets/hostcert.pem')))
+	execute('sudo rsync -a %s %s' % (hostCertificateKey, os.path.join(options['dataDirectory'], 'secrets/hostkey.pem')))
+
+	# Set the proper ownership for everything before switching to the new user and group
+	# and restrict file mode bits for everything (this must include the secrets).
+	execute('sudo chown -R %s:%s %s' % (userName, groupName, options['dataDirectory']))
+	execute('sudo chmod -R go-rwx %s' % options['dataDirectory'])
+
+	# Switch to the proper user. After this, sudo should not be used
+	# for any other command and tokens will not be available.
+	logging.info('Setting user identity: %s (%s)' % (userName, userId))
+	os.setuid(userId)
+
+	# Chdir to the data directory
+	logging.info('Working directory: ' + options['dataDirectory'])
+	os.chdir(options['dataDirectory'])
 
 	# Create the logs and jobs folders if they do not exist and their subdirectories
 	execute('mkdir -p logs/keeper jobs')
@@ -410,9 +436,6 @@ def deploy(options):
 		(head, tail) = os.path.split(service)
 		if head != '':
 			execute('mkdir -p %s' % os.path.join('jobs', head))
-
-	# Get the secrets
-	getSecrets()
 
 	# Create symlink if /data is not the dataDirectory
 	if options['dataDirectory'] != defaultDataDirectory:
@@ -439,11 +462,6 @@ def deploy(options):
 	# Clone cmsswNew and checkout the tag
 	execute('git clone -q ' + options['cmsswRepository'] + ' cmssw')
 	execute('cd cmssw && git checkout -q %s' % getDependencyTag('cmssw'))
-
-	# Give everything proper ownership if we are in dev/int/pro
-	# FIXME: We should use a cmsdbweb account & group
-	#if options['productionLevel'] != 'private':
-	#	execute('sudo chown -R andreasp:cmscdadm .')
 
 	# FIXME: Create symlink cmsswNew -> cmssw
 	execute('ln -s cmssw cmsswNew')

@@ -55,7 +55,7 @@ def deployBackend(level, tag):
         disableBackend(level, tag, env.host_string)
 
     setup(tag)
-    run('%s --force --update --nosendEmail -s %s %s' % (os.path.join(keeperPath, 'deploy.py'), config.servicesRepository, tag))
+    sudo('%s --force --update --nosendEmail -s %s %s' % (os.path.join(keeperPath, 'deploy.py'), config.servicesRepository, tag))
 
     if level == 'pro':
         enableBackend(level, tag, env.host_string)
