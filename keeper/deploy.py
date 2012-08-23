@@ -255,6 +255,27 @@ def checkPackage(package, testCommand = None):
 		raise Exception('This script requires %s.' % package)
 
 
+def checkFile(path, checkReadAccess = False):
+	'''Checks whether a file exists and is a regular file. Optionally, also
+	checks whether the file can be open for read access.
+	'''
+
+	logging.info('Checking file: %s', path)
+
+	if not os.path.exists(path):
+		raise Exception('This script requires that the %s file exists.' % path)
+
+	if not os.path.isfile(path):
+		raise Exception('This script requires that %s is a regular file.' % path)
+
+	if checkReadAccess:
+		try:
+			with open(path, 'r') as f:
+				pass
+		except:
+			raise Exception('This script requires read access to %s.' % path)
+
+
 def checkRequirements(options):
 	'''Checks the requirements needed for deploy().
 	'''
@@ -292,11 +313,9 @@ def checkRequirements(options):
 	level = 'devintpro'
 	if config.getProductionLevel() == 'private':
 		level = 'private'
-	try:
-		execute('test -f %s' % config.hostCertificateFiles[level]['crt'])
-		execute('test -f %s' % config.hostCertificateFiles[level]['key'])
-	except:
-		raise Exception('This script requires the host certificate to be installed: %s and %s must exist.' % (config.hostCertificateFiles[level]['crt'], config.hostCertificateFiles[level]['key']))
+
+	checkFile(config.hostCertificateFiles[level]['crt'])
+	checkFile(config.hostCertificateFiles[level]['key'])
 
 	# Check whether there is an existing deployment
 	if options['force']:
