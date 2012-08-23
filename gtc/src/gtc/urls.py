@@ -10,7 +10,7 @@ admin.autodiscover()
 
 #from tastypie.api import Api
 #from GlobalTagCollector.api import AccountTypesResource, QueueResource, AccountsResource, TagsResource
-from GlobalTagCollector.admin2 import gt_queues_list, gt_queue_create, gt_queue_edit, gt_queue_entries, gt_queue_entry_status_change, admin_dashboard, gt_info
+from GlobalTagCollector.admin2 import gt_queues_list, gt_queue_create, gt_queue_edit, gt_queue_entries, gt_queue_entry_status_change, admin_dashboard, gt_info, gt_list
 from GlobalTagCollector.views import gt_conf_export, new_request, list_view, details_view, json_account_types, json_accounts, json_tags, json_records, json_queues_for_record, login
 
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
@@ -56,6 +56,7 @@ regular_urlpatterns = patterns('',
     url(r'^json/queues/$', json_queues_for_record,),
     url(r'^accounts/login/', login,),
     url(r'^admin2/$', admin_dashboard, name="admin_dashboard"),
+    url(r'^admin2/gt_list/$', gt_list, name='gt_list'),
     url(r'^admin2/gt_info/(?P<gt_name>[a-zA-Z0-9_\-]+)$', gt_info, name='gt_info'),
 
 
