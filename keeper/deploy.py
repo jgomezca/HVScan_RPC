@@ -167,15 +167,6 @@ def getDependencyTag(dependency):
 	return tag
 
 
-def generateDocs():
-	'''Generates the docs by calling services/docs/generate.py.
-
-	Uses the markdown Python module installed in utilitiesPythonPackages.
-	'''
-
-	execute('cd services/docs && ./generate.py')
-
-
 def configureApache():
 	'''Generates the Apache configuration by calling services/keeper/makeApacheConfiguration.py,
 	asks for a 'graceful' restart to Apache and sets SELinux's httpd_can_network_connect to 'on'.
@@ -437,7 +428,7 @@ def deploy(options):
 	execute('ln -s cmssw cmsswNew')
 
 	# Generate docs
-	generateDocs()
+	execute('cd services/docs && ./generate.py')
 
 	# Configure Apache frontend(s)
 	configureApache()
