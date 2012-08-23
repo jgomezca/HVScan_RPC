@@ -309,6 +309,9 @@ def checkRequirements(options):
 	except:
 		raise Exception('This script requires rotatelogs (httpd package).')
 
+	# Test for the secrets
+	checkFile(os.path.join(config.secretsSource, 'secrets.py'), checkReadAccess = True)
+
 	# Test for the host certificate
 	level = 'devintpro'
 	if config.getProductionLevel() == 'private':
