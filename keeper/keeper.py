@@ -663,7 +663,7 @@ def _refreshCrontab():
 	'''Installs the crontab with the jobs from all services.
 	'''
 
-	crontab = 'SHELL=/bin/bash\n\n'
+	crontab = 'SHELL=/bin/bash\nMAILTO=%s\n\n' % config.jobsEmailAddress
 	for service in services:
 		try:
 			f = open(config.jobsFileTemplate % service, 'r')

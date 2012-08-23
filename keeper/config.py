@@ -41,8 +41,13 @@ secretsSource = '/afs/cern.ch/cms/DB/conddb/internal/webServices/secrets'
 
 timeBetweenChecks = 30 # seconds
 
+# Our mailing list
+_mailingList = 'cms-cond-dev@cern.ch'
 
-startedServiceEmailAddresses = ['cms-cond-dev@cern.ch']
+
+# Emails
+jobsEmailAddress = _mailingList
+startedServiceEmailAddresses = [_mailingList]
 
 
 # Used by deploy.py to add a rule in iptables' INPUT chain in private VMs.
