@@ -340,6 +340,7 @@ class GTQueue(models.Model):
     expected_gt_name = models.CharField(max_length=100, unique=True, help_text=_("Expected global tag name"))
 
     def clean(self):
+        self.expected_gt_name = self.expected_gt_name.upper()
         if (self.release_to is not None) and (self.release_from.internal_version > self.release_to.internal_version):
             raise ValidationError('Release to must be None or internal version must be not smaller than Relase from')
 
