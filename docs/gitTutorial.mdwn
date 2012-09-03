@@ -6,7 +6,7 @@ Informally explains the basics of Git in 5 minutes and the basic workflow
 we will follow in our group, including working examples.
 
 
-## Basic workflow
+## Preparations
 
 First, update your global username and email. This is important because
 *your identity is immutably baked into all the commits you pass around*:
@@ -20,6 +20,8 @@ As you are probably using AFS, these values will be saved in ~/.gitconfig,
 so you only need to do this once. However, if you start working on a machine
 without AFS access or with another user, please remember to set it up
 before working with Git!
+
+## Basic workflow
 
 Start cloning our remote master repository (you can think of it as
 the equivalent of the SVN/CVS server). It is called clone and not
