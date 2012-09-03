@@ -643,7 +643,7 @@ def status():
 			row.append(','.join(pids))
 			if service != 'keeper':
 				if config.getProductionLevel() == 'private':
-					row.append('https://%s/%s/' % (socket.gethostname(), service))
+				    row.append('https://%s:%s/%s/' % (socket.gethostname(), str(config.servicesConfiguration[service]['listeningPort']), service))
 				else:
 					# FIXME: Report the URL of the front-end (more consistent with 'private',
 					#        and also allows us to rely on absolute paths in the future, e.g. /libs)
