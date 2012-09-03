@@ -17,6 +17,8 @@ import json2html
 
 import service
 
+import logging
+
 PAGES_DIR = 'pages' # FIXME: Clean this up -mos
 
 class PopCon:
@@ -418,23 +420,38 @@ Total [#total#]" } ], "title": { "text": "Stuff I'm thinking about, Tue May 18 2
             #return processed data
             return data
 
+    @cherrypy.expose
     def PopConCronjobTailFetcherStatus(self, *args, **kwargs):
-        serviceName='EcalDCSO2O'
-        CTF = popconSQL.popconSQL().PopConCronjobTailFetcherStatus(self.auth,serviceName=serviceName)
-        return json.dumps(CTF)
+        serviceName = kwargs['serviceName']
+        if serviceName in self.tabsNames:
+            CTF = popconSQL.popconSQL().PopConCronjobTailFetcherStatus(self.auth,serviceName=serviceName)
+            return json.dumps(CTF)
+        else:
+            raise cherrypy.HTTPError(405, "Bad serviceName: '" + serviceName + "' not in allowed list.")
+        return 
 
+    @cherrypy.expose
     def checkLongTail(self, *args, **kwargs):
-        serviceName='OfflineDropBox'
-        CTF = popconSQL.popconSQL().checkLongTail(self.auth,serviceName=serviceName)
-        return json.dumps(CTF)
-
+        serviceName = kwargs['serviceName']
+        if serviceName in self.tabsNames:
+            CTF = popconSQL.popconSQL().checkLongTail(self.auth,serviceName=serviceName)
+            return json.dumps(CTF)
+        else:
+            raise cherrypy.HTTPError(405, "Bad serviceName: '" + serviceName + "' not in allowed list.")
+        return
+    
     def PopConCronjobStatus(self, *args, **kwargs):
         jobList = popconSQL.popconSQL().PopConCronjobStatus(self.auth)
         return json.dumps(jobList)
-
+    
 
 def main():
-	service.start(PopCon())
+
+    logging.basicConfig(
+        format = '[%(asctime)s] %(levelname)s: %(message)s',
+        level = logging.INFO,
+    )
+    service.start(PopCon())
 
 
 if __name__ == '__main__':
