@@ -6,6 +6,8 @@ Author: Antonio Pierro, antonio.pierro@cern.ch, Salvatore Di Guida, Aidas Tilman
 import re
 import time
 
+import logging
+
 import cherrypy
 import LumiDB_SQL
 
@@ -62,7 +64,7 @@ class LumiDB:
         p = re.compile('[0-9]*$'
                        '|[0-9]+-[0-9]+$')
         returnedValue = parameters
-#Was written only one parameter value
+	# Was written only one parameter value
         if checkParamStatus == 1:
             if returnedValue[0] == "[" and returnedValue[len(returnedValue)-1] == "]":
                 returnedValue = returnedValue.replace('[', '')
@@ -71,7 +73,7 @@ class LumiDB:
                 return returnedValue
             else:
                 return error
-#Was written more thn one parameter values
+	# Was written more thn one parameter values
         elif checkParamStatus == 2:
             if returnedValue[0] == "[" and returnedValue[len(returnedValue)-1] == "]":
                 returnedValue = returnedValue.replace('[', '')
@@ -142,11 +144,7 @@ class LumiDB:
         except Exception as e:
             raise cherrypy.HTTPError(405, "[startTime " + startTime + "] "  + " [endTime " + endTime + "] " + "    " + self.dateErrorMessage)
         LDB_SQL  = LumiDB_SQL.LumiDB_SQL()
-        runNumbList         =   LDB_SQL.getRunNumber(authfile="./auth.xml", startTime= startTime, endTime=endTime)
-#         runNumbersString    =   LDB_SQL.getRunNumberString(runNumbList=runNumbList)
-#         runNumbersString    =   LDB_SQL.getMaxMinString(StringNumber=runNumbersString)
-# 	print "runNumbersString:",runNumbersString
-#         runNumbersString    =   LDB_SQL.getRunNumberWhereClause(runNumbRance=runNumbersString)
+        runNumbList =   LDB_SQL.getRunNumber(authfile="./auth.xml", startTime= startTime, endTime=endTime)
         return LDB_SQL.getRunNumberExtendedInfo(runNumbers=runNumbList)
 
 
@@ -160,13 +158,15 @@ class LumiDB:
         except Exception as e:
             raise cherrypy.HTTPError(405, "[startTime " + startTime + "] "  + " [endTime " + endTime + "] " + "    " + self.dateErrorMessage)
         LDB_SQL  = LumiDB_SQL.LumiDB_SQL()
-        runNumbList         =   LDB_SQL.getRunNumber(authfile="./auth.xml", startTime= startTime, endTime=endTime)
-#         runNumbersString    =   LDB_SQL.getRunNumberString(runNumbList=runNumbList)
-#         runNumbersString    =   LDB_SQL.getMaxMinString(StringNumber=runNumbersString)
-#         runNumbersString    =   LDB_SQL.getRunNumberWhereClause(runNumbRance=runNumbersString,column_name='runnum')
+	try:
+          runNumbList         =   LDB_SQL.getRunNumber(authfile="./auth.xml", startTime= startTime, endTime=endTime)
+	except cx_Oracle.DatabaseError, e:
+	  raise cherrypy.HTTPError(405, "Got error from database (%s) when trying to get run numbers for requested time range %s - %s " % (str(e), startTime, endTime) )
+
+	if not runNumbList:
+	    logging.error("got no run numbers from lumiDB for requested time range %s - %s " % (startTime, endTime) )
+
         return LumiDB_SQL.LumiDB_SQL().getLumiByRun(runNumbers=runNumbList)
-        #runNumbList         =   LumiDB_SQL.LumiDB_SQL().getRunNumber(authfile="./auth.xml", startTime= startTime, endTime=endTime)
-        #runNumbersString    =   LumiDB_SQL.LumiDB_SQL().getRunNumberString(runNumbList=runNumbList)
 
     def getRunInfoByRunNumbers(self,
             runList="160614 , 160650-160659, 160789", *args, **kwargs
@@ -202,9 +202,6 @@ class LumiDB:
             raise cherrypy.HTTPError(405, "[startTime " + startTime + "] "  + " [endTime " + endTime + "] " + "    " + self.dateErrorMessage)
         LDB_SQL  = LumiDB_SQL.LumiDB_SQL()
         runNumbList         =   LDB_SQL.getRunNumber(authfile="./auth.xml", startTime= startTime, endTime=endTime)
-#         runNumbersString    =   LDB_SQL.getRunNumberString(runNumbList=runNumbList)
-#         runNumbersString    =   LDB_SQL.getMaxMinString(StringNumber=runNumbersString)
-#         runNumbersString    =   LDB_SQL.getRunNumberWhereClause(runNumbRance=runNumbersString,column_name='runnum')
         return LumiDB_SQL.LumiDB_SQL().getDeliveredLumiForRun(runNumbers=runNumbList)
         #pass
 
@@ -216,16 +213,18 @@ class LumiDB:
             runList = paramsValidationStatus
         else:
             raise cherrypy.HTTPError(405, "[You typed:     " + str(runList) + "] " + "     " +  self.errorMessage)
-#         runNumbersString = LumiDB_SQL.LumiDB_SQL().getRunNumberWhereClause(runNumbRance=runList,column_name='runnum')
         return LumiDB_SQL.LumiDB_SQL().getDeliveredLumiForRun(runNumbers=runList)
     
     def getLumiDB(self, *args, **kwargs):
         CTF = LumiDB_SQL.LumiDB_SQL().test()
         return {'items' : [CTF]}
-        #items = {'run' : 'x'}
 
 
 def main():
+	logging.basicConfig(
+		format = '[%(asctime)s] %(levelname)s: %(message)s',
+		level = logging.INFO,
+	)
 	service.start(LumiDB())
 
 

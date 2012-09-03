@@ -1,5 +1,7 @@
 import sys
 
+import logging
+
 import cx_Oracle
 
 import coral
@@ -346,19 +348,20 @@ AND (wbmrun.key = '/GLOBAL_CONFIGURATION_MAP/CMS/COSMICS/GLOBAL_RUN'
 OR wbmrun.key = '/GLOBAL_CONFIGURATION_MAP/CMS/CENTRAL/GLOBAL_RUN')
 AND runtable.runnumber = wbmrun.runnumber
         """
-        #params = {"startTime": startTime.decode(), "stopTime": endTime.decode()}
+
         params = {"startTime": startTime, "stopTime": endTime}
-        #sqlstr=sqlstr.decode()
         curs.prepare(sqlstr)
         curs.execute(sqlstr, params)
         
-        #print 'QUERY EXECUTION DONE'
         for row in curs:
             runNumb.append(row[0])
         jobList.append({'runnumbers':runNumb})
      except cx_Oracle.DatabaseError, e:
-         print "Unexpected error:", str(e) , sys.exc_info()
-         raise
+	msg = "getRunNumber> Error from DB : "+str(e) 
+	logging.error( msg )
+	logging.error("query was: '"+ sqlstr+"'" )
+        print "Unexpected error:", str(e) , sys.exc_info()
+        raise
      finally:
          conn.close()
          return runNumb # was: jobList
@@ -406,7 +409,7 @@ if __name__ == "__main__":
     runNumbersString    =   LumiDB_SQL.getRunNumberString(runNumbList=runNumbList)
     runNumbersString    =   LumiDB_SQL.getMaxMinString(StringNumber=runNumbersString)
     runNumbersString    =   LumiDB_SQL.getRunNumberWhereClause(runNumbRance=runNumbersString,column_name='runnum')
-    #print runNumbersString
+    # print runNumbersString
     #print LumiDB_SQL.getRunNumberExtendedInfo(runNumbers=runNumbersString)
     #runNumbList         =   LumiDB_SQL.getRunNumber(startTime='22-Mar-11 00:00', endTime='23-Mar-11 10:00')
     #runNumbersString    =   LumiDB_SQL.getRunNumberString(runNumbList=runNumbList)
