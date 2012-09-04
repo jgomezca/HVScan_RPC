@@ -38,7 +38,7 @@ class AjaxApp(object):
             'PFast' : ('PAGs', 'FastSim'),	
         }
 
-    MAILING_LIST = ["antanas.norkus@cern.ch", "jean-roch.vlimant@cern.ch", "dpiparo@cern.ch", "giovanni.franzoni@cern.ch"]
+    MAILING_LIST = ["antanas.norkus@cern.ch", "jean-roch.vlimant@cern.ch", "dpiparo@cern.ch", "giovanni.franzoni@cern.ch", "hn-cms-relval@cern.ch"]
     VALIDATION_STATUS = "VALIDATION_STATUS"
     COMMENTS = "COMMENTS"
     LINKS = "LINKS"
@@ -97,9 +97,9 @@ class AjaxApp(object):
         return 'cms-zh' in service.getGroups() or 'cms-CERN-users' in service.getGroups()
 
     @cherrypy.expose
-    def getLsogedUserName (self, **kwargs):
+    def getLogedUserName (self, **kwargs):
         cherrypy.response.headers['Content-Type'] = 'application/json'
-        return simplejson.dumps([self.get_fullname()])
+        return simplejson.dumps([self.get_username()])
 
     @cherrypy.expose
     def checkValidatorsRights (self, cat, subCategory, statusKind, **kwargs):
@@ -279,7 +279,7 @@ class AjaxApp(object):
         except Exception as e:
             return str(e)
 
-    def sendMailOnChanges(self, messageText, emailSubject, org_message_ID, new_message_ID, **kwargs):
+    def sendMailOnChanges(self, messageText, emailSubject, org_message_ID, new_message_ID, username=False, **kwargs):
         msg = MIMEMultipart()
         if org_message_ID != None:
             msg['In-Reply-To'] = org_message_ID
@@ -288,6 +288,8 @@ class AjaxApp(object):
         send_from = "PdmV.ValDb@cern.ch"
         msg['From'] = send_from
         send_to = self.MAILING_LIST
+        if username != False:
+           send_to.append(username+"@cern.ch")
         msg['To'] = COMMASPACE.join(send_to)
         msg['Date'] = formatdate(localtime=True)
         msg['Subject'] = emailSubject
