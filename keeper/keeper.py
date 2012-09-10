@@ -26,6 +26,7 @@ import email
 import socket
 import optparse
 import logging
+import json
 import inspect
 
 import daemon
@@ -247,7 +248,7 @@ def run(service, filename, extraCommandLine = '', replaceProcess = True):
 	# Run the service with the environment
 	# Ensure that the path is absolute (although at the moment config returns
 	# all paths as absolute)
-	commandLine += 'python %s --name %s --rootDirectory %s --secretsDirectory %s --listeningPort %s --productionLevel %s ' % (filename, service, getPath(service), config.secretsDirectory, str(config.servicesConfiguration[service]['listeningPort']), config.getProductionLevel())
+	commandLine += 'python %s --name %s --rootDirectory %s --secretsDirectory %s --listeningPort %s --productionLevel %s --caches \'%s\' ' % (filename, service, getPath(service), config.secretsDirectory, str(config.servicesConfiguration[service]['listeningPort']), config.getProductionLevel(), json.dumps((config.servicesConfiguration[service]['caches'])))
 
 	# Append the extra command line
 	commandLine += extraCommandLine
@@ -773,6 +774,87 @@ def listJobs(service):
 	f.close()
 
 
+def statusCache():
+	'''Prints the status of the cache system.
+	'''
+
+	def getStdout(command):
+		return subprocess.Popen(command, stdout = subprocess.PIPE, shell = True).communicate()[0]
+
+	# FIXME: We use the redis-cli instead of the redis Python package
+	# because it is included by default in the redis package. In SLC5,
+	# however, the redis Python package is not available, and the keeper
+	# should run with the standard environment, i.e. it does not run with
+	# the environment of the servicess, so utilities are not available.
+	redisInfo = {}
+	for line in getStdout('redis-cli info').splitlines():
+		(key, value) = line.split(':')
+		redisInfo[key] = value
+
+	# Print the global cache stats
+	cacheSize = config.cacheSize / 1024. / 1024.
+	usedMemory = float(redisInfo['used_memory']) / 1024. / 1024.
+	usedMemoryRSS = float(redisInfo['used_memory_rss']) / 1024. / 1024.
+	usedMemoryPeak = float(redisInfo['used_memory_peak']) / 1024. / 1024.
+	memoryFragmentationRatio = float(redisInfo['mem_fragmentation_ratio'])
+	print formatTable([
+		[cacheSize, 'Available cache global size (MB)'],
+		[usedMemory, 'Used memory (MB)'],
+		[usedMemory / cacheSize, 'Cache usage (%)'],
+		[usedMemoryPeak, '(Peak) Used memory (MB)'],
+		[usedMemoryPeak / cacheSize, '(Peak) Cache usage (%)'],
+		[usedMemoryRSS, 'Used memory RSS (MB)'],
+		[memoryFragmentationRatio, 'Memory fragmentation ratio (%)'],
+	])
+
+	# Print the caches status table
+	matrix = [
+		['Service', 'Cache', 'ID', '# Keys'],
+	]
+
+	for service in services:
+		for cacheID in sorted(config.servicesConfiguration[service]['caches'].values()):
+			matrix.append([service, config.getCacheByID(cacheID), str(cacheID), getStdout('redis-cli -n %s dbsize' % cacheID).strip()])
+
+	print
+	print formatTable(matrix)
+
+
+def flushallCache():
+	'''Flushes all caches.
+	'''
+
+	logging.info('Flushing all caches.')
+	subprocess.call('redis-cli flushall', stdout = subprocess.PIPE, shell = True)
+
+
+def flushCache(service, cache):
+	'''Flushes a cache of a service, or all caches of a service
+	or all caches.
+
+	Note that this flushes only caches known to the keeper by their ID.
+
+	If you need to flush all caches because (for instance) you added
+	a new cache and/or the IDs changed, use flushall.
+	'''
+
+	if service == 'all':
+		for service in services:
+			flushCache(service, cache)
+		return
+
+	checkRegistered(service)
+
+	if cache == 'all':
+		for cache in config.servicesConfiguration[service]['caches']:
+			flushCache(service, cache)
+		return
+
+	cacheID = config.getCacheID(service, cache)
+	logging.info('Flushing %s\'s %s cache (ID %s).', service, cache, cacheID)
+	subprocess.call('redis-cli -n %s flushdb' % cacheID, stdout = subprocess.PIPE, shell = True)
+
+
 def keep():
 	'''Keeps services and its jobs up and running.
 	'''
@@ -815,6 +897,11 @@ Commands:
   jobs  enable   <service>  Enables the jobs of a service.
   jobs  disable  <service>  Disables the jobs of a service.
   jobs  list     <service>  Lists the current jobs of a service.
+
+  cache  status                     Prints the status of the cache system.
+  cache  flushall                   Flushes all caches (including ones
+                                    unknown by the keeper).
+  cache  flush  <service>  <cache>  Flushes a service's cache.
 
   keep                Keeps the services and its jobs up and running.
                       (this is what the keeper-service runs).
@@ -933,6 +1020,11 @@ def main():
 			'enable': enableJobs,
 			'disable': disableJobs,
 			'list': listJobs,
+		},
+		'cache': {
+			'status': statusCache,
+			'flushall': flushallCache,
+			'flush': flushCache,
 		},
 		'keep': keep,
 		'run': run,

@@ -55,6 +55,8 @@ def deployBackend(level, tag):
         disableBackend(level, tag, env.host_string)
 
     setup(tag)
+    sudo('%s' % (os.path.join(keeperPath, 'makeRedisConfiguration.py')))
+    sudo('/etc/init.d/redis restart')
     sudo('%s --force --update --nosendEmail -s %s %s' % (os.path.join(keeperPath, 'deploy.py'), config.servicesRepository, tag))
 
     if level == 'pro':

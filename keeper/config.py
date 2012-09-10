@@ -59,6 +59,14 @@ officialGroupName = 'cmscdadm'
 listeningPortsRange = (8080, 8099)
 
 
+# Maximum number of caches
+maxCaches = 16
+
+# Available cache global size in bytes (at the moment this is just the maximum
+# memory that we tell Redis to use, so the actual cache size is probably lower)
+cacheSize = 2 * 1024 * 1024 * 1024
+
+
 hostCertificateFiles = {
 	'private': {
 		'crt': '/etc/pki/tls/certs/localhost.crt',
@@ -129,6 +137,13 @@ servicesConfiguration = {
 	#                   The output (both stdout and stderr) from each run
 	#                   of each job is saved in:
 	#                       /data/logs/service/job/log.timestamp
+	#
+	#    caches         List of caches (names) the service will use.
+	#
+	#                   Optional, default: [].
+	#
+	#                   Each cache is accessible by the service as
+	#                   the cache.name instance of the cache.Cache class.
 
 	'admin': {
 		'filename':       'admin.py',
@@ -209,6 +224,50 @@ servicesConfiguration = {
 	},
 
 }
+
+
+# Replace 'caches' lists with a mapping to globally unique IDs
+nextFreeCacheID = 0
+for service in sorted(servicesConfiguration):
+	servicesConfiguration[service].setdefault('caches', [])
+	caches = {}
+	for cache in servicesConfiguration[service]['caches']:
+		caches[cache] = nextFreeCacheID
+		nextFreeCacheID += 1
+	servicesConfiguration[service]['caches'] = caches
+
+
+def checkCacheID(service, cacheID):
+	'''Checks whether a cache ID is valid for a given service.
+	'''
+
+	for (cache, thisCacheID) in servicesConfiguration[service]['caches'].items():
+		if cacheID == thisCacheID:
+			return
+
+	raise Exception('Invalid cache ID %s for service %s.' % (cacheID, service))
+
+
+def getCacheID(service, cache):
+	'''Returns the cache ID of a given cache of a service.
+	'''
+
+	try:
+		return servicesConfiguration[service]['caches'][cache]
+	except KeyError:
+		raise Exception('Invalid cache name %s for service %s.' % (cache, service))
+
+
+def getCacheByID(cacheID):
+	'''Returns the cache by its ID (i.e. reverse mapping).
+	'''
+
+	for service in servicesConfiguration:
+		for (cache, thisCacheID) in servicesConfiguration[service]['caches'].items():
+			if cacheID == thisCacheID:
+				return cache
+
+	raise Exception('Cache ID not found in any service.')
 
 
 def getServicesList(showHiddenServices = False):

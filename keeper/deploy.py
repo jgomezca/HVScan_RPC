@@ -178,6 +178,22 @@ def configureApache():
 	execute('sudo /etc/init.d/httpd graceful')
 
 
+def configureRedis():
+	'''Generates the Redis configuration.
+	'''
+
+	# Only meant for private machines. In official deployments the fabfile
+	# takes care of updating Redis in the backend.
+	if config.getProductionLevel() != 'private':
+		return
+
+	# Generate Redis configuration
+	execute('sudo services/keeper/makeRedisConfiguration.py')
+
+	# Restart
+	execute('sudo /etc/init.d/redis restart')
+
+
 def openPort(port):
 	'''Open a port in iptables. Returns True if the table was modified.
 	'''
@@ -284,6 +300,7 @@ def checkRequirements(options):
 	# Test for packages
 	checkPackage('git', 'git --version')
 	checkPackage('rsync', 'rsync --version')
+	checkPackage('redis', 'redis-cli -v')
 
 	# httpd and mod_ssl are required for private deployments
 	# (i.e. in order to set up the private frontend)
@@ -475,6 +492,14 @@ def deploy(options):
 
 	# Update iptables in private machines
 	updateIptables()
+
+	# Configure Redis in private machines
+	configureRedis()
+
+	# Flush redis' cache to prevent problems with changes
+	# in the format of the stored objects
+	execute('redis-cli flushall')
+	execute('redis-cli save')
 
 	# Start all the services and then the keeper if updating
 	if options['update']:

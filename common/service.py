@@ -57,6 +57,11 @@ def _init():
 		help = 'The production level this service should run as, which can be one of the following: "dev" == Development, "int" == Integration, "pro" == Production. For instance, the service should use this parameter to decide to which database connect, to which mailing list should send emails, etc.'
 	)
 
+	parser.add_option('-c', '--caches', type = 'str',
+		dest = 'caches',
+		help = 'The cache to ID mapping of the caches that the service uses.'
+	)
+
 	options = parser.parse_args()[0]
 
 	# Set the settings
@@ -67,6 +72,7 @@ def _init():
 		'secretsDirectory': options.secretsDirectory,
 		'listeningPort': options.listeningPort,
 		'productionLevel': options.productionLevel,
+		'caches': dict([(str(x[0]), x[1]) for x in json.loads(options.caches).items()]),
 	}
 
 	# Set the secrets
