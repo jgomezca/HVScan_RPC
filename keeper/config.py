@@ -176,6 +176,7 @@ servicesConfiguration = {
 		'filename':       'GTServerStarter.py',
 		'listeningPort':  8081,
 		'hidden':         False,
+		'caches':         ['gts'],
 	},
 
 	'libs': {

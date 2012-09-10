@@ -11,7 +11,6 @@ GT_IOV_LIST_TRUNCATED_COUNT = 100
 GT_INFO_MAX_AGE = 3600 #seconds
 GLOBAL_TAG_SCHEMA = "frontier://PromptProd/CMS_COND_31X_GLOBALTAG"
 LOG_SCHEMA = "frontier://PromptProd/CMS_COND_31X_POPCONLOG"
-CACHE_DIR = 'cache'
 CMSSW_VERSION = default_cmssw_version
 
 PRODUCTION_GTS = {"express": "GR_E_V25", "hlt": "GR_H_V29", "prompt": "GR_P_V32"}

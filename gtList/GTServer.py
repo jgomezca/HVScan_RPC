@@ -11,9 +11,10 @@ import cherrypy
 import GTServerSettings as Settings
 import GTComparison
 from GTLib import UploadGTLib
-from GTServerCache import cache_get, cache_put
 
 import api
+import cache
+import cPickle
 
 logger = logging.getLogger(__name__)
 PAGES_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "pages"))
@@ -153,14 +154,14 @@ class UploadGTServer(object):
             return info
         truncated = (truncated != "False")
         GT_name =str(GT_name)
-        info = cache_get(GT_name+"_truncated_"+str(truncated), Settings.GT_INFO_MAX_AGE)
+        info = cache.gts.get(GT_name+"_truncated_"+str(truncated))
         if info is not None:
-            return info
+            return cPickle.loads(info)
         gt_lib = get_gt_lib()
         info = gt_lib.getGTInfo(GT_name)
-        cache_put(GT_name+"_truncated_False", info)
+        cache.gts.put(GT_name+"_truncated_False", cPickle.dumps(info), Settings.GT_INFO_MAX_AGE)
         info_truncated = truncate(info)
-        cache_put(GT_name+"_truncated_True", info_truncated) #could be delayed
+        cache.gts.put(GT_name+"_truncated_True", cPickle.dumps(info_truncated), Settings.GT_INFO_MAX_AGE) #could be delayed
         if truncated:
             return info_truncated
         else:
