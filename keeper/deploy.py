@@ -156,7 +156,8 @@ def configureApache():
 	asks for a 'graceful' restart to Apache and sets SELinux's httpd_can_network_connect to 'on'.
 	'''
 
-	# FIXME: For the moment, only meant for private machines.
+	# Only meant for private machines. In official deployments the fabfile
+	# takes care of updating Apache in the frontend.
 	if config.getProductionLevel() != 'private':
 		return
 
