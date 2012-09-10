@@ -470,10 +470,10 @@ def deploy(options):
 	# Generate docs
 	execute('cd services/docs && ./generate.py')
 
-	# Configure Apache frontend(s)
+	# Configure Apache in private machines
 	configureApache()
 
-	# Update iptables
+	# Update iptables in private machines
 	updateIptables()
 
 	# Start all the services and then the keeper if updating
