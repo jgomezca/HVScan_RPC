@@ -5,6 +5,7 @@ import datetime
 import json
 import service
 import fnmatch
+import types
 
 schema_name = service.secrets['connections']['dev']["writer"]["account"] #as service uses different users DB schema, to connect we get schema name.
 
@@ -71,9 +72,10 @@ class Status_Table(Base):
     user_name = Column(String, nullable=False)
     messageID = Column(String, nullable=False)
     email_subject = Column(String, nullable=False)
+    RELMON_URL = Column(String)
 
 
-    def __init__(self, id, validation_status, comments, links, user_name, messageID, email_subject):
+    def __init__(self, id, validation_status, comments, links, user_name, messageID, email_subject, relmonURL):
         self.id = id
         self.validation_status = validation_status
         self.comments = comments
@@ -81,6 +83,7 @@ class Status_Table(Base):
         self.user_name = user_name
         self.messageID = messageID
         self.email_subject = email_subject
+        self.RELMON_URL = relmonURL
 
     def __repr__(self):
        return "<Status_Table('%d','%s', '%s', '%s', '%s')>" % (self.id, self.validation_status, self.comments, self.links, self.user_name)
@@ -96,8 +99,9 @@ class Status_LV_Table(Base):
     user_name = Column(String, nullable=False)
     messageID = Column(String, nullable=False)
     email_subject = Column(String, nullable=False)
+    RELMON_URL = Column(String)
 
-    def __init__(self, id, validation_status, comments, links, user_name, messageID, email_subject):
+    def __init__(self, id, validation_status, comments, links, user_name, messageID, email_subject, relmonURL):
         self.id = id
         self.validation_status = validation_status
         self.comments = comments
@@ -105,6 +109,7 @@ class Status_LV_Table(Base):
         self.user_name = user_name
         self.messageID = messageID
         self.email_subject = email_subject
+        self.RELMON_URL = relmonURL
 
     def __repr__(self):
        return "<Status_LV_Table('%d','%s', '%s', '%s', '%s')>" % (self.id, self.validation_status, self.comments, self.links, self.user_name)
@@ -156,6 +161,7 @@ CATEGORY = "CATEGORY"
 SUBCATEGORY = "SUBCATEGORY"
 MESSAGE_ID = 'MESSAGE_ID'
 EMAIL_SUBJECT = 'EMAIL_SUBJECT'
+RELMON_URL = 'RELMON_URL'
     
 possible_status_list = ["OK", 
                         "NOT YET DONE", 
@@ -182,6 +188,7 @@ def getReleaseShortInfo(cat, sub_cat, rel_name, Session):
                                                 filter(Releases_Table.release_name == rel_name):
             for j in session.query(Status_Table).filter(Status_Table.id == i.id):
                 info_dict[i.status_kind] = j.validation_status
+                info_dict["RelMon"] = j.RELMON_URL
         session.close()
         return json.dumps(info_dict)
     except Exception as e:
@@ -357,7 +364,6 @@ def newRelease(cat, sub_cat, rel_name, dict_json, Session, *args):
         dict = json.loads(dict_json)
         list = dict.keys()
         date = datetime.datetime.now()
-        
         for status_kind in list:
             if dict[status_kind][VALIDATION_STATUS] not in possible_status_list:
                 session.close()
@@ -373,7 +379,7 @@ def newRelease(cat, sub_cat, rel_name, dict_json, Session, *args):
             user_name = dict[status_kind][USER_NAME]
             if user_name == "":
                 user_name = "Unknown name"
-            status = Status_Table(id, dict[status_kind][VALIDATION_STATUS], dict[status_kind][COMMENTS], dict[status_kind][LINKS], user_name, dict[status_kind][MESSAGE_ID], dict[status_kind][EMAIL_SUBJECT])
+            status = Status_Table(id, dict[status_kind][VALIDATION_STATUS], dict[status_kind][COMMENTS], dict[status_kind][LINKS], user_name, dict[status_kind][MESSAGE_ID], dict[status_kind][EMAIL_SUBJECT], dict[status_kind][RELMON_URL])
             session.add(status)
             release_lv = Releases_LV_Table(id, cat, sub_cat, rel_name, version, date, status_kind)
             session.add(release_lv)
@@ -383,7 +389,7 @@ def newRelease(cat, sub_cat, rel_name, dict_json, Session, *args):
                                                     filter(Releases_Table.release_name == rel_name).\
                                                     filter(Releases_LV_Table.status_kind == status_kind):
                 id_lv = i.id
-            status_lv = Status_LV_Table(id, dict[status_kind][VALIDATION_STATUS], dict[status_kind][COMMENTS], dict[status_kind][LINKS], user_name, dict[status_kind][MESSAGE_ID], dict[status_kind][EMAIL_SUBJECT])
+            status_lv = Status_LV_Table(id, dict[status_kind][VALIDATION_STATUS], dict[status_kind][COMMENTS], dict[status_kind][LINKS], user_name, dict[status_kind][MESSAGE_ID], dict[status_kind][EMAIL_SUBJECT],dict[status_kind][RELMON_URL])
             session.add(status_lv)
         if len(args) > 0:
             session.commit()
@@ -425,6 +431,7 @@ def changeStatus(cat, sub_cat, rel_name, status_kind, new_status, new_comment, n
                 status_dict[LINKS] = j.links
                 status_dict[MESSAGE_ID] = j.messageID
                 status_dict[EMAIL_SUBJECT] = j.email_subject
+                status_dict[RELMON_URL] = j.RELMON_URL
             dict[i.status_kind] = status_dict
         dict[status_kind][VALIDATION_STATUS] = new_status
         dict[status_kind][COMMENTS] = new_comment
@@ -453,7 +460,7 @@ def changeStatus(cat, sub_cat, rel_name, status_kind, new_status, new_comment, n
 #=======================USERS===========================
 
 # Adds user to database
-def addUser(user_name, email, Session):
+def addUser(user_name, Session, email=None):
     session = Session()
     try:
         user_name = user_name.lower()
@@ -515,8 +522,12 @@ def getUserEmail(user_name, Session):
     session = Session()
     try:
         for i in session.query(Users_Table).filter(Users_Table.user_name == user_name):
-            session.close()
-            return i.email
+            if i.email == None:
+                session.close()
+                return user_name+"@cern.ch"
+            else:
+                session.close()
+                return i.email
     except Exception as e:
         session.close()
         print e
@@ -614,6 +625,9 @@ def checkValidator(user_name, Session):
 # Checks validator rights to modify release status
 def checkValidatorRights(cat, sub_cat, status_kind, user_name, Session):
     user_name = user_name.lower()
+    print status_kind
+    status_kind = status_kind.upper()
+    print status_kind
     session = Session()
     try:
         for i in session.query(User_Rights_Table).filter(User_Rights_Table.category == cat).\
@@ -778,4 +792,3 @@ def getAllUsersInfo(regexp, Session):
         session.close()
         print e
         return "Error in database reading!"
-
