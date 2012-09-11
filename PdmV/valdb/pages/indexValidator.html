@@ -147,6 +147,7 @@
 									<th>BTag</th>
 									<th>Tau</th>
 									<th><b>Summary</th>
+									<th>RelMon</th>
 									</tbody>
 								</table>
 							</div>
@@ -170,6 +171,7 @@
 									<th>BTag</th>
 									<th>Tau</th>
 									<th>Summary</th>
+									<th>RelMon</th>
 								</table>
 							</div>
 							<a href="javascript:showMenu('iRFast')" class="SubCategory"> FastSim</a>
@@ -192,6 +194,7 @@
 									<th>BTag</th>
 									<th>Tau</th>
 									<th>Summary</th>
+									<th>RelMon</th>
 								</table>
 							</div>
 						</div>
@@ -214,6 +217,7 @@
 									<th>Susy</th>
 									<th>Exotica</th>
 									<th>Summary</th>
+									<th>RelMon</th>
 								</table>
 							</div>
 							<a href="javascript:showMenu('iHFull')" class="SubCategory"> FullSim</a>
@@ -233,6 +237,7 @@
 										<th>Susy</th>
 										<th>Exotica</th>
 										<th>Summary</th>
+										<th>RelMon</th>
 									</table>
 								</div>	
 							<a href="javascript:showMenu('iHFast')" class="SubCategory"> FastSim</a>
@@ -252,6 +257,7 @@
 										<th>Susy</th>
 										<th>Exotica</th>
 										<th>Summary</th>
+										<th>RelMon</th>
 									</table>
 								</div>
 						</div>
@@ -270,6 +276,7 @@
 									<th>B</th>
 									<th>Fwd</th>
 									<th>Summary</th>
+									<th>RelMon</th>
 								</table>
 							</div>
 						<a href="javascript:showMenu('iPFull')" class="SubCategory"> FullSim</a>
@@ -285,6 +292,7 @@
 									<th>B</th>
 									<th>Fwd</th>
 									<th>Summary</th>
+									<th>RelMon</th>
 								</table>
 							</div>
 						<a href="javascript:showMenu('iPFast')" class="SubCategory"> FastSim</a>
@@ -300,6 +308,7 @@
 									<th>B</th>
 									<th>Fwd</th>
 									<th>Summary</th>
+									<th>RelMon</th>
 								</table>
 							</div>
 						</div>
@@ -534,16 +543,16 @@ function createdinamictable(tbody, data1, releaseName, subCat){
   var colnumb;
   var keys;
   if (subCat == 'RData'|| subCat == 'RFull' || subCat == 'RFast'){
-    colnumb = 16;
-    keys = ["CSC", "TAU", "TRACKING", "BTAG", "JET", "ECAL", "RPC", "PHOTON", "MUON", "MET", "ELECTRON", "TK", "HCAL", "DT", "SUMMARY"];
+    colnumb = 17;
+    keys = ["CSC", "TAU", "TRACKING", "BTAG", "JET", "ECAL", "RPC", "PHOTON", "MUON", "MET", "ELECTRON", "TK", "HCAL", "DT", "SUMMARY", "RELMON"];
   }
   if (subCat == 'HData'||subCat == 'HFull'||subCat == 'HFast'){
-    colnumb = 13;
-    keys = ["TAU", "JET", "HIGGS", "TOP", "MUON", "PHOTON", "MET", "ELECTRON", "EXOTICA", "SUSY", "HEAVYFLAVOR", "SUMMARY"];
+    colnumb = 14;
+    keys = ["TAU", "JET", "HIGGS", "TOP", "MUON", "PHOTON", "MET", "ELECTRON", "EXOTICA", "SUSY", "HEAVYFLAVOR", "SUMMARY", "RELMON"];
   }
   if (subCat == 'PData'||subCat == 'PFull'||subCat == 'PFast'){
-    colnumb = 9;
-    keys = ["B", "HIGGS", "FWD", "TOP", "SMP", "EXOTICA", "SUSY", "SUMMARY"];
+    colnumb = 10;
+    keys = ["B", "HIGGS", "FWD", "TOP", "SMP", "EXOTICA", "SUSY", "SUMMARY", "RELMON"];
   }
   var text;
   if(tbody == null || tbody.length <1) return;
@@ -559,7 +568,20 @@ function createdinamictable(tbody, data1, releaseName, subCat){
 	    .data("col", j)
 	    .data("row",i)
 	    .appendTo(trow);
-	}
+	}else if (j == keys.length){
+        if (data1["RelMon"] != null){
+            src = "<a href='"+data1["RelMon"]+"'> <img src='media/arrowlink.gif'></a>"
+        } else{
+            src = "<a ></a>"
+        }
+        $("<td>")
+            .addClass("tableCell")
+            .append(src)
+            .attr('value', keys[j-1])
+            .data("col", j)
+            .data("row",i)
+            .appendTo(trow);  
+    }
 	else{
 	  if (! isEmpty(data1)) {
 	  	return;
@@ -810,7 +832,7 @@ function editModalInfo(){
 		dataType: 'json',
                 success: function(data) {if (data.link) {
                                                   window.location.href = data.link;
-                                        } else {document.getElementById('modalEditAuthor').textContent = data;}},
+                                        } else {document.getElementById('modalEditAuthor').textContent = data[1];}},
                 error: function() { alert("Error in data send") }
           });
 
@@ -898,16 +920,30 @@ function clearEditModal(){
   var tmpSubCatVal = cat.substring(cat.indexOf('/')+1,cat.indexOf('/')+5);
   cat = tmpCategoryName + tmpSubCatVal;  
   var statusName = document.getElementById('valStatName').textContent;
- $.ajax({
-					type: 'POST',
-					url: 'updateReleaseInfo',
-					data: {comentAuthor: editAuthor, stateValue: editSatusValue, relName: releasName, newComment: editComments, newLinks: editLinks, catSubCat: cat, statusKind: statusName},
-					dataType: 'json',
-					success: function (data) {if (data.link) {
-                                                  window.location.href = data.link;
-                                        } else {alert(data); clearEditModalValues(); updateTableValues(releasName, cat);}},
-					error: function() {alert("Data send failure"); clearEditModalValues();}
-			});
+  var userName = "";
+  var userFullName = "";
+  $.ajax({
+          type: 'POST',
+          url: 'getLogedUserName',
+          data: {},
+          async: false,
+          dataType: 'json',
+          success: function(data) {
+                    userName = data[0];
+                    userFullName = data[1];
+               },
+          error: function() { alert("Error in data send") }
+         });
+  $.ajax({
+		type: 'POST',
+		url: 'updateReleaseInfo',
+		data: {comentAuthor: userFullName, stateValue: editSatusValue, relName: releasName, newComment: editComments, newLinks: editLinks, catSubCat: cat, statusKind: statusName, userName:userName},
+		dataType: 'json',
+		success: function (data) {if (data.link) {
+                                       window.location.href = data.link;
+                                  } else {alert(data); clearEditModalValues(); updateTableValues(releasName, cat);}},
+		error: function() {alert("Data send failure"); clearEditModalValues();}
+		});
 
 }
 function clearEditModalValues(){

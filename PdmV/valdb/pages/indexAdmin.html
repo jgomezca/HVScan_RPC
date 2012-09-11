@@ -56,6 +56,8 @@
 		</select><br/>
 		<label class="span2">Release Name:</label> 
 		<input type="text" id="newRelName"/> <br/>
+		<label class="span2">RelMon URL:</label> 
+        <input type="text" id="RelMon_URL"/> <br/>
 		<div id="newStats">
 		</div>
 
@@ -118,7 +120,7 @@
 				<li ><input type="checkbox" id="MUON">Muon</li>
 				<li ><input type="checkbox" id="JET">Jet</li>
 				<li ><input type="checkbox" id="MET">MET</li>
-				<li ><input type="checkbox" id="Tag">BTag</li>
+				<li ><input type="checkbox" id="BTag">BTag</li>
 				<li ><input type="checkbox" id="TAU">Tau</li>
 				<li ><input type="checkbox" id="SUMMARY">Summary</li>
 
@@ -194,15 +196,15 @@
 	    </div>
 	    <div class="modal-body">
 	    <form>
-	      User name: <input type="text" id="newUsrName"/> <br/>
-
+	      User name: <input type="text" id="newUsrName"/> <br>
+          E-mail: <input type="text" id="newUserEmail"/> <br>
 		<h4> User type:</h4>
 		    <select id="userTypeList" onchange='showUserForm(this)'>
 			<option value='------'>------</option>
 			<option value='Validator'>Validator</option>
 			<option value='Admin'>Admin</option>
 		    </select> 
-	      </br>
+	      <br>
 
 	    </form>
 	      <form class="showM" id="usrFormList">
@@ -222,7 +224,7 @@
 
 				<li ><input type="checkbox" id="JET">Jet</li>
 				<li ><input type="checkbox" id="MET">MET</li>
-				<li ><input type="checkbox" id="Tag">BTag</li>
+				<li ><input type="checkbox" id="BTAG">BTag</li>
 				<li ><input type="checkbox" id="TAU">Tau</li>
 				<li ><input type="checkbox" id="SUMMARY">Summary</li>
 			      </ul>
@@ -242,7 +244,7 @@
 
 				<li ><input type="checkbox" id="JET">Jet</li>
 				<li ><input type="checkbox" id="MET">MET</li>
-				<li ><input type="checkbox" id="Tag">BTag</li>
+				<li ><input type="checkbox" id="BTAG">BTag</li>
 				<li ><input type="checkbox" id="TAU">Tau</li>
 				<li ><input type="checkbox" id="SUMMARY">Summary</li>
 			      </ul>
@@ -262,7 +264,7 @@
 
 				<li ><input type="checkbox" id="JET">Jet</li>
 				<li ><input type="checkbox" id="MET">MET</li>
-				<li ><input type="checkbox" id="Tag">BTag</li>
+				<li ><input type="checkbox" id="BTAG">BTag</li>
 				<li ><input type="checkbox" id="TAU">Tau</li>
 				<li ><input type="checkbox" id="SUMMARY">Summary</li>
 			      </ul>
@@ -377,6 +379,13 @@
 	  </div>
 <!--Modals for pop-up information-->
 
+<!--MODAL to show loading while adding new release-->
+  <div class="modal hide" id="loadModal">
+    <div class="modal-body">
+        <img src="media/loading_sentence.gif" alt="loading"/>  
+    </div>
+    </div>
+
 </head>
 	<body>
 	
@@ -475,7 +484,8 @@
 									<th>BTag</th>
 									<th>Tau</th>
 
-									<th><b>Summary</th>
+									<th>Summary</th>
+									<th>RelMon</th>
 									</tbody>
 								</table>
 							</div>
@@ -502,6 +512,7 @@
 									<th>BTag</th>
 									<th>Tau</th>
 									<th>Summary</th>
+									<th>RelMon</th>
 								</table>
 
 							</div>
@@ -528,6 +539,7 @@
 
 									<th>Tau</th>
 									<th>Summary</th>
+									<th>RelMon</th>
 								</table>
 							</div>
 						</div>
@@ -553,6 +565,7 @@
 									<th>Susy</th>
 									<th>Exotica</th>
 									<th>Summary</th>
+									<th>RelMon</th>
 								</table>
 							</div>
 							<a href="javascript:showMenu('iHFull')" class="SubCategory"> FullSim</a>
@@ -575,6 +588,7 @@
 										<th>Susy</th>
 										<th>Exotica</th>
 										<th>Summary</th>
+										<th>RelMon</th>
 									</table>
 								</div>	
 							<a href="javascript:showMenu('iHFast')" class="SubCategory"> FastSim</a>
@@ -597,6 +611,7 @@
 
 										<th>Exotica</th>
 										<th>Summary</th>
+										<th>RelMon</th>
 									</table>
 								</div>
 						</div>
@@ -617,6 +632,7 @@
 									<th>B</th>
 									<th>Fwd</th>
 									<th>Summary</th>
+									<th>RelMon</th>
 
 								</table>
 							</div>
@@ -635,6 +651,7 @@
 
 									<th>Fwd</th>
 									<th>Summary</th>
+									<th>RelMon</th>
 								</table>
 							</div>
 						<a href="javascript:showMenu('iPFast')" class="SubCategory"> FastSim</a>
@@ -652,6 +669,7 @@
 									<th>B</th>
 									<th>Fwd</th>
 									<th>Summary</th>
+									<th>RelMon</th>
 								</table>
 							</div>
 						</div>
@@ -907,16 +925,16 @@ function createdinamictable(tbody, data1, releaseName, subCat){
   var colnumb;
   var keys;
   if (subCat == 'RData'|| subCat == 'RFull' || subCat == 'RFast'){
-    colnumb = 16;
-    keys = ["CSC", "TAU", "TRACKING", "BTAG", "JET", "ECAL", "RPC", "PHOTON", "MUON", "MET", "ELECTRON", "TK", "HCAL", "DT", "SUMMARY"];
+    colnumb = 17;
+    keys = ["CSC", "TAU", "TRACKING", "BTAG", "JET", "ECAL", "RPC", "PHOTON", "MUON", "MET", "ELECTRON", "TK", "HCAL", "DT", "SUMMARY", "RELMON"];
   }
   if (subCat == 'HData'||subCat == 'HFull'||subCat == 'HFast'){
-    colnumb = 13;
-    keys = ["TAU", "JET", "HIGGS", "TOP", "MUON", "PHOTON", "MET", "ELECTRON", "EXOTICA", "SUSY", "HEAVYFLAVOR", "SUMMARY"];
+    colnumb = 14;
+    keys = ["TAU", "JET", "HIGGS", "TOP", "MUON", "PHOTON", "MET", "ELECTRON", "EXOTICA", "SUSY", "HEAVYFLAVOR", "SUMMARY", "RELMON"];
   }
   if (subCat == 'PData'||subCat == 'PFull'||subCat == 'PFast'){
-    colnumb = 9;
-    keys = ["B", "HIGGS", "FWD", "TOP", "SMP", "EXOTICA", "SUSY", "SUMMARY"];
+    colnumb = 10;
+    keys = ["B", "HIGGS", "FWD", "TOP", "SMP", "EXOTICA", "SUSY", "SUMMARY", "RELMON"];
   }
   var text;
   if(tbody == null || tbody.length <1) return;
@@ -932,6 +950,20 @@ function createdinamictable(tbody, data1, releaseName, subCat){
 	    .data("col", j)
 	    .data("row",i)
 	    .appendTo(trow);
+	}
+	else if (j == keys.length){
+	    if (data1["RelMon"] != null){
+            src = "<a href='"+data1["RelMon"]+"'> <img src='media/arrowlink.gif'></a>"
+        } else{
+            src = "<a ></a>"
+        }
+        $("<td>")
+            .addClass("tableCell")
+            .append(src)
+            .attr('value', keys[j-1])
+            .data("col", j)
+            .data("row",i)
+            .appendTo(trow);  
 	}
 	else{
 	  if (! isEmpty(data1)) {
@@ -1102,10 +1134,10 @@ function deleteChildTableRow (obj){
   var modal = document.getElementById('newReleaseModal');
   clearModal(modal);
   document.getElementById('newCatName').value = "------";
-  document.getElementById('editSubCategories').value = "Data";  
-    $('#newReleaseModal').bind('show', function (){
-	});
-    $('#newReleaseModal').modal('toggle');    
+  document.getElementById('editSubCategories').value = "Data";
+  document.getElementById('RelMon_URL').value = "";
+    $('#newReleaseModal').bind('show', function (){});
+    $('#newReleaseModal').modal('toggle');
 }
 
 function addStats(obj){
@@ -1174,6 +1206,7 @@ var Category = stasChild[0].value;
 var SubCategory = stasChild[1].value;
 var releasName = stasChild[2].value;
 
+var relMonURL = stasChild[3].value;
 var statName;
 var stuff;
 
@@ -1183,6 +1216,9 @@ var newStatVaList= new Array();
 var newStatComments = new Array();
 var newStatAuthors = new Array();
 var newStatLinks = new Array();
+
+var errorInAdding = false;
+var errorMessage;
 
 var statsEL = stasChild.lastElementChild;
     stats = $(statsEL).children();
@@ -1201,7 +1237,7 @@ var statsEL = stasChild.lastElementChild;
       newStatLinks.push(stuff[2].value);
     }
     if (releasName.length > 20) {
-        alert("Release name too long!!! ");
+        alert("Release name too long!!! Max 20 chars.");
         elem = document.getElementById('newModalSaveBTN');
         elem.removeAttribute('data-dismiss', 'modal'); 
         return false;
@@ -1210,6 +1246,20 @@ var statsEL = stasChild.lastElementChild;
     elem.setAttribute('data-dismiss', 'modal'); 
     relNametoPut = "";
     wasNotAdded = false;
+    var mailId;
+    $('#loadModal').modal('toggle');
+    //method to get new e-mail ID for email SPAMMING!
+    $.ajax({
+            type: 'GET',
+            url: 'getMsgId',
+            async: false,
+            data: {},
+            dataType: 'json',
+            success: function (data){
+                mailId = data;
+                },
+            error: function() {alert("Error in data send");}
+        });
     if(Category == "All"){
 	  var categoryList = ["Reconstruction","HLT","PAGs"];
 	  if(SubCategory.toUpperCase() == "ALL"){ //send info for AllxAll
@@ -1237,15 +1287,23 @@ var statsEL = stasChild.lastElementChild;
 			relNametoPut = releasName;
 			wasNotAdded = true;
 		}
+
+
 		    $.ajax({
 					type: 'POST',
 					url: 'addNewRelease',
 					data: $.param({'sendMail': wasNotAdded, 'categ': categoryList[i], 'subCat': subCatList[j], 'relName': releasName, 'statusNames': newStatList, 'statusValues': newStatVaList,
-					'statComments': newStatComments, 'statAuthors': newStatAuthors, 'statLinks': newStatLinks}, true),
+					'statComments': newStatComments, 'statAuthors': newStatAuthors, 'statLinks': newStatLinks, 'mailID': mailId, 'relMonURL': relMonURL}, true),
 					dataType: 'json',
+					async: false,
 					success: function (data) { if (data.link) {
                                                 			  window.location.href = data.link;
-                                   				     } else {alert(data);}},
+                                   				     };
+                                               if (data != "New release added successfuly"){
+                                                    errorInAdding = true;
+                                                    errorMessage = data;
+                                               };
+                                   				     },
 					error: function() {clearModal(objCpy); document.getElementById('newCatName').value = "------"; }
 			});
 	      }
@@ -1283,11 +1341,17 @@ var statsEL = stasChild.lastElementChild;
 			type: 'POST',
 			url: 'addNewRelease',
 			data: $.param({'sendMail': wasNotAdded, 'categ': categoryList[i], 'subCat': SubCategory, 'relName': releasName, 'statusNames': newStatList, 'statusValues': newStatVaList,
-			'statComments': newStatComments, 'statAuthors': newStatAuthors, 'statLinks': newStatLinks}, true),
+			'statComments': newStatComments, 'statAuthors': newStatAuthors, 'statLinks': newStatLinks, 'mailID': mailId, 'relMonURL': relMonURL}, true),
 			dataType: 'json',
+			async: false,
 			success: function (data) { if (data.link) {
                                    			  window.location.href = data.link;
-                           				     } else {alert(data);}},
+                           				     };
+                                       if (data != "New release added successfuly"){
+                                                    errorInAdding = true;
+                                                    errorMessage = data;
+                                                    };
+                           				     },
 			error: function() {clearModal(objCpy); document.getElementById('newCatName').value = "------"; }
 		});  
       //clear array values
@@ -1314,11 +1378,17 @@ var statsEL = stasChild.lastElementChild;
 			type: 'POST',
 			url: 'addNewRelease',
 			data: $.param({'sendMail': wasNotAdded, 'categ': Category, 'subCat': subCatList[j], 'relName': releasName, 'statusNames': newStatList, 'statusValues': newStatVaList,
-			'statComments': newStatComments, 'statAuthors': newStatAuthors, 'statLinks': newStatLinks}, true),
+			'statComments': newStatComments, 'statAuthors': newStatAuthors, 'statLinks': newStatLinks, 'mailID': mailId, 'relMonURL': relMonURL}, true),
 			dataType: 'json',
+			async: false,
 			success: function (data) { if (data.link) {
                                    			  window.location.href = data.link;
-                           				     } else {alert(data);}},
+                           				     };
+                                        if (data != "New release added successfuly"){
+                                                    errorInAdding = true;
+                                                    errorMessage = data;
+                                                    };
+                           				     },
 			error: function() {clearModal(objCpy); document.getElementById('newCatName').value = "------"; }
 		  }); 
 		}
@@ -1329,14 +1399,37 @@ var statsEL = stasChild.lastElementChild;
 			  type: 'POST',
 			  url: 'addNewRelease',
 			  data: $.param({'sendMail': wasNotAdded, 'categ': Category, 'subCat': SubCategory, 'relName': releasName, 'statusNames': newStatList, 'statusValues': newStatVaList,
-			  'statComments': newStatComments, 'statAuthors': newStatAuthors, 'statLinks': newStatLinks}, true),
+			  'statComments': newStatComments, 'statAuthors': newStatAuthors, 'statLinks': newStatLinks, 'mailID': mailId, 'relMonURL': relMonURL}, true),
 			  dataType: 'json',
+			  async: false,
 			  success: function (data) { if (data.link) {
 												window.location.href = data.link;
-											  } else {alert(data);}},
+											  };
+										if (data != "New release added successfuly"){
+                                                    errorInAdding = true;
+                                                    errorMessage = data;
+                                                    };
+											  },
 			  error: function() {clearModal(objCpy); document.getElementById('newCatName').value = "------"; }
 			});  
 		}
+	if (errorInAdding == false){
+	   msgSubject = "New release added"
+	   msgText = "New release: "+releasName +" was added. Please check it!"
+	   $.ajax({
+	     type: 'POST',
+	     url: 'sendMail',
+	     data: $.param({'messageText':msgText,'emailSubject': msgSubject,'org_message_ID':"",'new_message_ID':mailId}, true),
+	     dataType: 'json',
+	     async: false,
+	     success: function(data){alert(data);},
+	     error: function() {}
+	   });
+	   }
+	  else{
+	     alert(errorMessage);
+	  }
+	 $('#loadModal').modal('hide');
      return false;
 }
 
@@ -1392,14 +1485,14 @@ function editModalInfo(){
                type: 'POST',
                url: 'getLogedUserName',
                data: {},
-		dataType: 'json',
+               dataType: 'json',
                success: function(data) { if (data.link) {
                                                   window.location.href = data.link;
-                                        } else {document.getElementById('modalEditAuthor').textContent = data;}},
+                                        } else {document.getElementById('modalEditAuthor').textContent = data[1];}},
                error: function() { alert("Error in data send") }
          });
 
-$('#editModal').bind('show', function (){});
+    $('#editModal').bind('show', function (){});
 	                                            $('#editModal').modal('toggle');  
 	                                            setEditModal();
 	                                            elem = document.getElementById('btnEditInfo');
@@ -1468,10 +1561,24 @@ function clearEditModal(){
   var tmpSubCatVal = cat.substring(cat.indexOf('/')+1,cat.indexOf('/')+5);
   cat = tmpCategoryName + tmpSubCatVal;  
   var statusName = document.getElementById('valStatName').textContent;
+  var userName = "";
+  var userFullName = "";
+      $.ajax({
+               type: 'POST',
+               url: 'getLogedUserName',
+               data: {},
+               async: false,
+               dataType: 'json',
+               success: function(data) {
+                    userName = data[0];
+                    userFullName = data[1];
+               },
+               error: function() { alert("Error in data send") }
+         });
  $.ajax({
 					type: 'POST',
 					url: 'updateReleaseInfo',
-					data: {comentAuthor: editAuthor, stateValue: editSatusValue, relName: releasName, newComment: editComments, newLinks: editLinks, catSubCat: cat, statusKind: statusName},
+					data: {comentAuthor: userFullName, stateValue: editSatusValue, relName: releasName, newComment: editComments, newLinks: editLinks, catSubCat: cat, statusKind: statusName, userName: userName},
 					dataType: 'json',
                                         success: function (data) {if (data.link) {
                                                   window.location.href = data.link;
@@ -1595,18 +1702,7 @@ function getHistoryBtn(){
       }
     });
 
-
-//$('<form action="' + $("showHistory").data($.param({'statusList': statusList, 'subCatList': subCatList, 'recoStatsChecked': recoStatsChecked, 'hltStatsChecked': hltStatsChecked, 'pagsStatsChecked': pagsStatsChecked, 'releaseList': releaseList})) + '" method="post"><form>').appendTo('body').submit();
-
 window.open('showHistory?' + $.param({'statusList': statusList, 'subCatList': subCatList, 'recoStatsChecked': recoStatsChecked, 'hltStatsChecked': hltStatsChecked, 'pagsStatsChecked': pagsStatsChecked, 'releaseList': releaseList}, true));
-
-//    $.ajax({
-//               type: 'POST',
-//               url: '/showHistory',
-//               data: $.param({'statusList': statusList, 'subCatList': subCatList, 'recoStatsChecked': recoStatsChecked, 'hltStatsChecked': hltStatsChecked, 'pagsStatsChecked': pagsStatsChecked, 'releaseList': releaseList}, true),
-//               success: function (data) {clearHistoryModal();},
-//               error: function() {clearHistoryModal();}
-//          });
 }
 
 function clearHistoryModal(){
@@ -1838,15 +1934,15 @@ function removeUser(){
 function rmUser(obj){
   var userName = document.getElementById('userNameToBeRemoved').value;
 $.ajax({
-               type: 'POST',
-               url: 'removeUser',
-               data: {'user_Name': userName},
-		dataType: 'json',
-               success: function (data) {if (data.link) {
-                                                  window.location.href = data.link;
-                                        } else {alert(data)}},
-               error: function() {alert("Error removing user")}
-          });
+        type: 'POST',
+        url: 'removeUser',
+        data: {'user_Name': userName},
+        dataType: 'json',
+        success: function (data) {if (data.link) {
+                                      window.location.href = data.link;
+                                 } else {alert(data)}},
+        error: function() {alert("Error removing user")}
+      });
 }
 
 function addUser(){
@@ -1871,6 +1967,7 @@ function showUserForm(obj){
 function addUserButtonModal(obj){
   var userName = document.getElementById('newUsrName').value;
   var userTypeValue = document.getElementById('userTypeList').value;
+  var userEmail = document.getElementById('newUserEmail').value;
   
   var usrRDataStatsChecked = [""];
   var usrRFastStatsChecked = [""];
@@ -1953,7 +2050,10 @@ function addUserButtonModal(obj){
 $.ajax({
                type: 'POST',
                url: 'addNewUser',
-               data: $.param({'user_Name': userName, 'userTypeValue': userTypeValue, 'usrRDataStatList': usrRDataStatsChecked, 'usrRFastStatList': usrRFastStatsChecked, 'usrRFullStatList': usrRFullStatsChecked, 'usrHDataStatList': usrHDataStatsChecked, 'usrHFastStatList': usrHFastStatsChecked, 'usrHFullStatList': usrHFullStatsChecked, 'usrPDataStatList': usrPDataStatsChecked, 'usrPFastStatList': usrPFastStatsChecked, 'usrPFullStatList': usrPFullStatsChecked}, true),
+               data: $.param({'user_Name': userName, 'userTypeValue': userTypeValue, 'userEmail': userEmail, 'usrRDataStatList': usrRDataStatsChecked, 'usrRFastStatList': usrRFastStatsChecked, 
+                              'usrRFullStatList': usrRFullStatsChecked, 'usrHDataStatList': usrHDataStatsChecked, 'usrHFastStatList': usrHFastStatsChecked, 
+                              'usrHFullStatList': usrHFullStatsChecked, 'usrPDataStatList': usrPDataStatsChecked, 'usrPFastStatList': usrPFastStatsChecked, 
+                              'usrPFullStatList': usrPFullStatsChecked}, true),
                 dataType: 'json',
 		success: function (data) {if (data.link) {
                                                   window.location.href = data.link;

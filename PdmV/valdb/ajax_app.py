@@ -38,7 +38,8 @@ class AjaxApp(object):
             'PFast' : ('PAGs', 'FastSim'),	
         }
 
-    MAILING_LIST = ["antanas.norkus@cern.ch", "jean-roch.vlimant@cern.ch", "dpiparo@cern.ch", "giovanni.franzoni@cern.ch", "hn-cms-relval@cern.ch"]
+    #MAILING_LIST = ["antanas.norkus@cern.ch", "jean-roch.vlimant@cern.ch", "dpiparo@cern.ch", "giovanni.franzoni@cern.ch", "hn-cms-relval@cern.ch"]
+    MAILING_LIST = ["antanas.norkus@cern.ch"]
     VALIDATION_STATUS = "VALIDATION_STATUS"
     COMMENTS = "COMMENTS"
     LINKS = "LINKS"
@@ -99,7 +100,10 @@ class AjaxApp(object):
     @cherrypy.expose
     def getLogedUserName (self, **kwargs):
         cherrypy.response.headers['Content-Type'] = 'application/json'
-        return simplejson.dumps([self.get_username()])
+        info = []
+        info.append(self.get_username())
+        info.append(self.get_fullname())
+        return simplejson.dumps(info)
 
     @cherrypy.expose
     def checkValidatorsRights (self, cat, subCategory, statusKind, **kwargs):
@@ -123,15 +127,16 @@ class AjaxApp(object):
        return getReleaseDetails(cat, subCat, relName, state, Session)
 
     @cherrypy.expose
-    def addNewRelease(self, sendMail, categ, subCat, relName, statusNames, statusValues, statComments, statAuthors, statLinks, **kwargs):
+    def addNewRelease(self, sendMail, categ, subCat, relName, statusNames, statusValues, statComments, statAuthors, statLinks, mailID, relMonURL, **kwargs):
         if not (self.check_admin() or self.check_validator()):
             raise cherrypy.InternalRedirect('/permissionErrorMessage')
         if len(statusNames) == len(statusValues)  and len(statusNames) == len(statComments) and len(statusNames) == len(statAuthors) and len(statusNames) == len(statLinks):
             cherrypy.response.headers['Content-Type'] = 'text/html'
             dictionaryFull = {}
             returnedInformation = {}
-            mime_MSG_id = email.utils.make_msgid()
-            msgSubject = "New release " + relName + " was added"
+            mime_MSG_id = mailID
+            #mime_MSG_id = email.utils.make_msgid()
+            msgSubject = "New release added"
             for index in range(len(statusNames)):
                 tmpDictionary = {}
                 tmpDictionary[VALIDATION_STATUS] = statusValues[index]
@@ -140,12 +145,13 @@ class AjaxApp(object):
                 tmpDictionary[USER_NAME] = statAuthors[index]
                 tmpDictionary[MESSAGE_ID] = mime_MSG_id
                 tmpDictionary['EMAIL_SUBJECT'] = msgSubject
+                tmpDictionary['RELMON_URL'] = relMonURL
                 dictionaryFull[statusNames[index]] = tmpDictionary
             returnedInformation = newRelease(categ, subCat, relName, simplejson.dumps(dictionaryFull), Session)
             if returnedInformation == "True":
                 msgText = """ New release: %s In category: %s In subcategory: %s Was added. Check it!
                 """ % (relName.upper(), categ.upper(), subCat.upper())
-                self.sendMailOnChanges(msgText, msgSubject, None, mime_MSG_id)
+               # self.sendMailOnChanges(msgText, msgSubject, None, mime_MSG_id)
                 info = "New release added successfuly"
                 cherrypy.response.headers['Content-Type'] = 'application/json'
                 return simplejson.dumps([info])
@@ -159,7 +165,7 @@ class AjaxApp(object):
             return simplejson.dumps([info])
 
     @cherrypy.expose
-    def updateReleaseInfo(self, comentAuthor, stateValue, relName, newComment, newLinks, catSubCat, statusKind, **kwargs):
+    def updateReleaseInfo(self, comentAuthor, stateValue, relName, newComment, newLinks, catSubCat, statusKind, userName, **kwargs):
         if not (self.check_admin() or self.check_validator()):
             raise cherrypy.InternalRedirect('/permissionErrorMessage')
         cat = None
@@ -176,16 +182,20 @@ class AjaxApp(object):
         if returnedInformation == "True":
             msgText = """Release: %s In category: %s In subcategory: %s In column: %s Has Changed: From status: %s To status: %s By: %s Comment: %s
                 """ % (relName.upper(), cat.upper(), subCat.upper(), statusKind.upper(), returnedStatusValueOld[0].upper(), stateValue.upper(), comentAuthor.upper(), newComment)
-            self.sendMailOnChanges(msgText, msgSubject, returnedStatusValueOld[1], new_message_ID)
+            self.sendMailOnChanges(msgText, msgSubject, returnedStatusValueOld[1], new_message_ID, userName)
             info = "Release information updated successfuly"
             cherrypy.response.headers['Content-Type'] = 'application/json'
             return simplejson.dumps([info])
         else:
+            testlog = open('bump.log', 'a')
+            testlog.write("update -> else{}\n")
+            testlog.write(json.dumps(returnedInformation)+"\n")
+            testlog.close()
             cherrypy.response.headers['Content-Type'] = 'application/json'
             return simplejson.dumps([returnedInformation])
 
     @cherrypy.expose
-    def addNewUser (self, user_Name, userTypeValue, usrRDataStatList, usrRFastStatList, usrRFullStatList, usrHDataStatList, usrHFastStatList, usrHFullStatList, usrPDataStatList, usrPFastStatList, usrPFullStatList, **kwargs):
+    def addNewUser (self, user_Name, userTypeValue, userEmail, usrRDataStatList, usrRFastStatList, usrRFullStatList, usrHDataStatList, usrHFastStatList, usrHFullStatList, usrPDataStatList, usrPFastStatList, usrPFullStatList, **kwargs):
         if not self.check_admin():
             raise cherrypy.InternalRedirect('/permissionErrorMessage')
         if userTypeValue == "------":
@@ -194,7 +204,7 @@ class AjaxApp(object):
             return simplejson.dumps([info])
         elif userTypeValue == "Validator":
             removeUser(user_Name, Session)
-            check1 = addUser(user_Name, None, Session)
+            check1 = addUser(user_Name, Session, userEmail)
             check2 = grantValidatorRights(user_Name, Session)
             check3 = grantValidatorRightsForStatusKindList(user_Name, usrRDataStatList, usrRFastStatList, usrRFullStatList, usrHDataStatList, usrHFastStatList, usrHFullStatList, usrPDataStatList, usrPFastStatList, usrPFullStatList, Session)
             if check1 and check2 and check3:
@@ -207,7 +217,7 @@ class AjaxApp(object):
                 return simplejson.dumps([info]) 
         elif userTypeValue == "Admin":
             removeUser(user_Name, Session)
-            check1 = addUser(user_Name, None, Session)
+            check1 = addUser(user_Name, Session, userEmail)
             check2 = grantAdminRights(user_Name, Session)
             if check1 and check2:
                 info = "User " + user_Name + " as ADMIN was added successfuly"
@@ -289,7 +299,8 @@ class AjaxApp(object):
         msg['From'] = send_from
         send_to = self.MAILING_LIST
         if username != False:
-           send_to.append(username+"@cern.ch")
+            email = getUserEmail(username, Session)
+            send_to.append(email)
         msg['To'] = COMMASPACE.join(send_to)
         msg['Date'] = formatdate(localtime=True)
         msg['Subject'] = emailSubject
@@ -340,7 +351,45 @@ class AjaxApp(object):
             fullname = service.getUsername()
         return fullname
 
+        
+###UPDATED FUNCTIONALITIES as of 2012-09-07###
 
+    ##method to generate and get email messageID for first email sending.
+    @cherrypy.expose
+    def getMsgId(self, *args, **kwargs):
+        cherrypy.response.headers['Content-Type'] = 'application/json'
+        messageID = email.utils.make_msgid()
+        return json.dumps(messageID)
+        
+    ######
+
+    @cherrypy.expose
+    def sendMail(self, messageText, emailSubject, org_message_ID, new_message_ID, username=False, **kwargs):
+        msg = MIMEMultipart()
+        if org_message_ID != None:
+            msg['In-Reply-To'] = org_message_ID
+            msg['References'] = org_message_ID
+
+        send_from = "PdmV.ValDb@gmail.com"
+        msg['From'] = send_from
+        send_to = self.MAILING_LIST
+        if username != False:
+            email = getUserEmail(username, Session)
+            send_to.append(email)
+        msg['To'] = COMMASPACE.join(send_to)
+        msg['Date'] = formatdate(localtime=True)
+        msg['Subject'] = emailSubject
+        msg['Message-ID'] = new_message_ID
+
+        try:
+            msg.attach(MIMEText(messageText))
+            smtpObj = smtplib.SMTP()
+            smtpObj.connect()
+            smtpObj.sendmail(send_from, send_to, msg.as_string())
+            smtpObj.close()         
+        except Exception as e:
+            print "Error: unable to send email", e.__class__
+        return json.dumps('New release added. Email was sent.')    
 def main():
 	service.start(AjaxApp())
 

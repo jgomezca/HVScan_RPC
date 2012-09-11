@@ -120,6 +120,7 @@
 									<th>BTag</th>
 									<th>Tau</th>
 									<th><b>Summary</th>
+									<th>RelMon</th>
 									</tbody>
 								</table>
 							</div>
@@ -143,6 +144,7 @@
 									<th>BTag</th>
 									<th>Tau</th>
 									<th>Summary</th>
+									<th>RelMon</th>
 								</table>
 							</div>
 							<a href="javascript:showMenu('iRFast')" class="SubCategory"> FastSim</a>
@@ -165,6 +167,7 @@
 									<th>BTag</th>
 									<th>Tau</th>
 									<th>Summary</th>
+									<th>RelMon</th>
 								</table>
 							</div>
 						</div>
@@ -187,6 +190,7 @@
 									<th>Susy</th>
 									<th>Exotica</th>
 									<th>Summary</th>
+									<th>RelMon</th>
 								</table>
 							</div>
 							<a href="javascript:showMenu('iHFull')" class="SubCategory"> FullSim</a>
@@ -206,6 +210,7 @@
 										<th>Susy</th>
 										<th>Exotica</th>
 										<th>Summary</th>
+										<th>RelMon</th>
 									</table>
 								</div>	
 							<a href="javascript:showMenu('iHFast')" class="SubCategory"> FastSim</a>
@@ -225,6 +230,7 @@
 										<th>Susy</th>
 										<th>Exotica</th>
 										<th>Summary</th>
+										<th>RelMon</th>
 									</table>
 								</div>
 						</div>
@@ -243,6 +249,7 @@
 									<th>B</th>
 									<th>Fwd</th>
 									<th>Summary</th>
+									<th>RelMon</th>
 								</table>
 							</div>
 						<a href="javascript:showMenu('iPFull')" class="SubCategory"> FullSim</a>
@@ -258,6 +265,7 @@
 									<th>B</th>
 									<th>Fwd</th>
 									<th>Summary</th>
+									<th>RelMon</th>
 								</table>
 							</div>
 						<a href="javascript:showMenu('iPFast')" class="SubCategory"> FastSim</a>
@@ -273,6 +281,7 @@
 									<th>B</th>
 									<th>Fwd</th>
 									<th>Summary</th>
+									<th>RelMon</th>
 								</table>
 							</div>
 						</div>
@@ -506,16 +515,16 @@ function createdinamictable(tbody, data1, releaseName, subCat){
   var colnumb;
   var keys;
   if (subCat == 'RData'|| subCat == 'RFull' || subCat == 'RFast'){
-    colnumb = 16;
-    keys = ["CSC", "TAU", "TRACKING", "BTAG", "JET", "ECAL", "RPC", "PHOTON", "MUON", "MET", "ELECTRON", "TK", "HCAL", "DT", "SUMMARY"];
+    colnumb = 17;
+    keys = ["CSC", "TAU", "TRACKING", "BTAG", "JET", "ECAL", "RPC", "PHOTON", "MUON", "MET", "ELECTRON", "TK", "HCAL", "DT", "SUMMARY", "RELMON"];
   }
   if (subCat == 'HData'||subCat == 'HFull'||subCat == 'HFast'){
-    colnumb = 13;
-    keys = ["TAU", "JET", "HIGGS", "TOP", "MUON", "PHOTON", "MET", "ELECTRON", "EXOTICA", "SUSY", "HEAVYFLAVOR", "SUMMARY"];
+    colnumb = 14;
+    keys = ["TAU", "JET", "HIGGS", "TOP", "MUON", "PHOTON", "MET", "ELECTRON", "EXOTICA", "SUSY", "HEAVYFLAVOR", "SUMMARY", "RELMON"];
   }
   if (subCat == 'PData'||subCat == 'PFull'||subCat == 'PFast'){
-    colnumb = 9;
-    keys = ["B", "HIGGS", "FWD", "TOP", "SMP", "EXOTICA", "SUSY", "SUMMARY"];
+    colnumb = 10;
+    keys = ["B", "HIGGS", "FWD", "TOP", "SMP", "EXOTICA", "SUSY", "SUMMARY", "RELMON"];
   }
   var text;
   if(tbody == null || tbody.length <1) return;
@@ -532,6 +541,20 @@ function createdinamictable(tbody, data1, releaseName, subCat){
 	    .data("row",i)
 	    .appendTo(trow);
 	}
+    else if (j == keys.length){
+        if (data1["RelMon"] != null){
+            src = "<a href='"+data1["RelMon"]+"'> <img src='media/arrowlink.gif'></a>"
+        } else{
+            src = "<a ></a>"
+        }
+        $("<td>")
+            .addClass("tableCell")
+            .append(src)
+            .attr('value', keys[j-1])
+            .data("col", j)
+            .data("row",i)
+            .appendTo(trow);  
+    }
 	else{
 	  if (! isEmpty(data1)) {
 	  	return;
