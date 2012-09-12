@@ -765,20 +765,6 @@ def listJobs(service):
 	f.close()
 
 
-def jobs(action, service):
-	'''Manages the jobs of a service.'
-	'''
-
-	if action == 'enable':
-		enableJobs(service)
-	elif action == 'disable':
-		disableJobs(service)
-	elif action == 'list':
-		listJobs(service)
-	else:
-		raise Exception('Action should be one one of: enable, disable, list.')
-
-
 def keep():
 	'''Keeps services and its jobs up and running.
 	'''
@@ -935,7 +921,11 @@ def main():
 		'env': env,
 		'strace': strace,
 		'status': status,
-		'jobs': jobs,
+		'jobs': {
+			'enable': enableJobs,
+			'disable': disableJobs,
+			'list': listJobs,
+		},
 		'keep': keep,
 		'run': run,
 	}
