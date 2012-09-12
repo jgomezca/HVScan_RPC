@@ -594,18 +594,25 @@ def strace(service):
 	os.execlp('bash', 'bash', '-c', commandLine)
 
 
-def formatTable(matrix, columnSeparator = '  ', rowSeparator = '\n', filler = ' '):
+def formatTable(matrix, columnSeparator = '  ', floatFormat = '%.2f', rowSeparator = '\n', filler = ' '):
 	'''Returns a formatted table given a matrix.
 	'''
+
+	def getFormattedCell(cell):
+		if not cell:
+			cell = ''
+		elif isinstance(cell, float):
+			cell = floatFormat % cell
+		elif not isinstance(cell, str) and not isinstance(cell, unicode):
+			cell = str(cell)
+		return cell
 
 	sizes = [0] * len(matrix[0])
 
 	for row in matrix:
 		index = 0
 		for cell in row:
-			if not cell:
-				cell = ''
-			sizes[index] = max(sizes[index], len(cell))
+			sizes[index] = max(sizes[index], len(getFormattedCell(cell)))
 			index += 1
 
 	table = []
@@ -613,6 +620,7 @@ def formatTable(matrix, columnSeparator = '  ', rowSeparator = '\n', filler = ' 
 		formattedRow = []
 		index = 0
 		for cell in row:
+			cell = getFormattedCell(cell)
 			formattedRow.append(cell + (filler * (sizes[index] - len(cell))))
 			index += 1
 
