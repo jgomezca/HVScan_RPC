@@ -78,13 +78,13 @@ def testLoadBalancer(hostname, keepCookies = defaultKeepCookies, delay = default
             except Exception:
                 pass
 
-            logging.info('%3s %s %s %s' % (counter, route, code, responseSampleLine))
+            logging.info('%3s %s %s %s', counter, route, code, responseSampleLine)
 
         except urllib2.HTTPError as e:
             code = e.code
             errors.setdefault(code, 0)
             errors[code] += 1
-            logging.info('HTTP Error: %s' % code)
+            logging.info('HTTP Error: %s', code)
 
         except Exception:
             # We may get urllib2 or httplib exceptions
@@ -131,7 +131,7 @@ def main():
     try:
         testLoadBalancer(arguments[0], **vars(options))
     except KeyboardInterrupt:
-        logging.info('Errors: %s' % errors)
+        logging.info('Errors: %s', errors)
 
     return 0
 

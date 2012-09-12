@@ -1008,7 +1008,7 @@ def httpd(arguments):
 
     output = makeHttpdConfiguration(options.frontend)
     with open(options.outputFile, 'w') as f:
-        logging.info('Generating: %s' % options.outputFile)
+        logging.info('Generating: %s', options.outputFile)
         f.write(output)
 
 
@@ -1038,7 +1038,7 @@ def vhosts(arguments):
         output = makeApacheConfiguration(options.frontend, virtualHost)
         outputFile = os.path.join(options.outputPath, '%s.conf' % virtualHost)
         with open(outputFile, 'w') as f:
-            logging.info('Generating: %s' % outputFile)
+            logging.info('Generating: %s', outputFile)
             f.write(output)
 
 
@@ -1066,7 +1066,7 @@ def shib(arguments):
 
     output = makeShibbolethConfiguration(options.frontend)
     with open(options.outputFile, 'w') as f:
-        logging.info('Generating: %s' % options.outputFile)
+        logging.info('Generating: %s', options.outputFile)
         f.write(output)
 
 

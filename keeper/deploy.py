@@ -147,7 +147,7 @@ def getDependencyTag(dependency):
 	'''
 
 	tag = open('services/dependencies/%s.tag' % dependency).read().strip()
-	logging.info('Dependency: %s %s' % (dependency, tag))
+	logging.info('Dependency: %s %s', dependency, tag)
 	return tag
 
 
@@ -187,7 +187,7 @@ def openPort(port):
 		execute('sudo /sbin/iptables -L -n | grep -F \'state NEW tcp dpt:%s\' | grep -F ACCEPT' % port)
 	except:
 		# Ask the user whether it should be opened
-		logging.warning('The port %s does not *seem* open.' % port)
+		logging.warning('The port %s does not *seem* open.', port)
 		command = 'sudo /sbin/iptables -I INPUT -p tcp -m state --state NEW -m tcp --dport %s -j ACCEPT' % port
 		answer = raw_input('\nWould you like to run:\n\n    %s\n\nto insert the rule in the top of the INPUT chain? [y/N] ' % command)
 		if answer == 'y':
@@ -228,7 +228,7 @@ def checkPackage(package, testCommand = None):
 		try:
 			execute('rpm -qi %s' % package)
 		except Exception as e:
-			logging.warning('Package %s is not installed.' % package)
+			logging.warning('Package %s is not installed.', package)
 			text = raw_input('Would you like to install it? [y/N] ')
 			if text != 'y':
 				raise e
@@ -418,7 +418,7 @@ def deploy(options):
 
 	# Switch to the proper user. After this, sudo should not be used
 	# for any other command and tokens will not be available.
-	logging.info('Setting user identity: %s (%s)' % (userName, userId))
+	logging.info('Setting user identity: %s (%s)', userName, userId)
 	os.setuid(userId)
 
 	# Chdir to the data directory

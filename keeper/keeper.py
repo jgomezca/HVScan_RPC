@@ -389,7 +389,7 @@ def _stop(service, sigkill = False):
 
 	# Service not running
 	if len(pids) == 0:
-		logging.warning('Tried to stop a service (%s) which is not running.' % service)
+		logging.warning('Tried to stop a service (%s) which is not running.', service)
 		return
 
 	for pid in pids:
@@ -549,7 +549,7 @@ def lsof(service):
 
 	# Service not running
 	if len(pids) == 0:
-		logging.warning('Tried to lsof a service (%s) which is not running.' % service)
+		logging.warning('Tried to lsof a service (%s) which is not running.', service)
 		return
 
 	subprocess.call('/usr/sbin/lsof -p %s' % ','.join(pids), shell = True)
@@ -566,7 +566,7 @@ def env(service):
 
 	# Service not running
 	if len(pids) == 0:
-		logging.warning('Tried to env a service (%s) which is not running.' % service)
+		logging.warning('Tried to env a service (%s) which is not running.', service)
 		return
 
 	for pid in pids:
@@ -587,7 +587,7 @@ def strace(service):
 
 	# Service not running
 	if len(pids) == 0:
-		logging.warning('Tried to strace a service (%s) which is not running.' % service)
+		logging.warning('Tried to strace a service (%s) which is not running.', service)
 		return
 
 	# Replacing the process avoids the traceback when issuing ^C
@@ -703,7 +703,7 @@ def enableJobs(service, refreshIfAlreadyEnabled = True):
 
 	if hasEnabledJobs(service):
 		if refreshIfAlreadyEnabled:
-			logging.warning('Jobs were already enabled for %s, refreshing them.' % service)
+			logging.warning('Jobs were already enabled for %s, refreshing them.', service)
 		else:
 			return
 
@@ -731,7 +731,7 @@ def disableJobs(service):
 	checkRegistered(service)
 
 	if not hasEnabledJobs(service):
-		logging.warning('Tried to disable jobs which were already disabled for %s.' % service)
+		logging.warning('Tried to disable jobs which were already disabled for %s.', service)
 		return
 
 	try:

@@ -135,7 +135,7 @@ def manageBackend(backendHostname, enable, virtualHost):
     # Remove .cern.ch if provided
     backendHostname = backendHostname.rstrip('.cern.ch')
 
-    logging.info('%s all workers for the %s virtual host in the %s backend...' % (action, virtualHost, backendHostname))
+    logging.info('%s all workers for the %s virtual host in the %s backend...', action, virtualHost, backendHostname)
 
     nonce = findNonce(balancerManagerUrl, virtualHost)
 
@@ -151,7 +151,7 @@ def manageBackend(backendHostname, enable, virtualHost):
     for balancer in status:
         for backend in status[balancer]:
             if backendHostname in backend and status[balancer][backend]['statusBool'] != enable:
-                logging.warn('The %s backend\'s state is still %s' % (backendHostname, enable))
+                logging.warn('The %s backend\'s state is still %s', backendHostname, enable)
 
 
 def main():
