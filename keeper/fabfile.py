@@ -37,7 +37,7 @@ def setup(tag):
     '''Clones the cmsDbWebServices.git repository and checks out the given tag.
     '''
 
-    run('rm -rf %s' % servicesRepository)
+    sudo('rm -rf %s' % servicesRepository)
     run('git clone -q %s %s' % (config.servicesRepository, servicesRepository))
     with cd(servicesRepository):
         run('git checkout -q %s' % tag)
