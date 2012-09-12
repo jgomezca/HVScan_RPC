@@ -299,7 +299,6 @@ def start(service, warnIfAlreadyStarted = True, sendEmail = True):
 		if service == 'keeper':
 			os.execlp('bash', 'bash', '-c', './keeper.py keep ' + extraCommandLine)
 		else:
-
 			run(service, config.servicesConfiguration[service]['filename'], extraCommandLine = extraCommandLine)
 
 	# Wait until the service has started
