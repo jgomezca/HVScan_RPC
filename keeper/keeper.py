@@ -841,10 +841,34 @@ Commands:
 ''' % ' '.join(services)
 
 
-def runCommand(command, arguments):
+def runDictionary(dictionary, arguments, prefixCommandName = ''):
+	'''Tries to run a command (given in the arguments list) looking it up
+	in the given dictionary which must map a command name to the function.
+
+	It supports subcommands which are represented as subdictionaries.
+	'''
+
+	commandName = arguments[0]
+	command = dictionary[commandName]
+	arguments = arguments[1:]
+
+	if isinstance(command, dict):
+		# This is a command with subcommands
+		if len(arguments) < 1 or arguments[0] not in command.keys():
+			raise Exception('Subcommand should be one one of: %s.' % ','.join(command.keys()))
+
+		return runDictionary(command, arguments, prefixCommandName + commandName + ' ')
+
+	runCommand(command, arguments, prefixCommandName + commandName)
+
+
+def runCommand(command, arguments, commandName = None):
 	'''Runs a command after parsing its arguments, building
 	the OptionParser from the function definition.
 	'''
+
+	if commandName is None:
+		commandName = command.__name__
 
 	argspec = inspect.getargspec(command)
 	defaults = argspec.defaults
@@ -857,7 +881,7 @@ def runCommand(command, arguments):
 		args = argspec.args[:-len(defaults)]
 
 	parser = optparse.OptionParser(usage =
-		'Usage: %%prog %s [options]' % ' '.join([command.__name__] + ['<%s>' % x for x in args])
+		'Usage: %%prog %s [options]' % ' '.join([commandName] + ['<%s>' % x for x in args])
 	)
 
 	i = -1
@@ -921,7 +945,7 @@ def main():
 		return -2
 
 	try:
-		return runCommand(commands[sys.argv[1]], sys.argv[2:])
+		return runDictionary(commands, sys.argv[1:])
 	except Exception as e:
 		logging.error(e)
 		return -1
