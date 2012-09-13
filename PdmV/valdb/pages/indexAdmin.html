@@ -398,7 +398,7 @@
 		    </div>
 
 		    <div class="span1">
-		      <span>%USERNAME</span>
+		      <span id='userNameButton'>%USERNAME</span>
 		      <input name = "logOutBTN" class="btn" type="button" value="Logout" onclick="logoutUser();"/>
 		    </div>
 		  </div>
@@ -1183,7 +1183,6 @@ for(i=0; i<keys.length; i++){
 function displayExtraInfo(obj){
     var stuff= obj.nextElementSibling;
     stuff.className="hideM";
-  //  var tmp = document.getElementsByTagName('detailInfoTab'); //SHOULD stay?
 }
 function hideExtraInfo(obj){
     var stuff = $(obj).parent().parent()[0];
@@ -1217,6 +1216,7 @@ var newStatComments = new Array();
 var newStatAuthors = new Array();
 var newStatLinks = new Array();
 
+var userNAME = document.getElementById("userNameButton").textContent;
 var errorInAdding = false;
 var errorMessage;
 
@@ -1414,8 +1414,8 @@ var statsEL = stasChild.lastElementChild;
 			});  
 		}
 	if (errorInAdding == false){
-	   msgSubject = "New release added"
-	   msgText = "New release: "+releasName +" was added. Please check it!"
+	   msgSubject = "New release "+releasName+" added"
+	   msgText = "New release: "+releasName +" was added by "+userNAME+". Please check it!"
 	   $.ajax({
 	     type: 'POST',
 	     url: 'sendMail',

@@ -767,15 +767,19 @@ def getAllUsersInfo(regexp, Session):
     session = Session()
     try:
         dict = {}
-        admin_list = []
+        admin_list = {}
         validator_dict = {}
+        email_dict = {}
         for i in session.query(Users_Table):
             if i.admin == True and i.user_name in user_list:
-                admin_list.append(i.user_name)
+                admin_list[i.user_name] = i.email
+                #admin_list.append(i.user_name)
             elif i.validator == True and i.user_name in user_list:
                 validator_dict[i.user_name] = None
+                email_dict[i.user_name] = i.email
         dict["admins"] = admin_list
         dict["validators"] = validator_dict
+        dict["validator_mail"] = email_dict
         
         validators = dict["validators"].keys()
         for validator in validators:

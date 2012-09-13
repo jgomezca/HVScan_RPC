@@ -17,14 +17,16 @@
 </style>
 <h1 style="font-variant: small-caps">{{ header }}</h1>
 <div class="container">
-<div class="subcategory"> <h3> ADMINS: 
+<div class="subcategory"> <h3> ADMINS: </h3>
 {% for admin in admins %}
-    {{ admin }}, 
+    <h4>{{ admin }}
+        email:
+        {{ admins[admin] }},
+    </h4>
 {% endfor %}
-</h3>
 <h3>VALIDATORS: </h3>
 {% for user_kind, user_data in users | dictsort(true)  %}
-	<div class="subcategory"><h3> {{ user_kind }} </h3>
+	<div class="subcategory"><h4> {{ user_kind }} email: {{validators_email[user_kind]}} </h4>
 	{% for category, category_data in user_data | dictsort(true) %}
 		<div class="version" style="margin-left:20px; font-weight: bold">{{ category }}</div>
 		<div style="margin-left:40px; font-weight: bold; font-family:TIMES NEW ROMAN">

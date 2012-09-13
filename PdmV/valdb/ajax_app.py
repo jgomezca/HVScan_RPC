@@ -39,7 +39,7 @@ class AjaxApp(object):
         }
 
     #MAILING_LIST = ["antanas.norkus@cern.ch", "jean-roch.vlimant@cern.ch", "dpiparo@cern.ch", "giovanni.franzoni@cern.ch", "hn-cms-relval@cern.ch"]
-    MAILING_LIST = ["antanas.norkus@cern.ch"]
+    MAILING_LIST = ["antanas.norkus@cern.ch", "jean-roch.vlimant@cern.ch", "dpiparo@cern.ch", "giovanni.franzoni@cern.ch", "hn-cms-hnTest@cern.ch"]
     VALIDATION_STATUS = "VALIDATION_STATUS"
     COMMENTS = "COMMENTS"
     LINKS = "LINKS"
@@ -136,7 +136,7 @@ class AjaxApp(object):
             returnedInformation = {}
             mime_MSG_id = mailID
             #mime_MSG_id = email.utils.make_msgid()
-            msgSubject = "New release added"
+            msgSubject = "New release "+relName+" added"
             for index in range(len(statusNames)):
                 tmpDictionary = {}
                 tmpDictionary[VALIDATION_STATUS] = statusValues[index]
@@ -180,17 +180,19 @@ class AjaxApp(object):
         msgSubject = "Re: "+returnedStatusValueOld[2]+""
         returnedInformation = changeStatus(cat, subCat, relName, statusKind, stateValue, newComment, comentAuthor, newLinks,Session, new_message_ID, msgSubject)
         if returnedInformation == "True":
-            msgText = """Release: %s In category: %s In subcategory: %s In column: %s Has Changed: From status: %s To status: %s By: %s Comment: %s
-                """ % (relName.upper(), cat.upper(), subCat.upper(), statusKind.upper(), returnedStatusValueOld[0].upper(), stateValue.upper(), comentAuthor.upper(), newComment)
+            msgText = """Release: %s
+In category: %s
+In subcategory: %s 
+validation for: %s
+Has Changed: From status: %s To status: %s
+By: %s
+Comment: %s
+""" % (relName.upper(), cat.upper(), subCat.upper(), statusKind.upper(), returnedStatusValueOld[0].upper(), stateValue.upper(), comentAuthor.upper(), newComment)
             self.sendMailOnChanges(msgText, msgSubject, returnedStatusValueOld[1], new_message_ID, userName)
             info = "Release information updated successfuly"
             cherrypy.response.headers['Content-Type'] = 'application/json'
             return simplejson.dumps([info])
         else:
-            testlog = open('bump.log', 'a')
-            testlog.write("update -> else{}\n")
-            testlog.write(json.dumps(returnedInformation)+"\n")
-            testlog.close()
             cherrypy.response.headers['Content-Type'] = 'application/json'
             return simplejson.dumps([returnedInformation])
 
@@ -255,9 +257,10 @@ class AjaxApp(object):
         title = 'PdmV Users List'
         header = 'Selected Users:'
         users = getAllUsersInfo(userName, Session)
+        print users
         users = simplejson.loads(users)
         try:
-            return template.render(title=title, header=header, users=users['validators'], admins=users['admins'])
+            return template.render(title=title, header=header, users=users['validators'], admins=users['admins'], validators_email=users["validator_mail"])
         except Exception as e:
             return str(e)
 
@@ -295,7 +298,8 @@ class AjaxApp(object):
             msg['In-Reply-To'] = org_message_ID
             msg['References'] = org_message_ID
 
-        send_from = "PdmV.ValDb@cern.ch"
+        #send_from = "PdmV.ValDb@cern.ch"
+        send_from = "antanas.norkus@cern.ch"
         msg['From'] = send_from
         send_to = self.MAILING_LIST
         if username != False:
@@ -370,7 +374,8 @@ class AjaxApp(object):
             msg['In-Reply-To'] = org_message_ID
             msg['References'] = org_message_ID
 
-        send_from = "PdmV.ValDb@gmail.com"
+       # send_from = "PdmV.ValDb@cern.ch"
+        send_from = "antanas.norkus@cern.ch"
         msg['From'] = send_from
         send_to = self.MAILING_LIST
         if username != False:
