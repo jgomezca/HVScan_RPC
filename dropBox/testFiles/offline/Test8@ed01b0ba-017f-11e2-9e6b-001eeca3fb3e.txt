@@ -1,0 +1,9 @@
+{
+    "destDB": "sqlite_file:/tmp/test.db", 
+    "destTag": "Test8", 
+    "exportTo": "offline", 
+    "inputTag": "HcalRecoParams_v4.0_offline.db", 
+    "since": 164400, 
+    "timeType": "runnumber", 
+    "usertext": "Test 8: many IOVs, since in the metadata in the middle of the IOV sequence"
+}

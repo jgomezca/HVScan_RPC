@@ -1,0 +1,8 @@
+{
+    "destDB": "sqlite_file:/tmp/test.db", 
+    "destTag": "Test1", 
+    "exportTo": "offline", 
+    "inputTag": "RunInfo_v1_mc", 
+    "timeType": "runnumber", 
+    "usertext": "Test 1: one IOV 1-inf, no since in the metadata"
+}

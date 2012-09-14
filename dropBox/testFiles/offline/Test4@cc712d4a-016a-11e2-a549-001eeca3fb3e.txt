@@ -1,0 +1,9 @@
+{
+    "destDB": "sqlite_file:/tmp/test.db", 
+    "destTag": "Test4", 
+    "exportTo": "offline", 
+    "inputTag": "EcalTPGLinearizationConst_test", 
+    "since": 128564, 
+    "timeType": "runnumber", 
+    "usertext": "Test 4: one IOV not starting from 1, smaller since in the metadata"
+}
