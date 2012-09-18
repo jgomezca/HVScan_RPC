@@ -187,7 +187,9 @@ def getReleaseShortInfo(cat, sub_cat, rel_name, Session):
                                                 filter(Releases_Table.subcategory == sub_cat).\
                                                 filter(Releases_Table.release_name == rel_name):
             for j in session.query(Status_Table).filter(Status_Table.id == i.id):
-                info_dict[i.status_kind] = j.validation_status
+                info_dict[i.status_kind] = []
+                info_dict[i.status_kind].append(j.validation_status)
+                info_dict[i.status_kind].append(j.comments)
                 info_dict["RelMon"] = j.RELMON_URL
         session.close()
         return json.dumps(info_dict)
@@ -625,9 +627,7 @@ def checkValidator(user_name, Session):
 # Checks validator rights to modify release status
 def checkValidatorRights(cat, sub_cat, status_kind, user_name, Session):
     user_name = user_name.lower()
-    print status_kind
     status_kind = status_kind.upper()
-    print status_kind
     session = Session()
     try:
         for i in session.query(User_Rights_Table).filter(User_Rights_Table.category == cat).\

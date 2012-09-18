@@ -257,7 +257,6 @@ Comment: %s
         title = 'PdmV Users List'
         header = 'Selected Users:'
         users = getAllUsersInfo(userName, Session)
-        print users
         users = simplejson.loads(users)
         try:
             return template.render(title=title, header=header, users=users['validators'], admins=users['admins'], validators_email=users["validator_mail"])
@@ -352,7 +351,7 @@ Comment: %s
         if service.settings['productionLevel'] == 'private':
             fullname = pwd.getpwuid(os.getuid())[0]
         else:
-            fullname = service.getUsername()
+            fullname = service.getFullName()
         return fullname
 
         

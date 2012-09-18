@@ -4,14 +4,16 @@
 	<head>
 		<title>The PdmV Validation DB</title>
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-		<link href="media/bootstrap.css" rel="stylesheet">
-		<link href="media/bootstrap-responsive.css" rel="stylesheet">
+        <link href="/libs/bootstrap/2.1.0/css/bootstrap.min.css" rel="stylesheet">
+        <link href="/libs/bootstrap/2.1.0/css/bootstrap-responsive.css" rel="stylesheet">
 		<link href="media/menu.css" rel="stylesheet">
-		<script type="text/javascript" src="media/jquery-1.7.1.js"></script>
+    <script type="text/javascript" src="/libs/jquery-1.7.2.min.js" ></script>
+    <script type="text/javascript" src="/libs/bootstrap/2.1.0/js/bootstrap.min.js" ></script>
+
 
 <!--Modals for pop-up information-->
 <!--Default modal for showing information-->
-          <div id="myModal" class="modal hide fade">
+          <div id="myModal" class="modal hide fade" style="max-height:500px;">
 	    <div class="modal-header">
 	      <h2>Release: <text id="modalReleaseName"></text></h2>
 	      <h4><text id="modalHeaderTree"></text><h4>
@@ -24,13 +26,13 @@
 	    </div>
 	    <div class="modal-footer">
 	      <p> Date: <text id = "comdate"></text></p>
-	      <a href="#" class="btn btn-primary" data-dismiss="modal" >Close</a>
 	      <a onclick="editModalInfo();" data-dismiss="modal" class="btn btn-danger" id="btnEditInfo"> Edit Information </a>
+	      <a href="#" class="btn btn-primary" data-dismiss="modal" >Close</a>
 	    </div>
 	  </div>
 
 <!--MODAL to edit available release stats information-->
-          <div id="editModal" class="modal hide fade">
+          <div id="editModal" class="modal hide fade" style="max-height:500px;">
 	    <div class="modal-header">
 	      <h2>Release: <text type="text" id="modalEditReleaseName"/><br/></h2>
 	      <h4> <text id="editModalHeaderTree"> </text><h4>
@@ -52,8 +54,8 @@
 		<p>Links: </br><textarea id="modalEditLinks" style="width: 362px; height:60px;"></textarea> </p>
 	    </div>
 	      <div class="modal-footer" id="editModalFooter">
-	      <a onclick="clearEditModalValues();" class="btn btn-primary" data-dismiss="modal" >Close</a>
 	      <input id="btnSave" class="btn" type="submit" value="Save information" onclick="notEmpty();" />
+	       <a onclick="clearEditModalValues();" class="btn btn-primary" data-dismiss="modal" >Close</a>
 	    </div>
 	  </div>
 <!--Modals for pop-up information-->
@@ -83,7 +85,7 @@
 			<div class="span8">
 				<div>
 					<label style="font-family:verdana; font-size:18px"><br></label>
-					<form id="searchform" action="#" method="post">
+					<form id="searchform" action="#" method="post" class="form-inline">
 							<label for="releaseName" style="display:inline; font-family:verdana; font-size:18px">Select one release  </label>
 							<input type="text" id="releaseName" />
 							<input class="btnOK" type="submit" value="OK" onclick="clearSelectList();"/>
@@ -124,191 +126,227 @@
 				    </ul>
 				</div>
 				<div>
+				<input class="btnOK" type="submit" value="Show All" onclick="showAllMenus();"/>
 				<div>
-					<a href="javascript:showMenu('RECO')" class="Group">Reconstruction</a>
+                        <table border='0'>
+                            <tbody>
+                                <td style='margin:0; padding:0;'>
+                                    <a href="javascript:showMenu('RECO')" class="Group">Reconstruction </a>
+                                </td>
+                                <td style='margin:0; padding:0;'>
+                                    <input class="btnOK" type="submit" value="Show All" onclick="showRecoMenu();" style='width=100%;height=100%; margin:0; padding:0;'/>
+                                </td>
+                            </tbody>
+                        </table>
 						<div class="showM" id="RECO">
 							<a class="SubCategory" href="javascript:showMenu('iRData');"> Data</a>
 							<div class="showM" id="iRData">
 								<table name = "infoTable" class="table table-striped table-bordered table-condensed" style="border-color:black;" id= "RData" border="0">
 									<tbody>
-									<th>Release Name</th>
-									<th>Tk</th>
-									<th>Ecal</th>
-									<th>Hcal</th>
-									<th>DT</th>
-									<th>CSC</th>
-									<th>RPC</th>
-									<th>Tracking</th>
-									<th>Electron</th>
-									<th>Photon</th>
-									<th>Muon</th>
-									<th>Jet</th>
-									<th>MET</th>
-									<th>BTag</th>
-									<th>Tau</th>
-									<th><b>Summary</th>
-									<th>RelMon</th>
+									<th style="font-size: 8pt">Release Name</th>
+									<th style="font-size: 8pt">Tracker</th>
+									<th style="font-size: 8pt">Ecal</th>
+									<th style="font-size: 8pt">Hcal</th>
+									<th style="font-size: 8pt">DT</th>
+									<th style="font-size: 8pt">CSC</th>
+									<th style="font-size: 8pt">RPC</th>
+									<th style="font-size: 8pt">Tracking</th>
+									<th style="font-size: 8pt">Electron</th>
+									<th style="font-size: 8pt">Photon</th>
+									<th style="font-size: 8pt">Muon</th>
+									<th style="font-size: 8pt">Jet</th>
+									<th style="font-size: 8pt">MET</th>
+									<th style="font-size: 8pt">bTag</th>
+									<th style="font-size: 8pt">Tau</th>
+									<th style="font-size: 8pt"><b>Summary</th>
+									<th style="font-size: 8pt">RelMon</th>
 									</tbody>
 								</table>
 							</div>
 							<a href="javascript:showMenu('iRFull')" class="SubCategory"> FullSim</a>
 							<div class="showM" id="iRFull">
 								<table name= "infoTable" class="table table-striped table-bordered table-condensed" style="border-color:black;" id='RFull' border="0">
-									<tr>
-									<th>Release Name</th>
-									<th>Tk</th>
-									<th>Ecal</th>
-									<th>Hcal</th>
-									<th>DT</th>
-									<th>CSC</th>
-									<th>RPC</th>
-									<th>Tracking</th>
-									<th>Electron</th>
-									<th>Photon</th>
-									<th>Muon</th>
-									<th>Jet</th>
-									<th>MET</th>
-									<th>BTag</th>
-									<th>Tau</th>
-									<th>Summary</th>
-									<th>RelMon</th>
+									<tbody>
+									<th style="font-size: 8pt">Release Name</th>
+									<th style="font-size: 8pt">Tracker</th>
+									<th style="font-size: 8pt">Ecal</th>
+									<th style="font-size: 8pt">Hcal</th>
+									<th style="font-size: 8pt">DT</th>
+									<th style="font-size: 8pt">CSC</th>
+									<th style="font-size: 8pt">RPC</th>
+									<th style="font-size: 8pt">Tracking</th>
+									<th style="font-size: 8pt">Electron</th>
+									<th style="font-size: 8pt">Photon</th>
+									<th style="font-size: 8pt">Muon</th>
+									<th style="font-size: 8pt">Jet</th>
+									<th style="font-size: 8pt">MET</th>
+									<th style="font-size: 8pt">bTag</th>
+									<th style="font-size: 8pt">Tau</th>
+									<th style="font-size: 8pt">Summary</th>
+									<th style="font-size: 8pt">RelMon</th>
+									</tbody>
 								</table>
 							</div>
 							<a href="javascript:showMenu('iRFast')" class="SubCategory"> FastSim</a>
 							<div class="showM" id="iRFast">
 								<table name = "infoTable" class="table table-striped table-bordered table-condensed" style="border-color:black;" id='RFast' border="0">
-									<tr>
-									<th>Release Name</th>
-									<th>Tk</th>
-									<th>Ecal</th>
-									<th>Hcal</th>
-									<th>DT</th>
-									<th>CSC</th>
-									<th>RPC</th>
-									<th>Tracking</th>
-									<th>Electron</th>
-									<th>Photon</th>
-									<th>Muon</th>
-									<th>Jet</th>
-									<th>MET</th>
-									<th>BTag</th>
-									<th>Tau</th>
-									<th>Summary</th>
-									<th>RelMon</th>
+									<tbody>
+									<th style="font-size: 8pt">Release Name</th>
+									<th style="font-size: 8pt">Tracker</th>
+									<th style="font-size: 8pt">Ecal</th>
+									<th style="font-size: 8pt">Hcal</th>
+									<th style="font-size: 8pt">DT</th>
+									<th style="font-size: 8pt">CSC</th>
+									<th style="font-size: 8pt">RPC</th>
+									<th style="font-size: 8pt">Tracking</th>
+									<th style="font-size: 8pt">Electron</th>
+									<th style="font-size: 8pt">Photon</th>
+									<th style="font-size: 8pt">Muon</th>
+									<th style="font-size: 8pt">Jet</th>
+									<th style="font-size: 8pt">MET</th>
+									<th style="font-size: 8pt">bTag</th>
+									<th style="font-size: 8pt">Tau</th>
+									<th style="font-size: 8pt">Summary</th>
+									<th style="font-size: 8pt">RelMon</th>
+									</tbody>
 								</table>
 							</div>
 						</div>
-					<a href="javascript:showMenu('HLT')" class="Group">HLT</a>
+                        <table border='0'>
+                            <tbody>
+                                <td style='margin:0; padding:0;'>
+                                    <a href="javascript:showMenu('HLT')" class="Group">HLT</a>
+                                </td>
+                                <td style='margin:0; padding:0;'>
+                                    <input class="btnOK" type="submit" value="Show All" onclick="showHLTMenu();" style='width=100%;height=100%; margin:0; padding:0;'/>
+                                </td>
+                            </tbody>
+                        </table>
 						<div class="showM" id="HLT">
 							<a href="javascript:showMenu('iHData')" class="SubCategory"> Data</a>
 							<div class="showM" id="iHData">
 								<table name="infoTable" class="table table-striped table-bordered table-condensed" style="border-color:black;" id='HData' border="0">
-									<tr>
-									<th>Release Name</th>
-									<th>Electron</th>
-									<th>Photon</th>
-									<th>Muon</th>
-									<th>Jet</th>
-									<th>MET</th>
-									<th>Tau</th>
-									<th>Top</th>
-									<th>Higgs</th>
-									<th>HeavyFlavor</th>
-									<th>Susy</th>
-									<th>Exotica</th>
-									<th>Summary</th>
-									<th>RelMon</th>
+									<tbody>
+									<th style="font-size: 8pt">Release Name</th>
+									<th style="font-size: 8pt">Electron</th>
+									<th style="font-size: 8pt">Photon</th>
+									<th style="font-size: 8pt">Muon</th>
+									<th style="font-size: 8pt">Jet</th>
+									<th style="font-size: 8pt">MET</th>
+									<th style="font-size: 8pt">Tau</th>
+									<th style="font-size: 8pt">Top</th>
+									<th style="font-size: 8pt">Higgs</th>
+									<th style="font-size: 8pt">HeavyFlavor</th>
+									<th style="font-size: 8pt">Susy</th>
+									<th style="font-size: 8pt">Exotica</th>
+									<th style="font-size: 8pt">Summary</th>
+									<th style="font-size: 8pt">RelMon</th>
+									</tbody>
 								</table>
 							</div>
 							<a href="javascript:showMenu('iHFull')" class="SubCategory"> FullSim</a>
 								<div class="showM" id="iHFull">
 									<table name="infoTable" class="table table-striped table-bordered table-condensed" style="border-color:black;" id='HFull' border="0">
-										<tr>
-										<th>Release Name</th>
-										<th>Electron</th>
-										<th>Photon</th>
-										<th>Muon</th>
-										<th>Jet</th>
-										<th>MET</th>
-										<th>Tau</th>
-										<th>Top</th>
-										<th>Higgs</th>
-										<th>HeavyFlavor</th>
-										<th>Susy</th>
-										<th>Exotica</th>
-										<th>Summary</th>
-										<th>RelMon</th>
+										<tbody>
+										<th style="font-size: 8pt">Release Name</th>
+										<th style="font-size: 8pt">Electron</th>
+										<th style="font-size: 8pt">Photon</th>
+										<th style="font-size: 8pt">Muon</th>
+										<th style="font-size: 8pt">Jet</th>
+										<th style="font-size: 8pt">MET</th>
+										<th style="font-size: 8pt">Tau</th>
+										<th style="font-size: 8pt">Top</th>
+										<th style="font-size: 8pt">Higgs</th>
+										<th style="font-size: 8pt">HeavyFlavor</th>
+										<th style="font-size: 8pt">Susy</th>
+										<th style="font-size: 8pt">Exotica</th>
+										<th style="font-size: 8pt">Summary</th>
+										<th style="font-size: 8pt">RelMon</th>
+										</tbody>
 									</table>
 								</div>	
 							<a href="javascript:showMenu('iHFast')" class="SubCategory"> FastSim</a>
 								<div class="showM" id="iHFast">
 									<table name="infoTable" class="table table-striped table-bordered table-condensed" style="border-color:black;" id='HFast' border="0">
-										<tr>
-										<th>Release Name</th>
-										<th>Electron</th>
-										<th>Photon</th>
-										<th>Muon</th>
-										<th>Jet</th>
-										<th>MET</th>
-										<th>Tau</th>
-										<th>Top</th>
-										<th>Higgs</th>
-										<th>HeavyFlavor</th>
-										<th>Susy</th>
-										<th>Exotica</th>
-										<th>Summary</th>
-										<th>RelMon</th>
+										<tbody>
+										<th style="font-size: 8pt">Release Name</th>
+										<th style="font-size: 8pt">Electron</th>
+										<th style="font-size: 8pt">Photon</th>
+										<th style="font-size: 8pt">Muon</th>
+										<th style="font-size: 8pt">Jet</th>
+										<th style="font-size: 8pt">MET</th>
+										<th style="font-size: 8pt">Tau</th>
+										<th style="font-size: 8pt">Top</th>
+										<th style="font-size: 8pt">Higgs</th>
+										<th style="font-size: 8pt">HeavyFlavor</th>
+										<th style="font-size: 8pt">Susy</th>
+										<th style="font-size: 8pt">Exotica</th>
+										<th style="font-size: 8pt">Summary</th>
+										<th style="font-size: 8pt">RelMon</th>
+										</tbody>
 									</table>
 								</div>
 						</div>
-					<a href="javascript:showMenu('PAGs')" class="Group">PAGs</a>
+                        <table border='0'>
+                            <tbody>
+                                <td style='margin:0; padding:0;'>
+                                    <a href="javascript:showMenu('PAGs')" class="Group">PAGs</a>
+                                </td>
+                                <td style='margin:0; padding:0;'>
+                                    <input class="btnOK" type="submit" value="Show All" onclick="showPAGSMenu();" style='width=100%;height=100%; margin:0; padding:0;'/>
+                                </td>
+                            </tbody>
+                        </table>
 						<div class="showM" id="PAGs">
 						<a href="javascript:showMenu('iPData')" class="SubCategory"> Data</a>
 							<div class="showM" id="iPData">
 								<table name="infoTable" class="table table-striped table-bordered table-condensed" style="border-color:black;" id='PData' border="0">
-									<tr>
-									<th>Release Name</th>
-									<th>SMP</th>
-									<th>Higgs</th>
-									<th>Top</th>
-									<th>Susy</th>
-									<th>Exotica</th>
-									<th>B</th>
-									<th>Fwd</th>
-									<th>Summary</th>
-									<th>RelMon</th>
+									<tbody>
+									<th style="font-size: 8pt">Release Name</th>
+									<th style="font-size: 8pt">SMP</th>
+									<th style="font-size: 8pt">Higgs</th>
+									<th style="font-size: 8pt">Top</th>
+									<th style="font-size: 8pt">Susy</th>
+									<th style="font-size: 8pt">Exotica</th>
+									<th style="font-size: 8pt">B</th>
+									<th style="font-size: 8pt">Fwd</th>
+									<th style="font-size: 8pt">Summary</th>
+									<th style="font-size: 8pt">RelMon</th>
+									</tbody>
 								</table>
 							</div>
 						<a href="javascript:showMenu('iPFull')" class="SubCategory"> FullSim</a>
 							<div class="showM" id="iPFull">
 								<table name="infoTable" class="table table-striped table-bordered table-condensed" style="border-color:black;" id='PFull' border="0">
-									<tr>
-									<th>Release Name</th>
-									<th>SMP</th>
-									<th>Higgs</th>
-									<th>Top</th>
-									<th>Susy</th>
-									<th>Exotica</th>
-									<th>B</th>
-									<th>Fwd</th>
-									<th>Summary</th>
-									<th>RelMon</th>
+									<tbody>
+									<th style="font-size: 8pt">Release Name</th>
+									<th style="font-size: 8pt">SMP</th>
+									<th style="font-size: 8pt">Higgs</th>
+									<th style="font-size: 8pt">Top</th>
+									<th style="font-size: 8pt">Susy</th>
+									<th style="font-size: 8pt">Exotica</th>
+									<th style="font-size: 8pt">B</th>
+									<th style="font-size: 8pt">Fwd</th>
+									<th style="font-size: 8pt">Summary</th>
+									<th style="font-size: 8pt">RelMon</th>
+									</tbody>
 								</table>
 							</div>
 						<a href="javascript:showMenu('iPFast')" class="SubCategory"> FastSim</a>
 							<div class="showM" id="iPFast">
 								<table name="infoTable" class="table table-striped table-bordered table-condensed" style="border-color:black;" id='PFast' border="0">
-									<tr>
-									<th>Release Name</th>
-									<th>SMP</th>
-									<th>Higgs</th>
-									<th>Top</th>
-									<th>Susy</th>
-									<th>Exotica</th>
-									<th>B</th>
-									<th>Fwd</th>
-									<th>Summary</th>
-									<th>RelMon</th>
+									<tbody>
+									<th style="font-size: 8pt">Release Name</th>
+									<th style="font-size: 8pt">SMP</th>
+									<th style="font-size: 8pt">Higgs</th>
+									<th style="font-size: 8pt">Top</th>
+									<th style="font-size: 8pt">Susy</th>
+									<th style="font-size: 8pt">Exotica</th>
+									<th style="font-size: 8pt">B</th>
+									<th style="font-size: 8pt">Fwd</th>
+									<th style="font-size: 8pt">Summary</th>
+									<th style="font-size: 8pt">RelMon</th>
+									</tbody>
 								</table>
 							</div>
 						</div>
@@ -321,7 +359,7 @@
 					<select id = "releaseList" style="width:300px">
 					<option value="------">------</option>
 					</select>
-					<img src="media/add_icon.png" alt="Add" style="vertical-align: center;" onclick="selectList($(this).prev().get(0));" />
+					<img src="media/add_icon.png" alt="Add" style="vertical-align: center; margin-bottom:9px;" onclick="selectList($(this).prev().get(0));" />
 					<label style="font-family:verdana; font-size:18px"><br></label>
 					<label style="font-family:verdana; font-size:18px">Selected releases:</label>
 					<br>
@@ -591,26 +629,42 @@ function createdinamictable(tbody, data1, releaseName, subCat){
 	headValue = $(tmpchild).children()[0];
 	var ilgiauchild = $(headValue).children();
 	var key = ilgiauchild[j].textContent.toUpperCase();
-	text = data1[key];
+	if (key == "TRACKER"){
+       key = "TK"
+    }
+    text = data1[key][0];
+    comment = data1[key][1];
 	var src
 	switch(text){
 	case "OK" : 
-	      src =  "<img src='media/choice-yes.gif'/>";
+          src = "<a href='#' rel='tooltip' title='"+comment +"'>"
+          src +=  "<img src='media/choice-yes.gif'/>";
+          src += "</a>"
 	      break;
 	case "FAILURE":
-	      src =  "<img src='media/choice-no.gif'/>";
+          src = "<a href='#' rel='tooltip' title='"+comment +"'>"
+          src +=  "<img src='media/choice-no.gif'/>";
+          src += "</a>"
 	      break;
 	case "CHANGES EXPECTED":
-	      src =  "<img src='media/target.gif'/>";
+          src = "<a href='#' rel='tooltip' title='"+comment +"'>"
+          src +=  "<img src='media/target.gif'/>";
+          src += "</a>"
 	      break;
 	case "IN PROGRESS":
-	      src =  "<img src='media/wip.gif'/>";
+          src = "<a href='#' rel='tooltip' title='"+comment +"'>"
+          src +=  "<img src='media/wip.gif'/>";
+          src += "</a>"
 	      break;
 	case "OK TO BE SIGNED-OFF BY THE VALIDATORS":
-	      src =  "<img src='media/thumbs-up.gif'/>";
+          src = "<a href='#' rel='tooltip' title='"+comment +"'>"
+          src +=  "<img src='media/thumbs-up.gif'/>";
+          src += "</a>"
 	      break;
 	case "FAILURE TO BE SIGNED-OFF BY THE VALIDATORS":
-	      src =  "<img src='media/thumbs-down.gif'/>";
+          src = "<a href='#' rel='tooltip' title='"+comment +"'>"
+          src +=  "<img src='media/thumbs-down.gif'/>";
+          src += "</a>"
 	      break;
 	default:
 	      src = "<img src='media/minus.gif'/>";
@@ -643,6 +697,9 @@ function createdinamictable(tbody, data1, releaseName, subCat){
 <script>
 function showModal(subcategory, obj){
 	var statName = obj.value;
+	if (statName == "TK"){
+	    statName = "TRACKER"
+	}
 	document.getElementById('valStatName').textContent = ("name", statName);
 	var rn = $(obj).parent()[0];
 	var releaseName = $(rn).children()[0].textContent;
@@ -822,6 +879,9 @@ function editModalInfo(){
     var obj = document.getElementById('modalHeaderTree').textContent;
 
     var statusName = document.getElementById('valStatName').textContent;
+    if (statusName == "TRACKER"){
+        statusName = "TK"
+    }
     var category = obj.substring(0, obj.indexOf('/'));
     var subCategory = obj.substring(obj.indexOf('/')+1, obj.length);
 
@@ -920,6 +980,9 @@ function clearEditModal(){
   var tmpSubCatVal = cat.substring(cat.indexOf('/')+1,cat.indexOf('/')+5);
   cat = tmpCategoryName + tmpSubCatVal;  
   var statusName = document.getElementById('valStatName').textContent;
+  if (statusName == "TRACKER"){
+      statusName = "TK"
+  }
   var userName = "";
   var userFullName = "";
   $.ajax({
@@ -1171,8 +1234,168 @@ function showMenuURL(category){
 	whichcategory.className="showM";
     }
 }
-  function logoutUser(){
+function logoutUser(){
     window.location.replace('https://login.cern.ch/adfs/ls/?wa=wsignout1.0');
+}
+function showRecoMenu(){
+    if (document.getElementById('RECO').className == 'hideM'){
+        if (document.getElementById('iRData').className == 'hideM'){
+            if (document.getElementById('iRFull').className == 'hideM'){
+                if (document.getElementById('iRFast').className == 'hideM'){
+                    showMenu('RECO');
+                    showMenu('iRData');
+                    showMenu('iRFast');
+                    showMenu('iRFull');
+                    return false;
+                }
+            }
+        }   
+    }
+    if (document.getElementById('RECO').className == 'showM'){
+    showMenu('RECO')
+    }
+    if (document.getElementById('iRData').className == 'showM'){
+    showMenu('iRData')
+    }
+    if (document.getElementById('iRFull').className == 'showM'){
+    showMenu('iRFull')
+    }
+    if (document.getElementById('iRFast').className == 'showM'){
+    showMenu('iRFast')
+    }
+    return true;
+}
+function showHLTMenu(){
+    if (document.getElementById('HLT').className == 'hideM'){
+        if (document.getElementById('iHData').className == 'hideM'){
+            if (document.getElementById('iHFull').className == 'hideM'){
+                if (document.getElementById('iHFast').className == 'hideM'){
+                    showMenu('HLT');
+                    showMenu('iHData');
+                    showMenu('iHFast');
+                    showMenu('iHFull');
+                    return false;
+                }
+            }
+        }   
+    }
+    if (document.getElementById('HLT').className == 'showM'){
+    showMenu('HLT')
+    }
+    if (document.getElementById('iHData').className == 'showM'){
+    showMenu('iHData')
+    }
+    if (document.getElementById('iHFull').className == 'showM'){
+    showMenu('iHFull')
+    }
+    if (document.getElementById('iHFast').className == 'showM'){
+    showMenu('iHFast')
+    }
+    return true;
+}
+function showPAGSMenu(){
+    if (document.getElementById('PAGs').className == 'hideM'){
+        if (document.getElementById('iPData').className == 'hideM'){
+            if (document.getElementById('iPFull').className == 'hideM'){
+                if (document.getElementById('iPFast').className == 'hideM'){
+                    showMenu('PAGs');
+                    showMenu('iPData');
+                    showMenu('iPFast');
+                    showMenu('iPFull');
+                    return false;
+                }
+            }
+        }   
+    }
+    if (document.getElementById('PAGs').className == 'showM'){
+    showMenu('PAGs')
+    }
+    if (document.getElementById('iPData').className == 'showM'){
+    showMenu('iPData')
+    }
+    if (document.getElementById('iPFull').className == 'showM'){
+    showMenu('iPFull')
+    }
+    if (document.getElementById('iPFast').className == 'showM'){
+    showMenu('iPFast')
+    }
+    return true;
+}
+function showAllMenus(){
+    if (document.getElementById('RECO').className == 'hideM'){
+        if (document.getElementById('iRData').className == 'hideM'){
+            if (document.getElementById('iRFull').className == 'hideM'){
+                if (document.getElementById('iRFast').className == 'hideM'){
+      if (document.getElementById('HLT').className == 'hideM'){
+        if (document.getElementById('iHData').className == 'hideM'){
+            if (document.getElementById('iHFull').className == 'hideM'){
+                if (document.getElementById('iHFast').className == 'hideM'){
+      if (document.getElementById('PAGs').className == 'hideM'){
+        if (document.getElementById('iPData').className == 'hideM'){
+            if (document.getElementById('iPFull').className == 'hideM'){
+                if (document.getElementById('iPFast').className == 'hideM'){
+                    showMenu('RECO');
+                    showMenu('iRData');
+                    showMenu('iRFast');
+                    showMenu('iRFull');
+                                        showMenu('HLT');
+                    showMenu('iHData');
+                    showMenu('iHFast');
+                    showMenu('iHFull');
+                                        showMenu('PAGs');
+                    showMenu('iPData');
+                    showMenu('iPFast');
+                    showMenu('iPFull');
+                    return false;
+                }
+              }
+           }
+        }
+                 }
+              }
+           }
+        }
+                 }
+              }
+           }
+        }
+    if (document.getElementById('RECO').className == 'showM'){
+    showMenu('RECO')
+    }
+    if (document.getElementById('iRData').className == 'showM'){
+    showMenu('iRData')
+    }
+    if (document.getElementById('iRFull').className == 'showM'){
+    showMenu('iRFull')
+    }
+    if (document.getElementById('iRFast').className == 'showM'){
+    showMenu('iRFast')
+    }
+        if (document.getElementById('HLT').className == 'showM'){
+    showMenu('HLT')
+    }
+    if (document.getElementById('iHData').className == 'showM'){
+    showMenu('iHData')
+    }
+    if (document.getElementById('iHFull').className == 'showM'){
+    showMenu('iHFull')
+    }
+    if (document.getElementById('iHFast').className == 'showM'){
+    showMenu('iHFast')
+    }
+        if (document.getElementById('PAGs').className == 'showM'){
+    showMenu('PAGs')
+    }
+    if (document.getElementById('iPData').className == 'showM'){
+    showMenu('iPData')
+    }
+    if (document.getElementById('iPFull').className == 'showM'){
+    showMenu('iPFull')
+    }
+    if (document.getElementById('iPFast').className == 'showM'){
+    showMenu('iPFast')
+    }
+    return true;
 }
 </script>
 </html>
