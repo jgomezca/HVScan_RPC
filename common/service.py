@@ -187,6 +187,18 @@ def getURL():
 
 # Utility functions
 
+def onlyPrivate(f):
+	'''Decorator that only defines a function if the productionLevel
+	is private.
+
+	Useful to have testing methods in CherryPy, only available
+	in private instances.
+	'''
+
+	if settings['productionLevel'] == 'private':
+		return f
+
+
 def getPrettifiedJSON(data, sortKeys = True):
 	'''Returns prettified JSON (valid and easily read JSON).
 	'''
