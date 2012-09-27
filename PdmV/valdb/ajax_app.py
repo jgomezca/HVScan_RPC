@@ -177,14 +177,20 @@ class AjaxApp(object):
         #returnedStatusValueOld - tuple: 0 is old status, 1 is old messageID
         #make new messageID
         new_message_ID = email.utils.make_msgid()
-        msgSubject = "Re: "+returnedStatusValueOld[2]+""
-        returnedInformation = changeStatus(cat, subCat, relName, statusKind, stateValue, newComment, comentAuthor, newLinks,Session, new_message_ID, msgSubject)
+        if statusKind == "TK":
+            msgSubject = ">TRACKER< "+subCat + "< " + returnedStatusValueOld[2]  ##make a message subject with statuskin/subcat mentioned in case of Tracker subCat
+        else:
+            msgSubject = ">"+statusKind +" "+subCat + "< " + returnedStatusValueOld[2]  ##make a message subject with statuskin/subcat mentioned in case of other subCats
+        returnedInformation = changeStatus(cat, subCat, relName, statusKind,
+                                          stateValue, newComment, comentAuthor, 
+                                          newLinks,Session, new_message_ID, returnedStatusValueOld[2])
         if returnedInformation == "True":
             msgText = """Release: %s
 In category: %s
 In subcategory: %s 
 validation for: %s
-Has Changed: From status: %s To status: %s
+Has Changed: From status: %s 
+             To status: %s
 By: %s
 Comment: %s
 """ % (relName.upper(), cat.upper(), subCat.upper(), statusKind.upper(), returnedStatusValueOld[0].upper(), stateValue.upper(), comentAuthor.upper(), newComment)
@@ -368,6 +374,8 @@ Comment: %s
 
     @cherrypy.expose
     def sendMail(self, messageText, emailSubject, org_message_ID, new_message_ID, username=False, **kwargs):
+        if not self.check_admin():
+            raise cherrypy.InternalRedirect('/permissionErrorMessage')
         msg = MIMEMultipart()
         if org_message_ID != None:
             msg['In-Reply-To'] = org_message_ID
