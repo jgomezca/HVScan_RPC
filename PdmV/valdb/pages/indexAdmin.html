@@ -1157,9 +1157,6 @@ function showMenu(category){
     }
 }
 </script>
-
-<script src="media/bootstrap-modal.js"></script>
-
 <script>
 function deleteChildTableRow (obj){
   var name = obj.textContent;
@@ -2185,6 +2182,34 @@ function srchUser(){
   window.open('showUsers?' + $.param({'userName': userName}, true));
 }
 function getAllHistory(){
+    if (document.getElementById('RECO').className == 'hideM'){
+        if (document.getElementById('iRData').className == 'hideM'){
+            if (document.getElementById('iRFull').className == 'hideM'){
+                if (document.getElementById('iRFast').className == 'hideM'){
+                    showMenu('RECO');
+                    showMenu('iRData');
+                    showMenu('iRFast');
+                    showMenu('iRFull');
+                    return false;
+                }
+            }
+        }   
+    }
+    if (document.getElementById('RECO').className == 'showM'){
+    showMenu('RECO')
+    }
+    if (document.getElementById('iRData').className == 'showM'){
+    showMenu('iRData')
+    }
+    if (document.getElementById('iRFull').className == 'showM'){
+    showMenu('iRFull')
+    }
+    if (document.getElementById('iRFast').className == 'showM'){
+    showMenu('iRFast')
+    }
+    return true;
+}
+function showRecoMenu(){
     if (document.getElementById('RECO').className == 'hideM'){
         if (document.getElementById('iRData').className == 'hideM'){
             if (document.getElementById('iRFull').className == 'hideM'){
