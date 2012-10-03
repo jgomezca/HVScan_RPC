@@ -16,6 +16,7 @@ import socket
 import logging
 import unittest
 import json
+import urllib
 import datetime
 import xml.sax.saxutils
 import xml.dom.minidom
@@ -324,6 +325,34 @@ def getWinServicesSoapBaseUrl(connectionDictionary):
 	'''
 
 	return 'https://%s:%s@winservices-soap.web.cern.ch/winservices-soap/Generic/Authentication.asmx/' % (connectionDictionary['user'], connectionDictionary['password'])
+
+
+def winServicesSoapSignIn(winServicesUrl, username, password):
+	try:
+		data = urllib.urlopen('%sGetUserInfo?UserName=%s&Password=%s' % (winServicesUrl, username, password)).read()
+		status = int(data[data.find('</auth>') - 1])
+
+		# Status codes:
+		#	0 == Account disabled or activation pending or expired
+		#	1 == Invalid password
+		#	2 == Incorrect login or E-mail
+		#	3 == Success
+		success = 3
+		if status == success:
+			return True
+	except Exception as e:
+		logging.error('login(): %s', e)
+
+	return False
+
+def winServicesSoapIsUserInGroup(winServicesUrl, username, group):
+	try:
+		data = urllib.urlopen('%sGetGroupsForUser?UserName=%s' % (winServicesUrl, username)).read()
+		return '<string>%s</string>' % group in data
+	except Exception as e:
+		logging.error('isUserInGroup(): %s', e)
+
+	return False
 
 
 # Shibboleth functions
