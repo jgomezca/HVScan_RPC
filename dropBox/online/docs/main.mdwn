@@ -1,0 +1,55 @@
+
+# New DropBox service
+
+This document gives an overview of the new DropBox service of the CMS condition tools. The main aim of the service is to upload conditions from the clients to the CMS conditions database (CondDB). As the CondDB is situated in the online environment (P%) and this is behind a firewall, the DropBox service is used to pull conditions prepared in the "offline world" via a frontend service (and an http proxy) and then uploads these conditions to the DB. 
+
+New conditions get uploaded via a script to the frontend service (running in the cms-conddb web services environment) which does a number of consistency checks on the files uploaded by the client and then stores them for retrieval by the backend service at a later time. The backend job starts at regular intervals (10 min at present, via a cronjob) and processes all files uploaded since the last run. 
+
+## New DropBox frontend service
+
+The frontend provides several services:
+
+ - file upload service to the clients
+ - file download service to the backend
+ - logging service for the backend
+
+Any file which is accepted for processing will be logged in the database together with any status updates from the backend. Each processing job from the backend will have an entry in the logging table if there are files to process. Backend jobs which do not have files to process ("empty jobs") will not need to be logged (but the number of these may be counted).
+
+## New DropBox backend service
+
+### Overall workflow
+
+Once started (via cron), the backend job updates the run status and get's the list of files to process from the frontend. If there are no files to process, the job notifies the frontend logging service and quits. 
+
+If there are files to process, the backend gets the list of the next possible runs for HLT, Express, and Prompt processing from the relevant sources. Once this information is available, the backend job downloads all files from the frontend as individual tarballs with one data and one metadata file each. It then checks for transmission errors (via the checksum of the tarball) and validates the content of the tarball before unpacking it. Files which are transferred successfully are then moved to the main processing directory ("dropbox/"), files with errors are moved to other directories (according to which type of download error happened) for later manual analysis. 
+
+Once all files are downloaded, the backend reads in the metadata from all files and sorts those files which treat the same conditions tag by the "firstSince" the files contain. This is necessary to ensure proper insertion later.
+
+After ordering, processing of all files starts. Each file can be checked (at present we don't have checks on that level), then the correct "since" value is determined, according to the requested target for exportation. Once this information is available, the file with the relevant meta-information is handed over to the standard CMS conditions exportation tool for processing. If exportation is successful, the metadata information is checked for possible duplications. If requests for duplications are found, they are processed using the standard CMS conditions duplication tool, calling the tool several times for each of the destination tags (if more than one specified).
+
+The processing of each file is logged into an individual file (identified by the hash of the file handled) and at the end of the processing of each file, the corresponding log file is uploaded back to the frontend server.
+
+
+Any errors during processing are logged and the corresponding status updates are sent back to the frontend.
+
+During the job, the backend job logs relevant summary information into its own log-file. The downloading of the files is logged in a separate file. At the end of the job, both log files (for the downloader and the overall processing job) are uploaded back to the server. 
+
+### Running the service
+
+First, check out the service:
+
+	git clone /afs/cern.ch/work/a/andreasp/public/gitReps/newDropBox.git
+	
+Then simply do:
+
+	./scripts/runDropbox.sh 
+	
+This will run one job of the backend.
+
+Once done, you can get a somewhat nicer listing of the logs (separated listings) by calling:
+
+	./scripts/dropboxChecker.py | more 
+	
+
+
+

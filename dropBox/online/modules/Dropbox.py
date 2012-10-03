@@ -1,0 +1,429 @@
+import os
+import glob
+import json
+import uu
+
+import TeeFile
+import TagHandler
+from TarDownloader import FileDownloader
+import Constants
+import StatusUpdater
+
+
+# main handler for the new Dropbox
+
+
+class Dropbox(object) :
+
+    def __init__(self, cfg):
+
+        self.config = cfg
+
+        self.createDirs( )
+
+        self.metaData = {}
+        self.logDir   = os.path.join( self.config.getDropBoxMainDir(), 'logs' )
+        logFileName   = os.path.join( self.logDir, self.config.detector+self.config.label+'.log' )
+        self.logger   = TeeFile.TeeFile( filename   = logFileName,
+                                         loggerName = 'DropboxMainLogger')
+
+        self.inDir = os.path.join( self.config.getDropBoxMainDir( ), 'dropbox' )
+        self.hashList = []
+
+        self.sortedFileList = []
+
+        self.statUpdater = StatusUpdater.StatusUpdater( self.config )
+
+        self.logger.info('Dropbox initialised')
+
+        self.runChk = { }
+
+        # counters:
+        self.donwloadProc = 0
+        self.downloadOK   = 0
+
+        self.extractProc = 0
+        self.extractOK   = 0
+
+        self.processProc = 0
+        self.processOK   = 0
+
+        return
+
+    def shutdown(self):
+
+        self.logger.info('dropbox run finished. Closing up.')
+
+        del self.logger
+
+        dbLogFileName = os.path.join(self.logDir, self.config.detector+self.config.label+'.log')
+        dLogBlob = self.getLogFileContent( dbLogFileName  )
+
+        gLogBlob = self.getLogFileContent( os.path.join(self.logDir, 'Downloader.log') )
+        self.statUpdater.uploadRunLog(dLogBlob, gLogBlob)
+
+        # logger is gone here, so we need to be explicit:
+        self.statUpdater.updateRunStatus(Constants.DONE)
+
+        del self.statUpdater
+
+        # move the actual files to the backup.
+        # As they are also in the DB, one backup copy should be enough ...
+        logBkpDir = os.path.join( self.logDir, 'bkp' )
+        if not os.path.exists( logBkpDir ) : os.makedirs( logBkpDir )
+        logFileList = glob.glob( self.logDir+'/*log.gz')
+        for logFileName in logFileList:
+            os.rename( logFileName, os.path.join( logBkpDir, os.path.basename(logFileName) ) )
+
+        return
+
+    def createDirs(self) :
+
+        dirList = [ 'logs', 'logs/bkp',                # general
+                    'download', 'input', 'dropbox',    # downloader
+                    'exported', 'processError',        # processing
+        ]
+        for subdir in dirList :
+            path = os.path.join( self.config.getDropBoxMainDir( ), subdir )
+            if not os.path.exists( path ) : os.makedirs( path )
+
+        return
+
+    def getFileList(self):
+
+        # check all dirs in "dropbox/' and make list of dirs
+        startDir = os.getcwd()
+
+        os.chdir( self.inDir )
+        self.hashList = glob.glob('*')
+
+        os.chdir(startDir)
+
+        self.logger.debug(' -- found %i items in %s ' % (len(self.hashList), self.inDir))
+        for item in self.hashList:
+            self.logger.debug(' -- found %s ' % (item, ) )
+
+        return
+
+    def extractMetaData(self) :
+
+        inTagMap = {}
+        for itemHash in self.hashList:
+            try:
+                self.metaData[itemHash] = json.load( open( os.path.join(self.inDir, itemHash, 'metadata.txt') ) )
+                inTag   = self.metaData[itemHash]['inputTag']
+                inSince = self.metaData[itemHash]['since']
+                if inTag in inTagMap.keys():
+                    inTagMap[ inTag ].append( (inSince, itemHash) )
+                else:
+                    inTagMap[ inTag ] = [ (inSince, itemHash) ]
+            except Exception, e:
+                self.logger.error("reading metadata failed for %s, got: %s " % (itemHash, str(e),))
+
+        # for files which have the same tag, sort them by firstSince in their metadata
+        itemList = []
+        for k, v in inTagMap.items():
+            if len(v) == 1 :
+                (since, itemHash) = v[0]
+                itemList.append( itemHash )
+            else:
+                for (since, itemHash) in sorted(v):
+                    itemList.append( itemHash )
+
+        self.sortedFileList = itemList
+
+        self.logger.debug('metadata extracted, sorted file list: ' )
+        for item in self.sortedFileList:
+            self.logger.debug('  --  %s tag "%s" since "%s"' % (item, self.metaData[item]['inputTag'], self.metaData[item]['since'] ) )
+        self.updateRunStatus(Constants.EXTRACT_OK)
+
+        return
+
+    def checkFile(self) :
+
+        # todo : implement checks for file:
+
+        # checkTypeSince ?? no idea what it does:
+        #   "compare since values with hlt/promt and delete old ones"
+
+        # checkTagIOVType: ensure that the tag is consistent with the expertTo request
+        # ideally via a naming conventino (..._hlt, ..._express, ...)
+        # maybe offline/frontend ??
+
+        # if not checkResult:
+        #     self.updateRunStatus( Constants.FILECHECK_FAILED )
+
+        return True
+
+    def getLogFileContent(self, logFileName):
+
+        os.system( 'gzip -f ' + logFileName )
+        uu.encode( logFileName+'.gz', logFileName+'.gz.uu' )
+
+        logBlobFile = open( os.path.join( self.logDir, logFileName + '.gz.uu' ), 'r' )
+        logBlob = logBlobFile.read( )
+        logBlobFile.close( )
+
+        # clean up:
+        os.remove( logFileName + '.gz.uu' )
+
+        return logBlob
+
+    def uploadLogs(self, fileHash, logFileName):
+
+        self.logger.info('uploading logfile %s for %s ' % (logFileName, fileHash) )
+
+        logBlob = 'error getting logfile'
+        try:
+            logBlob = self.getLogFileContent(logFileName)
+        except Exception, e:
+            self.logger.error('trying to get content of logfile %s got: %s' % (logFileName, str(e)) )
+
+        ret = self.statUpdater.uploadFileLog(fileHash, logBlob)
+        self.logger.info('uploading logs for %s returned %s.' % (fileHash, str(ret)) )
+
+        return
+
+    def updateFileStatus(self, fileHash, status) :
+        self.logger.info('updating status for %s to %s ' % (fileHash, status,) )
+        self.statUpdater.updateFileStatus( fileHash, status)
+        return
+
+    def updateRunStatus(self, status) :
+        self.logger.info( 'updating run status to %s ' % (status,) )
+        try:
+            self.statUpdater.updateRunStatus( status )
+        except Exception, e:
+            self.logger.debug('Error from update run status : %s' % (str(e),))
+            pass
+        return
+
+    def unpackLumiId(self, since):
+
+        kLowMask = 0XFFFFFFFF
+        run  = since >> 32
+        lumi = since & kLowMask
+
+        self.logger.debug( "Unpacking lumiid: run = \"%s\", lumi = \"%s\"" % (run, lumi) )
+
+        return run, lumi
+
+    def repackLumiId(self, run, lumi):
+
+        since = (run << 32) + lumi
+        self.logger.debug( 'Repacking lumiid: "%s" from run = "%s", lumi = "%s"' % ( since, run, lumi ) )
+
+        return since
+
+    def getDestSince(self, fileHash, syncTarget) :
+
+        if syncTarget not in [ 'offline', 'hlt', 'express', 'pcl', 'prompt' ] :
+            self.logger.error('getDestSince called with illegal sync target %s ' % (syncTarget,))
+            return None
+
+        # todo: check what to do for timeType == timestamp
+
+        firstSince = self.metaData[ fileHash ][ 'since' ]
+
+        lumi = None
+        # check on timeType in metadata and extract run number for non-run types
+        if self.metaData[ fileHash ].has_key('timeType') and self.metaData[ fileHash ][ 'timeType' ] == 'lumiid' :
+            firstSince, lumi = self.unpackLumiId( firstSince )
+
+        # "synchronize": if the target is not offline, and the since the user has given is
+        # smaller than the next possible one (i.e. the user gave a run earlier than the one
+        # which will be started/processed next in prompt, hlt/express) move the since ahead
+        # to go to first safe run instead of the value given by the user:
+        syncSince = firstSince
+        if syncTarget != 'offline' and \
+           firstSince < self.runChk[syncTarget] :
+                syncSince = self.runChk[syncTarget]
+
+        # check on timeType in metadata and re-pack run number for non-run types
+        if self.metaData[ fileHash ].has_key('timeType') and self.metaData[ fileHash ][ 'timeType' ] == 'lumiid' :
+            return self.repackLumiId( firstSince, lumi ) # tool will take care of checking if this IOV is valid
+        else :
+            return firstSince
+
+    def moveToErrDir(self, fileHash):
+
+        # todo : ...
+
+        errDir = os.path.join( self.config.getDropBoxMainDir( ), 'processError' )
+        if not os.path.exists( errDir ) : os.makedirs( errDir )
+
+        inHashDir  = os.path.join( self.inDir, fileHash )
+        errHashDir = os.path.join( errDir, fileHash )
+
+        os.system('/bin/mv -f '+inHashDir+' '+errHashDir)  # assume this will always work.
+
+        return
+
+    def processOneFile(self, fileHash) :
+
+        # create a logger with a file for this processing (so we can upload it later)
+        fileLoggerName = os.path.join( self.logDir, fileHash+'.log' )
+        fileLogger = TeeFile.TeeFile(filename=fileLoggerName, loggerName='localLogger-'+fileHash, noName=True)
+        fileLogger.info('starting to process %s ' % (fileHash,) )
+
+        self.updateFileStatus(fileHash, Constants.PROCESSING)
+
+        if not self.checkFile( ) :
+            self.moveToErrDir( fileHash )
+            fileLogger.error( "checking file failed ... " )
+            self.updateFileStatus( fileHash, Constants.FILECHECK_FAILED )
+            return
+
+        # create the handler which will do the export and duplication
+        # (and checks the return from the commands
+
+        srcDB    = 'sqlite_file:'+os.path.join( self.inDir, fileHash, 'data.db')
+        destDB   = self.metaData[ fileHash ][ 'destDB' ]
+        inputTag = self.metaData[ fileHash ][ 'inputTag' ]
+        destTag  = self.metaData[ fileHash ][ 'destTag' ]
+        comment  = self.metaData[ fileHash ][ 'usertext' ]
+
+        tagHandler = TagHandler.TagHandler( srcDB      = srcDB,
+                                            destDB     = destDB,
+                                            inputTag   = inputTag,
+                                            fileLogger = fileLogger )
+
+        syncTarget = self.metaData[ fileHash ][ 'exportTo' ]
+        destSince = self.getDestSince( fileHash, syncTarget )  # check and validate, return correct value
+
+        msg = 'going to export input tag %s to dest tag %s with destSince %s in %s, user comment: "%s"' % (inputTag, destTag, destSince, destDB, comment)
+        self.logger.info( msg )
+        fileLogger.info ( msg )
+
+        # export will always be done (for now)
+        ret = tagHandler.export( destTag     = destTag,
+                                 destSince   = destSince,
+                                 userComment = comment )
+        if not ret:
+            self.moveToErrDir( fileHash )
+            msg = 'exportation failed for input tag %s to dest tag %s with destSince %s in %s, user comment: "%s"' % (inputTag, destTag, destSince, destDB, comment)
+            self.logger.error(msg)
+            fileLogger.error(msg)
+            self.updateFileStatus( fileHash, Constants.EXPORTING_FAILURE )
+
+        else : # do the following only if exporting is OK :
+
+            msg = 'exportation to %s done.' % (syncTarget,)
+            self.logger.info( msg )
+            fileLogger.info( msg )
+
+            # check what to duplicate and take action
+            firstSince = self.metaData[fileHash]['since'] # updated from the db file at upload time
+            if self.metaData[fileHash][ 'duplicateTo' ] :
+                for whatIn in [ 'hlt', 'express', 'pcl', 'prompt' ] :
+                    what = whatIn
+                    if what not in self.metaData[fileHash][ 'duplicateTo' ]: what = what.upper()
+                    if self.metaData[fileHash][ 'duplicateTo' ][ what ] :
+
+                        destSince = self.getDestSince( fileHash, what )  # check and validate, return correct value
+                        dupTags = self.metaData[fileHash][ 'duplicateTo' ][ what ]
+
+                        msg = 'going to duplicate input tag %s for %s inputSince %s to dest tag(s) %s with destSince %s in %s, user comment: "%s"' % (inputTag, what, firstSince, dupTags, destSince, destDB, comment)
+                        self.logger.info( msg )
+                        fileLogger.info ( msg )
+
+                        ret = tagHandler.duplicate( tagList   = dupTags,
+                                                    destSince = destSince )
+                        if not ret:
+                            self.moveToErrDir( fileHash )
+                            msg = 'duplicating failed for input tag %s for %s inputSince %s to dest tag(s) %s with destSince %s in %s, user comment: "%s"' % (inputTag, what, firstSince, dupTags, destSince, destDB, comment)
+                            self.logger.error( msg )
+                            fileLogger.error( msg )
+                            self.updateFileStatus( fileHash, Constants.EXPORTING_OK_BUT_DUPLICATION_FAILURE )
+                        else :
+                            msg = 'duplication to %s done.' % (what,)
+                            self.logger.info( msg )
+                            fileLogger.info( msg )
+
+        # -----------------------------------------------------------------
+        # the following needs to be done even if exportation failed:
+
+        # clean up, close log, flag status and upload log back to server
+        msg = 'done handling %s ' % (fileHash,)
+        self.logger.info( msg )
+        fileLogger.info( msg )
+
+        del tagHandler # delete this one before the logger ...
+        del fileLogger
+
+        self.uploadLogs( fileHash, fileLoggerName )
+
+        return
+
+    def updateRunInfo(self):
+
+        # todo: updated these values with the correct ones !!
+
+        self.runChk = {'hlt'     : 1,
+                       'express' : 1,
+                       'prompt'  : 1,
+                       'pcl'     : 1,
+                      }
+        return
+
+    def processAllFiles(self) :
+
+        self.logger.info('starting to download files')
+        self.updateRunStatus(Constants.STARTING)
+
+        self.updateRunStatus(Constants.DOWNLOADING)
+        dwnldr = FileDownloader( cfg=self.config, updater=self.statUpdater )
+
+        # check if we have any files to handle, if not, set status to NOTHING_TO_DO
+        # and return (not moving the logs to backup). In case of error, log and stop
+        # processing.
+        stat, nFiles = dwnldr.getFileList()
+        if not stat: # error
+            self.updateRunStatus(Constants.DOWNLOADING_FAILURE)
+            return
+
+        # if nothing to do, update status and return ...
+        if nFiles == 0:
+            self.updateRunStatus( Constants.NOTHING_TO_DO )
+            return
+
+        # now update runChk values from firstsaferun and runInfo, send info back to frontend for logging
+        self.updateRunInfo()
+        self.statUpdater.updateRunRunInfo(self.runChk['prompt'], self.runChk['hlt'])
+
+        dwnldr.downloadAll()
+        ( self.donwloadProc, self.downloadOK ) = dwnldr.getSummary()
+        del dwnldr
+
+        self.logger.info('starting to extract metadata from files')
+        self.updateRunStatus(Constants.EXTRACTING)
+
+        # get metadata for all files first, so we can
+        # check and reorder files by "since" if neccessary
+        self.getFileList()
+        self.extractMetaData() # sorts files with same tags by firstSince in the metadata
+
+        self.extractProc = len(self.hashList)
+        self.extractOK   = len(self.sortedFileList)
+        # could check here that extractProc == downloadOK :)
+
+        self.logger.info( 'starting to process %i files ' % (len(self.sortedFileList),) )
+        self.updateRunStatus(Constants.PROCESSING)
+        for item in self.sortedFileList :
+            self.processProc += 1
+            if self.processOneFile( item ) :
+                self.processOK += 1
+
+        return
+
+
+def main():
+
+    from config import test
+
+    db = Dropbox( test() )
+    db.processAllFiles()
+    db.shutdown()
+
+if __name__ == '__main__':
+    main()
