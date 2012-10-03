@@ -189,7 +189,7 @@ def getPrettifiedJSON(data, sortKeys = True):
 	'''Returns prettified JSON (valid and easily read JSON).
 	'''
 
-	return json.dumps(data, sort_keys = sortKeys, indent = 4)
+	return json.dumps(data, sort_keys = sortKeys, indent = 4, default = lambda obj: obj.strftime('%Y-%m-%d %H:%M:%S,%f')[:-3] if isinstance(obj, datetime.datetime) else None)
 
 def setResponsePlainText(data = None):
 	cherrypy.response.headers['Content-Type'] = 'text/plain;charset=ISO-8859-1'
