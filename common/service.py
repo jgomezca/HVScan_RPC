@@ -17,6 +17,7 @@ import logging
 import unittest
 import json
 import urllib
+import time
 import datetime
 import xml.sax.saxutils
 import xml.dom.minidom
@@ -402,10 +403,22 @@ class TestCase(unittest.TestCase):
 	'''An specialized TestCase for our services.
 	'''
 
+	warningTime = 4. # seconds
+
 
 	def __init__(self, methodName = 'runTest'):
 		super(TestCase, self).__init__(methodName)
 		self.httpService = HTTPService()
+
+
+	def setUp(self):
+		self.startTime = time.time()
+
+
+	def tearDown(self):
+		totalTime = time.time() - self.startTime
+		if totalTime > self.warningTime:
+			logging.warning('%s took %.2f seconds.', self.id(), totalTime)
 
 
 	def query(self, url, data = None, keepCookies = True):
