@@ -270,6 +270,14 @@ def isAnotherInstanceRunning():
 
 # Functions for generating connection strings and URLs
 
+def getOracleConnectionString(connectionDictionary):
+	'''Returns a connection string for Oracle given
+	a connection dictionary from the secrets file.
+	'''
+
+	return 'oracle://%s/%s' % (connectionDictionary['db_name'], connectionDictionary['account'])
+
+
 def getCxOracleConnectionString(connectionDictionary):
 	'''Returns a connection string for cx_oracle given
 	a connection dictionary from the secrets file.
@@ -277,12 +285,14 @@ def getCxOracleConnectionString(connectionDictionary):
 
 	return '%s/%s@%s' % (connectionDictionary['user'], connectionDictionary['password'], connectionDictionary['db_name'])
 
+
 def getSqlAlchemyConnectionString(connectionDictionary):
 	'''Returns a connection string for SQL Alchemy given
 	a connection dictionary from the secrets file.
 	'''
 
 	return 'oracle://%s:%s@%s' % (connectionDictionary['user'], connectionDictionary['password'], connectionDictionary['db_name'])
+
 
 frontierConnectionStringTemplate = None
 def getFrontierConnectionString(connectionDictionary, short = False):
@@ -316,6 +326,39 @@ def getFrontierConnectionString(connectionDictionary, short = False):
 		frontierConnectionStringTemplate = 'frontier://%s/%s' % (frontierName, '%s')
 	
 	return frontierConnectionStringTemplate % ((frontierConnectionStringTemplate.count('%s') - 1) * (connectionDictionary['frontier_name'], ) + (connectionDictionary['account'], ))
+
+
+def getProtocolServiceAndAccountFromConnectionString(connectionString):
+	'''Extract the protocol, the service and the account name from a given connection string.
+	Parameters:
+	connectionString: the input connection string.
+	@returns: a dictionary in the form {'protocol' : protocol_name, 'service' : service_name, 'account' : account_name}, None if parsing error'''
+
+	protocol, serviceAndAccount = connectionString.partition( '://' )[ : : 2 ]
+	if protocol != 'frontier' and protocol != 'oracle': #the supported protocols are frontier and oracle
+		return None
+	serviceConfiguration, account = serviceAndAccount.rpartition( '/' )[ : : 2 ]
+	if account == '' or serviceConfiguration == '': #only protocol provided (serviceAndAccount empty, so account and service both empty), or no account provided, but service ends with (account empty) or without (service empty) a /
+		return None
+	if serviceConfiguration.count( '/' ) > 1 and serviceConfiguration.count( '(' ) == 0: #too many slashes, but no explicit configuration
+		return None
+	if serviceConfiguration.count( '/' ) == 0: #no server and proxies specified, but other configurations can be there after the service name
+		service = serviceConfiguration.partition( '(' )[ 0 ]
+	elif serviceConfiguration.count( '/' ) == 1: #only one instance of the server address was provided
+		service = serviceConfiguration.partition( '/' )[ 2 ]
+	else: #it is a long connection string: find all the serverurl parameter
+		tempStr = serviceConfiguration
+		service = ''
+		for _ in xrange( serviceConfiguration.count( "serverurl=" ) ):
+			servletURL = tempStr[ tempStr.find( "serverurl=" ) + len( "serverurl=" ) : tempStr.find( ')', tempStr.find( "serverurl=" ) ) ]
+			newServlet = servletURL.rpartition( '/' )[ -1 ]
+			if service == '':
+				service = newServlet
+			elif service != newServlet: # there can be only one servlet, otherwise the connection string is malformed
+				return None
+			tempStr = tempStr[ tempStr.find( ')', tempStr.find( "serverurl=" ) ) + len( ')' ) : ]
+	return {'protocol' : protocol, 'service' : service, 'account' : account}
+
 
 def getFrontierConnectionStringList(connectionsDictionary):
 	'''Returns a list of connection strings for Frontier given
