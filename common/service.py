@@ -14,16 +14,20 @@ import sys
 import optparse
 import socket
 import logging
-import cherrypy
 import unittest
 import json
-import urllib2
 import datetime
 import xml.sax.saxutils
 import xml.dom.minidom
 
+import cherrypy
+
+import http
+
+
 settings = None
 secrets = None
+
 
 def _init():
 	'''Setup 'settings' and 'secrets' global variables by parsing
@@ -336,13 +340,30 @@ def getGroups():
 
 # Functions for testing
 
-baseUrl = 'https://%s:%s/%s/' % (socket.gethostname(), str(settings['listeningPort']), settings['name'])
+def parseCherryPyErrorPage(errorPage):
+	return errorPage.split('<p>')[1].split('</p>')[0]
 
-def query(url, data = None, timeout = 10):
-	return urllib2.urlopen(baseUrl + url, data, timeout).read()
 
-def queryJson(url, data = None, timeout = 10):
-	return json.loads(query(url, data, timeout))
+class HTTPService(http.HTTP):
+	'''Same as HTTP, but it queries our own service: the url is prefixed
+	with the URL of our service, including an ending slash.
+
+	It also parses the error page to get the real error message from
+	our CherryPy servers.
+
+	Typically used for testing in test.py.
+	'''
+
+	baseUrl = 'https://%s/%s/' % (socket.gethostname(), settings['name'])
+
+	def query(self, url, data = None, keepCookies = True):
+		try:
+			return super(HTTPService, self).query(self.baseUrl + url, data, keepCookies)
+		except http.HTTPError as e:
+			e.response = parseCherryPyErrorPage(e.response)
+			e.args = (e.response, )
+			raise e
+
 
 def test(TestCase):
 	return not unittest.TextTestRunner().run(unittest.defaultTestLoader.loadTestsFromTestCase(TestCase)).wasSuccessful()
@@ -352,16 +373,30 @@ class TestCase(unittest.TestCase):
 	'''An specialized TestCase for our services.
 	'''
 
-	def assertRaisesHTTPError(self, validCodes, callableObj, *args, **kwargs):
-		'''Like assertRaises(urllib2.HTTPError, ...), but checking that
-		the HTTP error code is in the given set.
+
+	def __init__(self, methodName = 'runTest'):
+		super(TestCase, self).__init__(methodName)
+		self.httpService = HTTPService()
+
+
+	def query(self, url, data = None, keepCookies = True):
+		return self.httpService.query(url, data, keepCookies)
+
+
+	def queryJson(self, url, data = None, keepCookies = True):
+		return json.loads(self.query(url, data, keepCookies))
+
+
+	def assertRaisesHTTPError(self, code, *args, **kwargs):
+		'''Like assertRaises(http.HTTPError, self.query, ...),
+		but checking that the HTTP error code is the given one.
 		'''
 
 		try:
-			callableObj(*args, **kwargs)
-		except urllib2.HTTPError as e:
-			if e.code not in validCodes:
-				raise self.failureException, "HTTPError's code %s is not in %s" % (e.code, validCodes)
+			return self.query(*args, **kwargs)
+		except http.HTTPError as e:
+			if e.code != code:
+				raise self.failureException, "HTTPError's code %s != expected %s" % (e.code, code)
 		else:
 			raise self.failureException, "HTTPError not raised"
 
