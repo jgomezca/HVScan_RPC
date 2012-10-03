@@ -1,7 +1,7 @@
 import unittest
 
 import conditionDatabase
-import conditionException
+import conditionError
 
 
 class TestConditionDatabase( unittest.TestCase ):
@@ -23,9 +23,9 @@ class TestConditionDatabase( unittest.TestCase ):
         #constructor with wrong account: unfortunately does!
         gt1 = conditionDatabase.GlobalTagChecker( "frontier://FrontierProd/CMS_COND_DUMMY", "" )
         #wrong service: it fails!
-        self.assertRaises( conditionException.ConditionException, gt1.__init__, "frontier://FrontierFoo/CMS_COND_DUMMY", "" )
+        self.assertRaises( conditionError.ConditionError, gt1.__init__, "frontier://FrontierFoo/CMS_COND_DUMMY", "" )
         #invalid connection string: it fails!
-        self.assertRaises( conditionException.ConditionException, gt1.__init__, "foo://Foo/BAR", "" )
+        self.assertRaises( conditionError.ConditionError, gt1.__init__, "foo://Foo/BAR", "" )
     
     def testInitGT( self ):
         isReconnected = self.gt.initGT( "GR_P_V41" )
@@ -110,13 +110,13 @@ class TestConditionDatabase( unittest.TestCase ):
         self.assertTrue( self.gt._dbStarted )
         self.assertTrue( isReconnected )
         #wrong GT name
-        self.assertRaises( conditionException.ConditionException, self.gt.initGT, "GR_Z_V40" )
+        self.assertRaises( conditionError.ConditionError, self.gt.initGT, "GR_Z_V40" )
         #correct GT but wrong account
-        self.assertRaises( conditionException.ConditionException, self.gt.initGT, "GR_P_V40", "frontier://FrontierProd/CMS_COND_DUMMY" )
+        self.assertRaises( conditionError.ConditionError, self.gt.initGT, "GR_P_V40", "frontier://FrontierProd/CMS_COND_DUMMY" )
         #correct GT name but with connection string containing a non existing service
-        self.assertRaises( conditionException.ConditionException, self.gt.initGT, "GR_P_V40", "frontier://FrontierFoo/CMS_COND_DUMMY" )
+        self.assertRaises( conditionError.ConditionError, self.gt.initGT, "GR_P_V40", "frontier://FrontierFoo/CMS_COND_DUMMY" )
         #correct GT name but with invalid connection string
-        self.assertRaises( conditionException.ConditionException, self.gt.initGT, "GR_P_V40", "foo://Foo/BAR" )
+        self.assertRaises( conditionError.ConditionError, self.gt.initGT, "GR_P_V40", "foo://Foo/BAR" )
         #re-init GT with correct parameters
         isReconnected = self.gt.initGT( "GR_P_V41", "frontier://FrontierProd/CMS_COND_31X_GLOBALTAG" , "" )
         self.assertEqual( self.gt._globalTagName, "GR_P_V41" )
@@ -126,7 +126,7 @@ class TestConditionDatabase( unittest.TestCase ):
         self.assertTrue( isReconnected )
 
     def testCheckTag( self ):
-        self.assertRaises( conditionException.ConditionException, self.gt.checkTag, "frontier://FrontierProd/CMS_COND_31X_RUN_INFO", "runinfo_31X_hlt" )
+        self.assertRaises( conditionError.ConditionError, self.gt.checkTag, "frontier://FrontierProd/CMS_COND_31X_RUN_INFO", "runinfo_31X_hlt" )
         isReconnected = self.gt.initGT( "GR_P_V41", "frontier://FrontierProd/CMS_COND_31X_GLOBALTAG" , "" )
         self.assertEqual( self.gt._globalTagName, "GR_P_V41" )
         self.assertEqual( self.gt._connectionString, "frontier://FrontierProd/CMS_COND_31X_GLOBALTAG" )
@@ -213,8 +213,8 @@ class TestConditionDatabase( unittest.TestCase ):
         self.assertFalse( self.gt.checkTag( "frontier://(proxyurl=http://cmst0frontier.cern.ch:3128)(proxyurl=http://cmst0frontier.cern.ch:3128)(proxyurl=http://cmst0frontier1.cern.ch:3128)(proxyurl=http://cmst0frontier2.cern.ch:3128)(backupproxyurl=http://cmsbpfrontier.cern.ch:3128)(backupproxyurl=http://cmsbpfrontier1.cern.ch:3128)(backupproxyurl=http://cmsbpfrontier2.cern.ch:3128)(serverurl=http://cmsfrontier.cern.ch:8000/PromptProd)(serverurl=http://cmsfrontier.cern.ch:8000/PromptProd)(serverurl=http://cmsfrontier1.cern.ch:8000/PromptProd)(serverurl=http://cmsfrontier2.cern.ch:8000/PromptProd)(serverurl=http://cmsfrontier3.cern.ch:8000/PromptProd)(serverurl=http://cmsfrontier4.cern.ch:8000/PromptProd)/CMS_COND_RUN_INFO", "RunInfo_v1_mc", True ) )
         self.assertFalse( self.gt.checkTag( "oracle://cms_orcon_prod/CMS_COND_RUN_INFO", "RunInfo_v1_mc", True ) )
         self.assertFalse( self.gt.checkTag( "frontier://(proxyurl=http://localhost:3128)(serverurl=http://localhost:8000/FrontierOnProd)(serverurl=http://localhost:8000/FrontierOnProd)(retrieve-ziplevel=0)(failovertoserver=no)/CMS_COND_RUN_INFO", "RunInfo_v1_mc", True ) )
-        self.assertRaises( conditionException.ConditionException, self.gt.checkTag, "oracle://CMSARC_LB/CMS_COND_RUN_INFO", "RunInfo_v1_mc", True )
-        self.assertRaises( conditionException.ConditionException, self.gt.checkTag, "frontier://FrontierArch/CMS_COND_31X_RUN_INFO", "RunInfo_v1_mc", True )
+        self.assertRaises( conditionError.ConditionError, self.gt.checkTag, "oracle://CMSARC_LB/CMS_COND_RUN_INFO", "RunInfo_v1_mc", True )
+        self.assertRaises( conditionError.ConditionError, self.gt.checkTag, "frontier://FrontierArch/CMS_COND_31X_RUN_INFO", "RunInfo_v1_mc", True )
 
         self.gt.initGT( "GR_E_V30" )
         self.assertTrue( self.gt.checkTag( "oracle://cms_orcon_adg/CMS_COND_31X_RUN_INFO", "runinfo_start_31X_hlt" ) )
@@ -297,8 +297,8 @@ class TestConditionDatabase( unittest.TestCase ):
         self.assertFalse( self.gt.checkTag( "frontier://(proxyurl=http://cmst0frontier.cern.ch:3128)(proxyurl=http://cmst0frontier.cern.ch:3128)(proxyurl=http://cmst0frontier1.cern.ch:3128)(proxyurl=http://cmst0frontier2.cern.ch:3128)(backupproxyurl=http://cmsbpfrontier.cern.ch:3128)(backupproxyurl=http://cmsbpfrontier1.cern.ch:3128)(backupproxyurl=http://cmsbpfrontier2.cern.ch:3128)(serverurl=http://cmsfrontier.cern.ch:8000/PromptProd)(serverurl=http://cmsfrontier.cern.ch:8000/PromptProd)(serverurl=http://cmsfrontier1.cern.ch:8000/PromptProd)(serverurl=http://cmsfrontier2.cern.ch:8000/PromptProd)(serverurl=http://cmsfrontier3.cern.ch:8000/PromptProd)(serverurl=http://cmsfrontier4.cern.ch:8000/PromptProd)/CMS_COND_RUN_INFO", "RunInfo_v1_mc", True ) )
         self.assertFalse( self.gt.checkTag( "oracle://cms_orcon_prod/CMS_COND_RUN_INFO", "RunInfo_v1_mc", True ) )
         self.assertFalse( self.gt.checkTag( "frontier://(proxyurl=http://localhost:3128)(serverurl=http://localhost:8000/FrontierOnProd)(serverurl=http://localhost:8000/FrontierOnProd)(retrieve-ziplevel=0)(failovertoserver=no)/CMS_COND_RUN_INFO", "RunInfo_v1_mc", True ) )
-        self.assertRaises( conditionException.ConditionException, self.gt.checkTag, "oracle://CMSARC_LB/CMS_COND_RUN_INFO", "RunInfo_v1_mc", True )
-        self.assertRaises( conditionException.ConditionException, self.gt.checkTag, "frontier://FrontierArch/CMS_COND_RUN_INFO", "RunInfo_v1_mc", True )
+        self.assertRaises( conditionError.ConditionError, self.gt.checkTag, "oracle://CMSARC_LB/CMS_COND_RUN_INFO", "RunInfo_v1_mc", True )
+        self.assertRaises( conditionError.ConditionError, self.gt.checkTag, "frontier://FrontierArch/CMS_COND_RUN_INFO", "RunInfo_v1_mc", True )
         
         self.gt.initGT( "GR_H_V29" )
         self.assertFalse( self.gt.checkTag( "oracle://cms_orcon_adg/CMS_COND_31X_RUN_INFO", "runinfo_start_31X_hlt" ) )
@@ -381,8 +381,8 @@ class TestConditionDatabase( unittest.TestCase ):
         self.assertFalse( self.gt.checkTag( "frontier://(proxyurl=http://cmst0frontier.cern.ch:3128)(proxyurl=http://cmst0frontier.cern.ch:3128)(proxyurl=http://cmst0frontier1.cern.ch:3128)(proxyurl=http://cmst0frontier2.cern.ch:3128)(backupproxyurl=http://cmsbpfrontier.cern.ch:3128)(backupproxyurl=http://cmsbpfrontier1.cern.ch:3128)(backupproxyurl=http://cmsbpfrontier2.cern.ch:3128)(serverurl=http://cmsfrontier.cern.ch:8000/PromptProd)(serverurl=http://cmsfrontier.cern.ch:8000/PromptProd)(serverurl=http://cmsfrontier1.cern.ch:8000/PromptProd)(serverurl=http://cmsfrontier2.cern.ch:8000/PromptProd)(serverurl=http://cmsfrontier3.cern.ch:8000/PromptProd)(serverurl=http://cmsfrontier4.cern.ch:8000/PromptProd)/CMS_COND_RUN_INFO", "RunInfo_v1_mc", True ) )
         self.assertFalse( self.gt.checkTag( "oracle://cms_orcon_prod/CMS_COND_RUN_INFO", "RunInfo_v1_mc", True ) )
         self.assertFalse( self.gt.checkTag( "frontier://(proxyurl=http://localhost:3128)(serverurl=http://localhost:8000/FrontierOnProd)(serverurl=http://localhost:8000/FrontierOnProd)(retrieve-ziplevel=0)(failovertoserver=no)/CMS_COND_RUN_INFO", "RunInfo_v1_mc", True ) )
-        self.assertRaises( conditionException.ConditionException, self.gt.checkTag, "oracle://CMSARC_LB/CMS_COND_RUN_INFO", "RunInfo_v1_mc", True )
-        self.assertRaises( conditionException.ConditionException, self.gt.checkTag, "frontier://FrontierArch/CMS_COND_RUN_INFO", "RunInfo_v1_mc", True )
+        self.assertRaises( conditionError.ConditionError, self.gt.checkTag, "oracle://CMSARC_LB/CMS_COND_RUN_INFO", "RunInfo_v1_mc", True )
+        self.assertRaises( conditionError.ConditionError, self.gt.checkTag, "frontier://FrontierArch/CMS_COND_RUN_INFO", "RunInfo_v1_mc", True )
 
     def testDBConstrcutor( self ):
         #this is the construction of the correct instance
@@ -396,9 +396,9 @@ class TestConditionDatabase( unittest.TestCase ):
         #constructor with wrong account: unfortunately does!
         db1 = conditionDatabase.ConditionDBChecker( "frontier://FrontierProd/CMS_COND_DUMMY", "" )
         #wrong service: it fails!
-        self.assertRaises( conditionException.ConditionException, db1.__init__, "frontier://FrontierFoo/CMS_COND_DUMMY", "" )
+        self.assertRaises( conditionError.ConditionError, db1.__init__, "frontier://FrontierFoo/CMS_COND_DUMMY", "" )
         #invalid connection string: it fails!
-        self.assertRaises( conditionException.ConditionException, db1.__init__, "foo://Foo/BAR", "" )
+        self.assertRaises( conditionError.ConditionError, db1.__init__, "foo://Foo/BAR", "" )
         #sqlite should work, no chack on the connection string is done!
         db1 = conditionDatabase.ConditionDBChecker( "sqlite_file:dummy.db", "" )
 
@@ -453,11 +453,11 @@ class TestConditionDatabase( unittest.TestCase ):
         self.assertEqual( self.db._authPath, "" )
         self.assertTrue( self.db._dbStarted )
         self.assertTrue( isReconnected )
-        ##self.assertRaises( conditionException.ConditionException, self.db._initDB, "frontier://FrontierProd/CMS_COND_INVALID" )
+        ##self.assertRaises( conditionError.ConditionError, self.db._initDB, "frontier://FrontierProd/CMS_COND_INVALID" )
         #connection string containing a non existing service
-        self.assertRaises( conditionException.ConditionException, self.db._initDB, "frontier://FrontierFoo/CMS_COND_DUMMY", "" )
+        self.assertRaises( conditionError.ConditionError, self.db._initDB, "frontier://FrontierFoo/CMS_COND_DUMMY", "" )
         #with invalid connection string
-        self.assertRaises( conditionException.ConditionException, self.db._initDB, "foo://Foo/BAR" )
+        self.assertRaises( conditionError.ConditionError, self.db._initDB, "foo://Foo/BAR" )
         #re-init with correct parameters
         isReconnected = self.db._initDB( "frontier://FrontierProd/CMS_COND_31X_RUN_INFO" , "" )
         self.assertEqual( self.db._connectionString, "frontier://FrontierProd/CMS_COND_31X_RUN_INFO" )
@@ -470,7 +470,7 @@ class TestConditionDatabase( unittest.TestCase ):
         self.assertFalse( self.db.checkTag( "RunInfo_invalid" ) )
         #now a connection to a wrong account fails!
         db1 = conditionDatabase.ConditionDBChecker( "frontier://FrontierProd/CMS_COND_INVALID", "" )
-        self.assertRaises( conditionException.ConditionException, db1.checkTag, "RunInfo_v1_mc" )
+        self.assertRaises( conditionError.ConditionError, db1.checkTag, "RunInfo_v1_mc" )
 
     def testIovCheckerFromConditionDBChecker( self ):
         import pluginCondDBPyInterface as condDB
@@ -515,10 +515,10 @@ class TestConditionDatabase( unittest.TestCase ):
         self.assertNotEqual( iov.size(), 0 )
         self.assertTrue( isinstance( iov.timestamp(), str ) )
         self.assertTrue( isinstance( iov.timetype(), condDB.timetype ) )
-        self.assertRaises( conditionException.ConditionException, self.db.iovSequence, "RunInfo_dummy" )
+        self.assertRaises( conditionError.ConditionError, self.db.iovSequence, "RunInfo_dummy" )
         #now a connection to a wrong account fails!
         db1 = conditionDatabase.ConditionDBChecker( "frontier://FrontierProd/CMS_COND_INVALID", "" )
-        self.assertRaises( conditionException.ConditionException, db1.iovSequence, "RunInfo_v1_mc" )
+        self.assertRaises( conditionError.ConditionError, db1.iovSequence, "RunInfo_v1_mc" )
         #TODO: run the checks for a sqlite file containing only condition tables, not values
 
     def testIOVChecker( self ):
@@ -542,7 +542,7 @@ class TestConditionDatabase( unittest.TestCase ):
         iov = conditionDatabase.IOVChecker( db )
         iov.load( "RunInfo_v1_mc" )
         self.assertEqual( iov._tag, "RunInfo_v1_mc" )
-        self.assertRaises( conditionException.ConditionException, iov.load, "RunInfo_dummy" )
+        self.assertRaises( conditionError.ConditionError, iov.load, "RunInfo_dummy" )
         self.assertTrue( isinstance( iov._iovSequence, condDB.IOV ) )
         rdbms = condDB.RDBMS( "" )
         db = rdbms.getReadOnlyDB( "frontier://FrontierProd/CMS_COND_31X_RUN_INFO" )
@@ -550,10 +550,10 @@ class TestConditionDatabase( unittest.TestCase ):
         iov.load( "runinfo_31X_hlt" )
         self.assertEqual( iov._tag, "runinfo_31X_hlt" )
         self.assertTrue( isinstance( iov._iovSequence, condDB.IOV ) )
-        self.assertRaises( conditionException.ConditionException, iov.load, "RunInfo_dummy" )
+        self.assertRaises( conditionError.ConditionError, iov.load, "RunInfo_dummy" )
         db = rdbms.getReadOnlyDB( "frontier://FrontierProd/CMS_COND_INVALID" )
         iov = conditionDatabase.IOVChecker( db )
-        self.assertRaises( conditionException.ConditionException, iov.load, "runinfo_31X_hlt" )
+        self.assertRaises( conditionError.ConditionError, iov.load, "runinfo_31X_hlt" )
         #TODO: run the checks for a sqlite file
     
     def testIovCheckerFromConditionAPI( self ):
@@ -592,7 +592,7 @@ class TestConditionDatabase( unittest.TestCase ):
         self.assertNotEqual( iov.size(), 0 )
         self.assertTrue( isinstance( iov.timestamp(), str ) )
         self.assertTrue( isinstance( iov.timetype(), condDB.timetype ) )
-        self.assertRaises( conditionException.ConditionException, iov.load, "RunInfo_dummy" )
+        self.assertRaises( conditionError.ConditionError, iov.load, "RunInfo_dummy" )
 
 if __name__ == '__main__':
     unittest.main()

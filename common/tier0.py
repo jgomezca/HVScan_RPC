@@ -6,7 +6,13 @@ import time
 
 import pycurl
 
-import conditionException
+class Tier0Error(Exception):
+    '''Tier0 exception.
+    '''
+
+    def __init__(self, message):
+        self.args = (message, )
+
 
 def unique(seq, keepstr=True):
     t = type(seq)
@@ -25,7 +31,7 @@ def unique(seq, keepstr=True):
             seen = []
             return t(c for c in seq if not (c in seen or seen.append(c)))
 
-class ResponseError( conditionException.ConditionException ):
+class ResponseError( Tier0Error ):
 
     def __init__( self, curl, response, proxy ):
         super( ResponseError, self ).__init__( response )
@@ -126,7 +132,7 @@ class Tier0Handler( object ):
         if self._proxy:
             errStr += """ using proxy \"%s\"""" %( str( self._proxy ), )
         errStr += """ with timeout \"%d\" since maximum number of retries \"%d\" with retry period \"%d\" was reached.""" % ( self._timeOut, self._retries, self._retryPeriod )
-        raise conditionException.ConditionException( errStr )
+        raise Tier0Error( errStr )
 
     def getFirstSafeRun( self, firstConditionSafeRunAPI ):
         """
@@ -141,7 +147,7 @@ class Tier0Handler( object ):
             errStr = """First condition safe run is not available in Tier0DataSvc from URL \"%s\"""" %( os.path.join( self._uri, firstConditionSafeRunAPI ), )
             if self._proxy:
                 errStr += """ using proxy \"%s\".""" %( str( self._proxy ), )
-            raise conditionException.ConditionException( errStr )
+            raise Tier0Error( errStr )
         return safeRun
 
     def getGlobalTag( self, config ):
@@ -162,4 +168,4 @@ class Tier0Handler( object ):
             errStr = """No Global Tags for \"%s\" are available in Tier0DataSvc from URL \"%s\"""" %( config, os.path.join( self._uri, config ) )
             if self._proxy:
                 errStr += """ using proxy \"%s\".""" %( str( self._proxy ), )
-        raise conditionException.ConditionException( errStr )
+        raise Tier0Error( errStr )

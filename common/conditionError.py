@@ -1,5 +1,5 @@
 
-class ConditionException(Exception):
+class ConditionError(Exception):
     '''Exception raised by modules related to conditions.
     '''
 

@@ -1,7 +1,7 @@
 #!usr/bin/env python
 
 import conditionDatabase
-import conditionException
+import conditionError
 import hlt
 import tier0
 
@@ -74,11 +74,11 @@ class GlobalTagHandler( object ):
         """
         #first check if the dictionary contains the workflows
         if len( productionGTsDict ) != 3:
-            raise conditionException.ConditionException( "The input dictionary for the Global Tags in the production worklows is not correct." )
+            raise conditionError.ConditionError( "The input dictionary for the Global Tags in the production worklows is not correct." )
         workflows = ( 'hlt', 'express', 'prompt' )
         for productionGTWorkflow in productionGTsDict.keys():
             if productionGTWorkflow not in workflows:
-                raise conditionException.ConditionException( "The input dictionary for the Global Tags in the production worklows does not contain workflow \"%s\"" %( productionGTWorkflow, ) )
+                raise conditionError.ConditionError( "The input dictionary for the Global Tags in the production worklows does not contain workflow \"%s\"" %( productionGTWorkflow, ) )
         #now check if the db/tag are in any of the production GTs
         for workflow in workflows:
             self._gt.initGT( productionGTsDict[ workflow ] )

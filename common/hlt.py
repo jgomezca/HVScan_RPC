@@ -4,7 +4,7 @@ import subprocess
 import cx_Oracle
 
 import conditionDatabase
-import conditionException
+import conditionError
 
 class HLTHandler( object ):
 
@@ -49,16 +49,16 @@ class HLTHandler( object ):
                     date = row[ 0 ]
             except cx_Oracle.DatabaseError as exc:
                 error, = exc.args
-                raise conditionException.ConditionException( """Unable to retrieve the start time for run \"%d\".
+                raise conditionError.ConditionError( """Unable to retrieve the start time for run \"%d\".
 The reason is: ORA-%d: %s.""" %( run, error.code, error.message ) )
         except cx_Oracle.DatabaseError as exc:
             error, = exc.args
-            raise conditionException.ConditionException( """Unable to connect to Oracle for retrieving the start time for run \"%d\".
+            raise conditionError.ConditionError( """Unable to connect to Oracle for retrieving the start time for run \"%d\".
 The reason is: ORA-%d: %s.""" %( run, error.code, error.message ) )
         finally:
             connection.close()
         if date is None:
-            raise conditionException.ConditionException( """The start time for run \"%d\" was not found.""" %( run, ) )
+            raise conditionError.ConditionError( """The start time for run \"%d\" was not found.""" %( run, ) )
         return date
     
     def getStopTime( self, run ):
@@ -86,16 +86,16 @@ The reason is: ORA-%d: %s.""" %( run, error.code, error.message ) )
                     date = row[ 0 ]
             except cx_Oracle.DatabaseError as exc:
                 error, = exc.args
-                raise conditionException.ConditionException( """Unable to retrieve the start time for run \"%d\".
+                raise conditionError.ConditionError( """Unable to retrieve the start time for run \"%d\".
 The reason is: ORA-%d: %s.""" %( run, error.code, error.message ) )
         except cx_Oracle.DatabaseError as exc:
             error, = exc.args
-            raise conditionException.ConditionException( """Unable to connect to Oracle for retrieving the start time for run \"%d\".
+            raise conditionError.ConditionError( """Unable to connect to Oracle for retrieving the start time for run \"%d\".
 The reason is: ORA-%d: %s.""" %( run, error.code, error.message ) )
         finally:
             connection.close()
         if date is None:
-            raise  conditionException.ConditionException( """The end time for run \"%d\" was not found.""" %( run, ) )
+            raise  conditionError.ConditionError( """The end time for run \"%d\" was not found.""" %( run, ) )
         return date
 
     def getHLTGlobalTag( self ):
@@ -114,9 +114,9 @@ The reason is: ORA-%d: %s.""" %( run, error.code, error.message ) )
             globalTag = [l.strip().replace("::All","") for l in resGT[0].split("\"") if l.find("::All") != -1][0]
             return globalTag
         except IndexError as i:
-            raise conditionException.ConditionException( "Configuration for run \"%d\" not found." %( self._lastStoppedRun, ) )
+            raise conditionError.ConditionError( "Configuration for run \"%d\" not found." %( self._lastStoppedRun, ) )
         except OSError as o:
-            raise conditionException.ConditionException( """Unable to load HLT configuration for run \"%d\".
+            raise conditionError.ConditionError( """Unable to load HLT configuration for run \"%d\".
 The reason is: %s """ %( self._lastStoppedRun, o ) )
     
     def getLastCompletedRun( self ):
