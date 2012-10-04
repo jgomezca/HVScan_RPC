@@ -22,6 +22,7 @@ import sqlite3
 
 import config
 import dropBox
+import checkTodo
 
 
 def getExtractedFilePath(fileHash):

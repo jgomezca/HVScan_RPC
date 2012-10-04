@@ -1,6 +1,6 @@
 import conditionDatabase
-import conditionException
-import dropBoxException
+import conditionError
+import dropBox
 import globalTagHandler
 import service
 
@@ -124,3 +124,4 @@ def checkDestinationTags( metaDict ):
         checkSynchronization( synchronizationDict[ 'synchTo' ], connectionString, tag, gtHandle )
         for dependentTag, synchronizeTo in synchronizationDict[ 'dependencies' ].items():
             checkSynchronization( synchronizeTo, connectionString, dependentTag, gtHandle )
+
