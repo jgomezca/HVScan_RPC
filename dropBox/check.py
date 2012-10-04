@@ -54,7 +54,7 @@ def checkContents(fileHash, data, metadata):
     logging.info('checkContents(): %s: Checking metadata...', fileHash)
 
     if not isinstance(metadata, dict):
-        raise dropBox.DropBoxError(fileHash, 'The metadata is not a dictionary.')
+        raise dropBox.DropBoxError('The metadata is not a dictionary.')
 
     if not set(metadata.keys()).issubset([
         u'destDB',
@@ -66,7 +66,7 @@ def checkContents(fileHash, data, metadata):
         u'since',
         u'usertext',
     ]):
-        raise dropBox.DropBoxError(fileHash, 'The metadata contains invalid keys.')
+        raise dropBox.DropBoxError('The metadata contains invalid keys.')
 
     if u'timeType' in metadata and metadata[u'timeType'] not in [
         u'runnumber',
@@ -75,7 +75,7 @@ def checkContents(fileHash, data, metadata):
         u'hash',
         u'user',
     ]:
-        raise dropBox.DropBoxError(fileHash, 'The metadata\'s timeType key contains an invalid value.')
+        raise dropBox.DropBoxError('The metadata\'s timeType key contains an invalid value.')
 
     if 'exportTo' in metadata and metadata[u'exportTo'] not in [
         u'offline',
@@ -84,7 +84,7 @@ def checkContents(fileHash, data, metadata):
         u'prompt',
         u'pcl',
     ]:
-        raise dropBox.DropBoxError(fileHash, 'The metadata\'s exportTo key contains an invalid value.')
+        raise dropBox.DropBoxError('The metadata\'s exportTo key contains an invalid value.')
 
 
 def checkFile(filename):
@@ -102,12 +102,12 @@ def checkFile(filename):
     try:
         tarFile = tarfile.open(filename, 'r:bz2')
     except tarfile.TarError as e:
-        raise dropBox.DropBoxError(fileHash, 'The file is not a valid tar file.')
+        raise dropBox.DropBoxError('The file is not a valid tar file.')
 
     try:
         logging.info('checkFile(): %s: Checking whether the tar file contains the and only the expected file names...', fileHash)
         if tarFile.getnames() != [dataFilename, metadataFilename]:
-            raise dropBox.DropBoxError(fileHash, 'The file tar file does not contain the and only the expected file names.')
+            raise dropBox.DropBoxError('The file tar file does not contain the and only the expected file names.')
 
         logging.info('checkFile(): %s: Checking whether each file has the expected attributes...', fileHash)
         for tarInfo in tarFile.getmembers():
@@ -117,7 +117,7 @@ def checkFile(filename):
                 or tarInfo.mtime != 0 \
                 or tarInfo.uname != 'root' \
                 or tarInfo.gname != 'root':
-                raise dropBox.DropBoxError(fileHash, 'The file %s has unexpected attributes.' % tarInfo.name)
+                raise dropBox.DropBoxError('The file %s has unexpected attributes.' % tarInfo.name)
 
         logging.info('checkFile(): %s: Extracting files...', fileHash)
         extractedFolderPath = getExtractedFilePath(fileHash)
@@ -134,15 +134,15 @@ def checkFile(filename):
             with open(metadataPath, 'rb') as f:
                 metadata = json.load(f)
         except ValueError:
-            raise dropBox.DropBoxError(fileHash, 'The metadata is not valid JSON.')
+            raise dropBox.DropBoxError('The metadata is not valid JSON.')
         except Exception as e:
-            raise dropBox.DropBoxError(fileHash, 'The metadata could not be read.')
+            raise dropBox.DropBoxError('The metadata could not be read.')
 
         try:
             logging.info('checkFile(): %s: Opening connection to data...', fileHash)
             dataConnection = sqlite3.connect(dataPath)
         except Exception as e:
-            raise dropBox.DropBoxError(fileHash, 'The data could not be read.')
+            raise dropBox.DropBoxError('The data could not be read.')
 
         try:
             logging.info('checkFile(): %s: Checking content of the files...', fileHash)

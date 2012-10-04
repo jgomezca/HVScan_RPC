@@ -28,7 +28,7 @@ import databaseLog
 
 # Declared before import check, so that check.py can access it
 class DropBoxError(Exception):
-    def __init__(self, fileHash, message):
+    def __init__(self, message):
         self.args = (message, )
 
 
@@ -78,7 +78,7 @@ def checkHash(fileHash):
     '''
 
     if re.match('^[0-9a-f]{%s}$' % hashLength, fileHash) is None:
-        raise DropBoxError(fileHash, 'The hash is not a valid SHA1 hash.')
+        raise DropBoxError('The hash is not a valid SHA1 hash.')
 
 
 def checkPendingFile(fileHash):
@@ -86,7 +86,7 @@ def checkPendingFile(fileHash):
     '''
 
     if not os.path.exists(getPendingFilePath(fileHash)):
-        raise DropBoxError(fileHash, 'The pending file %s does not exist.' % fileHash)
+        raise DropBoxError('The pending file %s does not exist.' % fileHash)
 
 
 def failUpload(fileHash):
@@ -111,21 +111,21 @@ def uploadFile(fileHash, fileContent, username):
     logging.info('uploadFile(): %s: Checking the file content hash...', fileHash)
     fileContentHash = getHash(fileContent)
     if fileHash != fileContentHash:
-        raise DropBoxError(fileHash, 'The given file hash %s does not match with the file content hash %s.' % (fileHash, fileContentHash))
+        raise DropBoxError('The given file hash %s does not match with the file content hash %s.' % (fileHash, fileContentHash))
 
     logging.info('uploadFile(): %s: Checking whether the file already exists...', fileHash)
 
     if os.path.exists(getUploadedFilePath(fileHash)):
-        raise DropBoxError(fileHash, 'The uploaded file with hash %s already exists in the Uploaded files (i.e. not yet processed). This probably means that you sent the same request twice in a short time.' % fileHash)
+        raise DropBoxError('The uploaded file with hash %s already exists in the Uploaded files (i.e. not yet processed). This probably means that you sent the same request twice in a short time.' % fileHash)
 
     if os.path.exists(getPendingFilePath(fileHash)):
-        raise DropBoxError(fileHash, 'The uploaded file with hash %s already exists in the Pending files (i.e. files that are waiting to be pulled by online that were already checked). This probably means that you sent the same request twice in a short time.' % fileHash)
+        raise DropBoxError('The uploaded file with hash %s already exists in the Pending files (i.e. files that are waiting to be pulled by online that were already checked). This probably means that you sent the same request twice in a short time.' % fileHash)
 
     if os.path.exists(getAcknowledgedFilePath(fileHash)):
-        raise DropBoxError(fileHash, 'The uploaded file with hash %s already exists in the Acknowledged files (i.e. files that were already pulled by online not too long ago -- we do not keep all of them forever). This probably means that you sent the same request twice after some time.' % fileHash)
+        raise DropBoxError('The uploaded file with hash %s already exists in the Acknowledged files (i.e. files that were already pulled by online not too long ago -- we do not keep all of them forever). This probably means that you sent the same request twice after some time.' % fileHash)
 
     if os.path.exists(getBadFilePath(fileHash)):
-        raise DropBoxError(fileHash, 'The uploaded file with hash %s already exists in the Bad files (i.e. files that were wrong for some reason). Therefore this file will be skipped since the results of the checks should be the same again (i.e. wrong).' % fileHash)
+        raise DropBoxError('The uploaded file with hash %s already exists in the Bad files (i.e. files that were wrong for some reason). Therefore this file will be skipped since the results of the checks should be the same again (i.e. wrong).' % fileHash)
 
     logging.info('uploadFile(): %s: Writing, flushing and fsyncing the uploaded file...', fileHash)
     with open(getUploadedFilePath(fileHash), 'wb') as f:
@@ -135,7 +135,7 @@ def uploadFile(fileHash, fileContent, username):
 
     logging.info('uploadFile(): %s: Checking whether the uploaded file exists...', fileHash)
     if not os.path.exists(getUploadedFilePath(fileHash)):
-        raise DropBoxError(fileHash, 'The uploaded file %s does not exist.' % fileHash)
+        raise DropBoxError('The uploaded file %s does not exist.' % fileHash)
 
     logging.info('uploadFile(): %s: Checking the contents of the file...', fileHash)
     try:
@@ -149,7 +149,7 @@ def uploadFile(fileHash, fileContent, username):
         databaseLog.insertFileLog(fileHash, 100, username)
     except cx_Oracle.IntegrityError:
         failUpload(fileHash)
-        raise DropBoxError(fileHash, 'The uploaded file %s was already requested in the database.' % fileHash)
+        raise DropBoxError('The uploaded file %s was already requested in the database.' % fileHash)
 
     logging.info('uploadFile(): %s: Moving file to pending folder...', fileHash)
     os.rename(getUploadedFilePath(fileHash), getPendingFilePath(fileHash))
@@ -216,7 +216,7 @@ def acknowledgeFile(fileHash):
 
     logging.info('acknowledgeFile(): %s: Checking whether the acknowledged file exists...', fileHash)
     if not os.path.exists(getAcknowledgedFilePath(fileHash)):
-        raise DropBoxError(fileHash, 'The acknowledged file %s does not exist.' % fileHash)
+        raise DropBoxError('The acknowledged file %s does not exist.' % fileHash)
 
 
 def updateFileStatus(fileHash, statusCode):
