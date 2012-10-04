@@ -75,28 +75,22 @@ def checkSynchronization( synchronizeTo, connectionString, tag, gtHandle ):
     connectionString: the connection string to be looked for.
     tag: the tag to be looked for.
     gtHandle: an instance of GlobalTagHandler.
-    Raises if the input workflow is not in supported ones, if the dictionary for production workflow is malformed, or if the synchronization is not correct.
+    Raises if the dictionary for production workflow is malformed, or if the synchronization is not correct.
     """
-    synchronizations = ( 'hlt', 'express', 'prompt', 'pcl', 'offline' )
-    if synchronizeTo not in synchronizations:
-        raise dropBox.DropBoxError(  """The synchronization \"%s\" for tag \"%s\" in database \"%s\" is not supported.""" %( synchronizeTo, tag, connectionString ) )
     try:
-        try:
-            productionGTsDict = gtHandle.getProductionGlobalTags()
-        except conditionError.ConditionError:
-            productionGTsDict = config.productionGlobalTags
-        workflow = gtHandle.getWorkflowForTagAndDB( connectionString, tag, productionGTsDict )
-        check = False
-        if workflow is None:
-            check = True #connection string and tag are not in any production Global Tags
-        elif synchronizeTo == workflow:
-            check = True #connection string and tag are in the production Global Tag for the same workflow specified
-        elif synchronizeTo == 'pcl' and workflow == 'prompt':
-            check = True #pcl is a particular case for prompt
-        if not check:
-            raise dropBox.DropBoxError( "The synchronization \"%s\" for tag \"%s\" in database \"%s\" provided in the metadata does not match the one in the global tag for workflow \"%s\"." %( synchronizeTo, tag, connectionString, workflow ) )
-    except conditionError.ConditionError as ce:
-        raise dropBox.DropBoxError( """The dictionary for the Global Tags in the production workflows is not valid.\nThe reason is: \"%s\"""" %( ce, ) )
+        productionGTsDict = gtHandle.getProductionGlobalTags()
+    except conditionError.ConditionError:
+        productionGTsDict = config.productionGlobalTags
+    workflow = gtHandle.getWorkflowForTagAndDB( connectionString, tag, productionGTsDict )
+    check = False
+    if workflow is None:
+        check = True #connection string and tag are not in any production Global Tags
+    elif synchronizeTo == workflow:
+        check = True #connection string and tag are in the production Global Tag for the same workflow specified
+    elif synchronizeTo == 'pcl' and workflow == 'prompt':
+        check = True #pcl is a particular case for prompt
+    if not check:
+        raise dropBox.DropBoxError( "The synchronization \"%s\" for tag \"%s\" in database \"%s\" provided in the metadata does not match the one in the global tag for workflow \"%s\"." %( synchronizeTo, tag, connectionString, workflow ) )
 
 def checkDestinationTags( metaDict ):
     """
@@ -105,7 +99,7 @@ def checkDestinationTags( metaDict ):
     If the destination account and the destination tags are as well as the dependent ones in at least one Global Tag, the synchronization must be exactly the same as the one of the Global Tag, otherwise the request will not be processed.
     Parameters:
     metaDict: the dictionary extracted from the metadata file.
-    Raises if the dictionary for production workflows is malformed, if one of the input workflows are not supported, or if the synchronization for one of the tags is not correct.
+    Raises if the dictionary for production workflows is malformed, or if the synchronization for one of the tags is not correct.
     """
     connectionString = metaDict[ 'destDB' ]
     destTags = metaDict[ 'destTags' ]
