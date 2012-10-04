@@ -107,25 +107,8 @@ def checkDestinationTags( metaDict ):
     metaDict: the dictionary extracted from the metadata file.
     Raises if the dictionary for production workflows is malformed, if one of the input workflows are not supported, or if the synchronization for one of the tags is not correct.
     """
-    #check the structure of destTags = { "Tag" : { "synchTo" : synch, "dependencies" : { "DepTag" : synch, ... } }, ... } where synch = 'hlt' or 'express' or 'prompt' or 'pcl' or 'offline'
     connectionString = metaDict[ 'destDB' ]
     destTags = metaDict[ 'destTags' ]
-    for tag in destTags.keys():
-        if not isinstance( tag, str ):
-            raise DropBoxError( """The destination tag specified in the metadata file must be a string.""" )
-        if not tag:
-            raise DropBoxError( """The destination tag is not specified in the metadata file.""" )
-    for synchronizationDict in destTags.values():
-        if "synchTo" not in synchronizationDict or "dependencies" not in synchronizationDict:
-            raise DropBoxError( """The synchronization for the destination tags are not specified in the metadata file.""" )
-        if not isinstance( synchronizationDict[ 'synchTo' ], str ):
-            raise DropBoxError( """The synchronization for the destination tag specified in the metadata file must be a string.""" )
-        if not isinstance( synchronizationDict[ 'dependencies' ], dict ):
-            raise DropBoxError( """The dependent tags specified in the metadata file must be encapsulated in a dictionary.""" )
-        for dependentTag, synchronizeTo in synchronizationDict[ 'dependencies' ].items():
-            if ( not isinstance( dependentTag, str ) ) or ( not isinstance( synchronizeTo, str ) ):
-                raise DropBoxError( """The dependent tags and their synchronizations specified in the metadata file must be a string.""" )
-
     globalTagConnectionString = service.getFrontierConnectionString( service.secrets[ 'connections' ][ 'dev' ][ 'global_tag' ] )
     runControlConnectionString = service.getCxOracleConnectionString( service.secrets[ 'connections' ][ 'dev' ][ 'run_control' ] )
     runInfoConnectionString = service.getFrontierConnectionString( service.secrets[ 'connections' ][ 'dev' ][ 'run_info' ] )
