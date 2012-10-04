@@ -18,7 +18,7 @@ def checkCorruptedOrEmptyFile( dbFile ):
     try:
         db.getAllTags()
     except conditionException.ConditionException as e:
-        raise DropBoxError( "The file %s is corrupted or empty." %( dbFile, ) )
+        raise dropBox.DropBoxError( "The file %s is corrupted or empty." %( dbFile, ) )
 
 def checkDestinationDatabase( metaDict ):
     """
@@ -28,11 +28,11 @@ def checkDestinationDatabase( metaDict ):
     try:
         connectionString = metaDict[ 'destDB' ]
         if not connectionString.startswith( 'oracle:' ):
-            raise DropBoxError( "Oracle is the only supported service." )
+            raise dropBox.DropBoxError( "Oracle is the only supported service." )
         if not conditionDatabase.checkConnectionString( connectionString, True ):
-            raise DropBoxError( "The destination database in connection string \"%s\" cannot point to read-only services." )
+            raise dropBox.DropBoxError( "The destination database in connection string \"%s\" cannot point to read-only services." )
     except conditionError.ConditionError as err:
-        raise DropBoxError( "The connection string is not correct.\nThe reason is: %s" %( err, ) )
+        raise dropBox.DropBoxError( "The connection string is not correct.\nThe reason is: %s" %( err, ) )
 
 def checkInputTag( dbFile, metaDict ):
     """
@@ -45,7 +45,7 @@ def checkInputTag( dbFile, metaDict ):
     """
     db = conditionDatabase.ConditionDBChecker( "sqlite_file:"+dbFile, "" )
     if not db.checkTag( metaDict[ 'inputTag' ] ):
-        raise DropBoxError( "The input tag \"%s\" is not in the input SQLite file \"%s\"." %( metaDict[ 'inputTag' ], dbFile ) )
+        raise dropBox.DropBoxError( "The input tag \"%s\" is not in the input SQLite file \"%s\"." %( metaDict[ 'inputTag' ], dbFile ) )
 
 #FIXME: do we need to update the request if the since in the metadata file is null?
 def checkSince( dbFile, metaDict ):
@@ -62,7 +62,7 @@ def checkSince( dbFile, metaDict ):
     firstSince = conditionDatabase.ConditionDBChecker("sqlite_file:" + dbFile, "").iovSequence( metaDict[ 'inputTag' ] ).firstSince()
     if since is not None:
         if since < firstSince:
-            raise DropBoxError( "The since value \"%d\" specified in the metadata cannot be smaller than the first IOV since \"%d\"" %( since, firstSince ) )
+            raise dropBox.DropBoxError( "The since value \"%d\" specified in the metadata cannot be smaller than the first IOV since \"%d\"" %( since, firstSince ) )
 
 
 def checkSynchronization( synchronizeTo, connectionString, tag, gtHandle ):
@@ -79,7 +79,7 @@ def checkSynchronization( synchronizeTo, connectionString, tag, gtHandle ):
     """
     synchronizations = ( 'hlt', 'express', 'prompt', 'pcl', 'offline' )
     if synchronizeTo not in synchronizations:
-        raise DropBoxError(  """The synchronization \"%s\" for tag \"%s\" in database \"%s\" is not supported.""" %( synchronizeTo, tag, connectionString ) )
+        raise dropBox.DropBoxError(  """The synchronization \"%s\" for tag \"%s\" in database \"%s\" is not supported.""" %( synchronizeTo, tag, connectionString ) )
     try:
         try:
             productionGTsDict = gtHandle.getProductionGlobalTags()
@@ -94,9 +94,9 @@ def checkSynchronization( synchronizeTo, connectionString, tag, gtHandle ):
         elif synchronizeTo == 'pcl' and workflow == 'prompt':
             check = True #pcl is a particular case for prompt
         if not check:
-            raise DropBoxError( "The synchronization \"%s\" for tag \"%s\" in database \"%s\" provided in the metadata does not match the one in the global tag for workflow \"%s\"." %( synchronizeTo, tag, connectionString, workflow ) )
+            raise dropBox.DropBoxError( "The synchronization \"%s\" for tag \"%s\" in database \"%s\" provided in the metadata does not match the one in the global tag for workflow \"%s\"." %( synchronizeTo, tag, connectionString, workflow ) )
     except conditionException.ConditionException as ce:
-        raise DropBoxError( """The dictionary for the Global Tags in the production workflows is not valid.\nThe reason is: \"%s\"""" %( ce, ) )
+        raise dropBox.DropBoxError( """The dictionary for the Global Tags in the production workflows is not valid.\nThe reason is: \"%s\"""" %( ce, ) )
 
 def checkDestinationTags( metaDict ):
     """
