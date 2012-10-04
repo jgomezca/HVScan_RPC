@@ -106,7 +106,7 @@ def checkStructure(metadata, structure):
 def checkContents(fileHash, data, metadata):
     '''Checks whether the data and metadata are correct.
 
-    data is a sqlite3 cursor ready to be used.
+    data is the filename of the sqlite file.
     metadata is a string with the metadata file itself.
     '''
 
@@ -136,6 +136,12 @@ def checkContents(fileHash, data, metadata):
     }
 
     checkStructure(metadata, structure)
+
+    checkTodo.checkCorruptedOrEmptyFile(data)
+    checkTodo.checkDestinationDatabase(metadata)
+    checkTodo.checkInputTag(data, metadata)
+    checkTodo.checkSince(data, metadata)
+    checkTodo.checkDestinationTags(metadata)
 
 
 def checkFile(filename):
@@ -192,16 +198,12 @@ def checkFile(filename):
         try:
             logging.info('checkFile(): %s: Opening connection to data...', fileHash)
             dataConnection = sqlite3.connect(dataPath)
+            dataConnection.close()
         except Exception as e:
             raise dropBox.DropBoxError('The data could not be read.')
 
-        try:
-            logging.info('checkFile(): %s: Checking content of the files...', fileHash)
-            data = dataConnection.cursor()
-            checkContents(fileHash, data, metadata)
-        finally:
-            data.close()
-            dataConnection.close()
+        logging.info('checkFile(): %s: Checking content of the files...', fileHash)
+        checkContents(fileHash, dataPath, metadata)
     finally:
         logging.info('checkFile(): %s: Removing extracted files...', fileHash)
         os.unlink(dataPath)
