@@ -1,8 +1,12 @@
 {
-    "destDB": "sqlite_file:/tmp/test.db", 
-    "destTag": "Test3", 
-    "exportTo": "offline", 
+    "destinationDatabase": "sqlite_file:/tmp/test.db", 
+    "destinationTags": {
+        "Test3": {
+            "dependencies": {}, 
+            "synchronizeTo": "offline"
+        }
+    }, 
     "inputTag": "EcalTPGLinearizationConst_test", 
-    "timeType": "runnumber", 
-    "usertext": "Test3: one IOV not starting from 1, no since in the metadata"
+    "since": null, 
+    "userText": "Test3: one IOV not starting from 1, no since in the metadata"
 }

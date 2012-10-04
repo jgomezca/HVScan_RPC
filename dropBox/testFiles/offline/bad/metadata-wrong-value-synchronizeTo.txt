@@ -1,12 +1,12 @@
 {
     "destinationDatabase": "sqlite_file:/tmp/test.db", 
     "destinationTags": {
-        "Test2": {
+        "Test1": {
             "dependencies": {}, 
-            "synchronizeTo": "offline"
+            "synchronizeTo": "offlinee"
         }
     }, 
     "inputTag": "RunInfo_v1_mc", 
-    "since": 189023, 
-    "userText": "Test 1: one IOV 1-inf, with since in the metadata"
+    "since": null, 
+    "userText": "Test 1: one IOV 1-inf, no since in the metadata"
 }

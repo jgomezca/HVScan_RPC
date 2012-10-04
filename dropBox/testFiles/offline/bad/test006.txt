@@ -1,8 +1,12 @@
 {
-    "destDB": "sqlite_file:/tmp/test.db", 
-    "destTag": "Test6", 
-    "exportTo": "offline", 
+    "destinationDatabase": "sqlite_file:/tmp/test.db", 
+    "destinationTags": {
+        "Test6": {
+            "dependencies": {}, 
+            "synchronizeTo": "offline"
+        }
+    }, 
     "inputTag": "HcalRecoParams_v4.0_offline.db", 
-    "timeType": "runnumber", 
-    "usertext": "Test 6: many IOVs no since in the metadata"
+    "since": null, 
+    "userText": "Test 6: many IOVs no since in the metadata"
 }

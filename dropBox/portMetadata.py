@@ -47,30 +47,35 @@ def portMetadata(inputFilename):
             key = key.lower()
 
             if key == 'destdb':
-                outputMetadata['destDB'] = value
+                outputMetadata['destinationDatabase'] = value
             elif key == 'tag':
-                outputMetadata['destTag'] = value
+                outputMetadata['destinationTags'] = {
+                    value: {}
+                }
             elif key == 'inputtag':
                 outputMetadata['inputTag'] = value
             elif key == 'since':
                 if value != '':
                     outputMetadata['since'] = int(value)
+                else:
+                    outputMetadata['since'] = None
             elif key == 'iovcheck':
-                outputMetadata['exportTo'] = value
+                outputMetadata['destinationTags'][outputMetadata['destinationTags'].keys()[0]] = {
+                    'synchronizeTo': value,
+                    'dependencies': {},
+                }
             elif key == 'timetype':
-                outputMetadata['timeType'] = value
+                continue
             elif key in ['duplicatetaghlt', 'duplicatetagexpress', 'duplicatetagprompt', 'duplicatetagpcl']:
                 if value != '':
-                    outputMetadata.setdefault('duplicateTo', {}).setdefault(key.split('duplicatetag')[1], []).append(value)
+                    outputMetadata['destinationTags'][outputMetadata['destinationTags'].keys()[0]]['dependencies'][value] = key.partition('duplicatetag')[2]
             elif key == 'usertext':
-                outputMetadata['usertext'] = value
+                outputMetadata['userText'] = value
             else:
                 raise Exception('Invalid key')
 
-
     with open(outputFilename, 'wb') as f:
         json.dump(outputMetadata, f, sort_keys = True, indent = 4)
-
 
     os.rename(inputFilename, backupFilename)
     os.rename(outputFilename, inputFilename)

@@ -43,6 +43,66 @@ dataFilename = 'data.db'
 metadataFilename = 'metadata.txt'
 
 
+def checkStructure(metadata, structure):
+    '''Checks the structure of the metadata.
+    '''
+
+    #-mos XXX: I will clean this: Explain how it works, add proper error
+    #          messages with a proper chain from the top levels, etc...
+    #          Then move it to common because it can be useful for others
+    #          to some file like type.py or checkType.py.
+    #          Also, check that there are no more keys than those specified.
+
+    if type(structure) == tuple:
+        if metadata not in structure:
+            raise dropBox.DropBoxError('In the metadata, value %s is not any of %s.' % (str(metadata), str(structure),))
+
+    elif type(structure) == set:
+        ok = False
+        for item in structure:
+            try:
+                checkStructure(metadata, item)
+                ok = True
+                break
+            except dropBox.DropBoxError:
+                pass
+        if not ok:
+            raise dropBox.DropBoxError('In the metadata, type %s is not any of %s.' % (str(type(metadata)), str(structure),))
+        return
+
+    elif type(structure) == dict:
+        for key in structure.keys():
+            if type(key) == unicode:
+                # Key with a fixed name, check value
+                (requiredKey, valueStructure) = structure[key]
+
+                try:
+                    value = metadata[key]
+                except KeyError:
+                    if not requiredKey:
+                        raise dropBox.DropBoxError('In the metadata, key %s is required.' % key)
+                    continue
+
+                checkStructure(value, valueStructure)
+            else:
+                # Other kind
+                for metadataKey in metadata:
+                    checkStructure(metadataKey, key)
+                    checkStructure(metadata[metadataKey], structure[key])
+
+    elif type(structure) == list:
+        for item in metadata:
+            checkStructure(item, structure[0])
+
+    elif type(structure) == type(int):
+        if type(metadata) != structure:
+            raise dropBox.DropBoxError('In the metadata, type %s is not equal to %s.' % (str(type(metadata)), str(structure),))
+
+    else:
+        if type(metadata) != type(structure):
+            raise dropBox.DropBoxError('In the metadata, type %s is not equal to %s.' % (str(type(metadata)), str(type(structure)),))
+
+
 def checkContents(fileHash, data, metadata):
     '''Checks whether the data and metadata are correct.
 
@@ -57,35 +117,25 @@ def checkContents(fileHash, data, metadata):
     if not isinstance(metadata, dict):
         raise dropBox.DropBoxError('The metadata is not a dictionary.')
 
-    if not set(metadata.keys()).issubset([
-        u'destDB',
-        u'destTag',
-        u'duplicateTo',
-        u'exportTo',
-        u'inputTag',
-        u'timeType',
-        u'since',
-        u'usertext',
-    ]):
-        raise dropBox.DropBoxError('The metadata contains invalid keys.')
+    workflows = (u'offline', u'hlt', u'express', u'prompt', u'pcl')
 
-    if u'timeType' in metadata and metadata[u'timeType'] not in [
-        u'runnumber',
-        u'lumiid',
-        u'timestamp',
-        u'hash',
-        u'user',
-    ]:
-        raise dropBox.DropBoxError('The metadata\'s timeType key contains an invalid value.')
+    structure = {
+        u'destinationDatabase': (False, unicode),
+        u'inputTag': (False, unicode),
+        u'since': (False, set([int, None])),
+        u'emails': (True, [unicode]),
+        u'userText': (False, unicode),
+        u'destinationTags': (False, {
+            unicode: {
+                u'synchronizeTo': (False, workflows),
+                u'dependencies': (True, {
+                    unicode: workflows,
+                }),
+            },
+        })
+    }
 
-    if 'exportTo' in metadata and metadata[u'exportTo'] not in [
-        u'offline',
-        u'hlt',
-        u'express',
-        u'prompt',
-        u'pcl',
-    ]:
-        raise dropBox.DropBoxError('The metadata\'s exportTo key contains an invalid value.')
+    checkStructure(metadata, structure)
 
 
 def checkFile(filename):

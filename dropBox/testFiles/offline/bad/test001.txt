@@ -1,8 +1,12 @@
 {
-    "destDB": "sqlite_file:/tmp/test.db", 
-    "destTag": "Test1", 
-    "exportTo": "offline", 
+    "destinationDatabase": "sqlite_file:/tmp/test.db", 
+    "destinationTags": {
+        "Test1": {
+            "dependencies": {}, 
+            "synchronizeTo": "offline"
+        }
+    }, 
     "inputTag": "RunInfo_v1_mc", 
-    "timeType": "runnumber", 
-    "usertext": "Test 1: one IOV 1-inf, no since in the metadata"
+    "since": null, 
+    "userText": "Test 1: one IOV 1-inf, no since in the metadata"
 }
