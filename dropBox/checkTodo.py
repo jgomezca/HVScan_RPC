@@ -4,6 +4,8 @@ import dropBoxException
 import globalTagHandler
 import service
 
+import config
+
 def checkCorruptedOrEmptyFile( dbFile ):
     """
     Checks if a SQLite file is corrupted or just empty (i.e. containing only empty tables) by checking if there are tags inside.
@@ -63,7 +65,7 @@ def checkSince( dbFile, metaDict ):
             raise DropBoxError( "The since value \"%d\" specified in the metadata cannot be smaller than the first IOV since \"%d\"" %( since, firstSince ) )
 
 
-def checkSynchronization( synchronizeTo, connectionString, tag, gtHandle, productionGTsDict = None ):
+def checkSynchronization( synchronizeTo, connectionString, tag, gtHandle ):
     """
     Checks if a connection string and a tag are compatible with the synchronization for a workflow against the production Global Tags.
     If the destination account and the destination tags are not in the production Global Tags, any synchronization is valid.
@@ -73,15 +75,16 @@ def checkSynchronization( synchronizeTo, connectionString, tag, gtHandle, produc
     connectionString: the connection string to be looked for.
     tag: the tag to be looked for.
     gtHandle: an instance of GlobalTagHandler.
-    productionGTsDict: (default None) dictionary for the Global Tags in the production workflows, in the form {'hlt' : hltGT, 'express' : expressGT, 'prompt' : promptGT }. When set to None (default), it is retrieved by querying HLT ConfDB and Tier0DataSvc.
     Raises if the input workflow is not in supported ones, if the dictionary for production workflow is malformed, or if the synchronization is not correct.
     """
     synchronizations = ( 'hlt', 'express', 'prompt', 'pcl', 'offline' )
     if synchronizeTo not in synchronizations:
         raise DropBoxError(  """The synchronization \"%s\" for tag \"%s\" in database \"%s\" is not supported.""" %( synchronizeTo, tag, connectionString ) )
     try:
-        if productionGTsDict is None:
+        try:
             productionGTsDict = gtHandle.getProductionGlobalTags()
+        except conditionError.ConditionError:
+            productionGTsDict = config.productionGlobalTags
         workflow = gtHandle.getWorkflowForTagAndDB( connectionString, tag, productionGTsDict )
         check = False
         if workflow is None:
@@ -95,14 +98,13 @@ def checkSynchronization( synchronizeTo, connectionString, tag, gtHandle, produc
     except conditionException.ConditionException as ce:
         raise DropBoxError( """The dictionary for the Global Tags in the production workflows is not valid.\nThe reason is: \"%s\"""" %( ce, ) )
 
-def checkDestinationTags( metaDict, productionGTsDict = None ):
+def checkDestinationTags( metaDict ):
     """
     Checks if the destTags field in the metadata dictionary is correct.
     If the destination account and the destination tags as well as the dependent ones are not in the production Global Tags, the request can be processed.
     If the destination account and the destination tags are as well as the dependent ones in at least one Global Tag, the synchronization must be exactly the same as the one of the Global Tag, otherwise the request will not be processed.
     Parameters:
     metaDict: the dictionary extracted from the metadata file.
-    productionGTsDict: (default None) dictionary for the Global Tags in the production workflows, in the form {'hlt' : hltGT, 'express' : expressGT, 'prompt' : promptGT }. When set to None (default), it is retrieved by querying HLT ConfDB and Tier0DataSvc.
     Raises if the dictionary for production workflows is malformed, if one of the input workflows are not supported, or if the synchronization for one of the tags is not correct.
     """
     #check the structure of destTags = { "Tag" : { "synchTo" : synch, "dependencies" : { "DepTag" : synch, ... } }, ... } where synch = 'hlt' or 'express' or 'prompt' or 'pcl' or 'offline'
@@ -136,6 +138,6 @@ def checkDestinationTags( metaDict, productionGTsDict = None ):
     retryPeriod = 90
     gtHandle = globalTagHandler.GlobalTagHandler( globalTagConnectionString, runControlConnectionString, runInfoConnectionString, runInfoStartTag, runInfoStopTag, authPath, tier0DataSvcURI, timeOut, retries, retryPeriod )
     for tag, synchronizationDict in destTags.items():
-        checkSynchronization( synchronizationDict[ 'synchTo' ], connectionString, tag, gtHandle, productionGTsDict )
+        checkSynchronization( synchronizationDict[ 'synchTo' ], connectionString, tag, gtHandle )
         for dependentTag, synchronizeTo in synchronizationDict[ 'dependencies' ].items():
-            checkSynchronization( synchronizeTo, connectionString, dependentTag, gtHandle, productionGTsDict )
+            checkSynchronization( synchronizeTo, connectionString, dependentTag, gtHandle )

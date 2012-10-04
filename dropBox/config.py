@@ -47,3 +47,6 @@ offlineTestFilesPath = os.path.join(testFilesPath, 'offline')
 # Files for online testing, used by copyOnlineTestFiles()
 onlineTestFilesPath = os.path.join(testFilesPath, 'online')
 
+# Default dictionary for production Global Tags
+productionGlobalTags = {'hlt' : 'GR_H_V29', 'express' : 'GR_E_V31', 'prompt' : 'GR_P_V42' }
+
