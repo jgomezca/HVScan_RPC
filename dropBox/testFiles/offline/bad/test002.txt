@@ -8,5 +8,5 @@
     }, 
     "inputTag": "RunInfo_v1_mc", 
     "since": 189023, 
-    "userText": "Test 1: one IOV 1-inf, with since in the metadata"
+    "userText": "Test 2: one IOV 1-inf, with since in the metadata"
 }
