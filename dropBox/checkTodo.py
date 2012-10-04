@@ -17,7 +17,7 @@ def checkCorruptedOrEmptyFile( dbFile ):
     db = conditionDatabase.ConditionDBChecker( "sqlite_file:"+dbFile, "" )
     try:
         db.getAllTags()
-    except conditionException.ConditionException as e:
+    except conditionError.ConditionError as e:
         raise dropBox.DropBoxError( "The file %s is corrupted or empty." %( dbFile, ) )
 
 def checkDestinationDatabase( metaDict ):
@@ -95,7 +95,7 @@ def checkSynchronization( synchronizeTo, connectionString, tag, gtHandle ):
             check = True #pcl is a particular case for prompt
         if not check:
             raise dropBox.DropBoxError( "The synchronization \"%s\" for tag \"%s\" in database \"%s\" provided in the metadata does not match the one in the global tag for workflow \"%s\"." %( synchronizeTo, tag, connectionString, workflow ) )
-    except conditionException.ConditionException as ce:
+    except conditionError.ConditionError as ce:
         raise dropBox.DropBoxError( """The dictionary for the Global Tags in the production workflows is not valid.\nThe reason is: \"%s\"""" %( ce, ) )
 
 def checkDestinationTags( metaDict ):
