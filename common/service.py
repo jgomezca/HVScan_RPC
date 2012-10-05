@@ -441,9 +441,9 @@ class HTTPService(http.HTTP):
 
 	baseUrl = 'https://%s/%s/' % (socket.gethostname(), settings['name'])
 
-	def query(self, url, data = None, keepCookies = True):
+	def query(self, url, data = None, files = None, keepCookies = True):
 		try:
-			return super(HTTPService, self).query(self.baseUrl + url, data, keepCookies)
+			return super(HTTPService, self).query(self.baseUrl + url, data, files, keepCookies)
 		except http.HTTPError as e:
 			e.response = parseCherryPyErrorPage(e.response)
 			e.args = (e.response, )
@@ -476,12 +476,12 @@ class TestCase(unittest.TestCase):
 			logging.warning('%s took %.2f seconds.', self.id(), totalTime)
 
 
-	def query(self, url, data = None, keepCookies = True):
-		return self.httpService.query(url, data, keepCookies)
+	def query(self, url, data = None, files = None, keepCookies = True):
+		return self.httpService.query(url, data, files, keepCookies)
 
 
-	def queryJson(self, url, data = None, keepCookies = True):
-		return json.loads(self.query(url, data, keepCookies))
+	def queryJson(self, url, data = None, files = None, keepCookies = True):
+		return json.loads(self.query(url, data, files, keepCookies))
 
 
 	def assertRaisesHTTPError(self, code, *args, **kwargs):
