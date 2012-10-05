@@ -202,7 +202,7 @@ class ConditionDBChecker( object ):
             self._dbStarted = False
         try:
             self._rdbms = condDB.RDBMS( self._authPath )
-            self._db = self._rdbms.getReadOnlyDB( self._connectionString )
+            self._db = self._rdbms.getReadOnlyDB( str(self._connectionString) )
             isReconnected = True
             self._dbStarted = True
         except RuntimeError as err :
