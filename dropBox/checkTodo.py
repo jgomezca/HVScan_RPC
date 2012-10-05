@@ -22,11 +22,11 @@ def checkCorruptedOrEmptyFile( dbFile ):
 
 def checkDestinationDatabase( metaDict ):
     """
-    Checks if the destDB field in the metadata dictionary is valid, i.e. point to an Oracle service where updates are allowed.
+    Checks if the destinationDatabase field in the metadata dictionary is valid, i.e. point to an Oracle service where updates are allowed.
     Raises if destination database is not valid.
     """
     try:
-        connectionString = metaDict[ 'destDB' ]
+        connectionString = metaDict[ 'destinationDatabase' ]
         if not connectionString.startswith( 'oracle:' ):
             raise dropBox.DropBoxError( "Oracle is the only supported service." )
         if not conditionDatabase.checkConnectionString( connectionString, True ):
@@ -94,15 +94,15 @@ def checkSynchronization( synchronizeTo, connectionString, tag, gtHandle ):
 
 def checkDestinationTags( metaDict ):
     """
-    Checks if the destTags field in the metadata dictionary is correct.
+    Checks if the destinationTags field in the metadata dictionary is correct.
     If the destination account and the destination tags as well as the dependent ones are not in the production Global Tags, the request can be processed.
     If the destination account and the destination tags are as well as the dependent ones in at least one Global Tag, the synchronization must be exactly the same as the one of the Global Tag, otherwise the request will not be processed.
     Parameters:
     metaDict: the dictionary extracted from the metadata file.
     Raises if the dictionary for production workflows is malformed, or if the synchronization for one of the tags is not correct.
     """
-    connectionString = metaDict[ 'destDB' ]
-    destTags = metaDict[ 'destTags' ]
+    connectionString = metaDict[ 'destinationDatabase' ]
+    destinationTags = metaDict[ 'destinationTags' ]
     globalTagConnectionString = service.getFrontierConnectionString( service.secrets[ 'connections' ][ 'dev' ][ 'global_tag' ] )
     runControlConnectionString = service.getCxOracleConnectionString( service.secrets[ 'connections' ][ 'dev' ][ 'run_control' ] )
     runInfoConnectionString = service.getFrontierConnectionString( service.secrets[ 'connections' ][ 'dev' ][ 'run_info' ] )
@@ -114,7 +114,7 @@ def checkDestinationTags( metaDict ):
     retries = 3
     retryPeriod = 90
     gtHandle = globalTagHandler.GlobalTagHandler( globalTagConnectionString, runControlConnectionString, runInfoConnectionString, runInfoStartTag, runInfoStopTag, authPath, tier0DataSvcURI, timeOut, retries, retryPeriod )
-    for tag, synchronizationDict in destTags.items():
+    for tag, synchronizationDict in destinationTags.items():
         checkSynchronization( synchronizationDict[ 'synchTo' ], connectionString, tag, gtHandle )
         for dependentTag, synchronizeTo in synchronizationDict[ 'dependencies' ].items():
             checkSynchronization( synchronizeTo, connectionString, dependentTag, gtHandle )
