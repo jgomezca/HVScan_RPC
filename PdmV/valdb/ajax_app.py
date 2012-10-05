@@ -299,17 +299,21 @@ Comment: %s
 
     def sendMailOnChanges(self, messageText, emailSubject, org_message_ID, new_message_ID, username=False, **kwargs):
         msg = MIMEMultipart()
+        reply_to = []
         if org_message_ID != None:
             msg['In-Reply-To'] = org_message_ID
             msg['References'] = org_message_ID
 
         #send_from = "PdmV.ValDb@cern.ch"
-        send_from = "antanas.norkus@cern.ch"
+        send_from = getUserEmail(username, Session)
         msg['From'] = send_from
         send_to = self.MAILING_LIST
         if username != False:
             email = getUserEmail(username, Session)
             send_to.append(email)
+        reply_to.append(send_from)
+        reply_to += send_to
+        msg['reply-to'] = COMMASPACE.join(reply_to)
         msg['To'] = COMMASPACE.join(send_to)
         msg['Date'] = formatdate(localtime=True)
         msg['Subject'] = emailSubject

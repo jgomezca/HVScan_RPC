@@ -139,7 +139,7 @@
 				<li ><input type="checkbox" id="HIGGS">Higgs</li>
 				<li ><input type="checkbox" id="HEAVYFLAVOR">HeavyFlavor</li>
 				<li ><input type="checkbox" id="SUSY">Susy</li>
-
+                <li ><input type="checkbox" id="B">B</li>
 				<li ><input type="checkbox" id="EXOTICA">Exotica</li>
 				<li ><input type="checkbox" id="SUMMARY">Summary</li>
 			      </ul>
@@ -283,6 +283,7 @@
 				<li ><input type="checkbox" id="HIGGS">Higgs</li>
 				<li ><input type="checkbox" id="HEAVYFLAVOR">HeavyFlavor</li>
 				<li ><input type="checkbox" id="SUSY">Susy</li>
+				<li ><input type="checkbox" id="B">B</li>
 				<li ><input type="checkbox" id="EXOTICA">Exotica</li>
 
 				<li ><input type="checkbox" id="SUMMARY">Summary</li>
@@ -300,6 +301,7 @@
 				<li ><input type="checkbox" id="HIGGS">Higgs</li>
 				<li ><input type="checkbox" id="HEAVYFLAVOR">HeavyFlavor</li>
 				<li ><input type="checkbox" id="SUSY">Susy</li>
+				<li ><input type="checkbox" id="B">B</li>
 				<li ><input type="checkbox" id="EXOTICA">Exotica</li>
 
 				<li ><input type="checkbox" id="SUMMARY">Summary</li>
@@ -317,6 +319,7 @@
 				<li ><input type="checkbox" id="HIGGS">Higgs</li>
 				<li ><input type="checkbox" id="HEAVYFLAVOR">HeavyFlavor</li>
 				<li ><input type="checkbox" id="SUSY">Susy</li>
+				<li ><input type="checkbox" id="B">B</li>
 				<li ><input type="checkbox" id="EXOTICA">Exotica</li>
 
 				<li ><input type="checkbox" id="SUMMARY">Summary</li>
@@ -583,6 +586,7 @@
 
 									<th style="font-size: 8pt">HeavyFlavor</th>
 									<th style="font-size: 8pt">Susy</th>
+									<th style="font-size: 8pt">B</th>
 									<th style="font-size: 8pt">Exotica</th>
 									<th style="font-size: 8pt">Summary</th>
 									<th style="font-size: 8pt">RelMon</th>
@@ -607,6 +611,7 @@
 										<th style="font-size: 8pt">HeavyFlavor</th>
 
 										<th style="font-size: 8pt">Susy</th>
+										<th style="font-size: 8pt">B</th>
 										<th style="font-size: 8pt">Exotica</th>
 										<th style="font-size: 8pt">Summary</th>
 										<th style="font-size: 8pt">RelMon</th>
@@ -629,8 +634,9 @@
 										<th style="font-size: 8pt">Top</th>
 										<th style="font-size: 8pt">Higgs</th>
 										<th style="font-size: 8pt">HeavyFlavor</th>
+										
 										<th style="font-size: 8pt">Susy</th>
-
+                                        <th style="font-size: 8pt">B</th>
 										<th style="font-size: 8pt">Exotica</th>
 										<th style="font-size: 8pt">Summary</th>
 										<th style="font-size: 8pt">RelMon</th>
@@ -957,8 +963,8 @@ function createdinamictable(tbody, data1, releaseName, subCat){
     keys = ["CSC", "TAU", "TRACKING", "BTAG", "JET", "ECAL", "RPC", "PHOTON", "MUON", "MET", "ELECTRON", "TK", "HCAL", "DT", "SUMMARY", "RELMON"];
   }
   if (subCat == 'HData'||subCat == 'HFull'||subCat == 'HFast'){
-    colnumb = 14;
-    keys = ["TAU", "JET", "HIGGS", "TOP", "MUON", "PHOTON", "MET", "ELECTRON", "EXOTICA", "SUSY", "HEAVYFLAVOR", "SUMMARY", "RELMON"];
+    colnumb = 15;
+    keys = ["TAU", "JET", "HIGGS", "TOP", "MUON", "PHOTON", "MET", "ELECTRON", "EXOTICA", "SUSY", "HEAVYFLAVOR","B", "SUMMARY", "RELMON"];
   }
   if (subCat == 'PData'||subCat == 'PFull'||subCat == 'PFast'){
     colnumb = 10;
@@ -1005,8 +1011,14 @@ function createdinamictable(tbody, data1, releaseName, subCat){
 	if (key == "TRACKER"){
        key = "TK"
     }
-	text = data1[key][0];
-	comment = data1[key][1];
+    if (typeof data1[key] === 'undefined'){
+        text = null;
+        comment = null;
+    }
+    else{
+        text = data1[key][0];
+        comment = data1[key][1];
+    }
 	var src
 
 	switch(text){
@@ -1196,7 +1208,7 @@ var keys;
 if(release.toUpperCase() == "RECONSTRUCTION")
     keys = ["CSC", "TAU", "TRACKING", "BTAG", "JET", "ECAL", "RPC", "PHOTON", "MUON", "MET", "ELECTRON", "TK", "HCAL", "DT", "SUMMARY"];
 if(release.toUpperCase() == "HLT")
-    keys = ["TAU", "JET", "HIGGS", "TOP", "MUON", "PHOTON", "MET", "ELECTRON", "EXOTICA", "SUSY", "HEAVYFLAVOR", "SUMMARY"];
+    keys = ["TAU", "JET", "HIGGS", "TOP", "MUON", "PHOTON", "MET", "ELECTRON", "EXOTICA", "SUSY", "HEAVYFLAVOR","B", "SUMMARY"];
 if(release.toUpperCase() == "PAGS")
     keys = ["B", "HIGGS", "FWD", "TOP", "SMP", "EXOTICA", "SUSY", "SUMMARY"];
 if(release == "------")
@@ -1317,7 +1329,7 @@ var statsEL = stasChild.lastElementChild;
 	      if(categoryList[i] == "Reconstruction")
 	        defaultKeys = ["CSC", "TAU", "TRACKING", "BTAG", "JET", "ECAL", "RPC", "PHOTON", "MUON", "MET", "ELECTRON", "TK", "HCAL", "DT", "SUMMARY"];
 	      if(categoryList[i] == "HLT")
-	        defaultKeys = ["TAU", "JET", "HIGGS", "TOP", "MUON", "PHOTON", "MET", "ELECTRON", "EXOTICA", "SUSY", "HEAVYFLAVOR", "SUMMARY"];
+	        defaultKeys = ["TAU", "JET", "HIGGS", "TOP", "MUON", "PHOTON", "MET", "ELECTRON", "EXOTICA", "SUSY", "HEAVYFLAVOR", "B", "SUMMARY"];
 	      if(categoryList[i] == "PAGs")
 	        defaultKeys = ["B", "HIGGS", "FWD", "TOP", "SMP", "EXOTICA", "SUSY", "SUMMARY"];
 	      for(k=0; k<defaultKeys.length; k++){
@@ -1368,7 +1380,7 @@ var statsEL = stasChild.lastElementChild;
 	      if(categoryList[i] == "Reconstruction")
 	        defaultKeys = ["CSC", "TAU", "TRACKING", "BTAG", "JET", "ECAL", "RPC", "PHOTON", "MUON", "MET", "ELECTRON", "TK", "HCAL", "DT", "SUMMARY"];
 	      if(categoryList[i] == "HLT")
-	        defaultKeys = ["TAU", "JET", "HIGGS", "TOP", "MUON", "PHOTON", "MET", "ELECTRON", "EXOTICA", "SUSY", "HEAVYFLAVOR", "SUMMARY"];
+	        defaultKeys = ["TAU", "JET", "HIGGS", "TOP", "MUON", "PHOTON", "MET", "ELECTRON", "EXOTICA", "SUSY", "HEAVYFLAVOR","B", "SUMMARY"];
 	      if(categoryList[i] == "PAGs")
 	        defaultKeys = ["B", "HIGGS", "FWD", "TOP", "SMP", "EXOTICA", "SUSY", "SUMMARY"];
 	      for(k=0; k<defaultKeys.length; k++){
@@ -2101,6 +2113,7 @@ function addUserButtonModal(obj){
 	}
       });
   }
+  console.log(usrRDataStatsChecked);
 $.ajax({
                type: 'POST',
                url: 'addNewUser',

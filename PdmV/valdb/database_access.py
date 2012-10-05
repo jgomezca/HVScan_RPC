@@ -175,7 +175,7 @@ possible_category_list = ["Reconstruction", "HLT", "PAGs"]
 possible_subcatrgory_list = ["Data", "FullSim", "FastSim"] 
 
 reconstruction_status_list = ["CSC", "TAU", "TRACKING", "BTAG", "JET", "ECAL", "RPC", "PHOTON", "MUON", "MET", "ELECTRON", "TK", "HCAL", "DT", "SUMMARY"]
-hlt_status_list = ["TAU", "JET", "HIGGS", "TOP", "MUON", "PHOTON", "MET", "ELECTRON", "EXOTICA", "SUSY", "HEAVYFLAVOR", "SUMMARY"]
+hlt_status_list = ["TAU", "JET", "HIGGS", "TOP", "MUON", "PHOTON", "MET", "ELECTRON", "EXOTICA", "SUSY", "HEAVYFLAVOR", "B","SUMMARY"]
 pags_status_list = ["B", "HIGGS", "FWD", "TOP", "SMP", "EXOTICA", "SUSY", "SUMMARY"]
 
 # Returns validation statuses in JSON key-value form, found by release category, subcategory and name 
