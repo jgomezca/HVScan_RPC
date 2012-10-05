@@ -10,17 +10,16 @@ __email__ = 'mojedasa@cern.ch'
 
 
 import sys
+import os
+import glob
 import netrc
 import hashlib
+import subprocess
+import logging
 
 import service
 
-
-def getOfflineTestFilePath(fileHash):
-    '''Returns the path of the given offline test file.
-    '''
-
-    return os.path.join(config.offlineTestFile, fileHash)
+import config
 
 
 class DropBoxTest(service.TestCase):
@@ -93,14 +92,37 @@ class DropBoxTest(service.TestCase):
         self.signOut()
 
 
-    def testInvalidFiles(self):
+    def testFiles(self):
         self.signIn()
-        for (invalidFile, reason) in {
-             
-        }:
-            self.assertRaisesHTTPError(400, 'uploadFile', {
-                'uploadedFile': getOfflineTestFilePath,
-            })
+
+        # First clean all files
+        for fileName in glob.glob('files/*/*'):
+            logging.debug('Unlinking %s...', fileName)
+            os.unlink(fileName)
+
+        folders = os.listdir(config.offlineTestFilesPath)
+
+        # FIXME: For the moment, until we correct them
+        folders.remove('skip')
+
+        logging.info('Testing files on folders %s...', folders)
+
+        # Then test all of them
+        for folder in folders:
+            tests = [x.partition('.txt')[0] for x in glob.glob(os.path.join(config.offlineTestFilesPath, folder, '*.txt'))]
+
+            i = 0
+            for test in tests:
+                i += 1
+                logging.info('    %s [%s/%s] Testing file %s...', folder, i, len(tests), os.path.basename(test))
+
+                process = subprocess.Popen('./upload.py %s' % test, shell = True, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+                error = process.communicate()[1].rsplit('\n', 1)[-2].partition('ERROR: ')[2]
+
+                with open('%s.out' % test, 'rb') as f:
+                    self.assertEqual(error, f.read().strip())
+
+        
         self.signOut()
 
 

@@ -55,7 +55,7 @@ def checkStructure(metadata, structure):
 
     if type(structure) == tuple:
         if metadata not in structure:
-            raise dropBox.DropBoxError('In the metadata, value %s is not any of %s.' % (str(metadata), str(structure),))
+            raise dropBox.DropBoxError('In the metadata, value %s is not any of %s.' % (str(metadata), str(structure)))
 
     elif type(structure) == set:
         ok = False
@@ -67,7 +67,7 @@ def checkStructure(metadata, structure):
             except dropBox.DropBoxError:
                 pass
         if not ok:
-            raise dropBox.DropBoxError('In the metadata, type %s is not any of %s.' % (str(type(metadata)), str(structure),))
+            raise dropBox.DropBoxError('In the metadata, type %s is not any of %s.' % (type(metadata).__name__, [x.__name__ for x in structure]))
         return
 
     elif type(structure) == dict:
@@ -94,13 +94,13 @@ def checkStructure(metadata, structure):
         for item in metadata:
             checkStructure(item, structure[0])
 
-    elif type(structure) == type(int):
+    elif type(structure) == type:
         if type(metadata) != structure:
-            raise dropBox.DropBoxError('In the metadata, type %s is not equal to %s.' % (str(type(metadata)), str(structure),))
+            raise dropBox.DropBoxError('In the metadata, type %s is not equal to %s.' % (type(metadata).__name__, structure.__name__))
 
     else:
         if type(metadata) != type(structure):
-            raise dropBox.DropBoxError('In the metadata, type %s is not equal to %s.' % (str(type(metadata)), str(type(structure)),))
+            raise dropBox.DropBoxError('In the metadata, type %s is not equal to %s.' % (type(metadata).__name__, type(structure).__name__))
 
 
 def checkContents(fileHash, data, metadata):
@@ -122,7 +122,7 @@ def checkContents(fileHash, data, metadata):
     structure = {
         u'destinationDatabase': (False, unicode),
         u'inputTag': (False, unicode),
-        u'since': (False, set([int, None])),
+        u'since': (False, set([int, type(None)])),
         u'emails': (True, [unicode]),
         u'userText': (False, unicode),
         u'destinationTags': (False, {
