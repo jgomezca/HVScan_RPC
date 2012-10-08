@@ -119,14 +119,14 @@ def wrongFileTypes(temporaryFile):
     tarFile.close()
 
 
-def createTestFile(f, overwriteFileHash = None):
+def createTestFile(createFileFunction, overwriteFileHash = None):
     '''Create test file.
     '''
 
     temporaryFile = 'upload.tar.bz2'
 
-    logging.info('%s: Creating file...', temporaryFile)
-    f(temporaryFile)
+    logging.info('%s: Creating temporary file %s...', createFileFunction.__name__, temporaryFile)
+    createFileFunction(temporaryFile)
 
     fileHash = hashlib.sha1()
 
@@ -139,13 +139,13 @@ def createTestFile(f, overwriteFileHash = None):
 
     fileHash = fileHash.hexdigest()
 
-    logging.info('%s: Hash: %s', temporaryFile, fileHash)
+    logging.info('%s: Hash: %s', createFileFunction.__name__, fileHash)
 
     if overwriteFileHash is not None:
-        logging.info('%s: Overwriting file hash: %s', temporaryFile, overwriteFileHash)
+        logging.info('%s: Overwriting file hash: %s', createFileFunction.__name__, overwriteFileHash)
         fileHash = overwriteFileHash
 
-    logging.info('%s: Saving file...', temporaryFile)
+    logging.info('%s: Renaming temporary file as %s...', createFileFunction.__name__, fileHash)
     os.rename(temporaryFile, os.path.join(config.securityTestFilesPath, fileHash))
 
 
