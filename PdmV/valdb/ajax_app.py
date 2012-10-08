@@ -38,8 +38,8 @@ class AjaxApp(object):
             'PFast' : ('PAGs', 'FastSim'),	
         }
 
-    #MAILING_LIST = ["antanas.norkus@cern.ch", "jean-roch.vlimant@cern.ch", "dpiparo@cern.ch", "giovanni.franzoni@cern.ch", "hn-cms-relval@cern.ch"]
-    MAILING_LIST = ["antanas.norkus@cern.ch", "jean-roch.vlimant@cern.ch", "dpiparo@cern.ch", "giovanni.franzoni@cern.ch", "hn-cms-hnTest@cern.ch"]
+    MAILING_LIST = ["antanas.norkus@cern.ch", "jean-roch.vlimant@cern.ch", "dpiparo@cern.ch", "giovanni.franzoni@cern.ch", "hn-cms-relval@cern.ch"]
+#  MAILING_LIST = ["antanas.norkus@cern.ch"]#, "hn-cms-hnTest@cern.ch"] #testing mailing list
     VALIDATION_STATUS = "VALIDATION_STATUS"
     COMMENTS = "COMMENTS"
     LINKS = "LINKS"
@@ -193,7 +193,8 @@ Has Changed: From status: %s
              To status: %s
 By: %s
 Comment: %s
-""" % (relName.upper(), cat.upper(), subCat.upper(), statusKind.upper(), returnedStatusValueOld[0].upper(), stateValue.upper(), comentAuthor.upper(), newComment)
+Links: %s
+""" % (relName.upper(), cat.upper(), subCat.upper(), statusKind.upper(), returnedStatusValueOld[0].upper(), stateValue.upper(), comentAuthor.upper(), newComment, newLinks)
             self.sendMailOnChanges(msgText, msgSubject, returnedStatusValueOld[1], new_message_ID, userName)
             info = "Release information updated successfuly"
             cherrypy.response.headers['Content-Type'] = 'application/json'
@@ -308,10 +309,10 @@ Comment: %s
         send_from = getUserEmail(username, Session)
         msg['From'] = send_from
         send_to = self.MAILING_LIST
-        if username != False:
+        if username != False:   #send email copy to the sender himself
             email = getUserEmail(username, Session)
             send_to.append(email)
-        reply_to.append(send_from)
+        reply_to.append(send_from) #make a reply header to sender+receivers of the email.
         reply_to += send_to
         msg['reply-to'] = COMMASPACE.join(reply_to)
         msg['To'] = COMMASPACE.join(send_to)

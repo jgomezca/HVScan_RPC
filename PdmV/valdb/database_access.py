@@ -233,6 +233,8 @@ def getReleaseDetails(cat, sub_cat, rel_name, status_kind, Session):
                 info_dict[LINKS] = j.links
                 info_dict[META_DATE] = i.date.strftime("%Y-%m-%d %H:%M:%S")
                 info_dict[USER_NAME] = j.user_name
+        if cat == 'HLT' and status_kind == 'B':
+            info_dict[RELEASE_NAME] = rel_name
         session.close()
         return json.dumps(info_dict)
     except Exception as e:
@@ -403,11 +405,15 @@ def newRelease(cat, sub_cat, rel_name, dict_json, Session, *args):
             return "True"
     except Exception as e:
         session.close()
-        print e
+        import traceback
+        import sys
+        traceback.print_exc(file=sys.stdout)
+        raise e
 
 # Changes validation status of given release
 def changeStatus(cat, sub_cat, rel_name, status_kind, new_status, new_comment, new_user_name, new_links, Session, new_messageID, new_email_subject):
     session = Session()
+    RELMON = ""
     try:
         date = datetime.datetime.now()
         version = None 
@@ -420,6 +426,7 @@ def changeStatus(cat, sub_cat, rel_name, status_kind, new_status, new_comment, n
             return "Error! Release not exists"
         version = version + 1
         dict = {}
+        dict[status_kind]= {}
         status_id_for_delete = []
         for i in session.query(Releases_Table).filter(Releases_Table.category == cat).\
                                                 filter(Releases_Table.subcategory == sub_cat).\
@@ -434,18 +441,24 @@ def changeStatus(cat, sub_cat, rel_name, status_kind, new_status, new_comment, n
                 status_dict[MESSAGE_ID] = j.messageID
                 status_dict[EMAIL_SUBJECT] = j.email_subject
                 status_dict[RELMON_URL] = j.RELMON_URL
+                RELMON = j.RELMON_URL
             dict[i.status_kind] = status_dict
+
+        if cat == 'HLT' and "RELMON_URL" not in dict[status_kind]: #if the new column B added, but no info was saved before.
+            dict[status_kind]["RELMON_URL"] = RELMON
+            
         dict[status_kind][VALIDATION_STATUS] = new_status
         dict[status_kind][COMMENTS] = new_comment
         dict[status_kind][LINKS] = new_links
         dict[status_kind][USER_NAME] = new_user_name
         dict[status_kind][MESSAGE_ID] = new_messageID
         dict[status_kind][EMAIL_SUBJECT] = new_email_subject
+            
         for i in status_id_for_delete:
             session.query(Status_Table).filter(Status_Table.id == i).delete()
         session.query(Releases_Table).filter(Releases_Table.category == cat).\
                                         filter(Releases_Table.subcategory == sub_cat).\
-                                        filter(Releases_Table.release_name == rel_name).delete()        
+                                        filter(Releases_Table.release_name == rel_name).delete()
         response = newRelease(cat, sub_cat, rel_name, json.dumps(dict), Session, version, session)
         if response[0] == "True":
             response[1].commit()
