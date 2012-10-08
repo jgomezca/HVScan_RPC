@@ -1,6 +1,11 @@
 #!/usr/bin/env python2.6
 '''Script that creates the 'security' test files, for reference.
 (The generated files are included in git in any case).
+
+Running this file should be idempotent w.r.t. to git, i.e. running it
+several times in a row should not create any difference in the files
+at config.securityTestFilesPath. Therefore, if you commit changed to this file,
+please add in the same commit the changes in the test files.
 '''
 
 __author__ = 'Miguel Ojeda'
