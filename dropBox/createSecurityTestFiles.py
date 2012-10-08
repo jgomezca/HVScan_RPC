@@ -1,5 +1,5 @@
 #!/usr/bin/env python2.6
-'''Script that creates some of the online test files, for reference.
+'''Script that creates the 'security' test files, for reference.
 (The generated files are included in git in any case).
 '''
 
@@ -22,6 +22,9 @@ import json
 import config
 
 
+templateDBFile = os.path.join(config.testFilesPath, 'metadata/wrongKey.db')
+
+
 def add(tarFile, fileobj, arcname):
     '''Adds a file object to the tarFile with a given name.
     '''
@@ -33,11 +36,11 @@ def add(tarFile, fileobj, arcname):
     tarFile.addfile(tarInfo, fileobj)
 
 
-def badBzip2File(temporaryFile):
+def wrongBzip2File(temporaryFile):
     # Create normal file
     tarFile = tarfile.open(temporaryFile, 'w:bz2')
 
-    with open(os.path.join(config.offlineTestFilesPath, 'Test1@3ead5b56-0169-11e2-83cb-001eeca3fb3e.db'), 'rb') as data:
+    with open(templateDBFile, 'rb') as data:
         add(tarFile, data, 'data.db')
 
     with tempfile.NamedTemporaryFile() as metadata:
@@ -55,7 +58,7 @@ def badBzip2File(temporaryFile):
         tarFile.write('BZ1')
 
 
-def badFileNames(temporaryFile):
+def wrongFileNames(temporaryFile):
     tarFile = tarfile.open(temporaryFile, 'w:bz2')
 
     with tempfile.NamedTemporaryFile() as metadata:
@@ -66,10 +69,10 @@ def badFileNames(temporaryFile):
     tarFile.close()
 
 
-def badMetadataFile(temporaryFile):
+def wrongMetadataFile(temporaryFile):
     tarFile = tarfile.open(temporaryFile, 'w:bz2')
 
-    with open(os.path.join(config.offlineTestFilesPath,'Test1@3ead5b56-0169-11e2-83cb-001eeca3fb3e.db'), 'rb') as data:
+    with open(templateDBFile, 'rb') as data:
         add(tarFile, data, 'data.db')
 
     with tempfile.NamedTemporaryFile() as metadata:
@@ -83,7 +86,24 @@ def badMetadataFile(temporaryFile):
     tarFile.close()
 
 
-def badFileTypes(temporaryFile):
+def wrongJSON(temporaryFile):
+    tarFile = tarfile.open(temporaryFile, 'w:bz2')
+
+    with open(templateDBFile, 'rb') as data:
+        add(tarFile, data, 'data.db')
+
+    with tempfile.NamedTemporaryFile() as metadata:
+        metadata.write(json.dumps({
+            'bad': 'json',
+            'since': -100,
+        }, sort_keys = True, indent = 4).replace('"json"', 'json"'))
+        metadata.seek(0)
+        add(tarFile, metadata, 'metadata.txt')
+
+    tarFile.close()
+
+
+def wrongFileTypes(temporaryFile):
     tarFile = tarfile.open(temporaryFile, 'w:bz2')
 
     with tempfile.NamedTemporaryFile() as data:
@@ -99,8 +119,8 @@ def badFileTypes(temporaryFile):
     tarFile.close()
 
 
-def createOnlineTestFile(f, overwriteFileHash = None):
-    '''Create online test file.
+def createTestFile(f, overwriteFileHash = None):
+    '''Create test file.
     '''
 
     temporaryFile = 'upload.tar.bz2'
@@ -126,24 +146,25 @@ def createOnlineTestFile(f, overwriteFileHash = None):
         fileHash = overwriteFileHash
 
     logging.info('%s: Saving file...', temporaryFile)
-    os.rename(temporaryFile, os.path.join(config.onlineTestFilesPath, fileHash))
+    os.rename(temporaryFile, os.path.join(config.securityTestFilesPath, fileHash))
 
 
 def main():
     '''Entry point.
     '''
 
-    # Bad checksums
-    createOnlineTestFile(badBzip2File, '123')
-    createOnlineTestFile(badBzip2File, '11a0c09404dddb79a4bd952dfd4b0c37824d6cd51')
-    createOnlineTestFile(badBzip2File, '01a0c09404dddb79a4bd952dfd4b0c37824d6cd5')
-    createOnlineTestFile(badBzip2File, '11a0c09404dddb79a4bd952dfd4b0c37824d6cv5')
+    # Wrong checksums
+    createTestFile(wrongBzip2File, '123')
+    createTestFile(wrongBzip2File, '11a0c09404dddb79a4bd952dfd4b0c37824d6cd51')
+    createTestFile(wrongBzip2File, '01a0c09404dddb79a4bd952dfd4b0c37824d6cd5')
+    createTestFile(wrongBzip2File, '11a0c09404dddb79a4bd952dfd4b0c37824d6cv5')
 
     
-    createOnlineTestFile(badBzip2File)
-    createOnlineTestFile(badFileNames)
-    createOnlineTestFile(badMetadataFile)
-    createOnlineTestFile(badFileTypes)
+    createTestFile(wrongBzip2File)
+    createTestFile(wrongFileNames)
+    createTestFile(wrongMetadataFile)
+    createTestFile(wrongJSON)
+    createTestFile(wrongFileTypes)
 
 
 if __name__ == '__main__':

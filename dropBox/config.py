@@ -41,11 +41,9 @@ badFilesPath = os.path.join(filesPath, 'bad')
 # Base path for test files
 testFilesPath = 'testFiles'
 
-# Files for offline testing, used by test.py
-offlineTestFilesPath = os.path.join(testFilesPath, 'offline')
-
-# Files for online testing, used by copyOnlineTestFiles()
-onlineTestFilesPath = os.path.join(testFilesPath, 'online')
+# Files for security testing, crafted by createSecurityTestFiles.py, treated
+# specially by test.py and used by copyOnlineTestFiles()
+securityTestFilesPath = os.path.join(testFilesPath, 'security')
 
 # Default dictionary for production Global Tags
 productionGlobalTags = {'hlt' : 'GR_H_V29', 'express' : 'GR_E_V31', 'prompt' : 'GR_P_V42' }

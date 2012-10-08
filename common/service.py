@@ -494,6 +494,9 @@ class TestCase(unittest.TestCase):
 		except http.HTTPError as e:
 			if e.code != code:
 				raise self.failureException, "HTTPError's code %s != expected %s" % (e.code, code)
+
+			# Return the error message to allow for detailed checking
+			return e.response
 		else:
 			raise self.failureException, "HTTPError not raised"
 

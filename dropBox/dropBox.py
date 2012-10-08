@@ -16,6 +16,7 @@ __email__ = 'mojedasa@cern.ch'
 
 import re
 import os
+import glob
 import shutil
 import logging
 import hashlib
@@ -293,6 +294,13 @@ def closeDatabase():
     return databaseLog.close()
 
 
+def getOnlineTestFilesList():
+    '''Returns the list of online test files.
+    '''
+
+    return [os.path.basename(x).partition('.out')[0] for x in glob.glob(os.path.join(config.securityTestFilesPath, '*.out'))]
+
+
 def removeOnlineTestFiles():
     '''Removes the online test files from all folders.
 
@@ -303,7 +311,7 @@ def removeOnlineTestFiles():
 
     logging.debug('dropBox::removeOnlineTestFiles()')
 
-    for fileHash in os.listdir(config.onlineTestFilesPath):
+    for fileHash in getOnlineTestFilesList():
         try:
             os.unlink(getUploadedFilePath(fileHash))
             logging.info('Removed %s', getUploadedFilePath(fileHash))
@@ -342,7 +350,7 @@ def copyOnlineTestFiles():
 
     removeOnlineTestFiles()
 
-    for fileHash in os.listdir(config.onlineTestFilesPath):
-        logging.info('%s -> %s', os.path.join(config.onlineTestFilesPath, fileHash), getPendingFilePath(fileHash))
-        shutil.copyfile(os.path.join(config.onlineTestFilesPath, fileHash), getPendingFilePath(fileHash))
+    for fileHash in getOnlineTestFilesList():
+        logging.info('Copying %s to %s', os.path.join(config.securityTestFilesPath, fileHash), getPendingFilePath(fileHash))
+        shutil.copyfile(os.path.join(config.securityTestFilesPath, fileHash), getPendingFilePath(fileHash))
 
