@@ -61,7 +61,7 @@ class DropBoxTest(service.TestCase):
         self.signOut()
 
 
-    def testUnauthorized(self):
+    def testNotFound(self):
         self.assertRaisesHTTPError(404, 'uploadFile')
         self.assertRaisesHTTPError(404, 'getFileList')
         self.assertRaisesHTTPError(404, 'getFile')
