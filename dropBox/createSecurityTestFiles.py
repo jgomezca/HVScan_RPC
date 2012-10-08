@@ -108,7 +108,7 @@ def wrongJSON(temporaryFile):
     tarFile.close()
 
 
-def wrongFileTypes(temporaryFile):
+def wrongDataFile(temporaryFile):
     tarFile = tarfile.open(temporaryFile, 'w:bz2')
 
     with tempfile.NamedTemporaryFile() as data:
@@ -117,7 +117,10 @@ def wrongFileTypes(temporaryFile):
         add(tarFile, data, 'data.db')
 
     with tempfile.NamedTemporaryFile() as metadata:
-        metadata.write('Bzt7025jPichcoj5jXAdkPtpJ4TGOVHjkq\nByEfI9cJ9zCbFmqsiPr4Ro5oGgQE\nax2wYvOettAcwe4HVfjpENnov06yBlCBlkS')
+        json.dump({
+            'bad': 'json',
+            'since': -100,
+        }, metadata, sort_keys = True, indent = 4)
         metadata.seek(0)
         add(tarFile, metadata, 'metadata.txt')
 
@@ -169,7 +172,7 @@ def main():
     createTestFile(wrongFileNames)
     createTestFile(wrongMetadataFile)
     createTestFile(wrongJSON)
-    createTestFile(wrongFileTypes)
+    createTestFile(wrongDataFile)
 
 
 if __name__ == '__main__':

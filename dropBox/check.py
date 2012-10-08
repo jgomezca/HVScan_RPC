@@ -198,9 +198,13 @@ def checkFile(filename):
         try:
             logging.info('checkFile(): %s: Opening connection to data...', fileHash)
             dataConnection = sqlite3.connect(dataPath)
-            dataConnection.close()
+            dataConnection.execute('select 1 from sqlite_master')
+        except sqlite3.DatabaseError as e:
+            raise dropBox.DropBoxError('The data is not a valid SQLite 3 database.')
         except Exception as e:
             raise dropBox.DropBoxError('The data could not be read.')
+        finally:
+            dataConnection.close()
 
         logging.info('checkFile(): %s: Checking content of the files...', fileHash)
         checkContents(fileHash, dataPath, metadata)
