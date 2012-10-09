@@ -56,9 +56,6 @@ def checkContents(fileHash, data, metadata):
 
     logging.info('checkContents(): %s: Checking metadata...', fileHash)
 
-    if not isinstance(metadata, dict):
-        raise dropBox.DropBoxError('The metadata is not a dictionary.')
-
     workflows = (u'offline', u'hlt', u'express', u'prompt', u'pcl')
 
     structure = {
