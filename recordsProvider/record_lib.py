@@ -128,7 +128,7 @@ class SoftwareReleaseManager(object):
             for hardware_architecture_name in self._hardware_architecture_list:
                 rez_dict[hardware_architecture_name] = []
             for item in rez:
-                for hardware_architecture_name in item.hardware_releases():
+                for hardware_architecture_name in item.get_hardware_releases():
                     rez_dict[hardware_architecture_name].append(item)
             for hardware_architecture_name in self._hardware_architecture_list:
                 if not rez_dict[hardware_architecture_name]:

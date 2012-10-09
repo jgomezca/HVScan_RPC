@@ -62,10 +62,10 @@ class App(object):
         for software_release in software_releases_list:
             software_release_dict = {
                 'name': software_release.name,
-                'hardware_architectures':list(software_release.hardware_releases()),
+                'hardware_architectures':list(software_release.get_hardware_releases()),
                 'version':{
-                    'tuple': software_release.version_tuple(),
-                    'dict': software_release.version_dict(),
+                    'tuple': software_release.get_version_tuple(),
+                    'dict': software_release.get_version_dict(),
                     'is_prerelease':software_release.is_prerelease,
                     }
             }
@@ -187,9 +187,9 @@ class App(object):
 
 
 def main():
-	service.start(App())
+    service.start(App())
 
 
 if __name__ == '__main__':
-	main()
+    main()
 
