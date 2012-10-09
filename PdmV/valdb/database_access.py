@@ -405,10 +405,7 @@ def newRelease(cat, sub_cat, rel_name, dict_json, Session, *args):
             return "True"
     except Exception as e:
         session.close()
-        import traceback
-        import sys
-        traceback.print_exc(file=sys.stdout)
-        raise e
+        print e
 
 # Changes validation status of given release
 def changeStatus(cat, sub_cat, rel_name, status_kind, new_status, new_comment, new_user_name, new_links, Session, new_messageID, new_email_subject):

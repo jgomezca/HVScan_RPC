@@ -313,7 +313,7 @@ Links: %s
             email = getUserEmail(username, Session)
             send_to.append(email)
         reply_to.append(send_from) #make a reply header to sender+receivers of the email.
-        reply_to += send_to
+        reply_to += "hn-cms-relval@cern.ch"
         msg['reply-to'] = COMMASPACE.join(reply_to)
         msg['To'] = COMMASPACE.join(send_to)
         msg['Date'] = formatdate(localtime=True)
@@ -387,12 +387,11 @@ Links: %s
             msg['References'] = org_message_ID
 
        # send_from = "PdmV.ValDb@cern.ch"
-        send_from = "antanas.norkus@cern.ch"
+        send_from = getUserEmail(username, Session)
         msg['From'] = send_from
         send_to = self.MAILING_LIST
         if username != False:
-            email = getUserEmail(username, Session)
-            send_to.append(email)
+            send_to.append(send_from)  ##send a copy to user himself
         msg['To'] = COMMASPACE.join(send_to)
         msg['Date'] = formatdate(localtime=True)
         msg['Subject'] = emailSubject
