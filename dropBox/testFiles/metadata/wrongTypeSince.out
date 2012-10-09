@@ -1,1 +1,1 @@
-In the metadata, type unicode is not any of ['int', 'NoneType'].
+In the metadata, wrongType does not match the expected structure.
