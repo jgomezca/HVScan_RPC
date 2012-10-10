@@ -19,6 +19,7 @@ import json
 import urllib
 import time
 import datetime
+import netrc
 import xml.sax.saxutils
 import xml.dom.minidom
 
@@ -269,6 +270,24 @@ def isAnotherInstanceRunning():
 
 
 # Functions for generating connection strings and URLs
+
+def getConnectionDictionaryFromNetrc(entry):
+	'''Returns a connection dictionary from a netrc entry.
+	(intended for personal/private database accounts and the like, instead
+	of the normal production ones from the secrets file).
+	'''
+
+	try:
+		(user, db_name, password) = netrc.netrc().authenticators(entry)
+	except TypeError:
+		raise Exception('netrc entry %s could not be found.' % entry)
+
+	return  {
+		'user': user,
+		'password': password,
+		'db_name': db_name,
+	}
+
 
 def getOracleConnectionString(connectionDictionary):
 	'''Returns a connection string for Oracle given

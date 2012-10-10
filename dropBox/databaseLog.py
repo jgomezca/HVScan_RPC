@@ -16,7 +16,10 @@ import database
 import service
 
 
-connection = database.Connection(service.secrets['connections']['dev'])
+if service.settings['productionLevel'] == 'private':
+    connection = database.Connection(service.getConnectionDictionaryFromNetrc('dropBoxDatabase'))
+else:
+    connection = database.Connection(service.secrets['connections']['dev'])
 
 
 def insertFileLog(fileHash, statusCode, username):
