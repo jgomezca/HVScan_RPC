@@ -137,7 +137,7 @@ def uploadFiles(username, password, filenames, temporaryFile = defaultTemporaryF
 
         logging.info('%s: Uploading file...', basename)
         os.rename(temporaryFile, fileHash)
-        ret = _uploadFile(username, password, fileHash, hostname = defaultHostname)
+        ret = _uploadFile(username, password, fileHash, hostname)
         os.unlink(fileHash)
 
         if ret != 0:
