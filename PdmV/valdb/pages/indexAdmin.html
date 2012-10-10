@@ -720,8 +720,8 @@
 
 					</select>
 					<img src="media/add_icon.png" alt="Add" style="vertical-align: center; margin-bottom:9px;" onclick="selectList($(this).prev().get(0));" />
-					<label style="font-family:verdana; font-size:18px"><br></label>
-					<label style="font-family:verdana; font-size:18px">Selected releases:</label>
+					<div><input name = "showAlllLitsBTN" class="btnOK" type="button" value="Show All" onclick="showAllList();"/></div>
+					<label style="font-family:verdana; font-size:18px; margin-top: 15px;">Selected releases:</label>
 					<br>
 					<ul id="list" style="list-style:none;">
 					</ul>
@@ -749,9 +749,29 @@
        <br> 
 	</body>
 
-		
-		
 	<script type="text/javascript">
+        function showAllList(){
+            selectedArray = []
+            selectedList = document.getElementById('list');
+            $(selectedList).children().each(function(data){
+                selectedArray.push(this.textContent);
+            });
+            select = document.getElementById('releaseList');
+
+           if ( (select.length)-1 != selectedArray.length){ //check if all elements are showed (-1 because list has ----- value)
+                for(var i=0; i< select.children.length;i++){  // if not all then show all searched list elements
+                    select.selectedIndex = i;
+                    if (selectedArray.indexOf(select.options[i].textContent) == -1){
+                        selectList(select);
+                    }
+                }
+           }
+           else{ //if all are shown -> delete them all
+                $(selectedList).children().each(function(){
+                   deleteChildTableRow(this);
+                });
+           }
+        }
 		function selectList(select)
 		{
 		  var option = select.options[select.selectedIndex];
@@ -767,7 +787,7 @@
 		  var img = document.createElement('img');
 		  var text = document.createTextNode(option.firstChild.data);
 		  var url = option.firstChild.data + "=addnew&";
-		  window.location.hash = window.location.hash+ url;			
+		  window.location.hash = window.location.hash+ url;
 		  input.type = 'hidden';
 		  input.value = option.value;
 		  
@@ -2113,7 +2133,6 @@ function addUserButtonModal(obj){
 	}
       });
   }
-  console.log(usrRDataStatsChecked);
 $.ajax({
                type: 'POST',
                url: 'addNewUser',
