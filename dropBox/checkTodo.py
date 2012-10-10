@@ -30,9 +30,9 @@ def checkDestinationDatabase( metaDict ):
         if not connectionString.startswith( 'oracle:' ):
             raise dropBox.DropBoxError( "Oracle is the only supported service." )
         if not conditionDatabase.checkConnectionString( connectionString, True ):
-            raise dropBox.DropBoxError( "The destination database in connection string \"%s\" cannot point to read-only services." )
+            raise dropBox.DropBoxError( 'The destination database cannot point to read-only services.' )
     except conditionError.ConditionError as err:
-        raise dropBox.DropBoxError( "The connection string is not correct.\nThe reason is: %s" %( err, ) )
+        raise dropBox.DropBoxError( 'The connection string is not correct. The reason is: %s' % err )
 
 def checkInputTag( dbFile, metaDict ):
     """
