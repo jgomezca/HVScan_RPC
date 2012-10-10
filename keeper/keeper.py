@@ -230,7 +230,7 @@ def run(service, filename, extraCommandLine = '', replaceProcess = True):
 	#
 	# This does not keep the original PYTHONPATH. There should not
 	# be anything there anyway.
-	os.putenv('PYTHONPATH', '%s:%s:%s' % (getPath('common'), config.secretsDirectory, os.path.join(config.utilitiesDirectory, 'lib', 'python2.6', 'site-packages')))
+	os.putenv('PYTHONPATH', getPythonPath())
 
 	commandLine = ''
 
@@ -481,6 +481,16 @@ def test(service):
 	return state
 
 
+def getPythonPath():
+	'''Returns the Python path that we use to run services.
+
+	This is also used when running other tools, like pylint, so that they can
+	find the dependencies.
+	'''
+
+	return '%s:%s:%s' % (getPath('common'), config.secretsDirectory, os.path.join(config.utilitiesDirectory, 'lib', 'python2.6', 'site-packages'))
+
+
 def pylint(argument):
 	'''Checks a service's (or the keeper's) code or a file.
 	'''
@@ -499,7 +509,7 @@ def pylint(argument):
 		'pushd `scram l | grep -F 6_0_X | tail -1 | awk \'{print $2}\'` >/dev/null ; '
 		'eval `scramv1 runtime -sh` ; '
 		'popd >/dev/null ; '
-		'pylint '
+		'PYTHONPATH=$PYTHONPATH:%s pylint '
 		'-iy '
 		'--good-names=i,j,k,e,f,s '
 		'--module-rgx="[a-z_][a-zA-Z0-9_]{2,30}$" '
@@ -509,7 +519,7 @@ def pylint(argument):
 		'--attr-rgx="[a-z_][a-zA-Z0-9_]{2,30}$" '
 		'--argument-rgx="[a-z_][a-zA-Z0-9_]{2,30}$" '
 		'--variable-rgx="[a-z_][a-zA-Z0-9_]{2,30}$" '
-		'%s' % files,
+		'%s' % (getPythonPath(), files),
 		shell = True
 	)
 
