@@ -23,7 +23,12 @@ def getHostname():
     '''Returns the current hostname without '.cern.ch'
     '''
 
-    return socket.gethostname().rstrip('.cern.ch')
+    hostname = socket.gethostname()
+
+    if hostname.endswith('.cern.ch'):
+        return hostname[:-len('.cern.ch')]
+
+    return hostname
 
 
 # Frontends

@@ -133,7 +133,8 @@ def manageBackend(backendHostname, enable, virtualHost):
         action = 'Disabling'
 
     # Remove .cern.ch if provided
-    backendHostname = backendHostname.rstrip('.cern.ch')
+    if backendHostname.endswith('.cern.ch'):
+        backendHostname = backendHostname[:-len('.cern.ch')]
 
     logging.info('%s all workers for the %s virtual host in the %s backend...', action, virtualHost, backendHostname)
 
