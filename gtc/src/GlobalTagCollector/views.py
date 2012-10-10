@@ -204,6 +204,19 @@ def new_request(request):
         return render_to_response("new_request.html", {}, context_instance=RequestContext(request))
 
 
+def record_container_map(request):
+    hardware_architecture_name = request.GET.get("hardware_architecture_name")
+    software_release_name = request.GET.get("software_release_name")
+    rez = {'body' : {"record_container_map": []}}
+    sr = SoftwareRelease.objects.get(name=software_release_name, hardware_architecture__name=hardware_architecture_name)
+    records = sr.record_set.all().select_related().order_by("name", "object_r__name")
+    for record in records:
+        rez["body"]["record_container_map"].append( {
+            "container": record.object_r.name,
+            "record_name": record.name
+        })
+    return HttpResponse(json.dumps(rez), mimetype="application/json")
+
 
 #create  form gt queue entry
 class RequeueForm(ModelForm):
