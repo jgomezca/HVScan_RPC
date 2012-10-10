@@ -491,15 +491,13 @@ def getPythonPath():
 	return '%s:%s:%s' % (getPath('common'), config.secretsDirectory, os.path.join(config.utilitiesDirectory, 'lib', 'python2.6', 'site-packages'))
 
 
-def pylint(argument):
+def pylint(*files):
 	'''Checks a service's (or the keeper's) code or a file.
 	'''
 
-	#-mo FIXME: Add support for several files, etc.
-
-	files = argument
-	if isRegistered(argument) or argument == 'keeper':
-		os.chdir(getPath(argument))
+	if len(files) == 1 and (isRegistered(files[0]) or files[0] == 'keeper'):
+		# Check a service
+		os.chdir(getPath(files[0]))
 		files = '*.py'
 
 	#-mo FIXME: In the future we won't need to use the IB from AFS.
@@ -519,7 +517,7 @@ def pylint(argument):
 		'--attr-rgx="[a-z_][a-zA-Z0-9_]{2,30}$" '
 		'--argument-rgx="[a-z_][a-zA-Z0-9_]{2,30}$" '
 		'--variable-rgx="[a-z_][a-zA-Z0-9_]{2,30}$" '
-		'%s' % (getPythonPath(), files),
+		'%s' % (getPythonPath(), ' '.join(files)),
 		shell = True
 	)
 
@@ -970,9 +968,10 @@ def runCommand(command, arguments, commandName = None):
 	else:
 		options = argspec.args[-len(defaults):]
 		args = argspec.args[:-len(defaults)]
+	varargs = argspec.varargs
 
 	parser = optparse.OptionParser(usage =
-		'Usage: %%prog %s [options]' % ' '.join([commandName] + ['<%s>' % x for x in args])
+		'Usage: %%prog %s [options]' % ' '.join([commandName] + ['<%s>' % x for x in args] + ['[%s...]' % varargs for x in [varargs] if x is not None])
 	)
 
 	i = -1
@@ -1002,7 +1001,10 @@ def runCommand(command, arguments, commandName = None):
 			raise Exception('Unsupported default type.')
 
 	(options, arguments) = parser.parse_args(arguments)
-	if len(arguments) != len(args):
+
+	# If varargs is None, there must be the same number of arguments as the function' ones.
+	# If varargs is not None, there must be at least the number of arguments as the function' ones.
+	if (varargs is None and len(arguments) != len(args)) or (varargs is not None and len(arguments) < len(args)):
 		parser.print_help()
 		return -2
 
