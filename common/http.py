@@ -13,6 +13,8 @@ import logging
 import cStringIO
 
 import pycurl
+import copy
+
 
 
 class HTTPError(Exception):
@@ -67,7 +69,12 @@ class HTTP(object):
 
         response = cStringIO.StringIO()
 
-        logging.debug('Querying %s with data %s and files %s...', url, data, files)
+        # make sure the logs are safe ... at least somewhat :)
+        data4log = copy.copy(data)
+        if data4log:
+            if 'password' in data4log.keys():
+                data4log['password'] = '*'
+        logging.debug('Querying %s with data %s and files %s...', url, data4log, files)
 
         self.curl.setopt(self.curl.URL, url)
         self.curl.setopt(self.curl.HTTPGET, 1)
