@@ -4,7 +4,7 @@ import os
 import sys
 import time
 
-import conditionError
+import conditionException
 import service
 
 sys.setdlopenflags(DLFCN.RTLD_GLOBAL+DLFCN.RTLD_LAZY)
@@ -12,7 +12,7 @@ sys.setdlopenflags(DLFCN.RTLD_GLOBAL+DLFCN.RTLD_LAZY)
 try:
     import pluginCondDBPyInterface as condDB
 except ImportError:
-    raise conditionError.ConditionError( """Unable to import the Condition Python API for accessing condition data.
+    raise conditionException.ConditionException( """Unable to import the Condition Python API for accessing condition data.
 Please check if the CMSSW environment is correctly initialized.""" )
 
 
@@ -34,30 +34,33 @@ def getValidConnectionDictionary( protocolDictionary ):
         for protocolServiceName in serviceDict[ protocolDictionary[ 'protocol' ] ]: #loop over the input protocol's services
             if protocolServiceName == protocolDictionary[ 'service' ]: #the service is in the list of the services associated to the input protocol
                 serviceType = serviceDict[ 'service_type' ]
-                oracleServiceName = serviceDict[ 'oracle' ][ 0 ]
-                frontierServiceName = serviceDict[ 'frontier' ][ 0 ]
+                if protocolDictionary[ 'protocol' ] == "oracle":
+                    # keep the same service name as specified in the input protocol
+                    oracleServiceName = protocolServiceName
+                else:
+                    # take the first of the list
+                    oracleServiceName = serviceDict[ 'oracle' ][ 0 ]
+                if protocolDictionary[ 'protocol' ] == "frontier":
+                    # keep the same service name as specified in the input protocol
+                    frontierServiceName = protocolServiceName
+                else:
+                    # take the first of the list
+                    frontierServiceName = serviceDict[ 'frontier' ][ 0 ]
                 return { 'service_type' : serviceType
                        , 'db_name' : oracleServiceName
                        , 'frontier_name' : frontierServiceName
                        , 'account' : protocolDictionary[ 'account' ] }
 
-def checkConnectionString( connectionString, forUpdating = False ):
-    if connectionString.startswith( 'sqlite_file:' ):
-        #FIXME: check that the file is existing
-        return True
+def getValidConnectionDictionaryFromConnectionString( connectionString ):
+    # first we parse the connection string in order to get the service name and the account name
     protocolDictionary = service.getProtocolServiceAndAccountFromConnectionString( connectionString )
     if not protocolDictionary:
-        raise conditionError.ConditionError( "Invalid connection string: \"%s\"" %( connectionString, ) )
-    if forUpdating and protocolDictionary[ 'protocol' ] == "frontier":
-        #we are explicitly excluding Frontier services, as they are read-only
-        return False
+        raise conditionException.ConditionException( "Invalid connection string: \"%s\"" %( connectionString, ) )
+    # next, we check whether the connection string is valid
     connectionDictionary = getValidConnectionDictionary( protocolDictionary )
-    if not connectionDictionary:
-        raise conditionError.ConditionError( "The service provided in the connection string \"%s\" was not found in the available ones." %( connectionString, ) )
-    if forUpdating and ( connectionDictionary[ 'service_type' ] == "OfflineProduction" or connectionDictionary[ 'service_type' ] == "OfflineArchive" ):
-        #we are explicitly excluding read-only services
-        return False
-    return True
+    if not connectionDictionary: #the oracle or frontier service provided was not found
+        raise conditionException.ConditionException( "The service provided in the connection string \"%s\" was not found in the available ones." %( connectionString, ) )
+    return connectionDictionary
 
 def frontierToOracle( connectionString, updatesOnOracle = False ):
     """
@@ -67,121 +70,156 @@ def frontierToOracle( connectionString, updatesOnOracle = False ):
     updatesOnOracle: boolean, default False, if set to True the connection string will contain an Oracle service name allowing for updates.
     @returns: Oracle connection string, raises exception if parsing error or update not allowed.
     """
-    #first we parse the connection string in order to get the service name and the account name
-    protocolDictionary = service.getProtocolServiceAndAccountFromConnectionString( connectionString )
-    if not protocolDictionary:
-        raise conditionError.ConditionError( "Invalid connection string: \"%s\"" %( connectionString, ) )
-    #next, we check whether the connection string is valid
-    connectionDictionary = getValidConnectionDictionary( protocolDictionary )
-    if not connectionDictionary: #the oracle or frontier service provided was not found
-        raise conditionError.ConditionError( "The service provided in the connection string \"%s\" was not found in the available ones." %( connectionString, ) )
-    
+    connectionDictionary = getValidConnectionDictionaryFromConnectionString( connectionString )
+
     if updatesOnOracle and connectionDictionary[ 'service_type' ] == 'OfflineProduction':
-        #The offline production service is read-only, so if we want to perform updates, we need a connection to the Online production
+        # The offline production service is read-only, so if we want to perform updates, we need a connection to the Online production
         for serviceDict in serviceList:
             if serviceDict[ 'service_type' ] == 'OnlineProduction':
                 connectionDictionary[ 'service_type' ] = 'OnlineProduction'
                 connectionDictionary[ 'db_name' ] = serviceDict[ 'oracle' ][ 0 ]
                 connectionDictionary[ 'frontier_name' ] = serviceDict[ 'frontier' ][ 0 ]
-    
-    #Moreover, the offline archive is read-only and frozen, so no updates are allowed
+
+    # Moreover, the offline archive is read-only and frozen, so no updates are allowed
     if updatesOnOracle and connectionDictionary[ 'service_type' ] == 'OfflineArchive':
-        raise conditionError.ConditionError( "The data stored in the Oracle Database accessed through the service \"%s\" and through frontier servlet \"%s\" for service type OfflineArchive are read-only and cannot be modified." %( connectionDictionary[ 'db_name' ], connectionDictionary[ 'frontier_name' ] ) )
-    
+        raise conditionException.ConditionException( "The data stored in the Oracle Database accessed through the service \"%s\" and through frontier servlet \"%s\" for service type OfflineArchive are read-only and cannot be modified." %( connectionDictionary[ 'db_name' ], connectionDictionary[ 'frontier_name' ] ) )
+
     return service.getOracleConnectionString( connectionDictionary )
+
+onlineFrontierConnectionStringTemplate = None
+def oracleToFrontier( connectionString, offlineServlet = False ):
+    """
+    Transforms an Oracle connection string into a frontier one.
+    Parameters:
+    connectionString: string for connecting to a condition Database account;
+    offlineServlet: boolean, default False, if set to True the connection string will contain a frontier servlet in the offline network, even if the connection string point to an online service.
+    @returns: frontier connection string, raises exception if parsing error or update not allowed.
+    """
+    connectionDictionary = getValidConnectionDictionaryFromConnectionString( connectionString )
+
+    global onlineFrontierConnectionStringTemplate
+    if connectionDictionary[ 'service_type' ] == 'OnlineProduction':
+        if not offlineServlet:
+            # we build the online connection string by hand, as there is no site configuration in that cluster
+            onlineFrontierConnectionStringTemplate = "frontier://(proxyurl=http://localhost:3128)(serverurl=http://localhost:8000/%s)(serverurl=http://localhost:8000/%s)(retrieve-ziplevel=0)(failovertoserver=no)/%s"
+            return onlineFrontierConnectionStringTemplate %( ( onlineFrontierConnectionStringTemplate.count( "%s" ) - 1 ) * ( connectionDictionary[ 'frontier_name' ], ) + ( connectionDictionary[ 'account' ], ) )
+        for serviceDict in serviceList:
+            if serviceDict[ 'service_type' ] == 'OfflineProduction':
+                connectionDictionary[ 'service_type' ] = 'OfflineProduction'
+                connectionDictionary[ 'db_name' ] = serviceDict[ 'oracle' ][ 0 ]
+                connectionDictionary[ 'frontier_name' ] = serviceDict[ 'frontier' ][ 0 ]
+    return service.getFrontierConnectionString( connectionDictionary )
+
+def checkConnectionString( connectionString, forUpdating = False ):
+    if connectionString.startswith( 'sqlite_file:' ):
+        # todo FIXME: check that the file is existing
+        return True
+    protocolDictionary = service.getProtocolServiceAndAccountFromConnectionString( connectionString )
+    if not protocolDictionary:
+        raise conditionException.ConditionException( "Invalid connection string: \"%s\"" %( connectionString, ) )
+    if forUpdating and protocolDictionary[ 'protocol' ] == "frontier":
+        # we are explicitly excluding Frontier services, as they are read-only
+        return False
+    connectionDictionary = getValidConnectionDictionary( protocolDictionary )
+    if not connectionDictionary:
+        raise conditionException.ConditionException( "The service provided in the connection string \"%s\" was not found in the available ones." %( connectionString, ) )
+    if forUpdating and ( connectionDictionary[ 'service_type' ] == "OfflineProduction" or connectionDictionary[ 'service_type' ] == "OfflineArchive" ):
+        # we are explicitly excluding read-only services
+        return False
+    return True
 
 class IOVChecker( object ):
     """
     This class allows to connect to a condition database account, load an IOVSequence, and check its contents.
     """
-    
+
     def __init__( self, db ):
         self._db = db
         self._iovSequence = None
-    
+
     def load( self, tag ):
-        self._tag = tag
+        self._tag = str(tag)  # ensure we pass on a string even if we get a unicode object
         try:
             self._db.startReadOnlyTransaction()
             self._iovSequence = self._db.iov( self._tag )
             self._db.commitTransaction()
         except RuntimeError as err:
-            raise conditionError.ConditionError( """Cannot retrieve the IOV sequence associated to tag \"%s\".
+            raise conditionException.ConditionException( """Cannot retrieve the IOV sequence associated to tag \"%s\".
 The CMSSW exception is: %s""" %( self._tag, err ) )
-    
+
     def getAllElements( self ):
         elementList = [ ( elem.since(), elem.till() ) for elem in self._iovSequence.elements ]
         if not elementList:
-            raise conditionError.ConditionError( """IOV tag \"%s\" does not contain any IOV elements.
+            raise conditionException.ConditionException( """IOV tag \"%s\" does not contain any IOV elements.
 Please check the status of this tag and inform Condition DB experts if the issue is not solved.""" %( self._tag, ) )
         return elementList
-    
+
     def getAllSinceValues( self ):
         elementList = [ elem.since() for elem in self._iovSequence.elements ]
         if not elementList:
-            raise conditionError.ConditionError( """IOV tag \"%s\" does not contain any IOV elements.
+            raise conditionException.ConditionException( """IOV tag \"%s\" does not contain any IOV elements.
 Please check the status of this tag and inform Condition DB experts if the issue is not solved.""" %( self._tag, ) )
         return elementList
-    
+
     def comment( self ):
         return self._iovSequence.comment()
-    
+
     def firstSince( self ):
         return self._iovSequence.firstSince()
-    
+
     def iovToken( self ):
         return self._iovSequence.token()
-    
+
     def lastSince( self ):
         iovRange = self._iovSequence.tail( 1 )
         return iovRange.back().since()
-    
+
     def lastTill( self ):
         return self._iovSequence.lastTill()
-    
+
     def payloadClasses( self ):
         payloads = self._iovSequence.payloadClasses()
         return tuple( payloads )
-    
+
     def payloadContainer( self ):
         try:
             return self.payloadClasses()[0]
         except KeyError:
-            raise conditionError.ConditionError( """IOV tag \"%s\" does not contain any payloads.
+            raise conditionException.ConditionException( """IOV tag \"%s\" does not contain any payloads.
 Please check the status of this tag and inform Condition DB experts if the issue is not solved.""" %( self._tag, ) )
-    
+
     def revision( self ):
         return self._iovSequence.revision()
-    
+
     def size( self ):
         iovSize = self._iovSequence.size()
         if not iovSize:
-            raise conditionError.ConditionError( """IOV tag \"%s\" does not contain any IOV elements.
+            raise conditionException.ConditionException( """IOV tag \"%s\" does not contain any IOV elements.
 Please check the status of this tag and inform Condition DB experts if the issue is not solved.""" %( self._tag, ) )
         return iovSize
-    
+
     def timestamp( self ):
         return time.asctime( time.gmtime( condDB.unpackTime( self._iovSequence.timestamp() )[ 0 ] ) )
-    
+
     def timetype( self ):
         return self._iovSequence.timetype()
-    
+
 class ConditionDBChecker( object ):
     """
     This class allows to connect to a condition database account and check its contents.
     """
-    
+
     def __init__( self, connectionString, authPath ):
         """Parameters:
         connectionString: connection string for connecting to the account hosting Global Tags;
         authPath: path to authentication key.
         """
         checkConnectionString( connectionString )
-        self._connectionString = connectionString
+        self._connectionString = str(connectionString)  # ensure we pass on a string even if we get a unicode object
         self._authPath = authPath
         self._dbStarted = False
         self._fwLoad = condDB.FWIncantation()
-    
+
     def _initDB( self, connectionString, authPath = None ):
         """
         Initiates the connection to the database, or re-initiates it in case one of the connection parameters is changed.
@@ -198,18 +236,18 @@ class ConditionDBChecker( object ):
             return isReconnected
         if self._connectionString != connectionString :
             checkConnectionString( connectionString )
-            self._connectionString = connectionString
+            self._connectionString = str(connectionString) # ensure we pass on a string even if we get a unicode object
             self._dbStarted = False
         try:
             self._rdbms = condDB.RDBMS( self._authPath )
-            self._db = self._rdbms.getReadOnlyDB( str(self._connectionString) )
+            self._db = self._rdbms.getReadOnlyDB( str(self._connectionString) )  # ensure we pass on a string even if we get a unicode object
             isReconnected = True
             self._dbStarted = True
         except RuntimeError as err :
-            raise conditionError.ConditionError( """Cannot connect to condition database \"%s\" for RDBMS in \"%s\".
+            raise conditionException.ConditionException( """Cannot connect to condition database \"%s\" for RDBMS in \"%s\".
 The CMSSW exception is: %s""" %( self._connectionString, self._authPath, err ) )
         return isReconnected
-    
+
     def getAllTags( self ):
         """
         @returns: list of all IOV tags available in the account, raises if no tags are there, or if the file is not correct.
@@ -221,13 +259,13 @@ The CMSSW exception is: %s""" %( self._connectionString, self._authPath, err ) )
             tags = self._db.allTags().strip().split()
             self._db.commitTransaction()
             if not tags:
-                raise conditionError.ConditionError( """Condition database in \"%s\" for RDBMS in \"%s\" does not contain any tags.
+                raise conditionException.ConditionException( """Condition database in \"%s\" for RDBMS in \"%s\" does not contain any tags.
 Please check the status of this account and inform Condition DB experts if the issue is not solved.""" %( self._connectionString, self._authPath ) )
             return tags
         except RuntimeError as err:
-            raise conditionError.ConditionError( """Cannot retrieve tags from condition database \"%s\" for RDBMS in \"%s\"
+            raise conditionException.ConditionException( """Cannot retrieve tags from condition database \"%s\" for RDBMS in \"%s\"
 The CMSSW exception is: %s""" %( self._connectionString, self._authPath, err ) )
-    
+
     def checkTag( self, tag ):
         """
         Checks whether or not a given tag is in the database.
@@ -241,11 +279,11 @@ The CMSSW exception is: %s""" %( self._connectionString, self._authPath, err ) )
             return False
         else:
             return True
-        ##alternative 1:
-        #return reduce(lambda x,y: x | y, map(lambda x: x == tag, self.getAllTags()))
-        ##alternative 2:
-        #return tag in self.getAllTags()
-    
+        # # alternative 1:
+        # return reduce(lambda x,y: x | y, map(lambda x: x == tag, self.getAllTags()))
+        # # alternative 2:
+        # return tag in self.getAllTags()
+
     def iovSequence( self, tag ):
         """
         Gives access to the IOV sequence labelled by a given tag.
@@ -263,7 +301,7 @@ class GlobalTagChecker( object ):
     """
     This class allows to connect to the database account hosting Global Tags, load one of them, and check its contents.
     """
-    
+
     def __init__( self, connectionString, authPath ):
         """
         Parameters:
@@ -276,7 +314,7 @@ class GlobalTagChecker( object ):
         self._authPath = authPath
         self._dbStarted = False
         self.fwLoad = condDB.FWIncantation()
-    
+
     def initGT( self, globalTagName, connectionString = None, authPath = None ):
         """
         Initiates the connection to the GT database, or re-initiates it in case one of the connection parameters is changed, and loads the Global Tag.
@@ -305,7 +343,7 @@ class GlobalTagChecker( object ):
             self._dbStarted = True
             isReconnected = True
         except RuntimeError as err:
-            raise conditionError.ConditionError( """Cannot connect to Global Tag \"%s\" on account \"%s\" for RDBMS in \"%s\".
+            raise conditionException.ConditionException( """Cannot connect to Global Tag \"%s\" on account \"%s\" for RDBMS in \"%s\".
 The CMSSW exception is: %s""" %( self._globalTagName, self._connectionString, self._authPath, err ) )
         return isReconnected
 
@@ -321,7 +359,7 @@ The CMSSW exception is: %s""" %( self._globalTagName, self._connectionString, se
         Raises if there is an error in parsing the input connection string, and, when updatesOnOracle is set True, if the connection string points to a service where updates are not allowed.
         """
         if self._globalTagName is None:
-            raise conditionError.ConditionError( """The Global Tag on account \"%s\" for RDBMS in \"%s\" has not yet been initialized.
+            raise conditionException.ConditionException( """The Global Tag on account \"%s\" for RDBMS in \"%s\" has not yet been initialized.
 Please run the GlobalTagChecker.initGT function.""" %( self._connectionString, self._authPath ) )
         if not self._dbStarted:
             self.initGT( self._globalTagName )
