@@ -1,9 +1,9 @@
 
 # New DropBox service
 
-This document gives an overview of the new DropBox service of the CMS condition tools. The main aim of the service is to upload conditions from the clients to the CMS conditions database (CondDB). As the CondDB is situated in the online environment (P%) and this is behind a firewall, the DropBox service is used to pull conditions prepared in the "offline world" via a frontend service (and an http proxy) and then uploads these conditions to the DB. 
+This document gives an overview of the new DropBox service of the CMS condition tools. The main aim of the service is to upload conditions from the clients to the CMS conditions database (CondDB). As the CondDB is situated in the online environment (P%) and this is behind a firewall, the DropBox service is used to pull conditions prepared in the "offline world" via a frontend service (and an http proxy) and then uploads these conditions to the DB.
 
-New conditions get uploaded via a script to the frontend service (running in the cms-conddb web services environment) which does a number of consistency checks on the files uploaded by the client and then stores them for retrieval by the backend service at a later time. The backend job starts at regular intervals (10 min at present, via a cronjob) and processes all files uploaded since the last run. 
+New conditions get uploaded via a script to the frontend service (running in the cms-conddb web services environment) which does a number of consistency checks on the files uploaded by the client and then stores them for retrieval by the backend service at a later time. The backend job starts at regular intervals (10 min at present, via a cronjob) and processes all files uploaded since the last run.
 
 ## New DropBox frontend service
 
@@ -19,9 +19,9 @@ Any file which is accepted for processing will be logged in the database togethe
 
 ### Overall workflow
 
-Once started (via cron), the backend job updates the run status and get's the list of files to process from the frontend. If there are no files to process, the job notifies the frontend logging service and quits. 
+Once started (via cron), the backend job updates the run status and get's the list of files to process from the frontend. If there are no files to process, the job notifies the frontend logging service and quits.
 
-If there are files to process, the backend gets the list of the next possible runs for HLT, Express, and Prompt processing from the relevant sources. Once this information is available, the backend job downloads all files from the frontend as individual tarballs with one data and one metadata file each. It then checks for transmission errors (via the checksum of the tarball) and validates the content of the tarball before unpacking it. Files which are transferred successfully are then moved to the main processing directory ("dropbox/"), files with errors are moved to other directories (according to which type of download error happened) for later manual analysis. 
+If there are files to process, the backend gets the list of the next possible runs for HLT, Express, and Prompt processing from the relevant sources. Once this information is available, the backend job downloads all files from the frontend as individual tarballs with one data and one metadata file each. It then checks for transmission errors (via the checksum of the tarball) and validates the content of the tarball before unpacking it. Files which are transferred successfully are then moved to the main processing directory ("dropbox/"), files with errors are moved to other directories (according to which type of download error happened) for later manual analysis.
 
 Once all files are downloaded, the backend reads in the metadata from all files and sorts those files which treat the same conditions tag by the "firstSince" the files contain. This is necessary to ensure proper insertion later.
 
@@ -32,24 +32,64 @@ The processing of each file is logged into an individual file (identified by the
 
 Any errors during processing are logged and the corresponding status updates are sent back to the frontend.
 
-During the job, the backend job logs relevant summary information into its own log-file. The downloading of the files is logged in a separate file. At the end of the job, both log files (for the downloader and the overall processing job) are uploaded back to the server. 
+During the job, the backend job logs relevant summary information into its own log-file. The downloading of the files is logged in a separate file. At the end of the job, both log files (for the downloader and the overall processing job) are uploaded back to the server.
 
 ### Running the service
 
 First, check out the service:
 
-	git clone /afs/cern.ch/work/a/andreasp/public/gitReps/newDropBox.git
-	
+	git clone /afs/cern.ch/user/m/mojedasa/public/services
+
 Then simply do:
 
-	./scripts/runDropbox.sh 
-	
+	./dropbox/online/scripts/runDropbox.sh
+
 This will run one job of the backend.
 
 Once done, you can get a somewhat nicer listing of the logs (separated listings) by calling:
 
-	./scripts/dropboxChecker.py | more 
-	
+	./dropbox/online/scripts/showDropBoxLogs.py | more
 
 
+## Running the tests
 
+### Testing the backend
+
+To do this, you first need to create an Oracle account and initialize a few tables. To create
+the account, go to http://cern.ch/accounts select "Manage my accounts", once you are logged in,
+click on the "[manage]" link next to "Oracle" and fill the form. Use "devdb11" as the database.
+After about 10 min or so you'll get a mail, follow the link there to set the password for your
+new account (at present you'll have to again follow the "trail" above to get to the form where
+you can set the pwd).
+
+Once you have an account, you will need to set up the tables for the logging. To do so, find a
+machine which has `sqlplus` available (lxplus should do, also some of the CMS build machines
+have it). There, copy the `databaseLog.sql` file from `services/dropBox/` to a local disk (it
+won't work from AFS), then run:
+
+    sqlplus <dbUsername>/<dbPwd>@devdb11 @databaseLog.sql
+
+This will create the tables. If you do this on a clean account, you'll get two errors from the
+`drop table ` commands, just ignore these.
+
+Once this is set up, you are ready to test the backend. Run:
+
+    (source /data/cmssw/setupEnv.sh; source ./dropBox/pre.sh; python ./dropBox/online/scripts/test.py )
+
+(or just that last part if you have set up your env already correctly).
+
+To clean up and start from scratch, you'll need to: stop the dropbox frontend server (#1), clean up
+it's DB (#2) and local file area(#3), clean up the offline server's local file area (#4), then start
+the dropbox frontend server (#5) and finally run the test again (#6) :
+
+    ./keeper/keeper.py stop dropBox                          #1
+    sqlplus <dbUsername>/<dbPwd>@devdb11 @databaseLog.sql    #2
+    rm -rf /data/services/dropBox/files/*/[a-z0-9]*          #3
+    ../NewOfflineDropBoxBaseDir/TestDropBox/                 #4
+    ./keeper/keeper.py start dropBox                         #5
+    (source /data/cmssw/setupEnv.sh; source ./dropBox/pre.sh; python ./dropBox/online/scripts/test.py ) #6
+
+Notes: if you don't have sqlplus installed on your machine, you can run #2 via ssh on lxplus. The location
+for the offline server's local file area (in #4) may be different if you are using the symlink option for
+the services (e.g. on my development VM with services being a symlink to ~/workspace0/newDropbox/services/
+the dir for #4 is ~/workspace0/newDropbox/NewOfflineDropBoxBaseDir/...).

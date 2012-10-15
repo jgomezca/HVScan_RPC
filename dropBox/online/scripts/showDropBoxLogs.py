@@ -7,6 +7,7 @@ import glob
 from pprint import pprint
 
 sys.path.append( '.' )
+sys.path.append( 'dropBox/online' )
 import modules.config as config
 
 cfg = config.test()

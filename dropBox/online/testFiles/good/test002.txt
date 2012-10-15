@@ -1,0 +1,12 @@
+{
+    "destinationDatabase": "oracle://cms_orcoff_prep/CMS_COND_DROPBOX",
+    "destinationTags": {
+        "Test2": {
+            "dependencies": {},
+            "synchronizeTo": "offline"
+        }
+    },
+    "inputTag": "RunInfo_v1_mc",
+    "since": 189023,
+    "userText": "Test 2: one IOV 1-inf, with since in the metadata"
+}
