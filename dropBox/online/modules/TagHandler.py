@@ -7,6 +7,8 @@ class TagHandler( object ):
         self.inputTag = inputTag
         #self.exportDB = destDB
         # fix me: testing phase!!!
+        self.exportDB = destDB
+        
         self.exportDB = "oracle://cms_orcoff_prep/CMS_COND_DROPBOX"
         self.exportTag = None
         self.exportSince = None
@@ -62,26 +64,21 @@ class TagHandler( object ):
 
         return self.executeAndLog( command, True )
 
-     # maybe also since should be a list?
-    def duplicate(self, tagList, destSince):
+    def duplicate(self, destTag, destSince):
         duplicateSince = str(destSince)
         if( self.exportTag == None ):
            self.fileLogger.error('Tag Export has not been done.')
            return False
-        ret = True
-        for tag in tagList:
-           command = "cmscond_duplicate_iov" + \
-                     " -c " + self.exportDB + \
-                     " -t " + self.exportTag + \
-                     " -f " + self.exportSince + \
-                     " -d " + tag + \
-                     " -s " + duplicateSince + \
-                     " -l " + self.logDB +\
-                     " -P " + self.authpath
+        command = "cmscond_duplicate_iov" + \
+                    " -c " + self.exportDB + \
+                    " -t " + self.exportTag + \
+                    " -f " + self.exportSince + \
+                    " -d " + destTag + \
+                    " -s " + duplicateSince + \
+                    " -l " + self.logDB +\
+                    " -P " + self.authpath
 
-           if( not self.executeAndLog( command, True ) ):
-               ret = False
-        return ret
+        return self.executeAndLog( command, True )
 
 import TeeFile
 import sys

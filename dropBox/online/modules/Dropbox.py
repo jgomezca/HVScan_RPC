@@ -9,9 +9,10 @@ from TarDownloader import FileDownloader
 import Constants
 import StatusUpdater
 
+from conditionDatabase import ConditionDBChecker
+from tier0 import Tier0Handler
 
 # main handler for the new Dropbox
-
 
 class Dropbox(object) :
 
@@ -113,6 +114,18 @@ class Dropbox(object) :
                 self.metaData[itemHash] = json.load( open( os.path.join(self.inDir, itemHash, 'metadata.txt') ) )
                 inTag   = self.metaData[itemHash]['inputTag']
                 inSince = self.metaData[itemHash]['since']
+                # access the data source file to extract since and timeType
+                srcDB    = 'sqlite_file:'+os.path.join( self.inDir, itemHash, 'data.db')
+
+                iovInfoDb  = ConditionDBChecker( srcDB, '' )
+                iov = iovInfoDb.iovSequence( inTag )
+                # iov = IOVChecker( srcDB )
+
+                iov.load( inTag )
+                self.metaData[itemHash]['timeType'] = iov.timetype()
+                if( inSince == None ):
+                    inSince = iov.firstSince()
+                    self.metaData[itemHash]['since'] = inSince
                 if inTag in inTagMap.keys():
                     inTagMap[ inTag ].append( (inSince, itemHash) )
                 else:
@@ -278,67 +291,62 @@ class Dropbox(object) :
         # (and checks the return from the commands
 
         srcDB    = 'sqlite_file:'+os.path.join( self.inDir, fileHash, 'data.db')
-        destDB   = self.metaData[ fileHash ][ 'destDB' ]
+        destDB   = self.metaData[ fileHash ][ 'destinationDatabase' ]
         inputTag = self.metaData[ fileHash ][ 'inputTag' ]
-        destTag  = self.metaData[ fileHash ][ 'destTag' ]
-        comment  = self.metaData[ fileHash ][ 'usertext' ]
+        comment  = self.metaData[ fileHash ][ 'userText' ]
+        destTags  = self.metaData[ fileHash ][ 'destinationTags' ]
+
 
         tagHandler = TagHandler.TagHandler( srcDB      = srcDB,
                                             destDB     = destDB,
                                             inputTag   = inputTag,
                                             fileLogger = fileLogger )
 
-        syncTarget = self.metaData[ fileHash ][ 'exportTo' ]
-        destSince = self.getDestSince( fileHash, syncTarget )  # check and validate, return correct value
+        for dTag, tagSpec in destTags.items():
+            syncTarget = tagSpec[ 'synchronizeTo' ]
+            destSince = self.getDestSince( fileHash, syncTarget )  # check and validate, return correct value
+            msg = 'going to export input tag %s to dest tag %s with destSince %s in %s, user comment: "%s"' % (inputTag, dTag, destSince, destDB, comment)
 
-        msg = 'going to export input tag %s to dest tag %s with destSince %s in %s, user comment: "%s"' % (inputTag, destTag, destSince, destDB, comment)
-        self.logger.info( msg )
-        fileLogger.info ( msg )
-
-        # export will always be done (for now)
-        ret = tagHandler.export( destTag     = destTag,
-                                 destSince   = destSince,
-                                 userComment = comment )
-        if not ret:
-            self.moveToErrDir( fileHash )
-            msg = 'exportation failed for input tag %s to dest tag %s with destSince %s in %s, user comment: "%s"' % (inputTag, destTag, destSince, destDB, comment)
-            self.logger.error(msg)
-            fileLogger.error(msg)
-            self.updateFileStatus( fileHash, Constants.EXPORTING_FAILURE )
-
-        else : # do the following only if exporting is OK :
-
-            msg = 'exportation to %s done.' % (syncTarget,)
             self.logger.info( msg )
-            fileLogger.info( msg )
+            fileLogger.info ( msg )
 
-            # check what to duplicate and take action
-            firstSince = self.metaData[fileHash]['since'] # updated from the db file at upload time
-            if self.metaData[fileHash][ 'duplicateTo' ] :
-                for whatIn in [ 'hlt', 'express', 'pcl', 'prompt' ] :
-                    what = whatIn
-                    if what not in self.metaData[fileHash][ 'duplicateTo' ]: what = what.upper()
-                    if self.metaData[fileHash][ 'duplicateTo' ][ what ] :
+            # export will always be done
+            ret = tagHandler.export( destTag     = dTag,
+                                     destSince   = destSince,
+                                     userComment = comment )
+            if not ret:
+                self.moveToErrDir( fileHash )
+                msg = 'exportation failed for input tag %s to dest tag %s with destSince %s in %s, user comment: "%s"' % (inputTag, dTag, destSince, destDB, comment)
+                self.logger.error(msg)
+                fileLogger.error(msg)
+                self.updateFileStatus( fileHash, Constants.EXPORTING_FAILURE )
 
-                        destSince = self.getDestSince( fileHash, what )  # check and validate, return correct value
-                        dupTags = self.metaData[fileHash][ 'duplicateTo' ][ what ]
+            else : # do the following only if exporting is OK :
 
-                        msg = 'going to duplicate input tag %s for %s inputSince %s to dest tag(s) %s with destSince %s in %s, user comment: "%s"' % (inputTag, what, firstSince, dupTags, destSince, destDB, comment)
+                msg = 'exportation to %s done.' % (syncTarget,)
+                self.logger.info( msg )
+                fileLogger.info( msg )
+
+                # check what to duplicate and take action
+                depTags = tagSpec[ 'dependencies' ]
+                for depTag, depSynch in depTags.items():
+                    depSince = self.getDestSince( fileHash, depSynch )
+                    msg = 'going to duplicate input tag %s for %s inputSince %s to dest tag(s) %s with destSince %s in %s, user comment: "%s"' % (dTag, depSynch, destSince, depTag, depSince, destDB, comment)
+                    self.logger.info( msg )
+                    fileLogger.info ( msg )
+
+                    ret = tagHandler.duplicate( destTag   = depTag,
+                                                destSince = depSince )
+                    if not ret:
+                        self.moveToErrDir( fileHash )
+                        msg = 'duplicating failed for input tag %s for %s inputSince %s to dest tag(s) %s with destSince %s in %s, user comment: "%s"' % (dTag, depSynch, destSince, depTag, destSince, destDB, comment)
+                        self.logger.error( msg )
+                        fileLogger.error( msg )
+                        self.updateFileStatus( fileHash, Constants.EXPORTING_OK_BUT_DUPLICATION_FAILURE )
+                    else :
+                        msg = 'duplication to %s done.' % (depTag,)
                         self.logger.info( msg )
-                        fileLogger.info ( msg )
-
-                        ret = tagHandler.duplicate( tagList   = dupTags,
-                                                    destSince = destSince )
-                        if not ret:
-                            self.moveToErrDir( fileHash )
-                            msg = 'duplicating failed for input tag %s for %s inputSince %s to dest tag(s) %s with destSince %s in %s, user comment: "%s"' % (inputTag, what, firstSince, dupTags, destSince, destDB, comment)
-                            self.logger.error( msg )
-                            fileLogger.error( msg )
-                            self.updateFileStatus( fileHash, Constants.EXPORTING_OK_BUT_DUPLICATION_FAILURE )
-                        else :
-                            msg = 'duplication to %s done.' % (what,)
-                            self.logger.info( msg )
-                            fileLogger.info( msg )
+                        fileLogger.info( msg )
 
         # -----------------------------------------------------------------
         # the following needs to be done even if exportation failed:
@@ -357,12 +365,24 @@ class Dropbox(object) :
 
     def updateRunInfo(self):
 
-        # todo: updated these values with the correct ones !!
+        self.logger.debug('getting hlt run from runInfo ...')
+        runInfoDb  = ConditionDBChecker( self.config.runInfoDbName, '/afs/cern.ch/cms/DB/conddb') # , self.config.authPath )
+        runInfoIov = runInfoDb.iovSequence( self.config.runInfotag )
+        runInfoIov.load( self.config.runInfotag )
+        hltLastRun = runInfoIov.lastSince()
+        self.logger.debug('found hlt run from runInfo to be %i ' % (hltLastRun,) )
 
-        self.runChk = {'hlt'     : 1,
-                       'express' : 1,
-                       'prompt'  : 1,
-                       'pcl'     : 1,
+        self.logger.debug('getting firstConditionSafeRun run from Tier-0 ...')
+        t0DataSvc = Tier0Handler( self.config.src,
+                                  self.config.timeout, self.config.retries, self.config.retryPeriod,
+                                  self.config.proxy, False )
+        fcsr = t0DataSvc.getFirstSafeRun( '' )
+        self.logger.debug('found firstConditionSafeRun from Tier-0 to be %i ' % (fcsr,) )
+
+        self.runChk = {'hlt'     : hltLastRun+1,
+                       'express' : hltLastRun+1,
+                       'prompt'  : fcsr,
+                       'pcl'     : fcsr,
                       }
         return
 

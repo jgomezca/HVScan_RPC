@@ -16,7 +16,9 @@ class BaseConfig( object ) :
 
         # get info on next run which will be processed for prompt:
         self.src = "https://cmsweb.cern.ch/tier0/firstconditionsaferun"
-        self.timeout = 5
+        self.timeout     = 3
+        self.retries     = 2
+        self.retryPeriod = 5
         self.proxy = None
         if os.environ.has_key('http_proxy'):
             self.proxy = os.environ.get( 'http_proxy' )  # export http_proxy=http://cmsproxy.cms:3128/
