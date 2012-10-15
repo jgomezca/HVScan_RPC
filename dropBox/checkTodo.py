@@ -115,7 +115,7 @@ def checkDestinationTags( metaDict ):
     retryPeriod = 90
     gtHandle = globalTagHandler.GlobalTagHandler( globalTagConnectionString, runControlConnectionString, runInfoConnectionString, runInfoStartTag, runInfoStopTag, authPath, tier0DataSvcURI, timeOut, retries, retryPeriod )
     for tag, synchronizationDict in destinationTags.items():
-        checkSynchronization( synchronizationDict[ 'synchTo' ], connectionString, tag, gtHandle )
+        checkSynchronization( synchronizationDict[ 'synchronizeTo' ], connectionString, tag, gtHandle )
         for dependentTag, synchronizeTo in synchronizationDict[ 'dependencies' ].items():
             checkSynchronization( synchronizeTo, connectionString, dependentTag, gtHandle )
 
