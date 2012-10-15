@@ -144,6 +144,7 @@ class DropBox(object):
         Called from offline.
         '''
 
+        logging.debug('='*80)
         # Check that the parameter is a file
         if not hasattr(uploadedFile, 'file') or not hasattr(uploadedFile, 'filename'):
             # 400 Bad Request
@@ -164,6 +165,7 @@ class DropBox(object):
         The name of each file is the SHA1 checksum of the file itself.
         '''
 
+        logging.debug('-'*80)
         logging.debug('server::getFileList()')
 
         return service.setResponseJSON(dropBox.getFileList())
@@ -193,7 +195,7 @@ class DropBox(object):
 
         Called from online, after downloading successfully a file.
         '''
-        
+
         logging.debug('server::acknowledgeFile(%s)', fileHash)
 
         dropBox.acknowledgeFile(fileHash)
@@ -206,7 +208,7 @@ class DropBox(object):
 
         Called from online, while processing a file.
         '''
-        
+
         logging.debug('server::updateStatus(%s, %s)', fileHash, statusCode)
 
         dropBox.updateFileStatus(fileHash, statusCode)

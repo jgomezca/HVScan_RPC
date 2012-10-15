@@ -173,6 +173,8 @@ def getFileList():
     fileList = os.listdir(config.pendingFilesPath)
     fileList.remove('.gitignore')
 
+    logging.debug('getFileList(): found %i files : %s' % (len(fileList), ','.join(fileList)) )
+
     return fileList
 
 
