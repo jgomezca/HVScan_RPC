@@ -52,7 +52,7 @@ class ResponseError( Tier0Error ):
 #TODO: check response code and raise corresponding exceptions
 def _raise_http_error( curl, response, proxy ):
     raise ResponseError( curl, response, proxy )
-        
+
 class Tier0Handler( object ):
 
     def __init__( self, uri, timeOut, retries, retryPeriod, proxy, debug ):
@@ -74,7 +74,7 @@ class Tier0Handler( object ):
 
     def setDebug( self ):
         self._debug = True
-    
+
     def unsetDebug( self ):
         self._debug = False
 
@@ -85,14 +85,15 @@ class Tier0Handler( object ):
         """
         Queries Tier0DataSvc.
         url: Tier0DataSvc URL.
-        @returns: dictionary, from whence the required information must be retieved according to the API call.
+        @returns: dictionary, from whence the required information must be retrieved according to the API call.
         Raises if connection error, bad response, or timeout after retries occur.
         """
         cHandle = pycurl.Curl()
         cHandle.setopt( cHandle.SSL_VERIFYPEER, 0 )
         cHandle.setopt( cHandle.SSL_VERIFYHOST, 0 )
         cHandle.setopt( cHandle.URL, url )
-        cHandle.setopt( cHandle.HTTPHEADER, [ "User-Agent: ConditionWebServices/1.0 python/%d.%d.%d PycURL/%s" % ( ( sys.version_info[ :3 ] + ( pycurl.version_info()[ 1 ], ) ) )
+        cHandle.setopt( cHandle.HTTPHEADER, [ "User-Agent: ConditionWebServices/1.0 python/%d.%d.%d PycURL/%s" %
+                                              ( sys.version_info[ :3 ] + ( pycurl.version_info()[ 1 ], ) )
                                             , "Accept: application/json" ] )
         cHandle.setopt( cHandle.TIMEOUT, self._timeOut )
         if self._proxy:
