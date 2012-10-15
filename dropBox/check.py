@@ -154,7 +154,10 @@ def checkFile(filename):
         logging.info('checkFile(): %s: Removing extracted files...', fileHash)
         os.unlink(dataPath)
         os.unlink(metadataPath)
-        os.rmdir(extractedFolderPath)
-
+        # os.rmdir(extractedFolderPath)
+        try:
+            os.system('rm -rf '+extractedFolderPath)
+        except:
+            os.system('rm -rf '+extractedFolderPath)
     logging.info('checkFile(): %s: Checking of the file was successful.', fileHash)
 
