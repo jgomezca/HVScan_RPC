@@ -69,7 +69,6 @@ class DropBoxBETest():
 
         # upload files from testFiles dir
         folders = os.listdir( os.path.join( os.getcwd(), 'dropBox', 'online', 'testFiles' ) )
-        folders.remove('bad')
         for subDir in folders:
             self.upload( subDir )
 
