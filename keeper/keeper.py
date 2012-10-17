@@ -60,11 +60,26 @@ def _sendEmail(from_address, to_addresses, cc_addresses, subject, body, smtp_ser
 	logging.debug('sendEmail(): Sending email... DONE')
 
 
-def _getPIDs(string):
-	'''Returns the PIDs matching the string, without grep nor bash.
+def _getPIDs(matchString, notMatchString = 'bash'):
+	'''Returns the PIDs where the command line matches the given string and
+	does not match the other given string.
 	'''
 
-	return os.popen("ps aux | grep -F '" + string + "' | grep -F 'python' | grep -F -v 'grep' | grep -F -v 'bash' | awk '{print $2}'", 'r').read().splitlines()
+	pids = []
+
+	for line in os.popen('ps -eo pid,command').readlines():
+
+		(pid, command) = line.split(None, 1)
+
+		if matchString not in command:
+			continue
+
+		if notMatchString in command:
+			continue
+
+		pids.append(pid)
+
+	return pids
 
 
 def getPIDs(service):
@@ -72,12 +87,12 @@ def getPIDs(service):
 	'''
 
 	if service == 'keeper':
-		pids = set(_getPIDs('keeper.py'))
+		pids = set(_getPIDs('./keeper.py keep'))
 		pids -= set([str(os.getpid())])
 	elif service == 'gtc':
-		pids = _getPIDs('bin/python src/manage.py')
+		pids = _getPIDs('bin/python src/manage.py runserver')
 	else:
-		pids = _getPIDs('python ' + config.servicesConfiguration[service]['filename'])
+		pids = _getPIDs('python %s --name %s --rootDirectory' % (config.servicesConfiguration[service]['filename'], service))
 
 		# At the moment all services run one and only one process
 		if len(pids) > 1:
