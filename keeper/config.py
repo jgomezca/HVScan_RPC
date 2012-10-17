@@ -163,6 +163,12 @@ servicesConfiguration = {
 		'hidden':         False,
 	},
 
+	'dropBoxBE': {
+		'filename':       'server.py',
+		'listeningPort':  8096,
+		'hidden':         True,
+	},
+
 	'getLumi': {
 		'filename':       'lumidb_server.py',
 		'listeningPort':  8086,

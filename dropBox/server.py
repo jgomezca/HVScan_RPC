@@ -1,4 +1,4 @@
-'''Offline web server of the new dropBox.
+'''dropBox frontend's web server.
 
 In this file, only the functionality related to the web interface of the
 dropBox should be implemented.
@@ -97,7 +97,7 @@ def checkSignedInOnline(f):
 
 
 class DropBox(object):
-    '''Offline web server of the new dropBox.
+    '''dropBox frontend's web server.
     '''
 
     @cherrypy.expose

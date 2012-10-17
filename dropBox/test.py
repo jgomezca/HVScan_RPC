@@ -1,4 +1,4 @@
-'''Offline new dropBox's test suite.
+'''dropBox frontend's test suite.
 '''
 
 __author__ = 'Miguel Ojeda'

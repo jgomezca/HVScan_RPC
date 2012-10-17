@@ -34,26 +34,25 @@ Any errors during processing are logged and the corresponding status updates are
 
 During the job, the backend job logs relevant summary information into its own log-file. The downloading of the files is logged in a separate file. At the end of the job, both log files (for the downloader and the overall processing job) are uploaded back to the server.
 
-### Running the service
+### Running the services
 
-First, check out the service:
+First, check out the services:
 
 	git clone /afs/cern.ch/user/m/mojedasa/public/services
 
 Then simply do:
 
-	./dropbox/online/scripts/runDropbox.sh
+    ./keeper/keeper.py restart dropBox
+    ./keeper/keeper.py restart dropBoxBE
 
 This will run one job of the backend.
 
 Once done, you can get a somewhat nicer listing of the logs (separated listings) by calling:
 
-	./dropbox/online/scripts/showDropBoxLogs.py | more
+	./dropboxBE/showDropBoxLogs.py | more
 
 
 ## Running the tests
-
-### Testing the backend
 
 To do this, you first need to create an Oracle account and initialize a few tables. To create
 the account, go to http://cern.ch/accounts select "Manage my accounts", once you are logged in,
@@ -70,26 +69,26 @@ won't work from AFS), then run:
     sqlplus <dbUsername>/<dbPwd>@devdb11 @databaseLog.sql
 
 This will create the tables. If you do this on a clean account, you'll get two errors from the
-`drop table ` commands, just ignore these.
+`drop table` commands, just ignore these.
 
-Once this is set up, you are ready to test the backend. Run:
+Note: if you don't have sqlplus installed on your machine, you can run #2 via ssh on lxplus.
 
-    (source /data/cmssw/setupEnv.sh; source ./dropBox/pre.sh; python ./dropBox/online/scripts/test.py )
+Once this is set up, you should (re)start the frontend and backend services:
 
-(or just that last part if you have set up your env already correctly).
+    ./keeper/keeper.py restart dropBox
+    ./keeper/keeper.py restart dropBoxBE
 
-To clean up and start from scratch, you'll need to: stop the dropbox frontend server (#1), clean up
-it's DB (#2) and local file area(#3), clean up the offline server's local file area (#4), then start
-the dropbox frontend server (#5) and finally run the test again (#6) :
+Finally, you are ready to test both the frontend and the backend. Run:
 
-    ./keeper/keeper.py stop dropBox                          #1
-    sqlplus <dbUsername>/<dbPwd>@devdb11 @databaseLog.sql    #2
-    rm -rf /data/services/dropBox/files/*/[a-z0-9]*          #3
-    ../NewOfflineDropBoxBaseDir/TestDropBox/                 #4
-    ./keeper/keeper.py start dropBox                         #5
-    (source /data/cmssw/setupEnv.sh; source ./dropBox/pre.sh; python ./dropBox/online/scripts/test.py ) #6
+    ./keeper/keeper.py test dropBox
 
-Notes: if you don't have sqlplus installed on your machine, you can run #2 via ssh on lxplus. The location
-for the offline server's local file area (in #4) may be different if you are using the symlink option for
-the services (e.g. on my development VM with services being a symlink to ~/workspace0/newDropbox/services/
-the dir for #4 is ~/workspace0/newDropbox/NewOfflineDropBoxBaseDir/...).
+to test the frontend, and/or:
+
+    ./keeper/keeper.py test dropBoxBE
+
+to test the backend.
+
+Both commands take care of cleaning up (i.e. starting from scratch, they delete the previous requests,
+both files and in entries in the database), so you should be able to re-run it several times
+without any further action.
+
