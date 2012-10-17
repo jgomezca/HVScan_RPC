@@ -291,6 +291,19 @@ class DropBox(object):
 
     @service.onlyPrivate
     @checkSignedInOnline
+    def cleanUp(self):
+        '''Clean up all files and database entries.
+
+        Only meant for testing.
+        '''
+
+        logging.debug('server::cleanUp()')
+
+        dropBox.cleanUp()
+
+
+    @service.onlyPrivate
+    @checkSignedInOnline
     def removeOnlineTestFiles(self):
         '''Removes the online test files from all folders.
 

@@ -94,3 +94,12 @@ def dumpDatabase():
 def close():
     connection.close()
 
+
+def cleanUp():
+    connection.commit('''
+        delete from fileLog
+    ''')
+    connection.commit('''
+        delete from runLog
+    ''')
+

@@ -296,6 +296,21 @@ def closeDatabase():
     return databaseLog.close()
 
 
+def cleanUp():
+    '''Clean up all files and database entries.
+
+    Only meant for testing.
+    '''
+
+    logging.debug('dropBox::cleanUp()')
+
+    for fileName in glob.glob('files/*/*'):
+        logging.debug('Unlinking %s...', fileName)
+        os.unlink(fileName)
+
+    databaseLog.cleanUp()
+
+
 def getOnlineTestFilesList():
     '''Returns the list of online test files.
     '''

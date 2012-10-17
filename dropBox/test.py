@@ -95,10 +95,9 @@ class DropBoxTest(service.TestCase):
     def testFiles(self):
         self.signIn()
 
-        # First clean all files
-        for fileName in glob.glob('files/*/*'):
-            logging.debug('Unlinking %s...', fileName)
-            os.unlink(fileName)
+        # First ask the dropBox to do a clean up to delete previous files
+        # and database entries
+        self.query('cleanUp')
 
         folders = os.listdir(config.testFilesPath)
 
