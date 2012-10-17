@@ -73,22 +73,14 @@ def _init():
 
     # Set the settings
     global settings
-    try:
-        settings = {
-            'name': options.name,
-            'rootDirectory': options.rootDirectory,
-            'secretsDirectory': options.secretsDirectory,
-            'listeningPort': options.listeningPort,
-            'productionLevel': options.productionLevel,
-        }
-    except Exception, e:
-        logging.error('could not initialize settings: %s ' % (str(e),) )
-        pass
-    try:
-        settings['caches'] = dict([(str(x[0]), x[1]) for x in json.loads(options.caches).items()]),
-    except Exception, e:
-        logging.error('could not set up cache: %s ' % (str(e),) )
-        pass
+    settings = {
+        'name': options.name,
+        'rootDirectory': options.rootDirectory,
+        'secretsDirectory': options.secretsDirectory,
+        'listeningPort': options.listeningPort,
+        'productionLevel': options.productionLevel,
+        'caches': dict([(str(x[0]), x[1]) for x in json.loads(options.caches).items()]),
+    }
 
     # Set the secrets
     global secrets
@@ -356,7 +348,7 @@ def getFrontierConnectionString(connectionDictionary, short = False):
 
         frontierConnectionStringTemplate = 'frontier://%s/%s' % (frontierName, '%s')
 
-    return frontierConnectionStringTemplate % ( (frontierConnectionStringTemplate.count('%s') - 1) * (connectionDictionary['frontier_name'], ) + (connectionDictionary['account'], ))
+    return frontierConnectionStringTemplate % ((frontierConnectionStringTemplate.count('%s') - 1) * (connectionDictionary['frontier_name'], ) + (connectionDictionary['account'], ))
 
 
 def getProtocolServiceAndAccountFromConnectionString(connectionString):
