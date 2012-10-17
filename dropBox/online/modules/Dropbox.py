@@ -368,7 +368,6 @@ class Dropbox(object) :
         self.logger.debug('getting hlt run from runInfo ...')
         runInfoDb  = ConditionDBChecker( self.config.runInfoDbName, '/afs/cern.ch/cms/DB/conddb') # , self.config.authPath )
         runInfoIov = runInfoDb.iovSequence( self.config.runInfotag )
-        runInfoIov.load( self.config.runInfotag )
         hltLastRun = runInfoIov.lastSince()
         self.logger.debug('found hlt run from runInfo to be %i ' % (hltLastRun,) )
 
