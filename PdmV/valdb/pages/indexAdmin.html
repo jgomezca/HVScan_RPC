@@ -1499,7 +1499,7 @@ var statsEL = stasChild.lastElementChild;
 	   $.ajax({
 	     type: 'POST',
 	     url: 'sendMail',
-	     data: $.param({'messageText':msgText,'emailSubject': msgSubject,'org_message_ID':"",'new_message_ID':mailId}, true),
+	     data: $.param({'messageText':msgText,'emailSubject': msgSubject,'org_message_ID':"",'new_message_ID':mailId, 'username' : userNAME}, true),
 	     dataType: 'json',
 	     async: false,
 	     success: function(data){alert(data);},

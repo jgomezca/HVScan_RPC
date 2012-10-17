@@ -258,8 +258,6 @@ Links: %s
 
     @cherrypy.expose
     def showUsers (self, userName, **kwargs):
-        if not self.check_admin():
-            raise cherrypy.InternalRedirect('/permissionErrorMessage')
         template = Template(open('pages/userRightsTemplate.html', "rb").read())
         title = 'PdmV Users List'
         header = 'Selected Users:'
@@ -387,7 +385,10 @@ Links: %s
             msg['References'] = org_message_ID
 
        # send_from = "PdmV.ValDb@cern.ch"
-        send_from = getUserEmail(username, Session)
+        if username != False:
+            send_from = getUserEmail(username, Session)
+        else:
+            send_from = username + "@cern.ch"
         msg['From'] = send_from
         send_to = self.MAILING_LIST
         if username != False:
