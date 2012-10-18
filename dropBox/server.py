@@ -304,6 +304,59 @@ class DropBox(object):
 
     @service.onlyPrivate
     @checkSignedInOnline
+    def holdFiles(self):
+        '''Hold files, i.e. make getFileList() return an empty list.
+
+        Only meant for testing. Useful to ensure a bunch of files are processed
+        as a single bunch in the backend.
+        '''
+
+        logging.debug('server::holdFiles()')
+
+        dropBox.holdFiles()
+
+
+    @service.onlyPrivate
+    @checkSignedInOnline
+    def releaseFiles(self):
+        '''Release files, i.e. make getFileList() behave normally.
+
+        Only meant for testing.
+        '''
+
+        logging.debug('server::releaseFiles()')
+
+        dropBox.releaseFiles()
+
+
+    @service.onlyPrivate
+    @checkSignedInOnline
+    def setRunTimestamp(self, runTimestamp):
+        '''Set timestamp of the run.
+
+        Only meant for testing.
+        '''
+
+        logging.debug('server::setRunTimestamp(%s)', runTimestamp)
+
+        dropBox.setRunTimestamp(runTimestamp)
+
+
+    @service.onlyPrivate
+    @checkSignedInOnline
+    def getRunTimestamp(self):
+        '''Get timestamp of the run.
+
+        Only meant for testing.
+        '''
+
+        logging.debug('server::getRunTimestamp()')
+
+        return dropBox.getRunTimestamp()
+
+
+    @service.onlyPrivate
+    @checkSignedInOnline
     def removeOnlineTestFiles(self):
         '''Removes the online test files from all folders.
 

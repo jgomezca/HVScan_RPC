@@ -27,6 +27,11 @@ import config
 import databaseLog
 
 
+# Global variables used only for tuning behaviour while testing
+_holdFiles = False
+_runTimestamp = None
+
+
 # Declared before import check, so that check.py can access it
 class DropBoxError(Exception):
     def __init__(self, message):
@@ -170,6 +175,10 @@ def getFileList():
 
     logging.info('getFileList(): Getting the list of files...')
 
+    if _holdFiles:
+        logging.debug('getFileList(): Holding files, i.e. returning empty list...')
+        return []
+
     fileList = os.listdir(config.pendingFilesPath)
     fileList.remove('.gitignore')
 
@@ -309,6 +318,54 @@ def cleanUp():
         os.unlink(fileName)
 
     databaseLog.cleanUp()
+
+
+def holdFiles():
+    '''Hold files, i.e. make getFileList() return an empty list.
+
+    Only meant for testing. Useful to ensure a bunch of files are processed
+    as a single bunch in the backend.
+    '''
+
+    logging.debug('dropBox::holdFiles()')
+
+    global _holdFiles
+    _holdFiles = True
+
+
+def releaseFiles():
+    '''Release files, i.e. make getFileList() behave normally.
+
+    Only meant for testing.
+    '''
+
+    logging.debug('dropBox::releaseFiles()')
+
+    global _holdFiles
+    _holdFiles = False
+
+
+def setRunTimestamp(runTimestamp):
+    '''Set timestamp of the run.
+
+    Only meant for testing.
+    '''
+
+    logging.debug('dropBox::setRunTimestamp(%s)', runTimestamp)
+
+    global _runTimestamp
+    _runTimestamp = runTimestamp
+
+
+def getRunTimestamp():
+    '''Get timestamp of the run.
+
+    Only meant for testing.
+    '''
+
+    logging.debug('dropBox::getRunTimestamp()')
+
+    return _runTimestamp
 
 
 def getOnlineTestFilesList():
