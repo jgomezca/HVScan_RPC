@@ -78,9 +78,9 @@ class FileDownloader( object ) :
             if OK and not self.untarFile( fileHash ):
                 OK = False
                 continue
-            #-ap if OK and not self.acknowledgeFile( filename ):
-            #    OK = False
-            #    continue
+            if OK and not self.acknowledgeFile( fileHash ):
+                OK = False
+                continue
 
             if OK :
                 self.filesOK += 1 # increment counter for files which are OK
@@ -265,6 +265,8 @@ class FileDownloader( object ) :
         os.remove( os.path.join( self.baseDownloadDir, fileHash ) )
 
         self.logger.debug(' -- file %s untarred.' % (fileHash,))
+
+        return True
 
     def moveValidFilesToProcess(self) :
 
