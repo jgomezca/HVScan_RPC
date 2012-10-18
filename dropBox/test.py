@@ -11,6 +11,7 @@ __email__ = 'mojedasa@cern.ch'
 
 import sys
 import os
+import socket
 import glob
 import netrc
 import hashlib
@@ -122,13 +123,13 @@ class DropBoxTest(service.TestCase):
                     })
                 else:
                     # Use upload.py
-                    process = subprocess.Popen('./upload.py %s' % test, shell = True, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+                    process = subprocess.Popen('./upload.py -H '+socket.gethostname()+' %s' % test, shell = True, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
                     error = process.communicate()[1].rsplit('\n', 1)[-2].partition('ERROR: ')[2]
 
                 with open('%s.out' % test, 'rb') as f:
                     self.assertEqual(error, f.read().strip())
 
-        
+
         self.signOut()
 
 
