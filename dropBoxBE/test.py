@@ -33,18 +33,6 @@ class DropBoxBETest(service.TestCase):
 
     def upload(self, testSubDir):
 
-        # First ask the dropBox to do a clean up to delete previous files
-        # and database entries
-        (username, account, password) = netrc.netrc().authenticators('newOffDb')
-        frontendHttp = http.HTTP()
-        frontendHttp.setBaseUrl(frontendBaseUrl)
-        frontendHttp.query('signIn', {
-            'username': username,
-            'password': password,
-        })
-        frontendHttp.query('cleanUp')
-        frontendHttp.query('signOut')
-
         folder = os.path.join( 'testFiles', testSubDir)
 
         tests = [ x.partition( '.out' )[ 0 ] for x in glob.glob( os.path.join( folder, '*.out' ) ) ]
@@ -73,13 +61,39 @@ class DropBoxBETest(service.TestCase):
         # override baseUrl to use private VM
         tstConfig.baseUrl = frontendBaseUrl
 
+        (username, account, password) = netrc.netrc().authenticators('newOffDb')
+        frontendHttp = http.HTTP()
+        frontendHttp.setBaseUrl(frontendBaseUrl)
+
         folders = os.listdir( 'testFiles' )
         for folder in folders:
+
+            frontendHttp.query('signIn', {
+                'username': username,
+                'password': password,
+            })
+
+            #-mos TODO: Make sure the dropBoxBE is not running at the moment
+            #           i.e. check the state in the database.
+
+            # first ask the frontend to do a clean up to delete previous files
+            # and database entries
+            frontendHttp.query('cleanUp')
+
+            # and ask also to hold the files until we have uploaded all
+            # the folder to prevent the backend from taking them in-between.
+            frontendHttp.query('holdFiles')
+
             # upload all files in the folder
             self.upload(folder)
 
-            # and trigger the dropBox backend to process all of them
-            self.query('runOne')
+            # now release the files so that the backend can take them
+            frontendHttp.query('releaseFiles')
+
+            frontendHttp.query('signOut')
+
+            #-mos TODO: Wait for the dropBox to read them and compare
+            #           the results from a JSON file in the folder.
 
 
 def testTier0Call():
