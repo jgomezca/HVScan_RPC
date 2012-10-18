@@ -12,65 +12,38 @@ __email__ = 'mojedasa@cern.ch'
 import logging
 import socket
 
-import cherrypy
-
+# Initialize logging
 import service
 
 import config
 import Dropbox
 
 
-class DropBoxBE(object):
-    '''dropBox backend's web server.
+def main():
+    '''Runs the dropBox forever.
     '''
 
-    def __init__(self):
-        '''Initializes the dropBox object with the correct configuration.
-        '''
+    logging.info('Starting...')
 
-        fqdn = socket.getfqdn()
+    fqdn = socket.getfqdn()
 
-        if fqdn.endswith('.cms'):
-            logging.info('Using online configuration.')
-            self.dropBoxConfig = config.online()
-        elif fqdn.endswith('.cern.ch'):
-            logging.info('Using test configuration.')
-            self.dropBoxConfig = config.test()
-        else:
-            raise Exception('Not running at CERN.')
+    if fqdn.endswith('.cms'):
+        logging.info('Using online configuration.')
+        dropBoxConfig = config.online()
+    elif fqdn.endswith('.cern.ch'):
+        logging.info('Using test configuration.')
+        dropBoxConfig = config.test()
+    else:
+        raise Exception('Not running at CERN.')
 
-        self.dropBox = Dropbox.Dropbox( self.dropBoxConfig )
+    logging.info('Configuring object...')
 
-    def __del__(self):
-        self.dropBox.shutdown()
+    dropBox = Dropbox.Dropbox(dropBoxConfig)
 
-    @cherrypy.expose
-    def run(self):
-        '''Triggers the dropBox to process all files.
-        '''
+    logging.info('Running forever...')
 
-        #-mos TODO: Add authentication.
-
-        logging.debug('server::run()')
-
-        OK = True
-        while OK:
-            OK = self.dropBox.processAllFiles()
-
-    @cherrypy.expose
-    def runOne(self) :
-        '''Triggers the dropBox to process all files.
-        '''
-
-        #-mos TODO: Add authentication.
-
-        logging.debug( 'server::runOne()' )
-
-        self.dropBox.processAllFiles( )
-
-
-def main():
-    service.start(DropBoxBE())
+    while dropBox.processAllFiles():
+        pass
 
 
 if __name__ == '__main__':
