@@ -20,7 +20,8 @@ DOWNLOADING   = 2000
 NOTHING_TO_DO = 2999
 EXTRACTING    = 3000
 PROCESSING    = 4000
-DONE          = 9999
+DONE_WITH_ERRORS  = 9910
+DONE_ALL_OK       = 9999
 
 # file-related:
 # downloading : offset = 2000
