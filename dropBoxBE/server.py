@@ -39,6 +39,10 @@ class DropBoxBE(object):
         else:
             raise Exception('Not running at CERN.')
 
+        self.dropBox = Dropbox.Dropbox( self.dropBoxConfig )
+
+    def __del__(self):
+        self.dropBox.shutdown()
 
     @cherrypy.expose
     def run(self):
@@ -49,9 +53,20 @@ class DropBoxBE(object):
 
         logging.debug('server::run()')
 
-        dropBox = Dropbox.Dropbox(self.dropBoxConfig)
-        dropBox.processAllFiles()
-        dropBox.shutdown()
+        OK = True
+        while OK:
+            OK = self.dropBox.processAllFiles()
+
+    @cherrypy.expose
+    def runOne(self) :
+        '''Triggers the dropBox to process all files.
+        '''
+
+        #-mos TODO: Add authentication.
+
+        logging.debug( 'server::runOne()' )
+
+        self.dropBox.processAllFiles( )
 
 
 def main():

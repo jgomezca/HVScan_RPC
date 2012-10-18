@@ -78,7 +78,7 @@ class DropBoxBETest(service.TestCase):
             self.upload(folder)
 
             # and trigger the dropBox backend to process all of them
-            self.query('run')
+            self.query('runOne')
 
 
 def testTier0Call():

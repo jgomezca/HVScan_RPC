@@ -1,5 +1,5 @@
 import os
-
+import socket
 
 class BaseConfig( object ) :
     def __init__(self) :
@@ -10,7 +10,7 @@ class BaseConfig( object ) :
         self.label = 'DropBox'
 
         # the server from which we download files and upload status and logs to:
-        self.baseUrl = 'https://mos-dev-slc6.cern.ch/dropBox/'
+        self.baseUrl = None
 
         self.delay = 30 # to wait if new files are found
 
@@ -43,6 +43,9 @@ class online( BaseConfig ) :
         # should become obsolete with new authentication
         self.authpath = '/nfshome0/popcondev/conddb'
 
+        # this is the URL for the dropBox frontend service:
+        self.baseUrl = 'https://cms-conddb-prod.cern.ch/dropBox/'
+
         #  used for sync to express and hlt
         self.runInfoDbName = "oracle://cms_orcon_prod/CMS_COND_31X_RUN_INFO"  # ... in online (and cms_orcon_adg in offline)
         self.runInfotag = "runinfo_start_31X_hlt"
@@ -72,6 +75,9 @@ class offline( BaseConfig ) :
         # should become obsolete with new authentication
         self.authpath = '/afs/cern.ch/cms/DB/conddb'
 
+        # this is the URL for the dropBox frontend service:
+        self.baseUrl = 'https://cms-conddb-int.cern.ch/dropBox/'
+
         #  used for sync to express and hlt
         self.runInfoDbName = "oracle://cms_orcon_adg/CMS_COND_31X_RUN_INFO"  # ... in online (and cms_orcon_adg in offline)
         self.runInfotag = "runinfo_start_31X_hlt"
@@ -95,6 +101,9 @@ class test( BaseConfig ) :
 
         # should become obsolete with new authentication
         self.authpath = '/afs/cern.ch/cms/DB/conddb/' # ADG'
+
+        # this is the URL for the dropBox frontend service, for testing/developing use the current host:
+        self.baseUrl = 'https://%s/dropBox/' % (socket.gethostname(),)
 
         #  used for sync to express and hlt
         self.runInfoDbName = "oracle://cms_orcon_adg/CMS_COND_31X_RUN_INFO"  # ... in online (and cms_orcon_adg in offline)

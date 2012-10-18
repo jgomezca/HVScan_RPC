@@ -1,4 +1,5 @@
 import os
+import time
 import glob
 import json
 import uu
@@ -13,6 +14,8 @@ from conditionDatabase import ConditionDBChecker
 from tier0 import Tier0Handler
 
 # main handler for the new Dropbox
+
+# todo: memorize if there were any error and return DONE_WITH_ERRORS
 
 class Dropbox(object) :
 
@@ -64,7 +67,7 @@ class Dropbox(object) :
         self.statUpdater.uploadRunLog(dLogBlob, gLogBlob)
 
         # logger is gone here, so we need to be explicit:
-        self.statUpdater.updateRunStatus(Constants.DONE)
+        self.statUpdater.updateRunStatus(Constants.DONE_ALL_OK)
 
         del self.statUpdater
 
@@ -399,12 +402,14 @@ class Dropbox(object) :
         stat, nFiles = dwnldr.getFileList()
         if not stat: # error
             self.updateRunStatus(Constants.DOWNLOADING_FAILURE)
-            return
+            return True
 
-        # if nothing to do, update status and return ...
+        # if nothing to do, update status sleep a bit and return, so we can check more
         if nFiles == 0:
+            # todo: update timestamp for logging of main dropbox every time the state changes to 0 files
             self.updateRunStatus( Constants.NOTHING_TO_DO )
-            return
+            time.sleep(30)
+            return True
 
         # now update runChk values from firstsaferun and runInfo, send info back to frontend for logging
         self.updateRunInfo()
@@ -433,7 +438,7 @@ class Dropbox(object) :
             if self.processOneFile( item ) :
                 self.processOK += 1
 
-        return
+        return True
 
 
 def main():
