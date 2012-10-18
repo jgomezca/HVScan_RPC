@@ -462,11 +462,14 @@ class HTTPService(http.HTTP):
     Typically used for testing in test.py.
     '''
 
-    baseUrl = 'https://%s/%s/' % (socket.gethostname(), settings['name'])
+    def __init__(self):
+        super(HTTPService, self).__init__()
+        self.setBaseUrl('https://%s/%s/' % (socket.gethostname(), settings['name']))
+
 
     def query(self, url, data = None, files = None, keepCookies = True):
         try:
-            return super(HTTPService, self).query(self.baseUrl + url, data, files, keepCookies)
+            return super(HTTPService, self).query(url, data, files, keepCookies)
         except http.HTTPError as e:
             e.response = parseCherryPyErrorPage(e.response)
             e.args = (e.response, )

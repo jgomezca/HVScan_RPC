@@ -37,12 +37,13 @@ class DropBoxBETest(service.TestCase):
         # and database entries
         (username, account, password) = netrc.netrc().authenticators('newOffDb')
         frontendHttp = http.HTTP()
-        frontendHttp.query('%s/signIn' % frontendBaseUrl, {
+        frontendHttp.setBaseUrl(frontendBaseUrl)
+        frontendHttp.query('signIn', {
             'username': username,
             'password': password,
         })
-        frontendHttp.query('%s/cleanUp' % frontendBaseUrl)
-        frontendHttp.query('%s/signOut' % frontendBaseUrl)
+        frontendHttp.query('cleanUp')
+        frontendHttp.query('signOut')
 
         folder = os.path.join( 'testFiles', testSubDir)
 

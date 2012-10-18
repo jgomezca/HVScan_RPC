@@ -35,19 +35,26 @@ class HTTP(object):
     '''
 
     def __init__(self):
-        self.reset()
+        self.setBaseUrl()
+        self.discardCookies()
 
 
-    def reset(self):
-        '''Resets the state of the object.
-
-        Usually used to discard cookies.
+    def discardCookies(self):
+        '''Discards cookies.
         '''
 
         self.curl = pycurl.Curl()
         self.curl.setopt(self.curl.COOKIEFILE, '')
         self.curl.setopt(self.curl.SSL_VERIFYPEER, 0)
         self.curl.setopt(self.curl.SSL_VERIFYHOST, 0)
+
+
+    def setBaseUrl(self, baseUrl = ''):
+        '''Allows to set a base URL which will be prefixed to all the URLs
+        that will be queried later.
+        '''
+
+        self.baseUrl = baseUrl
 
 
     def query(self, url, data = None, files = None, keepCookies = True):
@@ -65,9 +72,11 @@ class HTTP(object):
         '''
 
         if not keepCookies:
-            self.reset()
+            self.discardCookies()
 
         response = cStringIO.StringIO()
+
+        url = self.baseUrl + url
 
         # make sure the logs are safe ... at least somewhat :)
         data4log = copy.copy(data)
