@@ -39,7 +39,7 @@ class AjaxApp(object):
         }
 
     MAILING_LIST = ["hn-cms-relval@cern.ch"]
-#  MAILING_LIST = ["antanas.norkus@cern.ch"]#, "hn-cms-hnTest@cern.ch"] #testing mailing list
+    #MAILING_LIST = ["anorkus@gmail.com"]#, "hn-cms-hnTest@cern.ch"] #testing mailing list
     VALIDATION_STATUS = "VALIDATION_STATUS"
     COMMENTS = "COMMENTS"
     LINKS = "LINKS"
@@ -177,10 +177,14 @@ class AjaxApp(object):
         #returnedStatusValueOld - tuple: 0 is old status, 1 is old messageID
         #make new messageID
         new_message_ID = email.utils.make_msgid()
-        if statusKind == "TK":
-            msgSubject = ">TRACKER< "+subCat + "< " + returnedStatusValueOld[2]  ##make a message subject with statuskin/subcat mentioned in case of Tracker subCat
+        if cat == "Reconstruction":
+            emailCat = "RECO"
         else:
-            msgSubject = ">"+statusKind +" "+subCat + "< " + returnedStatusValueOld[2]  ##make a message subject with statuskin/subcat mentioned in case of other subCats
+            emailCat = cat
+        if statusKind == "TK":
+            msgSubject = ">TRACKER< "+ emailCat + " " + subCat + "< " + returnedStatusValueOld[2]  ##make a message subject with statuskin/subcat mentioned in case of Tracker subCat
+        else:
+            msgSubject = ">"+statusKind + " " + emailCat + " " + subCat + "< " + returnedStatusValueOld[2]  ##make a message subject with statuskin/subcat mentioned in case of other subCats
         returnedInformation = changeStatus(cat, subCat, relName, statusKind,
                                           stateValue, newComment, comentAuthor, 
                                           newLinks,Session, new_message_ID, returnedStatusValueOld[2])
@@ -299,6 +303,7 @@ Links: %s
     def sendMailOnChanges(self, messageText, emailSubject, org_message_ID, new_message_ID, username=False, **kwargs):
         msg = MIMEMultipart()
         reply_to = []
+        send_to = []
         if org_message_ID != None:
             msg['In-Reply-To'] = org_message_ID
             msg['References'] = org_message_ID
@@ -306,12 +311,12 @@ Links: %s
         #send_from = "PdmV.ValDb@cern.ch"
         send_from = getUserEmail(username, Session)
         msg['From'] = send_from
-        send_to = self.MAILING_LIST
+        send_to += self.MAILING_LIST
         if username != False:   #send email copy to the sender himself
             email = getUserEmail(username, Session)
             send_to.append(email)
         reply_to.append(send_from) #make a reply header to sender+receivers of the email.
-        reply_to += "hn-cms-relval@cern.ch"
+        reply_to.append("hn-cms-relval@cern.ch")
         msg['reply-to'] = COMMASPACE.join(reply_to)
         msg['To'] = COMMASPACE.join(send_to)
         msg['Date'] = formatdate(localtime=True)

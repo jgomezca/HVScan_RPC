@@ -21,7 +21,8 @@
 	    <div id ="modalkunas" class="modal-body">
 	      <h4>Validation Status: <text id ="valStat"></text> </h4>
 	      <p>Comments:</br> <text id ="comments" style="width: 454px; height:129px;"></text> </p>
-	      <p>Links: <text id = "links"></text> </p>
+            <text id="linkTEXT">Links:</text> 
+            <p id="links"></p>
 	    </div>
 	    <div class="modal-footer">
 	      <p> Date: <text id = "comdate"></text></p>
@@ -641,32 +642,32 @@ function createdinamictable(tbody, data1, releaseName, subCat){
 	var src
 	switch(text){
 	case "OK" : 
-          src = "<a href='#' rel='tooltip' title='"+comment +"'>"
+          src = '<a href="#" rel="tooltip" title="'+comment +'">'
           src +=  "<img src='media/choice-yes.gif'/>";
           src += "</a>"
 	      break;
 	case "FAILURE":
-          src = "<a href='#' rel='tooltip' title='"+comment +"'>"
+          src = '<a href="#" rel="tooltip" title="'+comment +'">'
           src +=  "<img src='media/choice-no.gif'/>";
           src += "</a>"
 	      break;
 	case "CHANGES EXPECTED":
-          src = "<a href='#' rel='tooltip' title='"+comment +"'>"
+          src = '<a href="#" rel="tooltip" title="'+comment +'">'
           src +=  "<img src='media/target.gif'/>";
           src += "</a>"
 	      break;
 	case "IN PROGRESS":
-          src = "<a href='#' rel='tooltip' title='"+comment +"'>"
+          src = '<a href="#" rel="tooltip" title="'+comment +'">'
           src +=  "<img src='media/wip.gif'/>";
           src += "</a>"
 	      break;
 	case "OK TO BE SIGNED-OFF BY THE VALIDATORS":
-          src = "<a href='#' rel='tooltip' title='"+comment +"'>"
+          src = '<a href="#" rel="tooltip" title="'+comment +'">'
           src +=  "<img src='media/thumbs-up.gif'/>";
           src += "</a>"
 	      break;
 	case "FAILURE TO BE SIGNED-OFF BY THE VALIDATORS":
-          src = "<a href='#' rel='tooltip' title='"+comment +"'>"
+          src = '<a href="#" rel="tooltip" title="'+comment +'">'
           src +=  "<img src='media/thumbs-down.gif'/>";
           src += "</a>"
 	      break;
@@ -698,6 +699,20 @@ function createdinamictable(tbody, data1, releaseName, subCat){
 </script>
 
 <script>
+function linkify(inputText) {
+    var replaceText, replacePattern1, replacePattern2, replacePattern3;
+
+    //URLs starting with http://, https://, or ftp://
+    replacePattern1 = /(\b(https?|ftp):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/gim;
+    replacedText = inputText.replace(replacePattern1, '<a href="$1" target="_blank">$1</a>');
+
+    //URLs starting with "www." (without // before it, or it'd re-link the ones done above).
+    replacePattern2 = /(^|[^\/])(www\.[\S]+(\b|$))/gim;
+    replacedText = replacedText.replace(replacePattern2, '$1<a href="http://$2" target="_blank">$2</a>');
+    
+    return replacedText.replace(/\n/g,"<br>")  //return formatted links with new line to <br> as HTML <P> tag skips '\n' 
+}
+
 function showModal(subcategory, obj){
 	var statName = obj.value;
 	var rn = $(obj).parent()[0];
@@ -745,11 +760,17 @@ function showModal(subcategory, obj){
 				document.getElementById('author').innerHTML = data[releaseDetails[1]];
 				document.getElementById('valStat').innerHTML = data[releaseDetails[0]];
 				document.getElementById('comments').innerHTML = data[releaseDetails[3]];
-				document.getElementById('links').innerHTML = data[releaseDetails[2]];
 				document.getElementById('comdate').innerHTML = data[releaseDetails[4]];
 				document.getElementById('modalReleaseName').innerHTML = data[releaseDetails[5]];
+                linksElem = document.getElementById('links');
+                linksElem.innerHTML = "";
+                linksData = data[releaseDetails[2]];
+                if (linksData != null){
+                    linksElem.innerHTML = linkify(linksData);
+                }
 				}),
-				$('#myModal').modal('toggle');}},
+				$('#myModal').modal({backdrop: 'static'},'toggle');
+				}},
             error: function() { alert("Error in data send"); }
 	});
 }
