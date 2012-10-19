@@ -43,7 +43,11 @@ def main():
 
     logging.info('Running forever...')
 
-    while dropBox.processAllFiles():
+    while True:
+        logging.info('Processing all files...')
+        dropBox.processAllFiles()
+
+        logging.info('Processing all files done; waiting %s seconds for the next run.', dropBoxConfig.delay)
         time.sleep(dropBoxConfig.delay)
 
 
