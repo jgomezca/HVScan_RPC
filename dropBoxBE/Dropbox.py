@@ -15,8 +15,6 @@ from tier0 import Tier0Handler
 
 # main handler for the new Dropbox
 
-# todo: memorize if there were any error and return DONE_WITH_ERRORS
-
 class Dropbox(object) :
 
     def __init__(self, cfg):
@@ -51,33 +49,6 @@ class Dropbox(object) :
 
         self.processProc = 0
         self.processOK   = 0
-
-        return
-
-    def shutdown(self):
-
-        self.logger.info('dropbox run finished. Closing up.')
-
-        del self.logger
-
-        dbLogFileName = os.path.join(self.logDir, self.config.detector+self.config.label+'.log')
-        dLogBlob = self.getLogFileContent( dbLogFileName  )
-
-        gLogBlob = self.getLogFileContent( os.path.join(self.logDir, 'Downloader.log') )
-        self.statUpdater.uploadRunLog(dLogBlob, gLogBlob)
-
-        # logger is gone here, so we need to be explicit:
-        self.statUpdater.updateRunStatus(Constants.DONE_ALL_OK)
-
-        del self.statUpdater
-
-        # move the actual files to the backup.
-        # As they are also in the DB, one backup copy should be enough ...
-        logBkpDir = os.path.join( self.logDir, 'bkp' )
-        if not os.path.exists( logBkpDir ) : os.makedirs( logBkpDir )
-        logFileList = glob.glob( self.logDir+'/*log.gz')
-        for logFileName in logFileList:
-            os.rename( logFileName, os.path.join( logBkpDir, os.path.basename(logFileName) ) )
 
         return
 
@@ -437,11 +408,39 @@ class Dropbox(object) :
         # could check here that extractProc == downloadOK :)
 
         self.logger.info( 'starting to process %i files ' % (len(self.sortedFileList),) )
+        errors = False
         self.updateRunStatus(Constants.PROCESSING)
         for item in self.sortedFileList :
             self.processProc += 1
             if self.processOneFile( item ) :
                 self.processOK += 1
+            else:
+                errors = True
+
+        self.logger.info('uploading the logs')
+        dbLogFileName = os.path.join(self.logDir, self.config.detector+self.config.label+'.log')
+        dLogBlob = self.getLogFileContent( dbLogFileName  )
+        gLogBlob = self.getLogFileContent( os.path.join(self.logDir, 'Downloader.log') )
+        self.statUpdater.uploadRunLog(dLogBlob, gLogBlob)
+
+        #-mos FIXME: We can't move the logs now that we run a single instance
+        #            of the dropBox.
+        #
+        # move the actual files to the backup.
+        # As they are also in the DB, one backup copy should be enough ...
+        #self.logger.info('backing up the logs, locally')
+        #logBkpDir = os.path.join( self.logDir, 'bkp' )
+        #if not os.path.exists( logBkpDir ) : os.makedirs( logBkpDir )
+        #logFileList = glob.glob( self.logDir+'/*log.gz')
+        #for logFileName in logFileList:
+        #    os.rename( logFileName, os.path.join( logBkpDir, os.path.basename(logFileName) ) )
+
+        if errors:
+            self.logger.info('finished, with errors')
+            self.updateRunStatus(Constants.DONE_WITH_ERRORS)
+        else:
+            self.logger.info('finished, all OK')
+            self.updateRunStatus(Constants.DONE_ALL_OK)
 
         return True
 
