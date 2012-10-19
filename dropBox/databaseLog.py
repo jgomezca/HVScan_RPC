@@ -78,6 +78,51 @@ def updateRunLogInfo(creationTimestamp, downloadLog, globalLog):
     ''', (downloadLog, globalLog, creationTimestamp))
 
 
+# For testing (test.py)
+
+def getLatestRunLogStatusCode():
+    result = connection.fetch('''
+        select *
+        from (
+            select statusCode
+            from runLog
+            order by creationTimestamp desc
+        )
+        where rownum = 1
+    ''')
+
+    # Usually test.py will be so fast uploading that the dropBox was sleeping
+    # all the time, so it did not even have time to call insertOrUpdateRunLog()
+    # at least once, so there are no row in the table since cleanUp() deleted
+    # them all
+    if result == []:
+        return None
+
+    return result[0][0]
+
+
+def getLatestRunLogInfo():
+    return connection.fetch('''
+        select *
+        from (
+            select creationTimestamp, downloadLog, globalLog
+            from runLog
+            order by creationTimestamp desc
+        )
+        where rownum = 1
+    ''')[0]
+
+
+def getFileLogInfo(fileHash):
+    return connection.fetch('''
+        select statusCode, log, runLogCreationTimestamp
+        from fileLog
+        where fileHash = :s
+    ''', (fileHash, ))[0]
+
+
+# For debugging
+
 def dumpDatabase():
     return (
         connection.fetch('''
