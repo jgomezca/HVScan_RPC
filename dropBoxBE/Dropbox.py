@@ -278,7 +278,7 @@ class Dropbox(object) :
 
         # create a logger with a file for this processing (so we can upload it later)
         fileLoggerName = os.path.join( self.logDir, fileHash+'.log' )
-        fileLogger = TeeFile.TeeFile(filename=fileLoggerName, loggerName='localLogger-'+fileHash, noName=True)
+        fileLogger = TeeFile.TeeFile(filename=fileLoggerName, loggerName='localLogger-'+fileHash)
         fileLogger.info('starting to process %s ' % (fileHash,) )
 
         self.updateFileStatus(fileHash, Constants.PROCESSING)

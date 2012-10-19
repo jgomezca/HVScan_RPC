@@ -7,35 +7,29 @@ class TeeFile( object ) :
         Initiate file
     """
 
-    def __init__(self, filename, loggerName="DropBoxLogger", noName=False) :
+    def __init__(self, filename, loggerName="DropBoxLogger") :
 
         # create a logger
         self.logger = logging.getLogger( loggerName )
-        self.logger.removeHandler(None)
-        self.logger.setLevel( logging.DEBUG )
+        
+        # Remove all handlers in case it already existed, e.g. for the moment,
+        # FileDownloader calls this with the same argument each dropBoxBE run.
+        self.logger.handlers = []
 
-        # ... and a formatter
-        if noName:
-            formatter = logging.Formatter( '[%(asctime)s]  localFileLogger  %(levelname)s: %(message)s' )
-        else:
-            formatter = logging.Formatter( '[%(asctime)s] %(name)s %(levelname)s: %(message)s' )
+        self.logger.setLevel( logging.DEBUG )
 
         # todo: move the loggers to create a rotating file handler and keep the last two hours of runs (12 files each)
 
-        # create logger 
-        fileLogger = logging.FileHandler(filename)
-
-        fileLogger.setLevel( level=logging.DEBUG )
-        fileLogger.setFormatter( formatter )
-
-        # create console handler with the same log level
-        consLogger = logging.StreamHandler( )
-        consLogger.setLevel( logging.DEBUG )
-        consLogger.setFormatter( formatter )
+        # create handler 
+        fileHandler = logging.FileHandler(filename)
+        fileHandler.setLevel( level=logging.DEBUG )
+        fileHandler.setFormatter( logging.Formatter( '[%(asctime)s] %(levelname)s: %(message)s' ) )
 
         # add the handlers to the logger
-        self.logger.addHandler( consLogger )
-        self.logger.addHandler( fileLogger )
+        self.logger.addHandler( fileHandler )
+
+        # Note: Output to the console is done automatically by the basicConfig
+        # done by import service
 
         self.map = {'debug' : self.logger.debug,
                     'info' : self.logger.info,
