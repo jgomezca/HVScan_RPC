@@ -95,17 +95,6 @@ class DropBoxBETest(service.TestCase):
             #-mos TODO: Wait for the dropBox to read them and compare
             #           the results from a JSON file in the folder.
 
-
-def testTier0Call():
-    tstConfig = config.test( )
-
-    # getting prompt run from tier0
-    t0DataSvc = tier0.Tier0Handler( tstConfig.src, tstConfig.timeout, tstConfig.retries, tstConfig.retryPeriod,
-                              tstConfig.proxy, False )
-    fcsr = t0DataSvc.getFirstSafeRun( '' )
-    print "fcsr = ", fcsr
-
-
 def main():
     sys.exit(service.test(DropBoxBETest))
 
