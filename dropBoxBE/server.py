@@ -11,6 +11,7 @@ __email__ = 'mojedasa@cern.ch'
 
 import logging
 import socket
+import time
 
 # Initialize logging
 import service
@@ -43,7 +44,7 @@ def main():
     logging.info('Running forever...')
 
     while dropBox.processAllFiles():
-        pass
+        time.sleep(dropBoxConfig.delay)
 
 
 if __name__ == '__main__':

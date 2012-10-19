@@ -1,5 +1,4 @@
 import os
-import time
 import glob
 import json
 import uu
@@ -384,7 +383,6 @@ class Dropbox(object) :
         if nFiles == 0:
             # todo: update timestamp for logging of main dropbox every time the state changes to 0 files
             self.updateRunStatus( Constants.NOTHING_TO_DO )
-            time.sleep(30)
             return True
 
         # now update runChk values from firstsaferun and runInfo, send info back to frontend for logging
