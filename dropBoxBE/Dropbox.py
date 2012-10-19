@@ -254,12 +254,13 @@ class Dropbox(object) :
         if syncTarget != 'offline' and \
            firstSince < self.runChk[syncTarget] :
                 syncSince = self.runChk[syncTarget]
+                self.logger.info( 'Synchronizing to "%s" with run=%d' % (syncTarget, syncSince ) ) 
 
         # check on timeType in metadata and re-pack run number for non-run types
         if self.metaData[ fileHash ].has_key('timeType') and self.metaData[ fileHash ][ 'timeType' ] == 'lumiid' :
-            return self.repackLumiId( firstSince, lumi ) # tool will take care of checking if this IOV is valid
+            return self.repackLumiId( syncSince, lumi ) # tool will take care of checking if this IOV is valid
         else :
-            return firstSince
+            return syncSince
 
     def moveToDir(self, fileHash, dirName):
 
