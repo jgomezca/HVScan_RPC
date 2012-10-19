@@ -261,17 +261,15 @@ class Dropbox(object) :
         else :
             return firstSince
 
-    def moveToErrDir(self, fileHash):
+    def moveToDir(self, fileHash, dirName):
 
-        # todo : ...
-
-        errDir = os.path.join( self.config.getDropBoxMainDir( ), 'processError' )
-        if not os.path.exists( errDir ) : os.makedirs( errDir )
+        targetDir = os.path.join( self.config.getDropBoxMainDir( ), dirName )
+        if not os.path.exists( targetDir ) : os.makedirs( targetDir )
 
         inHashDir  = os.path.join( self.inDir, fileHash )
-        errHashDir = os.path.join( errDir, fileHash )
+        targetHashDir = os.path.join( targetDir, fileHash )
 
-        os.system('/bin/mv -f '+inHashDir+' '+errHashDir)  # assume this will always work.
+        os.system('/bin/mv -f '+inHashDir+' '+targetHashDir)  # assume this will always work.
 
         return
 
@@ -285,7 +283,7 @@ class Dropbox(object) :
         self.updateFileStatus(fileHash, Constants.PROCESSING)
 
         if not self.checkFile( ) :
-            self.moveToErrDir( fileHash )
+            self.moveToDir( fileHash, 'processError' )
             fileLogger.error( "checking file failed ... " )
             self.updateFileStatus( fileHash, Constants.FILECHECK_FAILED )
             return
@@ -305,6 +303,7 @@ class Dropbox(object) :
                                             inputTag   = inputTag,
                                             fileLogger = fileLogger )
 
+        errorInExporting = False
         for dTag, tagSpec in destTags.items():
             syncTarget = tagSpec[ 'synchronizeTo' ]
             destSince = self.getDestSince( fileHash, syncTarget )  # check and validate, return correct value
@@ -318,11 +317,12 @@ class Dropbox(object) :
                                      destSince   = destSince,
                                      userComment = comment )
             if not ret:
-                self.moveToErrDir( fileHash )
+                self.moveToDir( fileHash, 'processError' )
                 msg = 'exportation failed for input tag %s to dest tag %s with destSince %s in %s, user comment: "%s"' % (inputTag, dTag, destSince, destDB, comment)
                 self.logger.error(msg)
                 fileLogger.error(msg)
                 self.updateFileStatus( fileHash, Constants.EXPORTING_FAILURE )
+                errorInExporting = True
 
             else : # do the following only if exporting is OK :
 
@@ -341,16 +341,20 @@ class Dropbox(object) :
                     ret = tagHandler.duplicate( destTag   = depTag,
                                                 destSince = depSince )
                     if not ret:
-                        self.moveToErrDir( fileHash )
+                        self.moveToDir( fileHash, 'processError')
                         msg = 'duplicating failed for input tag %s for %s inputSince %s to dest tag(s) %s with destSince %s in %s, user comment: "%s"' % (dTag, depSynch, destSince, depTag, destSince, destDB, comment)
                         self.logger.error( msg )
                         fileLogger.error( msg )
                         self.updateFileStatus( fileHash, Constants.EXPORTING_OK_BUT_DUPLICATION_FAILURE )
+                        errorInExporting = True
                     else :
                         msg = 'duplication to %s done.' % (depTag,)
                         self.logger.info( msg )
                         fileLogger.info( msg )
-
+                        
+        if not errorInExporting:
+                self.moveToDir( fileHash, 'exported' )
+                
         # -----------------------------------------------------------------
         # the following needs to be done even if exportation failed:
 
