@@ -1,5 +1,6 @@
 import shlex
 import subprocess
+import logging
 
 import cx_Oracle
 
@@ -108,9 +109,9 @@ The reason is: ORA-%d: %s.""" %( run, error.code, error.message ) )
             p = subprocess.Popen( args, stdout=subprocess.PIPE, stderr=subprocess.PIPE )
             result = p.communicate()[ 0 ]
             resList = result.strip().split( "\n" )
-            print "resList", resList
+            logging.debug("resList %s", resList)
             resGT = [ l.strip() for l in resList if l.find("globaltag") != -1 ]
-            print "restgt", resGT
+            logging.debug("restgt %s", resGT)
             globalTag = [l.strip().replace("::All","") for l in resGT[0].split("\"") if l.find("::All") != -1][0]
             return globalTag
         except IndexError as i:

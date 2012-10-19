@@ -1,3 +1,4 @@
+import logging
 import netrc
 import datetime
 import PyCurler
@@ -26,9 +27,9 @@ class StatusUpdater( object ) :
 
         msg = '\n'.join( response ).strip( )
         if msg :
-            print( ' -- login returned: %s ' % (msg,) )
+            logging.info( ' -- login returned: %s ' % (msg,) )
         else :
-            print( ' -- login OK ' )
+            logging.info( ' -- login OK ' )
 
         return
 
@@ -38,9 +39,9 @@ class StatusUpdater( object ) :
 
         msg = '\n'.join( response ).strip( )
         if msg :
-            print( ' -- logout returned: %s ' % (msg,) )
+            logging.info( ' -- logout returned: %s ' % (msg,) )
         else :
-            print( ' -- logout OK ' )
+            logging.info( ' -- logout OK ' )
 
         return
 
@@ -49,7 +50,7 @@ class StatusUpdater( object ) :
         Update the status one file, identified by the hash
         '''
 
-        print 'going to update status for '+hash+' code: '+str(status)
+        logging.info('going to update status for '+hash+' code: '+str(status))
         ret = self.curler.get( self.baseUrl+'updateFileStatus',
                                [ ('fileHash', str(hash) ) ,
                                  ('statusCode', str(int(status)) ),
@@ -58,7 +59,7 @@ class StatusUpdater( object ) :
 
         retMsg = '\n'.join(ret).strip()
         if retMsg:
-            print( "updating file status returned "+retMsg )
+            logging.info( "updating file status returned "+retMsg )
 
         return
 
@@ -67,7 +68,7 @@ class StatusUpdater( object ) :
         Upload the log for one file, identified by the hash
         '''
 
-        print 'going to upload log of size %i for %s ' % ( len(log), hash)
+        logging.info('going to upload log of size %i for %s ' % ( len(log), hash))
         ret = self.curler.get( self.baseUrl + 'updateFileLog',
                                [ ('fileHash', hash),
                                  ('log', log ),
@@ -76,7 +77,7 @@ class StatusUpdater( object ) :
 
         retMsg = '\n'.join( ret ).strip( )
         if retMsg :
-            print( "uploading file log returned " + retMsg )
+            logging.info( "uploading file log returned " + retMsg )
 
         return
 
@@ -86,7 +87,7 @@ class StatusUpdater( object ) :
         Updates the status code of a run.
         '''
 
-        print 'going to update run numbers for run of "%s" fcsr: %i, hlt: %s' % (self.creationTimeStamp, fcsr, hltRun )
+        logging.info('going to update run numbers for run of "%s" fcsr: %i, hlt: %s' % (self.creationTimeStamp, fcsr, hltRun ))
 
         ret = ''
         ret = self.curler.get( self.baseUrl + 'updateRunRuns',
@@ -98,7 +99,7 @@ class StatusUpdater( object ) :
 
         retMsg = '\n'.join( ret ).strip( )
         if retMsg :
-            print( "updating run run-numbers returned " + retMsg )
+            logging.info( "updating run run-numbers returned " + retMsg )
 
         return
 
@@ -107,7 +108,7 @@ class StatusUpdater( object ) :
         Updates the status code of a run.
         '''
 
-        print 'going to update status for run of "%s" code: %i ' % (self.creationTimeStamp, statusCode )
+        logging.info('going to update status for run of "%s" code: %i ' % (self.creationTimeStamp, statusCode ))
 
         ret = ''
         ret = self.curler.get( self.baseUrl + 'updateRunStatus',
@@ -117,7 +118,7 @@ class StatusUpdater( object ) :
 
         retMsg = '\n'.join( ret ).strip( )
         if retMsg :
-            print( "updating run status returned " + retMsg )
+            logging.info( "updating run status returned " + retMsg )
 
         return
 
@@ -126,8 +127,8 @@ class StatusUpdater( object ) :
         Uploads the logs (and final statistics) of a run.
         '''
 
-        print 'going to upload logs for run of "%s" of size %i (download) and %i (global) ' % \
-              (self.creationTimeStamp , len( downloadLog ), len(globalLog) )
+        logging.info('going to upload logs for run of "%s" of size %i (download) and %i (global) ' % \
+              (self.creationTimeStamp , len( downloadLog ), len(globalLog) ))
 
         ret = ''
         ret = self.curler.get( self.baseUrl + 'updateRunLog',
@@ -139,7 +140,7 @@ class StatusUpdater( object ) :
 
         retMsg = '\n'.join( ret ).strip( )
         if retMsg :
-            print( "uploading run logs returned " + retMsg )
+            logging.info( "uploading run logs returned " + retMsg )
 
         return
 

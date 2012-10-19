@@ -1,3 +1,4 @@
+import logging
 import cStringIO
 import json
 import os
@@ -117,13 +118,13 @@ class Tier0Handler( object ):
                     if self._proxy:
                         errStr += """ using proxy \"%s\"""" %( str( self._proxy ), )
                     errStr += """ with timeout \"%d\".\nThe reason is: \"%s\" (error code \"%d\").""" %( self._timeOut, errorMessage, errorCode )
-                    print "pycurl.error:", errStr
+                    logging.error("pycurl.error: %s", errStr)
                 retry += 1
                 if retry < self._retries: # no sleep in last iteration
                     time.sleep( self._retryPeriod )
             except ResponseError as r:
                 if self._debug:
-                    print "ResponseError:", r
+                    logging.error("ResponseError: %s", r)
                 retry += 1
                 if retry < self._retries: # no sleep in last iteration
                     time.sleep( self._retryPeriod )
