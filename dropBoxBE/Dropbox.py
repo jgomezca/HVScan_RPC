@@ -318,7 +318,6 @@ class Dropbox(object) :
                                      destSince   = destSince,
                                      userComment = comment )
             if not ret:
-                self.moveToDir( fileHash, 'processError' )
                 msg = 'exportation failed for input tag %s to dest tag %s with destSince %s in %s, user comment: "%s"' % (inputTag, dTag, destSince, destDB, comment)
                 self.logger.error(msg)
                 fileLogger.error(msg)
@@ -342,7 +341,6 @@ class Dropbox(object) :
                     ret = tagHandler.duplicate( destTag   = depTag,
                                                 destSince = depSince )
                     if not ret:
-                        self.moveToDir( fileHash, 'processError')
                         msg = 'duplicating failed for input tag %s for %s inputSince %s to dest tag(s) %s with destSince %s in %s, user comment: "%s"' % (dTag, depSynch, destSince, depTag, destSince, destDB, comment)
                         self.logger.error( msg )
                         fileLogger.error( msg )
@@ -353,8 +351,10 @@ class Dropbox(object) :
                         self.logger.info( msg )
                         fileLogger.info( msg )
                         
-        if not errorInExporting:
-                self.moveToDir( fileHash, 'exported' )
+        if errorInExporting:
+            self.moveToDir( fileHash, 'processError')
+        else:
+            self.moveToDir( fileHash, 'exported' )
                 
         # -----------------------------------------------------------------
         # the following needs to be done even if exportation failed:
