@@ -105,6 +105,9 @@ class test( BaseConfig ) :
         # this is the URL for the dropBox frontend service, for testing/developing use the current host:
         self.baseUrl = 'https://%s/dropBox/' % (socket.gethostname(),)
 
+        # be quicker in tests
+        self.delay = 10
+
         #  used for sync to express and hlt
         self.runInfoDbName = "oracle://cms_orcon_adg/CMS_COND_31X_RUN_INFO"  # ... in online (and cms_orcon_adg in offline)
         self.runInfotag = "runinfo_start_31X_hlt"
