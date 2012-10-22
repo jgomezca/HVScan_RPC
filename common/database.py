@@ -156,5 +156,6 @@ class Connection(object):
 
 
     def close(self):
+        logging.info('%s: Closing connection...', self)
         self.connection.close()
 
