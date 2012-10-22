@@ -477,6 +477,7 @@ class HTTPService(http.HTTP):
 
 
 def test(TestCase):
+    logging.getLogger().setLevel(logging.INFO)
     return not unittest.TextTestRunner().run(unittest.defaultTestLoader.loadTestsFromTestCase(TestCase)).wasSuccessful()
 
 
