@@ -12,6 +12,10 @@ import StatusUpdater
 from conditionDatabase import ConditionDBChecker
 from tier0 import Tier0Handler
 
+import database
+import service
+
+
 # main handler for the new Dropbox
 
 class Dropbox(object) :
@@ -48,6 +52,8 @@ class Dropbox(object) :
 
         self.processProc = 0
         self.processOK   = 0
+
+        self.runInfoConnection = database.Connection(service.secrets['runInfo'])
 
         return
 
@@ -344,9 +350,16 @@ class Dropbox(object) :
     def updateRunInfo(self):
 
         self.logger.debug('getting hlt run from runInfo ...')
-        runInfoDb  = ConditionDBChecker( self.config.runInfoDbName, '/afs/cern.ch/cms/DB/conddb') # , self.config.authPath )
-        runInfoIov = runInfoDb.iovSequence( self.config.runInfotag )
-        hltLastRun = runInfoIov.lastSince()
+        hltLastRun = self.runInfoConnection.fetch('''
+            select *
+            from (
+                select IOV_TIME
+                from CMS_COND_31X_RUN_INFO.IOV_DATA
+                where ID = 3
+                order by POS desc
+            )
+            where rownum = 1
+        ''')[0][0]
         self.logger.debug('found hlt run from runInfo to be %i ' % (hltLastRun,) )
 
         self.logger.debug('getting firstConditionSafeRun run from Tier-0 ...')
