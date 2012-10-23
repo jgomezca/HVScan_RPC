@@ -1,4 +1,5 @@
 import os
+import shutil
 import subprocess
 import logging
 
@@ -7,7 +8,24 @@ class TeeFile( object ) :
         Initiate file
     """
 
-    def __init__(self, filename, loggerName="DropBoxLogger") :
+    def __init__(self, filename, logDir, loggerName="DropBoxLogger") :
+
+        logging.info('TeeFile(): %s: Creating the logger...', filename)
+
+        backupDirectory = os.path.join(logDir, 'backup')
+        backupFilename = os.path.join(backupDirectory, os.path.basename(filename))
+
+        if not os.path.exists(backupDirectory):
+            logging.info('TeeFile(): %s: Making directory %s since it did not exist yet...', filename, backupDirectory)
+            os.makedirs(backupDirectory)
+
+        if os.path.exists(filename):
+            logging.info('TeeFile(): %s: Backing up previous file in %s...', filename, backupFilename)
+            shutil.copyfile(filename, backupFilename)
+        
+            logging.info('TeeFile(): %s: Truncating previous file...', filename)
+            with open(filename, 'w'):
+                pass
 
         # create a logger
         self.logger = logging.getLogger( loggerName )

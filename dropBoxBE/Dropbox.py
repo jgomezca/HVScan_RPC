@@ -1,7 +1,7 @@
 import os
+import logging
 import glob
 import json
-import uu
 
 import TeeFile
 import TagHandler
@@ -22,15 +22,14 @@ class Dropbox(object) :
 
     def __init__(self, cfg):
 
+        logging.info('Initialising Dropbox')
+
         self.config = cfg
 
         self.createDirs( )
 
         self.metaData = {}
         self.logDir   = os.path.join( self.config.getDropBoxMainDir(), 'logs' )
-        logFileName   = os.path.join( self.logDir, self.config.detector+self.config.label+'.log' )
-        self.logger   = TeeFile.TeeFile( filename   = logFileName,
-                                         loggerName = 'DropboxMainLogger')
 
         self.inDir = os.path.join( self.config.getDropBoxMainDir( ), 'dropbox' )
         self.hashList = []
@@ -39,7 +38,7 @@ class Dropbox(object) :
 
         self.statUpdater = StatusUpdater.StatusUpdater( self.config )
 
-        self.logger.info('Dropbox initialised')
+        
 
         self.runChk = { }
 
@@ -54,6 +53,8 @@ class Dropbox(object) :
         self.processOK   = 0
 
         self.runInfoConnection = database.Connection(service.secrets['runInfo'])
+
+        logging.info('Dropbox initialised')
 
 
     def createDirs(self) :
@@ -146,17 +147,8 @@ class Dropbox(object) :
 
     def getLogFileContent(self, logFileName):
 
-        os.system( 'gzip -f ' + logFileName )
-        uu.encode( logFileName+'.gz', logFileName+'.gz.uu' )
-
-        logBlobFile = open( os.path.join( self.logDir, logFileName + '.gz.uu' ), 'r' )
-        logBlob = logBlobFile.read( )
-        logBlobFile.close( )
-
-        # clean up:
-        os.remove( logFileName + '.gz.uu' )
-
-        return logBlob
+        with open(os.path.join(self.logDir, logFileName), 'r') as f:
+            return f.read()
 
 
     def uploadLogs(self, fileHash, logFileName):
@@ -252,7 +244,7 @@ class Dropbox(object) :
 
         # create a logger with a file for this processing (so we can upload it later)
         fileLoggerName = os.path.join( self.logDir, fileHash+'.log' )
-        fileLogger = TeeFile.TeeFile(filename=fileLoggerName, loggerName='localLogger-'+fileHash)
+        fileLogger = TeeFile.TeeFile(filename=fileLoggerName, logDir = self.logDir, loggerName='localLogger-'+fileHash)
         fileLogger.info('starting to process %s ' % (fileHash,) )
 
         self.updateFileStatus(fileHash, Constants.PROCESSING)
@@ -375,6 +367,10 @@ class Dropbox(object) :
 
     def processAllFiles(self) :
 
+        # Recreate the logger to backup the previous file and start fresh a new file
+        logFileName = os.path.join( self.logDir, self.config.detector+self.config.label+'.log' )
+        self.logger = TeeFile.TeeFile( filename = logFileName, logDir = self.logDir, loggerName = 'DropboxMainLogger' )
+
         self.logger.info('starting to download files')
         self.updateRunStatus(Constants.STARTING)
 
@@ -426,21 +422,10 @@ class Dropbox(object) :
                 errors = True
 
         self.logger.info('uploading the logs')
-        dLogBlob = self.getLogFileContent( os.path.join(self.logDir, 'Downloader.log') )
-        gLogBlob = self.getLogFileContent( os.path.join(self.logDir, self.config.detector+self.config.label+'.log')  )
-        self.statUpdater.uploadRunLog(dLogBlob, gLogBlob)
-
-        #-mos FIXME: We can't move the logs now that we run a single instance
-        #            of the dropBox.
-        #
-        # move the actual files to the backup.
-        # As they are also in the DB, one backup copy should be enough ...
-        #self.logger.info('backing up the logs, locally')
-        #logBkpDir = os.path.join( self.logDir, 'bkp' )
-        #if not os.path.exists( logBkpDir ) : os.makedirs( logBkpDir )
-        #logFileList = glob.glob( self.logDir+'/*log.gz')
-        #for logFileName in logFileList:
-        #    os.rename( logFileName, os.path.join( logBkpDir, os.path.basename(logFileName) ) )
+        self.statUpdater.uploadRunLog(
+            self.getLogFileContent( 'Downloader.log' ),
+            self.getLogFileContent( '%s%s.log' % ( self.config.detector, self.config.label ) )
+        )
 
         if errors:
             self.logger.info('finished, with errors')

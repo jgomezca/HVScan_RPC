@@ -17,9 +17,6 @@ import glob
 import socket
 import netrc
 import time
-import cStringIO
-import uu
-import gzip
 
 import http
 import tier0
@@ -29,6 +26,7 @@ import config
 import Dropbox
 import Constants
 import databaseLog
+import logPack
 
 
 frontendHost = socket.gethostname()
@@ -131,25 +129,8 @@ class DropBoxBETest(service.TestCase):
             # Then compare the runLog's logs
             (creationTimestamp, downloadLog, globalLog) = databaseLog.getLatestRunLogInfo()
 
-            def unpackLog(log):
-
-                # Decode uu
-                uuFile = cStringIO.StringIO()
-                uuFile.write(log)
-                uuFile.seek(0)
-                gzFile = cStringIO.StringIO()
-                uu.decode(uuFile, gzFile)
-
-                # Decode gzip
-                gzFile.seek(0)
-                f = gzip.GzipFile(fileobj = gzFile)
-                log = f.read()
-                f.close()
-
-                return log
-
-            downloadLog = unpackLog(downloadLog)
-            globalLog = unpackLog(globalLog)
+            downloadLog = logPack.unpack(downloadLog)
+            globalLog = logPack.unpack(globalLog)
 
             logging.debug('downloadLog = %s', downloadLog)
             logging.debug('globalLog = %s', globalLog)
@@ -187,7 +168,7 @@ class DropBoxBETest(service.TestCase):
                 with open('%s.statusCode' % test, 'rb') as f:
                     self.assertEqual(fileStatusCode, getattr(Constants, f.read().strip()))
 
-                fileLog = unpackLog(fileLog)
+                fileLog = logPack.unpack(fileLog)
 
                 # Compare the fileLog
                 with open('%s.fileLog' % test, 'rb') as f:

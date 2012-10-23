@@ -20,7 +20,7 @@ class FileDownloader( object ) :
 
         self.baseUrl = cfg.baseUrl
 
-        self.logger = TeeFile.TeeFile( os.path.join(self.baseDir, 'logs', 'Downloader.log'), 'downloader')
+        self.logger = TeeFile.TeeFile( os.path.join(self.baseDir, 'logs', 'Downloader.log'), os.path.join( self.baseDir, 'logs' ), 'downloader')
         self.logger.info('Downloader starting ... ')
         self.logger.info( "baseDir = %s " % (self.baseDir, ) )
 

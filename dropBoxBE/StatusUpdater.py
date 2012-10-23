@@ -2,6 +2,7 @@ import logging
 import netrc
 import datetime
 import PyCurler
+import logPack
 
 class StatusUpdater( object ) :
     def __init__(self, cfg):
@@ -68,7 +69,7 @@ class StatusUpdater( object ) :
         logging.info('going to upload log of size %i for %s ' % ( len(log), hash))
         ret = self.curler.get( self.baseUrl + 'updateFileLog',
                                [ ('fileHash', hash),
-                                 ('log', log ),
+                                 ('log', logPack.pack(log) ),
                                  ( 'runLogCreationTimestamp', str(self.creationTimeStamp) ),
                                 ] )
 
@@ -127,8 +128,8 @@ class StatusUpdater( object ) :
         ret = ''
         ret = self.curler.get( self.baseUrl + 'updateRunLog',
                                [ ( 'creationTimestamp', self.creationTimeStamp ),
-                                 ( 'downloadLog', downloadLog ),
-                                 ( 'globalLog'  , globalLog )
+                                 ( 'downloadLog', logPack.pack(downloadLog) ),
+                                 ( 'globalLog'  , logPack.pack(globalLog) )
                                ]
                              )
 

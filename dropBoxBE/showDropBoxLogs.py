@@ -6,9 +6,7 @@ import glob
 
 from pprint import pprint
 
-sys.path.append( '.' )
-sys.path.append( 'dropBox/online' )
-import modules.config as config
+import config
 
 cfg = config.test()
 
@@ -28,28 +26,28 @@ def checkDirs():
 def checkLogs():
 
     mainDir = cfg.getDropBoxMainDir( )
-    logDir = os.path.join(mainDir, 'logs', 'bkp')
+    logDir = os.path.join(mainDir, 'logs', 'backup')
 
-    logFile = logDir + '/Downloader.log.gz'
+    logFile = logDir + '/Downloader.log'
     print '\n', '=' * 80
     print '-------', logFile
     sys.stdout.flush()
-    os.system( 'gunzip -c ' + logFile )
+    os.system( 'cat ' + logFile )
     sys.stdout.flush()
 
-    logFile = logDir + '/TestDropBox.log.gz'
+    logFile = logDir + '/TestDropBox.log'
     print '\n', '=' * 80
     print '-------', logFile
     sys.stdout.flush()
-    os.system( 'gunzip -c ' + logFile )
+    os.system( 'cat ' + logFile )
     sys.stdout.flush()
 
     for logFile in glob.glob(logDir+'/*') :
-        if os.path.basename( logFile ) in [ 'TestDropBox.log.gz', 'Downloader.log.gz' ] : continue
+        if os.path.basename( logFile ) in [ 'TestDropBox.log', 'Downloader.log' ] : continue
         print '\n', '='*80
         print '-------', logFile
         sys.stdout.flush()
-        os.system('gunzip -c '+logFile)
+        os.system('cat ' +logFile)
         sys.stdout.flush()
 
     return
