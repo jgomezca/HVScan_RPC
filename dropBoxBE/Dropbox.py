@@ -429,9 +429,8 @@ class Dropbox(object) :
                 errors = True
 
         self.logger.info('uploading the logs')
-        dbLogFileName = os.path.join(self.logDir, self.config.detector+self.config.label+'.log')
-        dLogBlob = self.getLogFileContent( dbLogFileName  )
-        gLogBlob = self.getLogFileContent( os.path.join(self.logDir, 'Downloader.log') )
+        dLogBlob = self.getLogFileContent( os.path.join(self.logDir, 'Downloader.log') )
+        gLogBlob = self.getLogFileContent( os.path.join(self.logDir, self.config.detector+self.config.label+'.log')  )
         self.statUpdater.uploadRunLog(dLogBlob, gLogBlob)
 
         #-mos FIXME: We can't move the logs now that we run a single instance
