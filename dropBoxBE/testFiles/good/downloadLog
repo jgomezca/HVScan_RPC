@@ -1,1 +1,14 @@
-TODO
+[%s %s] INFO: Downloader starting ...
+[%s %s] INFO: baseDir = %s/TestDropBox
+[%s %s] DEBUG: -- login OK
+[%s %s] INFO: Retrieving file list from: https://%s/dropBox/getFileList
+[%s %s] INFO: Found 1 files
+[%s %s] INFO: going to download fd2da4cb0d24b24ca5653bcc591c12bb42bc6915
+[%s %s] INFO: Downloading file fd2da4cb0d24b24ca5653bcc591c12bb42bc6915 from url: https://%s/dropBox/getFile to %s/TestDropBox/download/fd2da4cb0d24b24ca5653bcc591c12bb42bc6915
+[%s %s] INFO: - size : 11812
+[%s %s] DEBUG: -- file fd2da4cb0d24b24ca5653bcc591c12bb42bc6915 downloaded.
+[%s %s] DEBUG: -- file fd2da4cb0d24b24ca5653bcc591c12bb42bc6915 untarred.
+[%s %s] INFO: Going to acknowledge file fd2da4cb0d24b24ca5653bcc591c12bb42bc6915 via url: https://%s/dropBox/acknowledgeFile
+[%s %s] DEBUG: -- logout OK
+[%s %s] DEBUG: -- 1 files moved to processing dir
+[%s %s] INFO: all files downloaded.

@@ -1,1 +1,8 @@
-TODO
+[%s %s] INFO: starting to process fd2da4cb0d24b24ca5653bcc591c12bb42bc6915
+[%s %s] INFO: going to export input tag RunInfo_v1_mc to dest tag Test2 with destSince 189023 in oracle://cms_orcoff_prep/CMS_COND_DROPBOX, user comment: "Test 2: one IOV 1-inf, with since in the metadata"
+[%s %s] DEBUG: Executing command :"cmscond_export_iov -s sqlite_file:%s/TestDropBox/dropbox/fd2da4cb0d24b24ca5653bcc591c12bb42bc6915/data.db -i RunInfo_v1_mc -d oracle://cms_orcoff_prep/CMS_COND_DROPBOX -t Test2 -b 189023 -l sqlite_file:log.db -x 'Test 2: one IOV 1-inf, with since in the metadata' -P /afs/cern.ch/cms/DB/conddb/test/dropbox"
+[%s %s] ERROR: An exception of category 'Conditions' occurred.
+Exception Message:
+IOVImportIterator::setUp Error: since time out of range, below last since
+[%s %s] ERROR: exportation failed for input tag RunInfo_v1_mc to dest tag Test2 with destSince 189023 in oracle://cms_orcoff_prep/CMS_COND_DROPBOX, user comment: "Test 2: one IOV 1-inf, with since in the metadata"
+[%s %s] INFO: done handling fd2da4cb0d24b24ca5653bcc591c12bb42bc6915

@@ -55,8 +55,6 @@ class TeeFile( object ) :
                     'error' : self.logger.error,
         }
 
-        self.debug( '-' * 80 ) # empty line to separate restarts
-
     def __del__(self):
         del self.logger
 

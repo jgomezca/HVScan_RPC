@@ -1,1 +1,24 @@
-TODO
+[%s %s] INFO: starting to download files
+[%s %s] INFO: updating run status to 1000
+[%s %s] INFO: updating run status to 2000
+[%s %s] DEBUG: getting hlt run from runInfo ...
+[%s %s] DEBUG: found hlt run from runInfo to be %s
+[%s %s] DEBUG: getting firstConditionSafeRun run from Tier-0 ...
+[%s %s] DEBUG: found firstConditionSafeRun from Tier-0 to be %s
+[%s %s] INFO: starting to extract metadata from files
+[%s %s] INFO: updating run status to 3000
+[%s %s] DEBUG: -- found 1 items in %s/TestDropBox/dropbox
+[%s %s] DEBUG: -- found fd2da4cb0d24b24ca5653bcc591c12bb42bc6915
+[%s %s] DEBUG: metadata extracted, sorted file list:
+[%s %s] DEBUG: --  fd2da4cb0d24b24ca5653bcc591c12bb42bc6915 tag "RunInfo_v1_mc" since "189023"
+[%s %s] INFO: updating run status to 3999
+[%s %s] INFO: starting to process 1 files
+[%s %s] INFO: updating run status to 4000
+[%s %s] INFO: updating status for fd2da4cb0d24b24ca5653bcc591c12bb42bc6915 to 4000
+[%s %s] INFO: going to export input tag RunInfo_v1_mc to dest tag Test2 with destSince 189023 in oracle://cms_orcoff_prep/CMS_COND_DROPBOX, user comment: "Test 2: one IOV 1-inf, with since in the metadata"
+[%s %s] ERROR: exportation failed for input tag RunInfo_v1_mc to dest tag Test2 with destSince 189023 in oracle://cms_orcoff_prep/CMS_COND_DROPBOX, user comment: "Test 2: one IOV 1-inf, with since in the metadata"
+[%s %s] INFO: updating status for fd2da4cb0d24b24ca5653bcc591c12bb42bc6915 to 4210
+[%s %s] INFO: done handling fd2da4cb0d24b24ca5653bcc591c12bb42bc6915
+[%s %s] INFO: uploading logfile %s/TestDropBox/logs/fd2da4cb0d24b24ca5653bcc591c12bb42bc6915.log for fd2da4cb0d24b24ca5653bcc591c12bb42bc6915
+[%s %s] INFO: uploading logs for fd2da4cb0d24b24ca5653bcc591c12bb42bc6915 returned None.
+[%s %s] INFO: uploading the logs

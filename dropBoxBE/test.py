@@ -19,6 +19,7 @@ import netrc
 import time
 
 import http
+import templateMatch
 import tier0
 import service
 
@@ -135,14 +136,11 @@ class DropBoxBETest(service.TestCase):
             logging.debug('downloadLog = %s', downloadLog)
             logging.debug('globalLog = %s', globalLog)
 
-            #-mos TODO: Think how to take out timestamps, use file paths, etc.
-            #           Probably the best solution is to match each line vs a regexp
-
             with open(os.path.join('testFiles', folder, 'downloadLog'), 'rb') as f:
-                pass #self.assertEqual(downloadLog, f.read().strip())
+                templateMatch.match(f.read(), downloadLog)
             
             with open(os.path.join('testFiles', folder, 'globalLog'), 'rb') as f:
-                pass #self.assertEqual(globalLog, f.read().strip())
+                templateMatch.match(f.read(), globalLog)
 
             tests = [x.partition('.txt')[0] for x in glob.glob(os.path.join('testFiles', folder, '*.txt'))]
 
@@ -172,7 +170,7 @@ class DropBoxBETest(service.TestCase):
 
                 # Compare the fileLog
                 with open('%s.fileLog' % test, 'rb') as f:
-                    pass #self.assertEqual(fileLog, f.read().strip())
+                    templateMatch.match(f.read(), fileLog)
 
 
 def main():
