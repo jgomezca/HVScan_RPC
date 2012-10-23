@@ -16,7 +16,7 @@ class TagHandler( object ):
         self.logDB = "sqlite_file:log.db"
         # fix me : will be removed (no needed with key authentication
         self.authpath = '/afs/cern.ch/cms/DB/conddb/test/dropbox'
-        return
+
 
     def executeAndLog(self, command, verbose=False):
         # processing

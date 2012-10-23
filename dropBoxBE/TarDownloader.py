@@ -130,8 +130,6 @@ class FileDownloader( object ) :
         else:
             self.logger.debug( ' -- login OK ' )
 
-        return
-
     def logout(self) :
 
         url = self.baseUrl + '/signOut'
@@ -143,7 +141,6 @@ class FileDownloader( object ) :
         else:
             self.logger.debug( ' -- logout OK ' )
 
-        return
 
     def downloadFileList(self) :
 
@@ -165,7 +162,6 @@ class FileDownloader( object ) :
         except Exception, e :
             self.logger.error( "Error when acknowledging file %s : %s" % (filename, str( e )) )
 
-        return
 
     def downloadFile(self, fileHash) :
 

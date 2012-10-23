@@ -55,7 +55,6 @@ class Dropbox(object) :
 
         self.runInfoConnection = database.Connection(service.secrets['runInfo'])
 
-        return
 
     def createDirs(self) :
 
@@ -67,7 +66,6 @@ class Dropbox(object) :
             path = os.path.join( self.config.getDropBoxMainDir( ), subdir )
             if not os.path.exists( path ) : os.makedirs( path )
 
-        return
 
     def getFileList(self):
 
@@ -83,7 +81,6 @@ class Dropbox(object) :
         for item in self.hashList:
             self.logger.debug(' -- found %s ' % (item, ) )
 
-        return
 
     def extractMetaData(self) :
 
@@ -129,7 +126,6 @@ class Dropbox(object) :
             self.logger.debug('  --  %s tag "%s" since "%s"' % (item, self.metaData[item]['inputTag'], self.metaData[item]['since'] ) )
         self.updateRunStatus(Constants.EXTRACT_OK)
 
-        return
 
     def checkFile(self) :
 
@@ -147,6 +143,7 @@ class Dropbox(object) :
 
         return True
 
+
     def getLogFileContent(self, logFileName):
 
         os.system( 'gzip -f ' + logFileName )
@@ -161,6 +158,7 @@ class Dropbox(object) :
 
         return logBlob
 
+
     def uploadLogs(self, fileHash, logFileName):
 
         self.logger.info('uploading logfile %s for %s ' % (logFileName, fileHash) )
@@ -174,12 +172,11 @@ class Dropbox(object) :
         ret = self.statUpdater.uploadFileLog(fileHash, logBlob)
         self.logger.info('uploading logs for %s returned %s.' % (fileHash, str(ret)) )
 
-        return
 
     def updateFileStatus(self, fileHash, status) :
         self.logger.info('updating status for %s to %s ' % (fileHash, status,) )
         self.statUpdater.updateFileStatus( fileHash, status)
-        return
+
 
     def updateRunStatus(self, status) :
         self.logger.info( 'updating run status to %s ' % (status,) )
@@ -188,7 +185,7 @@ class Dropbox(object) :
         except Exception, e:
             self.logger.debug('Error from update run status : %s' % (str(e),))
             pass
-        return
+
 
     def unpackLumiId(self, since):
 
@@ -199,6 +196,7 @@ class Dropbox(object) :
         self.logger.debug( "Unpacking lumiid: run = \"%s\", lumi = \"%s\"" % (run, lumi) )
 
         return run, lumi
+
 
     def repackLumiId(self, run, lumi):
 
@@ -238,6 +236,7 @@ class Dropbox(object) :
         else :
             return syncSince
 
+
     def moveToDir(self, fileHash, dirName):
 
         targetDir = os.path.join( self.config.getDropBoxMainDir( ), dirName )
@@ -248,7 +247,6 @@ class Dropbox(object) :
 
         os.system('/bin/mv -f '+inHashDir+' '+targetHashDir)  # assume this will always work.
 
-        return
 
     def processOneFile(self, fileHash) :
 
@@ -345,7 +343,6 @@ class Dropbox(object) :
 
         self.uploadLogs( fileHash, fileLoggerName )
 
-        return
 
     def updateRunInfo(self):
 
@@ -374,7 +371,7 @@ class Dropbox(object) :
                        'prompt'  : fcsr,
                        'pcl'     : fcsr,
                       }
-        return
+
 
     def processAllFiles(self) :
 

@@ -31,7 +31,6 @@ class StatusUpdater( object ) :
         else :
             logging.info( ' -- login OK ' )
 
-        return
 
     def logout(self) :
         url = self.baseUrl + '/signOut'
@@ -43,7 +42,6 @@ class StatusUpdater( object ) :
         else :
             logging.info( ' -- logout OK ' )
 
-        return
 
     def updateFileStatus(self, hash, status) :
         '''
@@ -61,7 +59,6 @@ class StatusUpdater( object ) :
         if retMsg:
             logging.info( "updating file status returned "+retMsg )
 
-        return
 
     def uploadFileLog(self, hash, log) :
         '''
@@ -79,7 +76,6 @@ class StatusUpdater( object ) :
         if retMsg :
             logging.info( "uploading file log returned " + retMsg )
 
-        return
 
 
     def updateRunRunInfo(self, fcsr, hltRun) :
@@ -101,7 +97,6 @@ class StatusUpdater( object ) :
         if retMsg :
             logging.info( "updating run run-numbers returned " + retMsg )
 
-        return
 
     def updateRunStatus(self, statusCode) :
         '''
@@ -120,7 +115,6 @@ class StatusUpdater( object ) :
         if retMsg :
             logging.info( "updating run status returned " + retMsg )
 
-        return
 
     def uploadRunLog(self, downloadLog, globalLog) :
         '''
@@ -142,7 +136,6 @@ class StatusUpdater( object ) :
         if retMsg :
             logging.info( "uploading run logs returned " + retMsg )
 
-        return
 
 def test() :
     from config import test
