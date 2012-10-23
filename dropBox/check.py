@@ -20,7 +20,7 @@ import tarfile
 import json
 import sqlite3
 
-import typematch
+import typeMatch
 
 import config
 import dropBox
@@ -75,8 +75,8 @@ def checkContents(fileHash, data, metadata):
     }
 
     try:
-        typematch.match(structure, metadata)
-    except typematch.MatchError as e:
+        typeMatch.match(structure, metadata)
+    except typeMatch.MatchError as e:
         raise dropBox.DropBoxError('In the metadata, ' + str(e))
 
     checkTodo.checkCorruptedOrEmptyFile(data)
