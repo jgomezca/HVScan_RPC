@@ -136,14 +136,14 @@ class Tier0Handler( object ):
         errStr += """ with timeout \"%d\" since maximum number of retries \"%d\" with retry period \"%d\" was reached.""" % ( self._timeOut, self._retries, self._retryPeriod )
         raise Tier0Error( errStr )
 
-    def getFirstSafeRun( self, firstConditionSafeRunAPI ):
+    def getFirstSafeRun( self ):
         """
         Queries Tier0DataSvc to get the first condition safe run.
         Parameters:
-        firstConditionSafeRunAPI: the Tier0DataSvc API call for retrieving the first condition safe run.
         @returns: integer, the run number.
         Raises if connection error, bad response, timeout after retries occur, or if the run number is not available.
         """
+        firstConditionSafeRunAPI = "firstconditionsaferun"
         safeRun = self._queryTier0DataSvc( os.path.join( self._uri, firstConditionSafeRunAPI ) )[ 0 ][ 'run_id' ]
         if safeRun is None:
             errStr = """First condition safe run is not available in Tier0DataSvc from URL \"%s\"""" %( os.path.join( self._uri, firstConditionSafeRunAPI ), )
