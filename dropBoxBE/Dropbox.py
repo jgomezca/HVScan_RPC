@@ -54,6 +54,8 @@ class Dropbox(object) :
 
         self.runInfoConnection = database.Connection(service.secrets['runInfo'])
 
+        self.replayTimestamp = None
+
         logging.info('Dropbox initialised')
 
 
@@ -253,7 +255,7 @@ class Dropbox(object) :
             self.moveToDir( fileHash, 'processError' )
             fileLogger.error( "checking file failed ... " )
             self.updateFileStatus( fileHash, Constants.FILECHECK_FAILED )
-            return
+            return False
 
         # create the handler which will do the export and duplication
         # (and checks the return from the commands
@@ -316,7 +318,7 @@ class Dropbox(object) :
                         msg = 'duplication to %s done.' % (depTag,)
                         self.logger.info( msg )
                         fileLogger.info( msg )
-                        
+
         if errorInExporting:
             self.moveToDir( fileHash, 'processError')
         else:
@@ -334,12 +336,19 @@ class Dropbox(object) :
         del fileLogger
 
         self.uploadLogs( fileHash, fileLoggerName )
+        if errorInExporting:
+            return False
+        return True
 
 
     def updateRunInfo(self):
 
-        self.logger.debug('getting hlt run from runInfo ...')
-        hltLastRun = self.runInfoConnection.fetch('''
+        hltLastRun = None
+        fcsr = None
+        
+        if( self.replayTimestamp == None):
+            self.logger.debug('getting hlt run from runInfo ...')
+            hltLastRun = self.runInfoConnection.fetch('''
             select *
             from (
                 select IOV_TIME
@@ -348,22 +357,24 @@ class Dropbox(object) :
                 order by POS desc
             )
             where rownum = 1
-        ''')[0][0]
-        self.logger.debug('found hlt run from runInfo to be %i ' % (hltLastRun,) )
+            ''')[0][0]
+            self.logger.debug('found hlt run from runInfo to be %i ' % (hltLastRun,) )
 
-        self.logger.debug('getting firstConditionSafeRun run from Tier-0 ...')
-        t0DataSvc = Tier0Handler( self.config.src,
-                                  self.config.timeout, self.config.retries, self.config.retryPeriod,
-                                  self.config.proxy, False )
-        fcsr = t0DataSvc.getFirstSafeRun( '' )
-        self.logger.debug('found firstConditionSafeRun from Tier-0 to be %i ' % (fcsr,) )
+            self.logger.debug('getting firstConditionSafeRun run from Tier-0 ...')
+            t0DataSvc = Tier0Handler( self.config.src,
+                                      self.config.timeout, self.config.retries, self.config.retryPeriod,
+                                      self.config.proxy, False )
+            fcsr = t0DataSvc.getFirstSafeRun()
+            self.logger.debug('found firstConditionSafeRun from Tier-0 to be %i ' % (fcsr,) )
+
+        # replay mode 
+        #else:    
 
         self.runChk = {'hlt'     : hltLastRun+1,
                        'express' : hltLastRun+1,
                        'prompt'  : fcsr,
                        'pcl'     : fcsr,
                       }
-
 
     def processAllFiles(self) :
 
@@ -435,6 +446,10 @@ class Dropbox(object) :
             self.updateRunStatus(Constants.DONE_ALL_OK)
 
         return True
+
+    def reprocess( self, timestamp ):
+        self.replayTimestamp = timestamp
+        return processAllFiles();
 
 
 def main():
