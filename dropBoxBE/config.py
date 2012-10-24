@@ -15,7 +15,7 @@ class BaseConfig( object ) :
         self.delay = 30 # to wait if new files are found
 
         # get info on next run which will be processed for prompt:
-        self.src = "https://cmsweb.cern.ch/tier0/firstconditionsaferun"
+        self.src = "https://cmsweb.cern.ch/tier0"
         self.timeout     = 5
         self.retries     = 3
         self.retryPeriod = 30
@@ -39,6 +39,8 @@ class online( BaseConfig ) :
         self.maindir = '/nfshome0/popcondev/'
         self.detector = 'Test' # was PopCon
         self.label = 'DropBox'
+
+        self.destinationDB = None
 
         # should become obsolete with new authentication
         self.authpath = '/nfshome0/popcondev/conddb'
@@ -72,6 +74,8 @@ class offline( BaseConfig ) :
         self.detector = 'Test'
         self.label = 'DropBox'
 
+        self.destinationDB = None
+
         # should become obsolete with new authentication
         self.authpath = '/afs/cern.ch/cms/DB/conddb'
 
@@ -99,8 +103,11 @@ class test( BaseConfig ) :
 
         self.maindir = os.path.abspath( os.path.join( os.getcwd(), '..', 'NewOfflineDropBoxBaseDir') )
 
-        # should become obsolete with new authentication
-        self.authpath = '/afs/cern.ch/cms/DB/conddb/' # ADG'
+        # this will be changed to use the 'private' db in the .netrc 
+        self.destinationDB = "oracle://cms_orcoff_prep/CMS_COND_DROPBOX"
+
+        # will be pointing to the location where the tester is keeping his test_dropbox key
+        self.authpath = '/afs/cern.ch/cms/DB/conddb/test/dropbox' 
 
         # this is the URL for the dropBox frontend service, for testing/developing use the current host:
         self.baseUrl = 'https://%s/dropBox/' % (socket.gethostname(),)
@@ -122,3 +129,37 @@ class test( BaseConfig ) :
         self.debug = True
 
         return
+
+class replay( BaseConfig ) :
+    def __init__(self) :
+
+        super(test, self).__init__()
+
+        self.maindir = os.path.abspath( os.path.join( os.getcwd(), '..', 'NewOfflineDropBoxBaseDir') )
+
+        self.destinationDB = "oracle://cms_orcoff_prep/CMS_COND_DROPBOX"
+
+        # should become obsolete with new authentication
+        self.authpath = '/afs/cern.ch/cms/DB/conddb/test/dropbox' # ADG'
+
+        # this is the URL for the dropBox frontend service, for testing/developing use the current host:
+        self.baseUrl = 'https://%s/dropBox/' % (socket.gethostname(),)
+
+        # be quicker in tests
+        self.delay = 10
+
+        #  used for sync to express and hlt
+        self.runInfoDbName = "oracle://cms_orcon_adg/CMS_COND_31X_RUN_INFO"  # ... in online (and cms_orcon_adg in offline)
+        self.runInfotag = "runinfo_start_31X_hlt"
+
+        # this will later go into the main DB:
+        self.logdb = 'sqlite_file:/tmp/TestOfflineDropBoxJobLog.db'
+
+        self.gtDbName = "oracle://cms_orcon_adg/CMS_COND_31X_GLOBALTAG"
+        self.gtTags = {'hlt' : 'GR10_H_V5', 'express' : 'GR10_E_V5',
+                       'prompt' : 'GR10_P_V5'} #-ap: get this from gtList (if we can)
+
+        self.debug = True
+
+        return
+
