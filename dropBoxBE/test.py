@@ -28,10 +28,7 @@ import Dropbox
 import Constants
 import databaseLog
 import logPack
-
-
-frontendHost = socket.gethostname()
-frontendBaseUrl = 'https://%s/dropBox/' % frontendHost
+import doUpload
 
 
 class DropBoxBETest(service.TestCase):
@@ -46,25 +43,18 @@ class DropBoxBETest(service.TestCase):
         for test in tests :
             i += 1
             logging.info( '%s   [%s/%s] %s: Uploading...', loggingPrefix, i, len( tests ), os.path.basename( test ) )
-            # Use upload.py
-            process = subprocess.Popen( '../dropBox/upload.py -H %s %s' % (frontendHost, test),
-                                        shell=True, stdout=subprocess.PIPE,stderr=subprocess.PIPE )
-            result = process.communicate( )
-            error = result[ 1 ].rsplit( '\n', 1 )[ -2 ].partition( 'ERROR: ' )[ 2 ]
-
-            if len( error ) > 0 :
-                raise Exception('%s Upload failed: %s (full msg: %s)' % (loggingPrefix, error, result))
+            doUpload.upload(test)
 
 
     def testRun(self):
         tstConfig = config.test()
 
         # override baseUrl to use private VM
-        tstConfig.baseUrl = frontendBaseUrl
+        tstConfig.baseUrl = doUpload.frontendBaseUrl
 
         (username, account, password) = netrc.netrc().authenticators('newOffDb')
         frontendHttp = http.HTTP()
-        frontendHttp.setBaseUrl(frontendBaseUrl)
+        frontendHttp.setBaseUrl(doUpload.frontendBaseUrl)
 
         folders = os.listdir( 'testFiles' )
 
