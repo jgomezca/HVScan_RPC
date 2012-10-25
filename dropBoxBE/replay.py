@@ -145,7 +145,15 @@ def main():
             tarFile.close()
 
             logging.info('  [%s/%s] %s: Uploading...', j, len(dropBoxRuns[runTimestamp]), fileName)
-            doUpload.upload('/tmp/replayRequest')
+
+            try:
+                doUpload.upload('/tmp/replayRequest')
+            except doUpload.UploadError as e:
+                # If it is a error from the server (i.e. UploadError),
+                # we can continue with the next files.
+                # If it is another kind, we do not catch it since in that case
+                # it is a real problem with the upload.py script.
+                logging.info('  [%s/%s] %s: Upload error:', j, len(dropBoxRuns[runTimestamp]), str(e))
 
         # TODO: Run the DropBox giving the runTimestamp
 

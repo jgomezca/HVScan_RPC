@@ -17,6 +17,11 @@ frontendHost = socket.gethostname()
 frontendBaseUrl = 'https://%s/dropBox/' % frontendHost
 
 
+class UploadError(Exception):
+    def __init__(self, message):
+        self.args = (message, )
+
+
 def upload(fileName):
     '''Uploads a file to the frontend.
     '''
@@ -28,7 +33,7 @@ def upload(fileName):
     error = result[1].rsplit('\n', 1)[-2].partition('ERROR: ')[2]
 
     if len(error) > 0:
-        raise Exception('Upload failed: %s (full msg: %s)' % (error, result))
+        raise UploadError('Upload failed: %s (full msg:\n%s)' % (error, result))
     elif returnCode != 0:
         raise Exception('Error while running the upload script:\n%s' % result[1])
 
