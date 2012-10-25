@@ -17,6 +17,9 @@ import json
 import replay
 
 
+outputFile = 'replayTags.json'
+
+
 def main():
     outputPairs = set([])
 
@@ -65,8 +68,8 @@ def main():
     for (destDB, tag) in outputPairs:
         outputDict.setdefault(destDB, []).append(tag)
 
-    logging.info('Writing output file...')
-    with open('outputDict.json', 'w') as f:
+    logging.info('Writing output file %s...', outputFile)
+    with open(outputFile, 'w') as f:
         json.dump(outputDict, f, sort_keys = True, indent = 4)
 
 
