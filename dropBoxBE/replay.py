@@ -19,6 +19,12 @@ import service
 dropBoxReplayFilesFolder = '/afs/cern.ch/work/m/mojedasa/dropBoxReplayFiles'
 dropBoxSnapshotTimestamp = datetime.datetime(2012, 8, 31, 7, 0, 0)
 
+# Just for validation
+dropBoxFirstRun = (datetime.datetime(2012, 8, 31, 10, 30), set([
+    'BeamSpotObjects_PCL_byRun_v0_offline@d5474f75-8f5c-4851-bbb9-937d86409bed.tar.bz2',
+    'BeamSpotObjects_PCL_byLumi_v0_prompt@2a13ed55-b5d9-4658-9266-3ad1181b1d75.tar.bz2',
+    'SiStripBadChannel_PCL_v0_offline@e5c9f19f-b83f-48d4-85ff-5e6a3b97b75d.tar.bz2',
+]))
 
 def getNextDropBoxRunTimestamp(timestamp):
     '''Given a timestamp, give the timestamp of the next dropBox run.
@@ -60,10 +66,14 @@ def main():
         logging.debug('%s: %s -> %s', fileName.split('@')[1], files[fileName], dropBoxTimestamp)
         dropBoxRuns.setdefault(dropBoxTimestamp, set([])).add(fileName)
 
+    sortedDropBoxRuns = sorted(dropBoxRuns)
+    if sortedDropBoxRuns[0] != dropBoxFirstRun[0] or dropBoxRuns[dropBoxFirstRun[0]] != dropBoxFirstRun[1]:
+        raise Exception('The expected first dropBox run is not the same as the calculated one.')
+
     # TODO: Prepare database from the sqlite file
 
     i = 0
-    for runTimestamp in sorted(dropBoxRuns):
+    for runTimestamp in sortedDropBoxRuns:
         i += 1
         logging.info('[%s/%s] Replaying run %s...', i, len(dropBoxRuns), runTimestamp)
 
