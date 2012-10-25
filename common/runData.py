@@ -86,7 +86,6 @@ class RunData( object ):
               AND START_VIEW.RUN = STOP_VIEW.RUN
         """
         runList = self._runControlConnection.fetch( sqlstr )
-        print len(runList)
         cursor = self._sqliteConnection.cursor()
         cursor.executemany( """INSERT INTO RUNS( RUN, START_TIME, STOP_TIME ) VALUES ( ?, ?, ? )""", runList )
         self._sqliteConnection.commit()
