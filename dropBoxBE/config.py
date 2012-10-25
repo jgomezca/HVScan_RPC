@@ -103,11 +103,11 @@ class test( BaseConfig ) :
 
         self.maindir = os.path.abspath( os.path.join( os.getcwd(), '..', 'NewOfflineDropBoxBaseDir') )
 
-        # this will be changed to use the 'private' db in the .netrc 
+        # this will be changed to use the 'private' db in the .netrc
         self.destinationDB = "oracle://cms_orcoff_prep/CMS_COND_DROPBOX"
 
         # will be pointing to the location where the tester is keeping his test_dropbox key
-        self.authpath = '/afs/cern.ch/cms/DB/conddb/test/dropbox' 
+        self.authpath = '/afs/cern.ch/cms/DB/conddb/test/dropbox'
 
         # this is the URL for the dropBox frontend service, for testing/developing use the current host:
         self.baseUrl = 'https://%s/dropBox/' % (socket.gethostname(),)
@@ -133,7 +133,7 @@ class test( BaseConfig ) :
 class replay( BaseConfig ) :
     def __init__(self) :
 
-        super(test, self).__init__()
+        super(replay, self).__init__()
 
         self.maindir = os.path.abspath( os.path.join( os.getcwd(), '..', 'NewOfflineDropBoxBaseDir') )
 
