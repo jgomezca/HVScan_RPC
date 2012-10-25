@@ -17,7 +17,7 @@ import service
 
 
 dropBoxReplayFilesFolder = '/afs/cern.ch/work/m/mojedasa/dropBoxReplayFiles'
-dropBoxSnapshotTimestamp = datetime.datetime(2012, 8, 31)
+dropBoxSnapshotTimestamp = datetime.datetime(2012, 8, 31, 7, 0, 0)
 
 
 def getNextDropBoxRunTimestamp(timestamp):
