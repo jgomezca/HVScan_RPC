@@ -77,12 +77,14 @@ def getFiles():
 def main():
     dropBoxRuns = {}
 
+    # Calculate the old dropBox non-empty runs that will be replayed, with their corresponding files
     files = getFiles()
     for fileName in sorted(files, key = lambda x: files[x]):
         dropBoxTimestamp = getNextDropBoxRunTimestamp(files[fileName])
         logging.debug('%s: %s -> %s', fileName.split('@')[1], files[fileName], dropBoxTimestamp)
         dropBoxRuns.setdefault(dropBoxTimestamp, set([])).add(fileName)
 
+    # Validate that the first run is the one expected
     sortedDropBoxRuns = sorted(dropBoxRuns)
     if sortedDropBoxRuns[0] != dropBoxFirstRun[0] or dropBoxRuns[dropBoxFirstRun[0]] != dropBoxFirstRun[1]:
         raise Exception('The expected first dropBox run is not the same as the calculated one.')
@@ -106,6 +108,7 @@ def main():
 
     # TODO: Prepare database from the sqlite file
 
+    # Replay all the runs
     i = 0
     for runTimestamp in sortedDropBoxRuns:
         i += 1
