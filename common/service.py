@@ -476,8 +476,12 @@ class HTTPService(http.HTTP):
             raise e
 
 
-def test(TestCase):
+def setupTest():
     logging.getLogger().setLevel(logging.INFO)
+
+
+def test(TestCase):
+    setupTest()
     return not unittest.TextTestRunner().run(unittest.defaultTestLoader.loadTestsFromTestCase(TestCase)).wasSuccessful()
 
 

@@ -96,5 +96,7 @@ def main():
 
 
 if __name__ == '__main__':
+    # This is a test like test.py (although special)
+    service.setupTest()
     main()
 
