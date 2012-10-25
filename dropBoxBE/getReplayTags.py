@@ -1,4 +1,3 @@
-#!/usr/bin/env python2.6
 '''dropBox backend's script to get the replay tags from the original dropBox files.
 '''
 
@@ -14,12 +13,13 @@ import os
 import tarfile
 import json
 
-dropBoxReplayFilesFolder = '/afs/cern.ch/work/m/mojedasa/dropBoxReplayFiles'
+import replay
+
 
 outputPairs = set([])
 
-for fileName in os.listdir(dropBoxReplayFilesFolder):
-    tarFile = tarfile.open(os.path.join(dropBoxReplayFilesFolder, fileName))
+for fileName in replay.getFiles():
+    tarFile = tarfile.open(os.path.join(replay.dropBoxReplayFilesFolder, fileName))
 
     names = tarFile.getnames()
     if len(names) != 2:

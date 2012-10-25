@@ -19,12 +19,14 @@ import service
 dropBoxReplayFilesFolder = '/afs/cern.ch/work/m/mojedasa/dropBoxReplayFiles'
 dropBoxSnapshotTimestamp = datetime.datetime(2012, 8, 31, 7, 0, 0)
 
+
 # Just for validation
 dropBoxFirstRun = (datetime.datetime(2012, 8, 31, 10, 30), set([
     'BeamSpotObjects_PCL_byRun_v0_offline@d5474f75-8f5c-4851-bbb9-937d86409bed.tar.bz2',
     'BeamSpotObjects_PCL_byLumi_v0_prompt@2a13ed55-b5d9-4658-9266-3ad1181b1d75.tar.bz2',
     'SiStripBadChannel_PCL_v0_offline@e5c9f19f-b83f-48d4-85ff-5e6a3b97b75d.tar.bz2',
 ]))
+
 
 def getNextDropBoxRunTimestamp(timestamp):
     '''Given a timestamp, give the timestamp of the next dropBox run.
@@ -49,18 +51,27 @@ def getNextDropBoxRunTimestamp(timestamp):
     raise Exception('This should not happen.')
 
 
-def main():
-    dropBoxRuns = {}
+def getFiles():
+    '''Returns a dictionary mapping the files to be replayed to their
+    modification timestamp.
 
-    fileNames = os.listdir(dropBoxReplayFilesFolder)
+    This is used by getReplayTags.py as well.
+    '''
 
     files = {}
-    for fileName in fileNames:
+    for fileName in os.listdir(dropBoxReplayFilesFolder):
         timestamp = datetime.datetime.fromtimestamp(os.stat(os.path.join(dropBoxReplayFilesFolder, fileName)).st_mtime)
         if timestamp < dropBoxSnapshotTimestamp:
             continue
         files[fileName] = timestamp
 
+    return files
+
+
+def main():
+    dropBoxRuns = {}
+
+    files = getFiles()
     for fileName in sorted(files, key = lambda x: files[x]):
         dropBoxTimestamp = getNextDropBoxRunTimestamp(files[fileName])
         logging.debug('%s: %s -> %s', fileName.split('@')[1], files[fileName], dropBoxTimestamp)
