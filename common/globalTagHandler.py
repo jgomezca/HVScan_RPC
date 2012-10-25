@@ -24,7 +24,7 @@ class GlobalTagHandler( object ):
         debug: (default False) if set to True, enables debug information.
         """
         self._gt = conditionDatabase.GlobalTagChecker( globalTagConnectionString, authPath )
-        self._hlt = hlt.HLTHandler( runControlConnectionString, runInfoConnectionString, runInfoStartTag, runInfoStopTag, authPath )
+        self._hlt = hlt.HLTHandler( runInfoConnectionString, runInfoStartTag, runInfoStopTag, authPath )
         self._tier0 = tier0.Tier0Handler( tier0DataSvcURI, timeOut, retries, retryPeriod, proxy, debug )
     
     def getHLTGlobalTag( self ):
