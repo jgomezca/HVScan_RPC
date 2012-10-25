@@ -153,7 +153,7 @@ def main():
                 # we can continue with the next files.
                 # If it is another kind, we do not catch it since in that case
                 # it is a real problem with the upload.py script.
-                logging.info('  [%s/%s] %s: Upload error:', j, len(dropBoxRuns[runTimestamp]), str(e))
+                logging.info('  [%s/%s] %s: Upload error: %s', j, len(dropBoxRuns[runTimestamp]), fileName, str(e))
 
         # TODO: Run the DropBox giving the runTimestamp
 
