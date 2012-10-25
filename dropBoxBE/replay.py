@@ -12,8 +12,12 @@ __email__ = 'mojedasa@cern.ch'
 import os
 import datetime
 import logging
+import tarfile
 
 import service
+
+import metadata
+import doUpload
 
 
 dropBoxReplayFilesFolder = '/afs/cern.ch/work/m/mojedasa/dropBoxReplayFiles'
@@ -86,11 +90,40 @@ def main():
     i = 0
     for runTimestamp in sortedDropBoxRuns:
         i += 1
-        logging.info('[%s/%s] Replaying run %s...', i, len(dropBoxRuns), runTimestamp)
+        logging.info('[%s/%s] %s: Replaying run...', i, len(dropBoxRuns), runTimestamp)
 
+        j = 0
         for fileName in dropBoxRuns[runTimestamp]:
-            logging.info('      Uploading %s...', fileName)
-            # TODO: Upload the fie
+            j += 1
+            logging.info('  [%s/%s] %s: Converting...', j, len(dropBoxRuns[runTimestamp]), fileName)
+
+            tarFile = tarfile.open(os.path.join(dropBoxReplayFilesFolder, fileName))
+
+            names = tarFile.getnames()
+            if len(names) != 2:
+                raise Exception('%s: Invalid number of files in tar file.', fileName)
+
+            baseFileName = names[0].rsplit('.', 1)[0]
+            dbFileName = '%s.db' % baseFileName
+            txtFileName = '%s.txt' % baseFileName
+            if set([dbFileName, txtFileName]) != set(names):
+                raise Exception('%s: Invalid file names in tar file.', fileName)
+
+            # This one is to easily inspect the old metadata in case the porting fails
+            oldMetadata = tarFile.extractfile(txtFileName).read()
+            with open('/tmp/replayRequest.old', 'wb') as f:
+                f.write(oldMetadata)
+
+            with open('/tmp/replayRequest.txt', 'wb') as f:
+                f.write(metadata.port(oldMetadata))
+
+            with open('/tmp/replayRequest.db', 'wb') as f:
+                f.write(tarFile.extractfile(dbFileName).read())
+
+            tarFile.close()
+
+            logging.info('  [%s/%s] %s: Uploading...', j, len(dropBoxRuns[runTimestamp]), fileName)
+            doUpload.upload('/tmp/replayRequest')
 
         # TODO: Run the DropBox giving the runTimestamp
 
