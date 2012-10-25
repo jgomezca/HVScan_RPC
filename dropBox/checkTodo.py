@@ -45,7 +45,7 @@ def checkInputTag( dbFile, metaDict ):
     """
     db = conditionDatabase.ConditionDBChecker( "sqlite_file:"+dbFile, "" )
     if not db.checkTag( metaDict[ 'inputTag' ] ):
-        raise dropBox.DropBoxError( "The input tag \"%s\" is not in the input SQLite file \"%s\"." %( metaDict[ 'inputTag' ], dbFile ) )
+        raise dropBox.DropBoxError( "The input tag \"%s\" is not in the input SQLite file." % metaDict[ 'inputTag' ] )
 
 #FIXME: do we need to update the request if the since in the metadata file is null?
 def checkSince( dbFile, metaDict ):
