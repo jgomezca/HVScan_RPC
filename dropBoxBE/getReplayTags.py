@@ -10,6 +10,7 @@ __email__ = 'mojedasa@cern.ch'
 
 
 import os
+import logging
 import tarfile
 import json
 
@@ -19,7 +20,13 @@ import replay
 def main():
     outputPairs = set([])
 
-    for fileName in replay.getFiles():
+    files = replay.getFiles()
+
+    i = 0
+    for fileName in files:
+        i += 1
+        logging.info('[%s/%s] %s: Getting replay tags...', i, len(files), fileName)
+
         tarFile = tarfile.open(os.path.join(replay.dropBoxReplayFilesFolder, fileName))
 
         names = tarFile.getnames()
@@ -61,6 +68,7 @@ def main():
     for (destDB, tag) in outputPairs:
         outputDict.setdefault(destDB, []).append(tag)
 
+    logging.info('Writing output file...')
     with open('outputDict.json', 'w') as f:
         json.dump(outputDict, f, sort_keys = True, indent = 4)
 
