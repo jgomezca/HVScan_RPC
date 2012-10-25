@@ -61,9 +61,6 @@ def main():
 
         outputPairs.add((destDB, tag))
 
-    with open('outputPairs.json', 'w') as f:
-        json.dump(list(outputPairs), f, sort_keys = True, indent = 4)
-
     outputDict = {}
     for (destDB, tag) in outputPairs:
         outputDict.setdefault(destDB, []).append(tag)
