@@ -21,7 +21,7 @@ outputFile = 'replayTags.json'
 
 
 def main():
-    outputPairs = set([])
+    replayTags = {}
 
     files = replay.getFiles()
 
@@ -62,11 +62,14 @@ def main():
 
         tarFile.close()
 
-        outputPairs.add((destDB, tag))
+        replayTags.setdefault(destDB, set([])).add(tag)
 
+    # Convert the sets to a sorted list. This allows to dump the JSON and
+    # also makes future changes easier to compare (since the lists are sorted,
+    # when taking a diff we will not see movement of tags)
     outputDict = {}
-    for (destDB, tag) in outputPairs:
-        outputDict.setdefault(destDB, []).append(tag)
+    for destDB in replayTags:
+        outputDict[destDB] = sorted(replayTags[destDB])
 
     logging.info('Writing output file %s...', outputFile)
     with open(outputFile, 'w') as f:
