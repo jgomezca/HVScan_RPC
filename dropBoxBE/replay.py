@@ -55,7 +55,7 @@ def main():
             continue
         files[fileName] = timestamp
 
-    for fileName in sorted(files, key = lambda x: os.stat(os.path.join(dropBoxReplayFilesFolder, x)).st_mtime):
+    for fileName in sorted(files, key = lambda x: files[x]):
         dropBoxTimestamp = getNextDropBoxRunTimestamp(files[fileName])
         logging.debug('%s: %s -> %s', fileName.split('@')[1], files[fileName], dropBoxTimestamp)
         dropBoxRuns.setdefault(dropBoxTimestamp, set([])).add(fileName)
