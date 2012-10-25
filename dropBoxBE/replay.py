@@ -13,7 +13,9 @@ import os
 import datetime
 import logging
 import tarfile
+import netrc
 
+import http
 import service
 
 import metadata
@@ -84,6 +86,23 @@ def main():
     sortedDropBoxRuns = sorted(dropBoxRuns)
     if sortedDropBoxRuns[0] != dropBoxFirstRun[0] or dropBoxRuns[dropBoxFirstRun[0]] != dropBoxFirstRun[1]:
         raise Exception('The expected first dropBox run is not the same as the calculated one.')
+
+    # Ask the frontend to clean up the files and database
+    (username, account, password) = netrc.netrc().authenticators('newOffDb')
+    frontendHttp = http.HTTP()
+    frontendHttp.setBaseUrl(doUpload.frontendBaseUrl)
+
+    logging.info('Signing in the frontend...')
+    frontendHttp.query('signIn', {
+        'username': username,
+        'password': password,
+    })
+
+    logging.info('Asking the frontend to clean up files and database...')
+    frontendHttp.query('cleanUp')
+
+    logging.info('Signing out the frontend...')
+    frontendHttp.query('signOut')
 
     # TODO: Prepare database from the sqlite file
 
