@@ -22,12 +22,13 @@ class RunData( object ):
         self._runControlConnection = database.Connection( connectionDictionary )
         self._localSQLiteFile = "runs.db"
         self._runsDumped = False
-        self._sqliteConnection = connection = sqlite3.connect( self._localSQLiteFile )
+        self._sqliteConnection = sqlite3.connect( self._localSQLiteFile )
+        self._checkSQLiteFile()
 
     def _createSQLite( self ):
         cursor = self._sqliteConnection.cursor()
         cursor.execute( """
-        CREATE TABLE RUNS 
+        CREATE TABLE IF NOT EXISTS RUNS 
         (
           RUN INTEGER NOT NULL 
           , START_TIME TIMESTAMP(9) NOT NULL 
@@ -90,6 +91,15 @@ class RunData( object ):
         cursor.executemany( """INSERT INTO RUNS( RUN, START_TIME, STOP_TIME ) VALUES ( ?, ?, ? )""", runList )
         self._sqliteConnection.commit()
         self._runsDumped = True
+
+    def _checkSQLiteFile( self ):
+        cursor = self._sqliteConnection.cursor()
+        if cursor.execute( "SELECT COUNT(*) FROM SQLITE_MASTER WHERE NAME = ?",( "RUNS", ) ).fetchone() is not None:
+            #check whether or not the table is filled with runs:
+            if cursor.execute( "SELECT COUNT(*) FROM RUNS" ).fetchone()[0]:
+                self._runsDumped = True
+            else:
+                raise RunDataError( "The SQLite file containing the dump of the runs has an empty table: please check it." )
     
     def getStartTime( self, run ):
         """
