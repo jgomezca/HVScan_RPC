@@ -20,7 +20,7 @@ serviceList = [ {'service_type' : 'OnlineProduction', 'oracle' : [ 'cms_orcon_pr
               , {'service_type' : 'OfflineProduction', 'oracle' : [ 'cms_orcon_adg' ], 'frontier': [ 'PromptProd', 'FrontierProd' ] }
               , {'service_type' : 'OfflineIntegration', 'oracle' : [ 'cms_orcoff_int' ], 'frontier': [ 'FrontierInt' ] }
               , {'service_type' : 'OfflinePreparation', 'oracle' : [ 'cms_orcoff_prep' ], 'frontier': [ 'FrontierPrep' ] }
-              , {'service_type' : 'OfflineArchive', 'oracle' : [ 'CMSARC_LB' ], 'frontier': [ 'FrontierArch' ] }
+              , {'service_type' : 'OfflineArchive', 'oracle' : [ 'CMSARC_LB' ], 'frontier': [ 'FrontierArc' ] }
                ]
 
 def getValidConnectionDictionary( protocolDictionary ):
