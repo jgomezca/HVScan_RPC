@@ -258,9 +258,6 @@ The CMSSW exception is: %s""" %( self._connectionString, self._authPath, err ) )
             self._db.startReadOnlyTransaction()
             tags = self._db.allTags().strip().split()
             self._db.commitTransaction()
-            if not tags:
-                raise conditionError.ConditionError( """Condition database in \"%s\" for RDBMS in \"%s\" does not contain any tags.
-Please check the status of this account and inform Condition DB experts if the issue is not solved.""" %( self._connectionString, self._authPath ) )
             return tags
         except RuntimeError as err:
             raise conditionError.ConditionError( """Cannot retrieve tags from condition database \"%s\" for RDBMS in \"%s\"

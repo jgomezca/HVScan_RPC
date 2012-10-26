@@ -18,7 +18,7 @@ def checkCorruptedOrEmptyFile( dbFile ):
     try:
         tags = db.getAllTags()
         if not tags:
-            raise dropBox.DropBoxError( "The file %s does not contain any payloads, as there are no tags inside it." %( dbFile, ) )
+            raise dropBox.DropBoxError( "The file %s does not contain any tags, so it is likely not hosting any Condition payloads." %( dbFile, ) )
     except conditionError.ConditionError as e:
         raise dropBox.DropBoxError( "The file %s is corrupted, as it was not possible to get the list of tags inside it." %( dbFile, ) )
 
