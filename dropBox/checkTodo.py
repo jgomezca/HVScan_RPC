@@ -16,9 +16,11 @@ def checkCorruptedOrEmptyFile( dbFile ):
     """
     db = conditionDatabase.ConditionDBChecker( "sqlite_file:"+dbFile, "" )
     try:
-        db.getAllTags()
+        tags = db.getAllTags()
+        if not tags:
+            raise dropBox.DropBoxError( "The file %s does not contain any payloads, as there are no tags inside it." %( dbFile, ) )
     except conditionError.ConditionError as e:
-        raise dropBox.DropBoxError( "The file %s is corrupted or empty." %( dbFile, ) )
+        raise dropBox.DropBoxError( "The file %s is corrupted, as it was not possible to get the list of tags inside it." %( dbFile, ) )
 
 def checkDestinationDatabase( metaDict ):
     """
