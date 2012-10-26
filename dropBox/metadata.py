@@ -16,6 +16,9 @@ import logging
 import optparse
 import json
 
+import service
+import globalTagHandler
+
 
 def port(metadata):
     '''Ports metadata into the new format.
@@ -70,6 +73,49 @@ def port(metadata):
                 outputMetadata['since'] = None
 
         elif key == 'iovcheck':
+            # from dropBox/config.py
+            productionGTsDict = {
+                'hlt': 'GR_H_V29',
+                'express': 'GR_E_V31',
+                'prompt': 'GR_P_V42'
+            }
+
+            # from dropBox/checkTodo.py
+            globalTagConnectionString = service.getFrontierConnectionString( service.secrets[ 'connections' ][ 'dev' ][ 'global_tag' ] )
+            runControlConnectionString = service.getCxOracleConnectionString( service.secrets[ 'connections' ][ 'dev' ][ 'run_control' ] )
+            runInfoConnectionString = service.getFrontierConnectionString( service.secrets[ 'connections' ][ 'dev' ][ 'run_info' ] )
+            runInfoStartTag = "runinfo_start_31X_hlt"
+            runInfoStopTag = "runinfo_31X_hlt"
+            authPath = ""
+            tier0DataSvcURI = "https://cmsweb.cern.ch/tier0"
+            timeOut = 30
+            retries = 3
+            retryPeriod = 90
+            gtHandle = globalTagHandler.GlobalTagHandler( globalTagConnectionString, runControlConnectionString, runInfoConnectionString, runInfoStartTag, runInfoStopTag, authPath, tier0DataSvcURI, timeOut, retries, retryPeriod )
+
+            workflow = gtHandle.getWorkflowForTagAndDB( outputMetadata['destinationDatabase'], outputMetadata['destinationTags'].keys()[0], productionGTsDict )
+
+            replaceValue = True
+            if workflow is None:
+                replaceValue = False #connection string and tag are not in any production Global Tags
+            elif value == workflow:
+                replaceValue = False #connection string and tag are in the production Global Tag for the same workflow specified
+            elif value == 'pcl' and workflow == 'prompt':
+                replaceValue = False #pcl is a particular case for prompt
+
+            # If IOVCheck was 'All', and the tag is in a global tag
+            # (e.g. workflow is not None, replaceValue == True),
+            # we replace it with something else (e.g. 'hlt') and therefore
+            # there will not allow dependencies since this is what the user
+            # should have used in the first place.
+            #
+            # If IOVCheck was 'All', and the tag is not in a global tag
+            # (e.g. workflow is None, replaceValue == False),
+            # we do not replace it, so it means it was offline + allow
+            # dependencies, which we will reach since value still is 'All'.
+            if replaceValue:
+                value = workflow
+
             if value == 'All':
                 allowDependencies = True
                 value = 'offline'
