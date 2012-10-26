@@ -23,7 +23,7 @@ def port(metadata):
 
     try:
         json.loads(metadata)
-        raise Exception('%s: Looks like JSON, i.e. probably already ported to the new format.', inputFilename)
+        raise Exception('Looks like JSON, i.e. probably already ported to the new format.')
     except ValueError:
         pass
 
