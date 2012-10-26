@@ -39,7 +39,7 @@ class AjaxApp(object):
         }
 
     MAILING_LIST = ["hn-cms-relval@cern.ch"]
-    #MAILING_LIST = ["anorkus@gmail.com"]#, "hn-cms-hnTest@cern.ch"] #testing mailing list
+    #MAILING_LIST = ["anorkus@cern.ch"]#, "hn-cms-hnTest@cern.ch"] #testing mailing list
     VALIDATION_STATUS = "VALIDATION_STATUS"
     COMMENTS = "COMMENTS"
     LINKS = "LINKS"
@@ -174,7 +174,7 @@ class AjaxApp(object):
         configuration = self.configuration
         cat, subCat = configuration.get(catSubCat, (None,None))
         returnedStatusValueOld = getStatus(cat, subCat, relName, statusKind, Session)
-        #returnedStatusValueOld - tuple: 0 is old status, 1 is old messageID
+        #returnedStatusValueOld - tuple: 0 is old status, 1 is old messageID, 2 is releaseName
         #make new messageID
         new_message_ID = email.utils.make_msgid()
         if cat == "Reconstruction":
@@ -199,7 +199,41 @@ By: %s
 Comment: %s
 Links: %s
 """ % (relName.upper(), cat.upper(), subCat.upper(), statusKind.upper(), returnedStatusValueOld[0].upper(), stateValue.upper(), comentAuthor.upper(), newComment, newLinks)
-            self.sendMailOnChanges(msgText, msgSubject, returnedStatusValueOld[1], new_message_ID, userName)
+            
+            if (cat.upper() == 'HLT'): #if the category is HLT  -> send email to trigger hn and a reply to orginal with text to diff hn
+                hlt_msg_id = email.utils.make_msgid()
+                hn_address = 'hn-cms-trigger-performance@cern.ch'
+                #hn_address = 'hn-cms-hnTest@cern.ch'
+                self.sendMailOnChanges(msgText, msgSubject, None, hlt_msg_id, userName, hn_address) #send message to other HN adress without threading
+                newText = """Release: %s
+In category: %s
+In subcategory: %s 
+validation for: %s
+Has Changed: From status: %s 
+             To status: %s
+By: %s
+
+The full details was sent to %s find it there""" %(relName.upper(), cat.upper(), subCat.upper(), statusKind.upper(), returnedStatusValueOld[0].upper(), stateValue.upper(), comentAuthor.upper(),hn_address) #new text for RelVal HN
+                self.sendMailOnChanges(newText, msgSubject, returnedStatusValueOld[1], new_message_ID, userName) #send a threaded message to RelVal HN
+                
+            elif (cat.upper() == 'RECONSTRUCTION') and (statusKind.upper() == 'MUON'): #same for Reco Moun as for all HLT
+                reco_msg_id = email.utils.make_msgid()
+                hn_address = 'hn-cms-moun-object-validation@cern.ch'
+                #hn_address = 'hn-cms-hnTest@cern.ch'
+                self.sendMailOnChanges(msgText, msgSubject, None, reco_msg_id, userName, hn_address) #mail to Moun HN without threading
+                newText = """Release: %s
+In category: %s
+In subcategory: %s 
+validation for: %s
+Has Changed: From status: %s 
+             To status: %s
+By: %s
+
+The full details was sent to %s find it there""" %(relName.upper(), cat.upper(), subCat.upper(), statusKind.upper(), returnedStatusValueOld[0].upper(), stateValue.upper(), comentAuthor.upper(),hn_address) #new text for RelVal HN
+                self.sendMailOnChanges(newText, msgSubject, returnedStatusValueOld[1], new_message_ID, userName) #send a threaded message to RelVal HN
+                
+            else:  #by default send to relval
+                self.sendMailOnChanges(msgText, msgSubject, returnedStatusValueOld[1], new_message_ID, userName) 
             info = "Release information updated successfuly"
             cherrypy.response.headers['Content-Type'] = 'application/json'
             return simplejson.dumps([info])
@@ -300,7 +334,7 @@ Links: %s
         except Exception as e:
             return str(e)
 
-    def sendMailOnChanges(self, messageText, emailSubject, org_message_ID, new_message_ID, username=False, **kwargs):
+    def sendMailOnChanges(self, messageText, emailSubject, org_message_ID, new_message_ID, username=False, diff_HN_adress=None, **kwargs):
         msg = MIMEMultipart()
         reply_to = []
         send_to = []
@@ -311,10 +345,13 @@ Links: %s
         #send_from = "PdmV.ValDb@cern.ch"
         send_from = getUserEmail(username, Session)
         msg['From'] = send_from
-        send_to += self.MAILING_LIST
-        if username != False:   #send email copy to the sender himself
-            email = getUserEmail(username, Session)
-            send_to.append(email)
+        if diff_HN_adress == None:
+            send_to += self.MAILING_LIST
+        else:
+            send_to += [diff_HN_adress]
+        #if username != False:   #send email copy to the sender himself
+        #    email = getUserEmail(username, Session)
+        #    send_to.append(email)
         reply_to.append(send_from) #make a reply header to sender+receivers of the email.
         reply_to.append("hn-cms-relval@cern.ch")
         msg['reply-to'] = COMMASPACE.join(reply_to)

@@ -33,7 +33,6 @@
 	       <a onclick="editModalInfo();" data-dismiss="modal" class="btn" id="btnEditInfo"> Edit Information </a>
            <a href="#" class="btn btn-primary" data-dismiss="modal" >Close</a>
 	    </div>
-
 	  </div>
 
 <!-- MODAL for admin to add new Release into dataBase-->
@@ -97,8 +96,15 @@
 		<p>Links: </br><textarea id="modalEditLinks" style="width: 362px; height:60px;"></textarea> </p>
 	    </div>
 	    <div class="modal-footer" id="editModalFooter">
-		<input id="btnSave" class="btn" type="submit" value="Save information" onclick="notEmpty();" />
-		<a onclick="clearEditModalValues();" class="btn btn-primary" data-dismiss="modal" >Close</a>
+            <div>
+                <text align='left' style='font-size:14px;'>
+                    The message will be sent to: <text id='hn-address'></text>
+                </text>
+            </div>
+            <div>
+                <input id="btnSave" class="btn" type="submit" value="Save information" onclick="notEmpty();" />
+                <a onclick="clearEditModalValues();" class="btn btn-primary" data-dismiss="modal" >Close</a>
+            </div>
 	    </div>
 	  </div>
 
@@ -1180,6 +1186,12 @@ function showModal(subcategory, obj){
                 }
 			}),
 				$('#myModal').modal({backdrop: 'static'},'toggle');
+				//.css({
+                //width: '90%',   //uncomment to have a bigger size modal
+                //'margin-left': function () {
+                //return -($(this).width() / 2);
+               // }
+               // });
 					}},
             error: function() { alert("Error in data send"); }
 	});
@@ -1237,6 +1249,12 @@ function deleteChildTableRow (obj){
   document.getElementById('RelMon_URL').value = "";
     $('#newReleaseModal').bind('show', function (){});
     $('#newReleaseModal').modal('toggle');
+    //.css({
+    //            width: '90%',
+    //            'margin-left': function () {  //uncomment for bigger modal
+    //            return -($(this).width() / 2);
+    //           }
+    //            });
 }
 
 function addStats(obj){
@@ -1595,7 +1613,13 @@ function editModalInfo(){
          });
 
     $('#editModal').bind('show', function (){});
-	                                            $('#editModal').modal('toggle');  
+	                                            $('#editModal').modal('toggle');
+	          //                                  .css({
+              //  width: '90%',
+              //  'margin-left': function () {
+              //  return -($(this).width() / 2);
+              //  }
+              //  });
 	                                            setEditModal();
 	                                            elem = document.getElementById('btnEditInfo');
 	                                            elem.setAttribute('data-dismiss', 'modal');
@@ -1620,6 +1644,18 @@ function setEditModal(){
    document.getElementById('modalEditComments').value = document.getElementById('comments').innerHTML;
    document.getElementById('modalEditLinks').value = document.getElementById('links').textContent;
    tmpInfo = document.getElementById('modalHeaderTree').textContent;
+   catSubCat = tmpInfo.split('/')
+   statusKind = document.getElementById('valStatName').textContent;
+   if (catSubCat[0] == 'HLT'){
+      document.getElementById('hn-address').textContent = 'hn-cms-trigger-performance@cern.ch';
+   }
+   else if ((catSubCat[0] == 'Reconstruction') && (statusKind == 'MUON')){
+     console.log('If REC->MUOn')
+      document.getElementById('hn-address').textContent = 'hn-cms-moun-object-validation@cern.ch';
+   }
+   else{
+      document.getElementById('hn-address').textContent = 'hn-cms-relval@cern.ch';
+   }
    document.getElementById('editModalHeaderTree').textContent = tmpInfo;  
 }
 
