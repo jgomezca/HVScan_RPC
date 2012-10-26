@@ -58,6 +58,9 @@ def port(metadata):
             }
 
         elif key == 'inputtag':
+            if value == '':
+                value = outputMetadata['destinationTags'].keys()[0]
+
             outputMetadata['inputTag'] = value
 
         elif key == 'since':
