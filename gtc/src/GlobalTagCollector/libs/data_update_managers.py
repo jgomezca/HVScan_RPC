@@ -21,6 +21,7 @@ from django.contrib.flatpages.models import FlatPage, Site
 
 from django.core.management import call_command
 from GlobalTagCollector.models import GTTypeCategory
+from GlobalTagCollector.libs.exceptions import DataAccessException, DataFormatException
 import pprint
 
 
@@ -200,8 +201,12 @@ class GlobalTagsUpdate(object):
 
         gt_names_count = len(global_tag_names_for_update)
         for i, global_tag_name in enumerate(global_tag_names_for_update):
-            logger.info("Processing %d global tag out of %d. Name: %s" % (i, gt_names_count, global_tag_name))
-            self._process_global_tag(global_tag_name)
+            try:
+                logger.info("Processing %d global tag out of %d. Name: %s" % (i, gt_names_count, global_tag_name))
+                self._process_global_tag(global_tag_name)
+            except (DataAccessException, DataFormatException) as e:
+                logger.error("Data is not accessible or has bad format")
+                logger.error(e)
 
 
 
