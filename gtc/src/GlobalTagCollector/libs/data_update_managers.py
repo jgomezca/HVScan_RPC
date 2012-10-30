@@ -4,7 +4,7 @@ from GlobalTagCollector.libs import utils
 from GlobalTagCollector.libs.GTManagement import RawGT
 from GlobalTagCollector.libs.data_inserters import AccountObjectCreator, TagObjectCreator
 from GlobalTagCollector.libs.data_inserters import RecordObjectCreator, SoftwareReleaseCreator
-from GlobalTagCollector.models import Account, HardwareArchitecture, GTQueue, AccountType, GTAccount, GTType, ObjectForRecords, Record, SoftwareRelease
+from GlobalTagCollector.models import Account, HardwareArchitecture, GTQueue, AccountType, GTAccount, GTType, ObjectForRecords, Record, SoftwareRelease, GlobalTag
 from data_providers import AccountsProvider, TagsProvider, RecordProvider, SoftwareReleaseProvider, GlobalTagListProvider, DatabasesProvider
 from data_filters import AccountFilter, TagsFilter, RecordsFilter, SoftwareReleaseFilter, GlobalTagListFilter
 from GlobalTagCollector.libs.data_patchers import PatchTagContainers
@@ -206,7 +206,16 @@ class GlobalTagsUpdate(object):
                 self._process_global_tag(global_tag_name)
             except (DataAccessException, DataFormatException) as e:
                 logger.error("Data is not accessible or has bad format")
-                logger.error(e)
+                logger.error("exception" + str(e))
+                with commit_on_success():
+                    gt_obj, created = GlobalTag.objects.get_or_create(name=global_tag_name)
+                    if not gt_obj.has_errors:
+                        logger.error("Trying to save already correctly saved GT")
+                        continue
+                    logger.info("Saving problematic GT")
+                    error = {"GlobalTag": global_tag_name, "exception":str(e), "exception_class":str(e.__class__)}
+                    gt_obj.errors = json.dumps([error], indent=4)
+                    gt_obj.save()
 
 
 
