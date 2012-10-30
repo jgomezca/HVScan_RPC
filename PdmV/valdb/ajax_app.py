@@ -75,7 +75,30 @@ class AjaxApp(object):
             return self.loadPage('indexValidator')
         else:
             return self.loadPage('indexUser')
-
+            
+    ###An TO_BE Update        
+    #@cherrypy.expose
+    #def api(self, *args, **kwargs):
+        #return """
+         #<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+               #"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+               #<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+               #<head>
+                   #<title>PdmV/valDB JSON API</title>
+                   #<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+               #</head>
+               #<body>
+               #An TO-BE API home page 
+               #<a href='https://pdmv/PdmV/valdb/release_info?release_name=bump1'>A test</a>
+               #</body>
+               #</html>"""
+               
+    #@cherrypy.expose
+    #def release_info(self, release_name):
+        #data = self.mainInformation('RData', release_name)
+        #tmp = json.loads(data)
+        #return json.dumps(tmp, indent=4)
+        
     @cherrypy.expose
     def permissionErrorMessage(self):
         return """ <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"

@@ -175,7 +175,7 @@ possible_category_list = ["Reconstruction", "HLT", "PAGs"]
 possible_subcatrgory_list = ["Data", "FullSim", "FastSim"] 
 
 reconstruction_status_list = ["CSC", "TAU", "TRACKING", "BTAG", "JET", "ECAL", "RPC", "PHOTON", "MUON", "MET", "ELECTRON", "TK", "HCAL", "DT", "SUMMARY"]
-hlt_status_list = ["TAU", "JET", "HIGGS", "TOP", "MUON", "PHOTON", "MET", "ELECTRON", "EXOTICA", "SUSY", "HEAVYFLAVOR", "TRACKING", "B","SUMMARY"]
+hlt_status_list = ["TAU", "JET", "HIGGS", "TOP", "MUON", "PHOTON", "MET", "ELECTRON", "EXOTICA", "SUSY", "TRACKING", "BTAG", "SMP", "FWD", "B","SUMMARY"]
 pags_status_list = ["B", "HIGGS", "FWD", "TOP", "SMP", "EXOTICA", "SUSY", "SUMMARY"]
 
 # Returns validation statuses in JSON key-value form, found by release category, subcategory and name 
@@ -236,6 +236,12 @@ def getReleaseDetails(cat, sub_cat, rel_name, status_kind, Session):
         if cat == 'HLT' and status_kind == 'B':  #check if B is not existing (a.k.a column addded
             info_dict[RELEASE_NAME] = rel_name   # after the release.
         elif cat == 'HLT' and status_kind == 'TRACKING': #SAME
+            info_dict[RELEASE_NAME] = rel_name
+        elif cat == 'HLT' and status_kind == 'SMP': #SAME
+            info_dict[RELEASE_NAME] = rel_name
+        elif cat == 'HLT' and status_kind == 'FWD': #SAME
+            info_dict[RELEASE_NAME] = rel_name
+        elif cat == 'HLT' and status_kind == 'BTAG': #SAME   ##update ELIF in case new columns added
             info_dict[RELEASE_NAME] = rel_name
         session.close()
         return json.dumps(info_dict)
