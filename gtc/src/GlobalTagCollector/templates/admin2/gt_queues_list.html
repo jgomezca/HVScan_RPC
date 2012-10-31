@@ -7,9 +7,29 @@
 {% block media%}
 {{ block.super }}
 <style type="text/css">
-
+    table.queue_properties{
+        margin-left: 40px;
+    }
+    table.queue_properties  td {
+        border: 0px;
+        padding-top:1px;
+        padding-bottom:1px;
+    }
+    table.queue_properties  th {
+        border: 0px;
+        padding-top:1px;
+        padding-bottom:1px;
+    }
 
 </style>
+
+<script type="text/javascript">
+    $(document).ready(function() {
+        $('.edit-queue-btn').tooltip({});
+        $('.download-config-btn').tooltip({});
+        $('.queue_status').tooltip({});
+    });
+</script>
 
 {% endblock %}
 
@@ -55,27 +75,44 @@
             <tr>
                 <th>Name</th>
                 <th>Description</th>
-                <th>Is open</th>
-                <th>Last GT</th>
-                <th>gt_account</th>
-                <th>gt_type_category</th>
                 <th>Releases</th>
-                <th>Expected GT name</th>
                 <th>Action</th>
             </tr>
             {% for gt_queue in gt_queues %}
             <tr>
-                <td><a href="{% url gt_queue_entries queue_id=gt_queue.id %}">{{gt_queue.name}}</a></td>
+                <td style="white-space: nowrap">
+                    {% if gt_queue.is_open %}
+                        <span class="badge badge-success queue_status" data-title="Queue open for submissions"><i class="icon-ok"></i></span>
+                    {% else %}
+                        <span class="badge queue_status" data-title="Queue closed for submissions"><i class="icon-remove"></i></span>
+                    {% endif %}
+
+                    <a href="{% url gt_queue_entries queue_id=gt_queue.id %}">{{gt_queue.name}}</a>
+
+                    <table class="queue_properties">
+                        <tr>
+                            <th>Last GT:</th>
+                            <td>{{gt_queue.last_gt}}</td>
+                        </tr>
+                        <tr>
+                            <th>Expected GT:</th>
+                            <td>{{gt_queue.expected_gt_name}}</td>
+                        </tr>
+                        <tr>
+                            <th>GT type category:</th>
+                            <td>{{gt_queue.gt_type_category}}</td>
+                        </tr>
+                        <tr>
+                            <th>GT account:</th>
+                            <td>{{gt_queue.gt_account}}</td>
+                        </tr>
+                    </table>
+                </td>
                 <td>{{gt_queue.description}}</td>
-                <td>{{gt_queue.is_open}}</td>
-                <td>{{gt_queue.last_gt}}</td>
-                <td>{{gt_queue.gt_account}}</td>
-                <td>{{gt_queue.gt_type_category}}</td>
                 <td>{{gt_queue.release_from}} - {{gt_queue.release_to}}</td>
-                <td>{{gt_queue.expected_gt_name}}</td>
-                <td>
-                    <a href="{% url gt_queue_edit queue_id=gt_queue.id %}">Edit</a>
-                    <a href="{% url gt_conf_export gt_queue_name=gt_queue.name %}">Download configuration</a>
+                <td style="white-space: nowrap">
+                    <a href="{% url gt_queue_edit queue_id=gt_queue.id %}" class="btn edit-queue-btn"  data-title="Edit configuration"><i class="icon-edit"></i></a>
+                    <a href="{% url gt_conf_export gt_queue_name=gt_queue.name %}" class="btn download-config-btn"  data-title="Download configuration"><i class="icon-download"></i> </a>
                 </td>
             </tr>
             {% empty %}
