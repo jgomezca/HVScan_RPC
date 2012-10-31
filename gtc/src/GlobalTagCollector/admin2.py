@@ -28,8 +28,16 @@ class GTQueueModelEditForm(GTQueueModelForm):
 
 @user_passes_test(lambda u: u.is_superuser)
 def gt_queues_list(request):
+    queue_status = request.GET.get('filter_queue_status', "open")
     gt_queues = GTQueue.objects.all()
-    return render_to_response("admin2/gt_queues_list.html", {"gt_queues": gt_queues}, context_instance=RequestContext(request))
+    if queue_status == "all":
+        pass
+    elif queue_status=="closed":
+        gt_queues = gt_queues.filter(is_open=False)
+    else: #open
+        gt_queues = gt_queues.filter(is_open=True)
+        queue_status = "open"
+    return render_to_response("admin2/gt_queues_list.html", {"gt_queues": gt_queues, "fqs":queue_status}, context_instance=RequestContext(request))
 
 @user_passes_test(lambda u: u.is_superuser)
 def gt_list(request):

@@ -54,17 +54,10 @@
 
         <div class="tabbable"> <!-- Only required for left/right tabs -->
             <ul class="nav nav-tabs">
-                <!--<li class="active"><a href="?active" data-toggle="tab">Active</a></li>-->
-                <li class="active"><a href="?all" data-toggle="tab">All</a></li>
+                <li class='{%if fqs == "open" %}active{% endif %}'><a href="?filter_queue_status=open" >Open</a></li>
+                <li class='{%if fqs == "closed" %}active{% endif %}'><a href="?filter_queue_status=closed" >Closed</a></li>
+                <li class='{%if fqs == "all" %}active{% endif %}'><a href="?filter_queue_status=all" >All</a></li>
             </ul>
-            <!--<div class="tab-content">-->
-                <!--<div class="tab-pane active" id="tab1">-->
-                    <!--<p>I'm in Section 1.</p>-->
-                <!--</div>-->
-                <!--<div class="tab-pane" id="tab2">-->
-                    <!--<p>Howdy, I'm in Section 2.</p>-->
-                <!--</div>-->
-            <!--</div>-->
         </div>
 
 
