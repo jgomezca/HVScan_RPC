@@ -115,11 +115,20 @@ def main():
         'password': password,
     })
 
+    # FIXME: When the bug of not-closed files bug is solved, remove this workaround
+    # This needs to be done before the cleanUp since it fails when trying to unlink()
+    # the extracted/* folders.
+    logging.info('Removing extracted files in frontend (to workaround not-closed files bug)...')
+    execute('rm -rf ../dropBox/files/extracted/*')
+
     logging.info('Asking the frontend to clean up files and database...')
     frontendHttp.query('cleanUp')
 
     logging.info('Signing out the frontend...')
     frontendHttp.query('signOut')
+
+    logging.info('Removing files in the backend...')
+    execute('rm -rf ../NewOfflineDropBoxBaseDir/TestDropBox/*/*')
 
     conf = config.replay()
 
