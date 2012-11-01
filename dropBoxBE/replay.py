@@ -14,6 +14,7 @@ import datetime
 import logging
 import tarfile
 import netrc
+import subprocess
 
 import http
 import service
@@ -21,9 +22,12 @@ import service
 import metadata
 import doUpload
 
+import config
+import Dropbox
 
-dropBoxReplayFilesFolder = '/afs/cern.ch/work/m/mojedasa/dropBoxReplayFiles'
+dropBoxReplayFilesFolder = '/afs/cern.ch/work/g/govi/dropbox'
 dropBoxSnapshotTimestamp = datetime.datetime(2012, 8, 31, 7, 0, 0)
+replayMasterDB = '/afs/cern.ch/cms/DB/conddb/test/dropbox/replay/replayMaster.db'
 
 
 # Just for validation
@@ -106,7 +110,43 @@ def main():
     logging.info('Signing out the frontend...')
     frontendHttp.query('signOut')
 
-    # TODO: Prepare database from the sqlite file
+    conf = config.replay()
+
+    cleanUpCommand = "cmscond_schema_manager" + \
+                  " -c " + conf.destinationDB + \
+                  " -P " + conf.authpath + \
+                  " --dropAll "
+
+    logging.info('Cleaning up: executing command %s' %(cleanUpCommand))
+    cleanUpProc = subprocess.Popen(cleanUpCommand, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    (stdoutdata, stderrdata) =  cleanUpProc.communicate()
+    retcode = cleanUpProc.returncode
+
+    if ( retcode != 0 ):
+        if(stdoutdata != None ):
+            logging.error(stdoutdata)
+        if(stderrdata != None ):
+            logging.error(stderrdata)
+        return False
+
+    exportCommand = "cmscond_export_database" + \
+                  " -s sqlite_file:" + replayMasterDB + \
+                  " -d " + conf.destinationDB + \
+                  " -P " + conf.authpath 
+
+    logging.info('Setting up: executing command %s' %(exportCommand))
+    exportUpProc = subprocess.Popen(exportCommand, shell=True, stdout=None, stderr=None, stdin=subprocess.PIPE)
+    (stdoutdata, stderrdata) =  exportUpProc.communicate('Y\n')
+    retcode = exportUpProc.returncode
+
+    if ( retcode != 0 ):
+        if(stdoutdata != None ):
+            logging.error(stdoutdata)
+        if(stderrdata != None ):
+            logging.error(stderrdata)
+        return False
+
+    dropBoxBE = Dropbox.Dropbox( conf )
 
     # Replay all the runs
     i = 0
@@ -155,7 +195,7 @@ def main():
                 # it is a real problem with the upload.py script.
                 logging.info('  [%s/%s] %s: Upload error: %s', j, len(dropBoxRuns[runTimestamp]), fileName, str(e))
 
-        # TODO: Run the DropBox giving the runTimestamp
+        dropBoxBE.reprocess( runTimestamp )
 
 
 if __name__ == '__main__':

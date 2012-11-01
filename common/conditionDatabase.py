@@ -248,6 +248,10 @@ class ConditionDBChecker( object ):
 The CMSSW exception is: %s""" %( self._connectionString, self._authPath, err ) )
         return isReconnected
 
+    def close( self ):
+        if self._dbStarted:
+            self._db.closeSession()
+
     def getAllTags( self ):
         """
         @returns: list of all IOV tags available in the account, raises if no tags are there, or if the file is not correct.

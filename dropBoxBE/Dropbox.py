@@ -10,6 +10,7 @@ import Constants
 import StatusUpdater
 
 from conditionDatabase import ConditionDBChecker
+import runData
 from tier0 import Tier0Handler
 
 import database
@@ -51,6 +52,10 @@ class Dropbox(object) :
 
         self.processProc = 0
         self.processOK   = 0
+
+        # removeme ?
+        self.processedFiles = 0
+        self.updateErrors = 0
 
         self.runInfoConnection = database.Connection(service.secrets['runInfo'])
 
@@ -98,7 +103,6 @@ class Dropbox(object) :
 
                 iovInfoDb  = ConditionDBChecker( srcDB, '' )
                 iov = iovInfoDb.iovSequence( inTag )
-                # iov = IOVChecker( srcDB )
 
                 iov.load( inTag )
                 self.metaData[itemHash]['timeType'] = iov.timetype()
@@ -109,6 +113,7 @@ class Dropbox(object) :
                     inTagMap[ inTag ].append( (inSince, itemHash) )
                 else:
                     inTagMap[ inTag ] = [ (inSince, itemHash) ]
+                iovInfoDb.close()
             except Exception, e:
                 self.logger.error("reading metadata failed for %s, got: %s " % (itemHash, str(e),))
 
@@ -128,7 +133,6 @@ class Dropbox(object) :
         for item in self.sortedFileList:
             self.logger.debug('  --  %s tag "%s" since "%s"' % (item, self.metaData[item]['inputTag'], self.metaData[item]['since'] ) )
         self.updateRunStatus(Constants.EXTRACT_OK)
-
 
     def checkFile(self) :
 
@@ -163,13 +167,23 @@ class Dropbox(object) :
         except Exception, e:
             self.logger.error('trying to get content of logfile %s got: %s' % (logFileName, str(e)) )
 
-        ret = self.statUpdater.uploadFileLog(fileHash, logBlob)
-        self.logger.info('uploading logs for %s returned %s.' % (fileHash, str(ret)) )
-
+        # remove try catch
+        try:
+            ret = self.statUpdater.uploadFileLog(fileHash, logBlob)
+            self.logger.info('uploading logs for %s returned %s.' % (fileHash, str(ret)) )
+        except Exception as exc:
+            self.updateErrors += 1
+            self.logger.error('Failed in uploading log: %s' %(exc))
+            
 
     def updateFileStatus(self, fileHash, status) :
         self.logger.info('updating status for %s to %s ' % (fileHash, status,) )
-        self.statUpdater.updateFileStatus( fileHash, status)
+        try:
+            self.statUpdater.updateFileStatus( fileHash, status)
+        except Exception as exc:
+            self.updateErrors += 1
+            self.logger.error('Error from update file status: %s' %(str(exc)))
+            pass
 
 
     def updateRunStatus(self, status) :
@@ -177,6 +191,7 @@ class Dropbox(object) :
         try:
             self.statUpdater.updateRunStatus( status )
         except Exception, e:
+            self.updateErrors += 1
             self.logger.debug('Error from update run status : %s' % (str(e),))
             pass
 
@@ -199,10 +214,10 @@ class Dropbox(object) :
 
         return since
 
-    def getDestSince(self, fileHash, syncTarget) :
+    def getDestSince(self, fileHash, syncTarget, fileLogger) :
 
         if syncTarget not in [ 'offline', 'hlt', 'express', 'pcl', 'prompt' ] :
-            self.logger.error('getDestSince called with illegal sync target %s ' % (syncTarget,))
+            fileLogger.error('getDestSince called with illegal sync target %s ' % (syncTarget,))
             return None
 
         # todo: check what to do for timeType == timestamp
@@ -211,7 +226,15 @@ class Dropbox(object) :
 
         lumi = None
         # check on timeType in metadata and extract run number for non-run types
-        if self.metaData[ fileHash ].has_key('timeType') and self.metaData[ fileHash ][ 'timeType' ] == 'lumiid' :
+        if not self.metaData[ fileHash ].has_key('timeType'):
+            fileLogger.error('Timetype information has not been found.')
+            return None
+        timeType = self.metaData[ fileHash ][ 'timeType' ]
+
+        if timeType == 'timestamp' or timeType == 'hash' or timeType == 'userid':
+            return firstSince
+            
+        if timeType == 'lumiid' :
             firstSince, lumi = self.unpackLumiId( firstSince )
 
         # "synchronize": if the target is not offline, and the since the user has given is
@@ -219,13 +242,16 @@ class Dropbox(object) :
         # which will be started/processed next in prompt, hlt/express) move the since ahead
         # to go to first safe run instead of the value given by the user:
         syncSince = firstSince
-        if syncTarget != 'offline' and \
-           firstSince < self.runChk[syncTarget] :
-                syncSince = self.runChk[syncTarget]
-                self.logger.info( 'Synchronizing to "%s" with run=%d' % (syncTarget, syncSince ) ) 
+        if syncTarget != 'offline':
+            syncValue = self.runChk[syncTarget]
+            fileLogger.info( 'Synchronizing since value:%d to "%s" with run=%d' % (firstSince, syncTarget, syncValue ) )
+            if firstSince < syncValue:
+                syncSince = syncValue
+        else:
+            fileLogger.info( 'Keeping since value:%d for "%s" synchronization' % (firstSince, syncTarget) )            
 
         # check on timeType in metadata and re-pack run number for non-run types
-        if self.metaData[ fileHash ].has_key('timeType') and self.metaData[ fileHash ][ 'timeType' ] == 'lumiid' :
+        if timeType == 'lumiid' :
             return self.repackLumiId( syncSince, lumi ) # tool will take care of checking if this IOV is valid
         else :
             return syncSince
@@ -257,6 +283,8 @@ class Dropbox(object) :
             self.updateFileStatus( fileHash, Constants.FILECHECK_FAILED )
             return False
 
+        self.processedFiles += 1
+
         # create the handler which will do the export and duplication
         # (and checks the return from the commands
 
@@ -275,7 +303,12 @@ class Dropbox(object) :
         errorInExporting = False
         for dTag, tagSpec in destTags.items():
             syncTarget = tagSpec[ 'synchronizeTo' ]
-            destSince = self.getDestSince( fileHash, syncTarget )  # check and validate, return correct value
+            destSince = self.getDestSince( fileHash, syncTarget, fileLogger )  # check and validate, return correct value
+            if destSince == None:
+                self.logger.error( 'Could not resolve the destination since' )
+                self.updateFileStatus( fileHash, Constants.PROCESSING_FAILURE )
+                errorInExporting = True
+                continue
             msg = 'going to export input tag %s to dest tag %s with destSince %s in %s, user comment: "%s"' % (inputTag, dTag, destSince, destDB, comment)
 
             self.logger.info( msg )
@@ -301,7 +334,7 @@ class Dropbox(object) :
                 # check what to duplicate and take action
                 depTags = tagSpec[ 'dependencies' ]
                 for depTag, depSynch in depTags.items():
-                    depSince = self.getDestSince( fileHash, depSynch )
+                    depSince = self.getDestSince( fileHash, depSynch, fileLogger )
                     msg = 'going to duplicate input tag %s for %s inputSince %s to dest tag(s) %s with destSince %s in %s, user comment: "%s"' % (dTag, depSynch, destSince, depTag, depSince, destDB, comment)
                     self.logger.info( msg )
                     fileLogger.info ( msg )
@@ -348,6 +381,7 @@ class Dropbox(object) :
         
         if( self.replayTimestamp == None):
             self.logger.debug('getting hlt run from runInfo ...')
+            
             hltLastRun = self.runInfoConnection.fetch('''
             select *
             from (
@@ -357,7 +391,7 @@ class Dropbox(object) :
                 order by POS desc
             )
             where rownum = 1
-            ''')[0][0]
+            ''')[0][0]+1
             self.logger.debug('found hlt run from runInfo to be %i ' % (hltLastRun,) )
 
             self.logger.debug('getting firstConditionSafeRun run from Tier-0 ...')
@@ -368,10 +402,18 @@ class Dropbox(object) :
             self.logger.debug('found firstConditionSafeRun from Tier-0 to be %i ' % (fcsr,) )
 
         # replay mode 
-        #else:    
+        else:
+            self.logger.debug('getting hlt run from runInfo ...')
+            runD = runData.RunData( service.secrets['runInfo'] )
+            hltLastRun = runD.getHLTSafeRunAtTime( self.replayTimestamp )
+            self.logger.debug('found hlt run from runInfo for timestamp %s to be %i ' % (self.replayTimestamp,hltLastRun,) )
 
-        self.runChk = {'hlt'     : hltLastRun+1,
-                       'express' : hltLastRun+1,
+            self.logger.debug('getting firstConditionSafeRun run from Tier-0 ...')
+            fcsr = runD.getPromptRecoSafeRunAtTime( self.replayTimestamp )
+            self.logger.debug('found firstConditionSafeRun from Tier-0 for timestamp %s to be %i ' % (self.replayTimestamp,fcsr,) )
+
+        self.runChk = {'hlt'     : hltLastRun,
+                       'express' : hltLastRun,
                        'prompt'  : fcsr,
                        'pcl'     : fcsr,
                       }
@@ -404,8 +446,11 @@ class Dropbox(object) :
 
         # now update runChk values from firstsaferun and runInfo, send info back to frontend for logging
         self.updateRunInfo()
-        self.statUpdater.updateRunRunInfo(self.runChk['prompt'], self.runChk['hlt'])
-
+        try:
+            self.statUpdater.updateRunRunInfo(self.runChk['prompt'], self.runChk['hlt'])
+        except Exception as exc:
+            self.updateErrors += 1
+            self.logger.error('Failed to update run info values into frontend database: %s' %(exc)) 
         dwnldr.downloadAll()
         ( self.donwloadProc, self.downloadOK ) = dwnldr.getSummary()
         del dwnldr
@@ -433,10 +478,14 @@ class Dropbox(object) :
                 errors = True
 
         self.logger.info('uploading the logs')
-        self.statUpdater.uploadRunLog(
-            self.getLogFileContent( 'Downloader.log' ),
-            self.getLogFileContent( '%s%s.log' % ( self.config.detector, self.config.label ) )
-        )
+        try:
+            self.statUpdater.uploadRunLog(
+                self.getLogFileContent( 'Downloader.log' ),
+                self.getLogFileContent( '%s%s.log' % ( self.config.detector, self.config.label ) )
+            )
+        except Exception as exc:
+            self.updateErrors += 1
+            self.logger.error('Failed to uploading the logs into frontend database: %s' %(exc))             
 
         if errors:
             self.logger.info('finished, with errors')
@@ -445,11 +494,13 @@ class Dropbox(object) :
             self.logger.info('finished, all OK')
             self.updateRunStatus(Constants.DONE_ALL_OK)
 
+        self.logger.info('Files processed (incremental):%d'%(self.processedFiles) )
+        self.logger.info('Errors in contacting server for updates: %d' %(self.updateErrors))
         return True
 
     def reprocess( self, timestamp ):
         self.replayTimestamp = timestamp
-        return processAllFiles();
+        return self.processAllFiles()
 
 
 def main():

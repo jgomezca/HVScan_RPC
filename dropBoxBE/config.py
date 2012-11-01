@@ -110,7 +110,8 @@ class test( BaseConfig ) :
         self.authpath = '/afs/cern.ch/cms/DB/conddb/test/dropbox'
 
         # this is the URL for the dropBox frontend service, for testing/developing use the current host:
-        self.baseUrl = 'https://%s/dropBox/' % (socket.gethostname(),)
+        #self.baseUrl = 'https://%s/dropBox/' % (socket.gethostname(),)
+        self.baseUrl = 'https://%s:8095/dropBox/' %(socket.gethostname(),)
 
         # be quicker in tests
         self.delay = 10
@@ -143,7 +144,8 @@ class replay( BaseConfig ) :
         self.authpath = '/afs/cern.ch/cms/DB/conddb/test/dropbox' # ADG'
 
         # this is the URL for the dropBox frontend service, for testing/developing use the current host:
-        self.baseUrl = 'https://%s/dropBox/' % (socket.gethostname(),)
+        #self.baseUrl = 'https://%s/dropBox/' % (socket.gethostname(),)
+        self.baseUrl = 'https://%s:8095/dropBox/' %(socket.gethostname(),)
 
         # be quicker in tests
         self.delay = 10

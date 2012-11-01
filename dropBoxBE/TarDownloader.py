@@ -63,13 +63,20 @@ class FileDownloader( object ) :
 
         return True, len( self.fileList )
 
+    def updateFileStatus( self, hash, status ):
+        try:
+            self.statUpdater.updateFileStatus( hash, status )
+        except Exception as exc:
+            self.logger.error("Error in update file status (from TarDownloader): %s" %(str(exc)))
+        
+
     def downloadAll(self):
 
         for fileHash in self.fileList :
 
             self.filesProc += 1 # increment counter for processed files here
 
-            self.statUpdater.updateFileStatus( fileHash, Constants.DOWNLOADING )
+            self.updateFileStatus( fileHash, Constants.DOWNLOADING )
             self.logger.info( "going to download %s " % (fileHash,) )
             OK = True
             if not self.downloadFile( fileHash ) :
@@ -84,7 +91,7 @@ class FileDownloader( object ) :
 
             if OK :
                 self.filesOK += 1 # increment counter for files which are OK
-                self.statUpdater.updateFileStatus( fileHash, Constants.DOWNLOADING_OK )
+                self.updateFileStatus( fileHash, Constants.DOWNLOADING_OK )
 
         self.logout()
 
@@ -175,7 +182,7 @@ class FileDownloader( object ) :
             webFile = self.curl.get( fileUrl, [ ('fileHash', str(fileHash)) ] )
             self.logger.info( " - size : %i " % (len(''.join(webFile)),) )
         except Exception, e :
-            self.statUpdater.updateFileStatus(fileHash, Constants.DOWNLOADING_FAILURE)
+            self.updateFileStatus(fileHash, Constants.DOWNLOADING_FAILURE)
             self.logger.error( "when downloading file %s : %s" % (fileHash, str(e)) )
             return False
 
@@ -185,7 +192,7 @@ class FileDownloader( object ) :
             localFile.write( ''.join(webFile) )
             localFile.close( )
         except Exception, e :
-            self.statUpdater.updateFileStatus(fileHash, Constants.DOWNLOADING_FAILURE)
+            self.updateFileStatus(fileHash, Constants.DOWNLOADING_FAILURE)
             self.logger.error( "when storing downloaded file to %s : %s" % (filepath, str(e)) )
             return False
 
@@ -194,7 +201,7 @@ class FileDownloader( object ) :
 
             # todo: retry once more ??
 
-            self.statUpdater.updateFileStatus(fileHash, Constants.CHECKSUM_FAILURE)
+            self.updateFileStatus(fileHash, Constants.CHECKSUM_FAILURE)
             self.logger.error("checksum for tarball not correct: found %s expected %s" % (newChkSum, fileHash.split('.')[0]) )
             # move bad file/dir into downloadError/ dir,
             # ensure there is nothing there before moving.
@@ -232,7 +239,7 @@ class FileDownloader( object ) :
         try :
             tar = tarfile.open( filepath )
         except Exception as e :
-            self.statUpdater.updateFileStatus( fileHash, Constants.UNTARING_FAILURE )
+            self.updateFileStatus( fileHash, Constants.UNTARING_FAILURE )
             self.logger.error( "when opening tar file %s/%s: %s " % ( self.baseDownloadDir, fileHash, str(e) ) )
             return False
 
@@ -243,13 +250,13 @@ class FileDownloader( object ) :
         except:
             # move bad file/dir into downloadError/ dir
             os.rename( filepath, self.baseDownloadErrDir )
-            self.statUpdater.updateFileStatus( fileHash, Constants.UNTARING_ILLCONT )
+            self.updateFileStatus( fileHash, Constants.UNTARING_ILLCONT )
             raise
         try:
             tar.extractall( path=destDir )
             tar.close( )
         except Exception as e :
-            self.statUpdater.updateFileStatus( fileHash, Constants.UNTARING_FAILURE )
+            self.updateFileStatus( fileHash, Constants.UNTARING_FAILURE )
             self.logger.error( "when un-taring file %s/%s to %s: %s - skipping " % ( self.baseDownloadDir, fileHash, destDir, str(e) ) )
             # move input file away to the downloadError dir
             # ensure there is nothing there before moving.
