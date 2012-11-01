@@ -18,12 +18,12 @@ class RunData( object ):
     
     tier0Delay = datetime.timedelta( hours = 47, minutes = 45 )
     
-    def __init__( self, connectionDictionary ):
+    def __init__( self, runControlConnectionString ):
         """
         Parameters:
         runControlConnectionString: connection string for connecting to the schema hosting Run Control FM information.
         """
-        self._runControlConnection = database.Connection( connectionDictionary )
+        self._runControlConnectionString = runControlConnectionString
         self._sqliteConnection = sqlite3.connect(runsDatabasePath)
         self._checkSQLiteFile()
 
@@ -88,7 +88,11 @@ class RunData( object ):
               AND KEY_VIEW.RUN = START_VIEW.RUN
               AND START_VIEW.RUN = STOP_VIEW.RUN
         """
-        runList = self._runControlConnection.fetch( sqlstr )
+
+        runControlConnection = database.Connection(self._runControlConnectionString)
+        runList = runControlConnection.fetch(sqlstr)
+        runControlConnection.close()
+
         cursor = self._sqliteConnection.cursor()
         cursor.executemany( """INSERT INTO RUNS( RUN, START_TIME, STOP_TIME ) VALUES ( ?, ?, ? )""", runList )
         self._sqliteConnection.commit()
@@ -193,5 +197,4 @@ class RunData( object ):
         return run[0]
 
     def __del__( self ):
-        self._runControlConnection.close()
         self._sqliteConnection.close()
