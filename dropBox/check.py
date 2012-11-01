@@ -25,6 +25,7 @@ import typeMatch
 import config
 import dropBox
 import checkTodo
+import conditionDatabase
 
 
 def getExtractedFilePath(fileHash):
@@ -79,11 +80,16 @@ def checkContents(fileHash, data, metadata):
     except typeMatch.MatchError as e:
         raise dropBox.DropBoxError('In the metadata, ' + str(e))
 
-    checkTodo.checkCorruptedOrEmptyFile(data)
-    checkTodo.checkDestinationDatabase(metadata)
-    checkTodo.checkInputTag(data, metadata)
-    checkTodo.checkSince(data, metadata)
-    checkTodo.checkDestinationTags(metadata)
+    db = conditionDatabase.ConditionDBChecker('sqlite_file:%s' % data, '')
+
+    try:
+        checkTodo.checkCorruptedOrEmptyFile(db)
+        checkTodo.checkDestinationDatabase(metadata)
+        checkTodo.checkInputTag(db, metadata)
+        checkTodo.checkSince(db, metadata)
+        checkTodo.checkDestinationTags(metadata)
+    finally:
+        db.close()
 
 
 def checkFile(filename):
@@ -154,10 +160,6 @@ def checkFile(filename):
         logging.info('checkFile(): %s: Removing extracted files...', fileHash)
         os.unlink(dataPath)
         os.unlink(metadataPath)
-        # os.rmdir(extractedFolderPath)
-        try:
-            os.system('rm -rf '+extractedFolderPath)
-        except:
-            os.system('rm -rf '+extractedFolderPath)
+        os.rmdir(extractedFolderPath)
     logging.info('checkFile(): %s: Checking of the file was successful.', fileHash)
 

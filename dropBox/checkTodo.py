@@ -6,7 +6,7 @@ import service
 
 import config
 
-def checkCorruptedOrEmptyFile( dbFile ):
+def checkCorruptedOrEmptyFile( db ):
     """
     Checks if a SQLite file is corrupted or just empty (i.e. containing only empty tables) by checking if there are tags inside.
     The corrupted or empty files with the corresponding metadata files are skipped from processing and put into a dedicated folder.
@@ -14,13 +14,12 @@ def checkCorruptedOrEmptyFile( dbFile ):
     dbFile: the name of the SQLite file;
     Raises if the file is corrupted or empty.
     """
-    db = conditionDatabase.ConditionDBChecker( "sqlite_file:"+dbFile, "" )
     try:
         tags = db.getAllTags()
         if not tags:
-            raise dropBox.DropBoxError( "The file %s does not contain any tags, so it is likely not hosting any Condition payloads." %( dbFile, ) )
+            raise dropBox.DropBoxError( "The file does not contain any tags, so it is likely not hosting any Condition payloads.")
     except conditionError.ConditionError as e:
-        raise dropBox.DropBoxError( "The file %s is corrupted, as it was not possible to get the list of tags inside it." %( dbFile, ) )
+        raise dropBox.DropBoxError( "The file is corrupted, as it was not possible to get the list of tags inside it." )
 
 def checkDestinationDatabase( metaDict ):
     """
@@ -36,7 +35,7 @@ def checkDestinationDatabase( metaDict ):
     except conditionError.ConditionError as err:
         raise dropBox.DropBoxError( 'The connection string is not correct. The reason is: %s' % err )
 
-def checkInputTag( dbFile, metaDict ):
+def checkInputTag( db, metaDict ):
     """
     Checks if a SQLite file contains the input tag specified in the metadata dictionary.
     The wrong files with the corresponding metadata files are skipped from processing and put in dedicated folder.
@@ -45,12 +44,11 @@ def checkInputTag( dbFile, metaDict ):
     metaDict: the dictionary extracted from the metadata file.
     Raises if the input tag in the metadata is not found in the SQLite file.
     """
-    db = conditionDatabase.ConditionDBChecker( "sqlite_file:"+dbFile, "" )
     if not db.checkTag( metaDict[ 'inputTag' ] ):
         raise dropBox.DropBoxError( "The input tag \"%s\" is not in the input SQLite file." % metaDict[ 'inputTag' ] )
 
 #FIXME: do we need to update the request if the since in the metadata file is null?
-def checkSince( dbFile, metaDict ):
+def checkSince( db, metaDict ):
     """
     Checks if the since field in the metadata dictionary is correct.
     If the since field is None, it assumes that the value will be taken from the SQLite file, being the first since of the input tag.
@@ -61,7 +59,7 @@ def checkSince( dbFile, metaDict ):
     Raises if the since value in the metadata is not None and smaller than the first IOV since in the SQLite file.
     """
     since = metaDict[ 'since' ]
-    firstSince = conditionDatabase.ConditionDBChecker("sqlite_file:" + dbFile, "").iovSequence( metaDict[ 'inputTag' ] ).firstSince()
+    firstSince = db.iovSequence( metaDict[ 'inputTag' ] ).firstSince()
     if since is not None:
         if since < firstSince:
             raise dropBox.DropBoxError( "The since value \"%d\" specified in the metadata cannot be smaller than the first IOV since \"%d\"" %( since, firstSince ) )
