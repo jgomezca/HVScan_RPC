@@ -78,6 +78,17 @@ def getFiles():
     return files
 
 
+def execute(command, stdin = None):
+    logging.info('Executing %s...', repr(command))
+
+    process = subprocess.Popen(command, shell = True, stdin = subprocess.PIPE, stdout = None, stderr = None)
+    (stdout, stderr) = process.communicate(stdin)
+    returnCode = process.returncode
+
+    if returnCode != 0:
+        raise Exception('Executing %s failed with return code %s: stdout = %s, stderr = %s', repr(command), returnCode, repr(stdout), repr(stderr))
+
+
 def main():
     dropBoxRuns = {}
 
@@ -112,39 +123,11 @@ def main():
 
     conf = config.replay()
 
-    cleanUpCommand = "cmscond_schema_manager" + \
-                  " -c " + conf.destinationDB + \
-                  " -P " + conf.authpath + \
-                  " --dropAll "
+    logging.info('Cleaning up backend database...')
+    execute('cmscond_schema_manager -c %s -P %s --dropAll' % (conf.destinationDB, conf.authpath))
 
-    logging.info('Cleaning up: executing command %s' %(cleanUpCommand))
-    cleanUpProc = subprocess.Popen(cleanUpCommand, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    (stdoutdata, stderrdata) =  cleanUpProc.communicate()
-    retcode = cleanUpProc.returncode
-
-    if ( retcode != 0 ):
-        if(stdoutdata != None ):
-            logging.error(stdoutdata)
-        if(stderrdata != None ):
-            logging.error(stderrdata)
-        return False
-
-    exportCommand = "cmscond_export_database" + \
-                  " -s sqlite_file:" + replayMasterDB + \
-                  " -d " + conf.destinationDB + \
-                  " -P " + conf.authpath 
-
-    logging.info('Setting up: executing command %s' %(exportCommand))
-    exportUpProc = subprocess.Popen(exportCommand, shell=True, stdout=None, stderr=None, stdin=subprocess.PIPE)
-    (stdoutdata, stderrdata) =  exportUpProc.communicate('Y\n')
-    retcode = exportUpProc.returncode
-
-    if ( retcode != 0 ):
-        if(stdoutdata != None ):
-            logging.error(stdoutdata)
-        if(stderrdata != None ):
-            logging.error(stderrdata)
-        return False
+    logging.info('Setting up backend database...')
+    execute('cmscond_export_database -s sqlite_file:%s -d %s -P %s' % (replayMasterDB, conf.destinationDB, conf.authpath), 'Y\n')
 
     dropBoxBE = Dropbox.Dropbox( conf )
 
