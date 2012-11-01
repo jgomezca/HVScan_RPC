@@ -3,6 +3,10 @@ import sqlite3
 
 import database
 
+
+runsDatabasePath = 'runs.db'
+
+
 class RunDataError( Exception ):
     '''Exception raised by modules related to run data.
     '''
@@ -20,9 +24,7 @@ class RunData( object ):
         runControlConnectionString: connection string for connecting to the schema hosting Run Control FM information.
         """
         self._runControlConnection = database.Connection( connectionDictionary )
-        self._localSQLiteFile = "runs.db"
-        self._runsDumped = False
-        self._sqliteConnection = sqlite3.connect( self._localSQLiteFile )
+        self._sqliteConnection = sqlite3.connect(runsDatabasePath)
         self._checkSQLiteFile()
 
     def _createSQLite( self ):
@@ -93,14 +95,18 @@ class RunData( object ):
         self._runsDumped = True
 
     def _checkSQLiteFile( self ):
+        self._runsDumped = False
+
         cursor = self._sqliteConnection.cursor()
-        if cursor.execute( "SELECT COUNT(*) FROM SQLITE_MASTER WHERE NAME = ?",( "RUNS", ) ).fetchone() is not None:
-            #check whether or not the table is filled with runs:
-            if cursor.execute( "SELECT COUNT(*) FROM RUNS" ).fetchone()[0]:
-                self._runsDumped = True
-            else:
-                raise RunDataError( "The SQLite file containing the dump of the runs has an empty table: please check it." )
-    
+
+        if cursor.execute( 'SELECT COUNT(*) FROM SQLITE_MASTER WHERE NAME = "RUNS"' ).fetchone()[0] == 0:
+            return
+
+        if cursor.execute( "SELECT COUNT(*) FROM RUNS" ).fetchone()[0] == 0:
+            raise RunDataError( "The SQLite file containing the dump of the runs has an empty table: please check it." )
+
+        self._runsDumped = True
+
     def getStartTime( self, run ):
         """
         Retrieves the start of a run from CMS online run control.
