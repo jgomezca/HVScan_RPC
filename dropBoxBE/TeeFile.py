@@ -32,7 +32,7 @@ class TeeFile( object ) :
         
         # Remove all handlers in case it already existed, e.g. for the moment,
         # FileDownloader calls this with the same argument each dropBoxBE run.
-        self.logger.handlers = []
+        self.removeHandlers()
 
         self.logger.setLevel( logging.DEBUG )
 
@@ -56,7 +56,16 @@ class TeeFile( object ) :
         }
 
     def __del__(self):
+        self.removeHandlers()
         del self.logger
+
+    def removeHandlers(self):
+        # FileHandler does not close the files when deleted?
+        for handler in self.logger.handlers:
+            if isinstance(handler, logging.FileHandler):
+                handler.close()
+
+        self.logger.handlers = []
 
     def toBoth(self, msgIn) :
         """
