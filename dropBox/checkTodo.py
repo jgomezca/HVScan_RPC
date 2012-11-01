@@ -59,8 +59,8 @@ def checkSince( db, metaDict ):
     Raises if the since value in the metadata is not None and smaller than the first IOV since in the SQLite file.
     """
     since = metaDict[ 'since' ]
-    firstSince = db.iovSequence( metaDict[ 'inputTag' ] ).firstSince()
     if since is not None:
+        firstSince = db.iovSequence( metaDict[ 'inputTag' ] ).firstSince()
         if since < firstSince:
             raise dropBox.DropBoxError( "The since value \"%d\" specified in the metadata cannot be smaller than the first IOV since \"%d\"" %( since, firstSince ) )
 
