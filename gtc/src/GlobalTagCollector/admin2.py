@@ -8,7 +8,7 @@ from django.shortcuts import render_to_response, get_object_or_404
 from django.template.context import RequestContext
 from GlobalTagCollector import reports
 from GlobalTagCollector.libs.GTQueueManagement import GTQueueManager
-from GlobalTagCollector.models import GTQueue, GTQueueEntry, GlobalTag
+from GlobalTagCollector.models import GTQueue, GTQueueEntry, GlobalTag, GTType
 from django.contrib import messages
 import logging
 
@@ -80,6 +80,13 @@ def gt_queue_entries(request, queue_id):
     gt_queue_entries_qs = gt_queue.gtqueueentry_set.all()
     gt_queue_entries_qs = filter_query_by_entry_status(gt_queue_entries_qs, entry_status_filter)
     gt_queue_entries_qs = gt_queue_entries_qs.select_related()
+
+    #Each gt_queue_entry append with attribute type_conn_string
+    #TODO: improve query to avoid 1+N db queries
+    for gt_queue_entry in gt_queue_entries_qs:
+        type_conn_string = GTType.objects.get(gt_type_category=gt_queue.gt_type_category, account_type=gt_queue_entry.tag.account.account_type).type_conn_string
+        gt_queue_entry.type_conn_string = type_conn_string
+
     return render_to_response("admin2/gt_queue_entries.html", {
         "gt_queue":gt_queue,
         "gt_queue_entries":gt_queue_entries_qs,

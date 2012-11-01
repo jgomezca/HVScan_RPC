@@ -111,6 +111,9 @@ span.entry_value_right{
                     <span class="entry_key_left">Tag:    </span><span class="entry_value_left">{{entry.tag}}</span>
                     <span class="entry_key_left">Record: </span><span class="entry_value_left">{{entry.record}}</span>
                     <span class="entry_key_left">Label:  </span><span class="entry_value_left">{{entry.label}}</span>
+                    <br clear=all>
+                    <b>Conn:</b>{{entry_id}}  {{entry.type_conn_string}}/{{entry.tag.account}}
+
                 </td>
                 <td>
                     <span class="entry_key_right">Submitter:     </span><span class="entry_value_right">{{entry.submitter}} - {{entry.submitting_time}}</span>
