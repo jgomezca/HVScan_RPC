@@ -4,7 +4,7 @@ import sqlite3
 import database
 
 
-runsDatabasePath = 'runs.db'
+runsDatabasePath = '/afs/cern.ch/cms/DB/conddb/test/dropbox/replay/runs.db'
 
 
 class RunDataError( Exception ):
