@@ -21,11 +21,14 @@ import json
 import sqlite3
 
 import typeMatch
+import service
 
 import config
 import dropBox
 import checkTodo
 import conditionDatabase
+import conditionError
+import globalTagHandler
 
 
 def getExtractedFilePath(fileHash):
@@ -44,6 +47,28 @@ def getFilePathInExtractedFile(fileHash, filename):
 
 dataFilename = 'data.db'
 metadataFilename = 'metadata.txt'
+
+
+def checkSynchronization(synchronizeTo, destinationDatabase, tag, gtHandle, productionGTsDict):
+    '''Checks if a connection string and a tag are compatible with the synchronization for a workflow against the production Global Tags.
+
+    If the destination account and the destination tags are not in the production Global Tags, any synchronization is valid.
+    If the destination account and the destination tags are in at least one Global Tag, the synchronization must be exactly the same as the one of the Global Tag.
+
+    Raises if the dictionary for production workflow is malformed, or if the synchronization is not correct.
+    '''
+
+    workflow = gtHandle.getWorkflowForTagAndDB(destinationDatabase, tag, productionGTsDict)
+
+    #connection string and tag are not in any production Global Tags
+    #connection string and tag are in the production Global Tag for the same workflow specified
+    #pcl is a particular case for prompt
+    if workflow is None \
+        or synchronizeTo == workflow \
+        or (synchronizeTo == 'pcl' and workflow == 'prompt'):
+        return
+
+    raise dropBox.DropBoxError('The synchronization "%s" for tag "%s" in database "%s" provided in the metadata does not match the one in the global tag for workflow "%s".' % (synchronizeTo, tag, destinationDatabase, workflow))
 
 
 def checkContents(fileHash, data, metadata):
@@ -83,11 +108,64 @@ def checkContents(fileHash, data, metadata):
     db = conditionDatabase.ConditionDBChecker('sqlite_file:%s' % data, '')
 
     try:
-        checkTodo.checkCorruptedOrEmptyFile(db)
-        checkTodo.checkDestinationDatabase(metadata)
-        checkTodo.checkInputTag(db, metadata)
-        checkTodo.checkSince(db, metadata)
-        checkTodo.checkDestinationTags(metadata)
+        # Corrupted file
+        try:
+            tags = db.getAllTags()
+        except conditionError.ConditionError as e:
+            raise dropBox.DropBoxError('The file is corrupted, as it was not possible to get the list of tags inside it.')
+
+        # Empty file
+        if not tags:
+            raise dropBox.DropBoxError('The file does not contain any tags, so it is likely not hosting any Condition payloads.')
+
+        # Wrong input tag
+        if metadata['inputTag'] not in tags:
+            raise dropBox.DropBoxError('The input tag "%s" is not in the input SQLite file.' % metadata['inputTag'])
+
+        # Unsupported service
+        destinationDatabase = metadata['destinationDatabase']
+        if not destinationDatabase.startswith('oracle:'):
+            raise dropBox.DropBoxError('Oracle is the only supported service.')
+
+        # Invalid connection string
+        try:
+            if not conditionDatabase.checkConnectionString(destinationDatabase, True):
+                raise dropBox.DropBoxError('The destination database cannot point to read-only services.')
+        except conditionError.ConditionError as err:
+            raise dropBox.DropBoxError('The connection string is not correct. The reason is: %s' % err)
+
+        # Invalid since
+        since = metadata['since']
+        if since is not None:
+            firstSince = db.iovSequence(metadata['inputTag']).firstSince()
+            if since < firstSince:
+                raise dropBox.DropBoxError('The since value "%d" specified in the metadata cannot be smaller than the first IOV since "%d"' % (since, firstSince))
+
+        # Invalid synchronizations
+        gtHandle = globalTagHandler.GlobalTagHandler(
+            service.getFrontierConnectionString(service.secrets['connections']['dev']['global_tag']),
+            service.getCxOracleConnectionString(service.secrets['connections']['dev']['run_control']),
+            service.getFrontierConnectionString(service.secrets['connections']['dev']['run_info']),
+            'runinfo_start_31X_hlt',
+            'runinfo_31X_hlt',
+            '',
+            'https://cmsweb.cern.ch/tier0',
+            30,
+            3,
+            90,
+        )
+
+        try:
+            productionGTsDict = gtHandle.getProductionGlobalTags()
+        except conditionError.ConditionError:
+            productionGTsDict = config.productionGlobalTags
+
+        for tag, synchronizationDict in metadata['destinationTags'].items():
+            checkSynchronization(synchronizationDict['synchronizeTo'], destinationDatabase, tag, gtHandle, productionGTsDict)
+
+            for dependentTag, synchronizeTo in synchronizationDict['dependencies'].items():
+                checkSynchronization(synchronizeTo, destinationDatabase, dependentTag, gtHandle, productionGTsDict)
+
     finally:
         db.close()
 
