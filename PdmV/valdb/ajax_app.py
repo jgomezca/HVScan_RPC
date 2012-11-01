@@ -23,6 +23,54 @@ connectionDictionary = service.secrets['connections']['dev']["writer"]
 engine = create_engine(service.getSqlAlchemyConnectionString(connectionDictionary), echo=False)
 Session = sessionmaker(bind=engine)
 
+class API(object):
+    def __init__(self, param):
+        self.parent_obj = param ##inherit parent object -> to be albe use all methods of DB access
+        
+    @cherrypy.expose
+    def index(self): ##take info from defined methods docstrings
+        return self.parent_obj.loadPage('API')
+    
+    def get_CatSubCat_details(self, catSubCat, release_name):
+        data = self.parent_obj.mainInformation(catSubCat, release_name)
+        tmp = json.loads(data)
+        detailedinfo = {}
+        tmp_arr = []  #an array to save all the status
+        for elem in tmp:
+            if elem == 'RelMon':  ##in case the RelMon -> save it as a string of URL
+                #detailedinfo[elem] = tmp[elem]
+                tmp_arr.append({elem: tmp[elem]})
+            else:  ##for all the different load as a JSON object
+                json_obj = json.loads(self.parent_obj.getDetailInformation(catSubCat, release_name, elem))
+                tmp_arr.append({elem : json_obj})
+        #return detailedinfo
+        return tmp_arr
+
+    @cherrypy.expose
+    def release_info(self,release_name):
+        
+        detailedinfo = {}
+        ### GET Reconstruction info
+        detailedinfo['RData']= self.get_CatSubCat_details('RData', release_name)
+        detailedinfo['RFast']= self.get_CatSubCat_details('RFast', release_name)
+        detailedinfo['RFull']= self.get_CatSubCat_details('RFull', release_name)
+        
+        #GET HLT info
+        detailedinfo['HData']= self.get_CatSubCat_details('HData', release_name)
+        detailedinfo['HFast']= self.get_CatSubCat_details('HFast', release_name)
+        detailedinfo['HFull']= self.get_CatSubCat_details('HFull', release_name)
+        
+        ###GET PAGs info
+        detailedinfo['PData']= self.get_CatSubCat_details('PData', release_name)
+        detailedinfo['PFast']= self.get_CatSubCat_details('PFast', release_name)
+        detailedinfo['PFull']= self.get_CatSubCat_details('PFull', release_name)
+        
+        return json.dumps(detailedinfo)
+        
+    @cherrypy.expose
+    def all_releases(self):
+        data = self.parent_obj.submit('*')
+        return data
 
 class AjaxApp(object):
     def __init__(self):
@@ -35,8 +83,10 @@ class AjaxApp(object):
             'HFast' : ('HLT', 'FastSim'),
             'PData' : ('PAGs', 'Data'),
             'PFull' : ('PAGs', 'FullSim'),
-            'PFast' : ('PAGs', 'FastSim'),	
+            'PFast' : ('PAGs', 'FastSim'),
         }
+        
+        self.api = API(self)
 
     MAILING_LIST = ["hn-cms-relval@cern.ch"]
     #MAILING_LIST = ["anorkus@cern.ch"]#, "hn-cms-hnTest@cern.ch"] #testing mailing list
@@ -75,30 +125,7 @@ class AjaxApp(object):
             return self.loadPage('indexValidator')
         else:
             return self.loadPage('indexUser')
-            
-    ###An TO_BE Update        
-    #@cherrypy.expose
-    #def api(self, *args, **kwargs):
-        #return """
-         #<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
-               #"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-               #<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
-               #<head>
-                   #<title>PdmV/valDB JSON API</title>
-                   #<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-               #</head>
-               #<body>
-               #An TO-BE API home page 
-               #<a href='https://pdmv/PdmV/valdb/release_info?release_name=bump1'>A test</a>
-               #</body>
-               #</html>"""
-               
-    #@cherrypy.expose
-    #def release_info(self, release_name):
-        #data = self.mainInformation('RData', release_name)
-        #tmp = json.loads(data)
-        #return json.dumps(tmp, indent=4)
-        
+           
     @cherrypy.expose
     def permissionErrorMessage(self):
         return """ <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
@@ -473,11 +500,10 @@ The full details was sent to %s find it there""" %(relName.upper(), cat.upper(),
             smtpObj.close()         
         except Exception as e:
             print "Error: unable to send email", e.__class__
-        return json.dumps('New release added. Email was sent.')    
+        return json.dumps('New release added. Email was sent.')
+
 def main():
 	service.start(AjaxApp())
 
-
 if __name__ == '__main__':
 	main()
-
