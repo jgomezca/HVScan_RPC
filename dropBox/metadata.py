@@ -51,6 +51,7 @@ def port(metadata):
         (key, x, value) = line.partition(' ')
 
         key = key.lower()
+        value = value.strip()
 
         if key == 'destdb':
             outputMetadata['destinationDatabase'] = value
