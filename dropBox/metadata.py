@@ -160,6 +160,15 @@ def port(metadata):
             # Bad userText in ESEEIntercalibConstants_LG_V03_mc@a7238182-1ad8-11e2-85cc-001e4f3da513.tar.bz2
             outputMetadata['userText'] = '%s %s' % (key, value)
 
+        elif key == 'lorentz':
+            # Bad userText in SiPixelLorentzAngle_r194912_v1@4c10ccb4-1ee8-11e2-be80-003048d2bc9a.tar.bz2
+            outputMetadata['userText'] = '%s %s' % (key, value)
+
+        elif key == 'produced':
+            # Bad userText in SiPixelTemplateDBObject_38T_2012_for_alignment_v1_offline@db41edfc-1fae-11e2-9aab-003048d2bf8c.tar.bz2
+            # Bad userText in SiPixelTemplateDBObject_38T_IOV1_r194912@efb22762-1fa3-11e2-9fdd-003048d2bf8c.tar.bz2
+            outputMetadata['userText'] = '%s %s' % (key, value)
+
         else:
             raise Exception('Invalid key: %s', key)
 
