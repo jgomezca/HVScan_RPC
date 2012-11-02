@@ -7,6 +7,11 @@
     ], 
     "oracle://cms_orcoff_prep/CMS_COND_GEOMETRY": [
         "RPCRECO_Geometry_61YV2", 
+        "XMLFILE_Geometry_53YV1_ExtendedFlat10Percent_mc", 
+        "XMLFILE_Geometry_53YV1_ExtendedFlat10Services30Percent_mc", 
+        "XMLFILE_Geometry_53YV1_ExtendedFlat20Percent_mc", 
+        "XMLFILE_Geometry_53YV1_ExtendedFlat20Services30Percent_mc", 
+        "XMLFILE_Geometry_53YV1_ExtendedServices30Percent_mc", 
         "XMLFILE_Geometry_61YV1_ExtendedPhaseIBeamPipe_mc", 
         "XMLFILE_Geometry_61YV1_ExtendedPostLS1_mc", 
         "XMLFILE_Geometry_61YV1_ExtendedPostLS2_mc", 
@@ -20,14 +25,19 @@
     ], 
     "oracle://cms_orcoff_prep/CMS_COND_STRIP": [
         "SiStripApvGain_FromParticles_GR10_v2_hlt_forValidation", 
-        "SiStripBadChannel_PCL_v0_offline"
+        "SiStripBadChannel_PCL_v0_hlt", 
+        "SiStripBadChannel_PCL_v0_offline", 
+        "SiStripBadChannel_PCL_v0_prompt"
     ], 
     "oracle://cms_orcon_prod/CMS_COND_31X_ALIGNMENT": [
         "TrackerAlignment_PCLv1_express"
     ], 
     "oracle://cms_orcon_prod/CMS_COND_31X_BEAMSPOT": [
+        "BeamSpotObjects_2009_v1_express", 
         "BeamSpotObjects_PCL_byLumi_v0_prompt", 
-        "BeamSpotObjects_PCL_byRun_v0_offline"
+        "BeamSpotObjects_PCL_byRun_v0_hlt", 
+        "BeamSpotObjects_PCL_byRun_v0_offline", 
+        "BeamSpotObjects_PCL_byRun_v0_prompt"
     ], 
     "oracle://cms_orcon_prod/CMS_COND_31X_ECAL": [
         "EcalChannelStatus_v07_offline", 
@@ -53,6 +63,13 @@
         "SiPixelGainCalibration_2009runs_express", 
         "SiPixelGainCalibration_2009runs_hlt", 
         "SiPixelGainCalibration_r203368_offline", 
+        "SiPixelLorentzAngle_2012_for_alignment_v1_offline", 
+        "SiPixelLorentzAngle_2012_for_alignment_v2_offline", 
+        "SiPixelLorentzAngle_r194912_v1", 
+        "SiPixelLorentzAngle_r196364_v1", 
+        "SiPixelLorentzAngle_r200091_v1", 
+        "SiPixelLorentzAngle_r202237_v1", 
+        "SiPixelLorentzAngle_r203987_v1", 
         "SiPixelQuality_v03_dup_hlt", 
         "SiPixelQuality_v09_bugfix_mc", 
         "SiPixelQuality_v10_bugfix_mc", 
@@ -64,7 +81,10 @@
         "SiPixelQuality_v15_bugfix_mc", 
         "SiPixelQuality_v16_bugfix_mc", 
         "SiPixelQuality_v17_mc", 
-        "SiPixelQuality_v18_mc"
+        "SiPixelQuality_v18_mc", 
+        "SiPixelTemplateDBObject_38T_2012_for_alignment_v1_offline", 
+        "SiPixelTemplateDBObject_38T_IOV1_r194912", 
+        "SiPixelTemplateDBObject_38T_IOV2_r196364"
     ], 
     "oracle://cms_orcon_prod/CMS_COND_31X_PRESHOWER": [
         "ESEEIntercalibConstants_V01_offline", 
@@ -108,6 +128,7 @@
         "HcalRecoParams_v5.0_offline"
     ], 
     "oracle://cms_orcon_prod/CMS_COND_PAT_000": [
-        "MVAComputerContainer_JetTags_v1_offline"
+        "MVAComputerContainer_JetTags_v1_offline", 
+        "MVAComputerContainer_JetTags_v2_offline"
     ]
 }

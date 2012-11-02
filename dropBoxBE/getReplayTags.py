@@ -15,6 +15,7 @@ import tarfile
 import json
 
 import replay
+import metadata
 
 
 outputFile = 'replayTags.json'
@@ -42,27 +43,13 @@ def main():
         if set([dbFileName, txtFileName]) != set(names):
             raise Exception('%s: Invalid file names in tar file.', fileName)
         
-        destDB = None
-        tag = None
-        metadata = tarFile.extractfile(txtFileName).readlines()
-        for line in metadata:
-            if line.startswith('destDB'):
-                if destDB is not None:
-                    raise Exception('%s: destDB twice.', fileName)
-                destDB = line.split('destDB', 1)[1].strip()
-            elif line.startswith('tag'):
-                if tag is not None:
-                    raise Exception('%s: tag twice.', fileName)
-                tag = line.split('tag', 1)[1].strip()
-
-        if destDB is None:
-            raise Exception('%s: destDB not found.', fileName)
-        if tag is None:
-            raise Exception('%s: tag not found.', fileName)
-
+        newMetadata = json.loads(metadata.port(tarFile.extractfile(txtFileName).read()))
         tarFile.close()
 
-        replayTags.setdefault(destDB, set([])).add(tag)
+        for tag in newMetadata['destinationTags']:
+            replayTags.setdefault(newMetadata['destinationDatabase'], set([])).add(tag)
+            for dependentTag in newMetadata['destinationTags'][tag]['dependencies']:
+                replayTags[newMetadata['destinationDatabase']].add(dependentTag)
 
     # Convert the sets to a sorted list. This allows to dump the JSON and
     # also makes future changes easier to compare (since the lists are sorted,
