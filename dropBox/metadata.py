@@ -10,10 +10,6 @@ __maintainer__ = 'Miguel Ojeda'
 __email__ = 'mojedasa@cern.ch'
 
 
-import os
-import sys
-import logging
-import optparse
 import json
 
 import service
@@ -174,49 +170,4 @@ def port(metadata):
             raise Exception('Invalid key: %s', key)
 
     return json.dumps(outputMetadata, sort_keys = True, indent = 4)
-
-
-def portFile(inputFilename):
-    '''Ports a metadata file.
-    '''
-
-    logging.info('%s: Porting...', inputFilename)
-
-    outputFilename = '%s.out' % inputFilename
-    backupFilename = '%s.backup' % inputFilename
-
-    outputMetadata = port()
-
-    with open(outputFilename, 'wb') as f:
-        f.write(outputMetadata)
-
-    os.rename(inputFilename, backupFilename)
-    os.rename(outputFilename, inputFilename)
-
-
-def main():
-    '''Entry point.
-    '''
-
-    parser = optparse.OptionParser(usage =
-        'Usage: %prog <file> [<file> ...]\n'
-    )
-
-    (options, arguments) = parser.parse_args()
-
-    if len(arguments) < 1:
-        parser.print_help()
-        return -3
-
-    for argument in arguments:
-        portFile(argument)
-
-
-if __name__ == '__main__':
-    logging.basicConfig(
-        format = '[%(asctime)s] %(levelname)s: %(message)s',
-        level = logging.INFO,
-    )
-
-    sys.exit(main())
 
