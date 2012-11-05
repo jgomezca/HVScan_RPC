@@ -57,6 +57,8 @@
         "HcalRespCorrs_v4.4_offline"
     ], 
     "oracle://cms_orcon_prod/CMS_COND_31X_PIXEL": [
+        "SiPixelGainCalibHLT_2009CollRuns_offline", 
+        "SiPixelGainCalib_2009CollRuns_offline", 
         "SiPixelGainCalibrationHLT_2009runs_express", 
         "SiPixelGainCalibrationHLT_2009runs_hlt", 
         "SiPixelGainCalibrationHLT_r203368_offline", 
@@ -71,6 +73,7 @@
         "SiPixelLorentzAngle_r202237_v1", 
         "SiPixelLorentzAngle_r203987_v1", 
         "SiPixelQuality_v03_dup_hlt", 
+        "SiPixelQuality_v04_offline", 
         "SiPixelQuality_v09_bugfix_mc", 
         "SiPixelQuality_v10_bugfix_mc", 
         "SiPixelQuality_v11_bugfix_mc", 
@@ -81,7 +84,9 @@
         "SiPixelQuality_v15_bugfix_mc", 
         "SiPixelQuality_v16_bugfix_mc", 
         "SiPixelQuality_v17_mc", 
+        "SiPixelQuality_v18_bugfix_mc", 
         "SiPixelQuality_v18_mc", 
+        "SiPixelQuality_v19", 
         "SiPixelTemplateDBObject_38T_2012_for_alignment_v1_offline", 
         "SiPixelTemplateDBObject_38T_IOV1_r194912", 
         "SiPixelTemplateDBObject_38T_IOV2_r196364"
@@ -125,10 +130,17 @@
     "oracle://cms_orcon_prod/CMS_COND_44X_HCAL": [
         "HcalRecoParams_v2.0_hlt", 
         "HcalRecoParams_v5.0_mc", 
-        "HcalRecoParams_v5.0_offline"
+        "HcalRecoParams_v5.0_offline", 
+        "HcalRecoParams_v6.0_offline"
+    ], 
+    "oracle://cms_orcon_prod/CMS_COND_CSC_000": [
+        "CSCBadChambers_empty_mc", 
+        "CSCBadStrips_empty_mc", 
+        "CSCBadWires_empty_mc"
     ], 
     "oracle://cms_orcon_prod/CMS_COND_PAT_000": [
         "MVAComputerContainer_JetTags_v1_offline", 
-        "MVAComputerContainer_JetTags_v2_offline"
+        "MVAComputerContainer_JetTags_v2_offline", 
+        "MVAComputerContainer_JetTags_v3_offline"
     ]
 }
