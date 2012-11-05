@@ -11,6 +11,7 @@ from conditionError import ConditionError
 
 defaultMasterDB = 'sqlite_file:replayReference.db'
 defaultArchID = 'CH31'
+endArchiveID = 'CK02'
 defaultInputFile = 'replayTags.json'
 
 connectionPrefix = 'oracle://cms_orcon_prod/'
@@ -63,8 +64,8 @@ class ReplayMaster( object ):
                 accountName = connStr[len(connectionPrefix):len(connStr)]
                 connStr = "frontier://FrontierArc/"+accountName+"_"+archiveID
                 print "Reading from ARCHIVE database using FronTier. Connection string:'%s'" %(connStr)
-                prodConnStr = "frontier://FrontierProd/"+accountName
-                print "Reading from production database using FronTier. Connection string:'%s'" %(prodConnStr)
+                prodConnStr = "frontier://FrontierArc/"+accountName+"_"+endArchiveID
+                print "Reading from ARCHIVE database using FronTier. Connection string:'%s'" %(prodConnStr)
                 try:
                     db0 = rdbms.getReadOnlyDB( str(connStr) )  
                     iov0 = conditionDatabase.IOVChecker( db0 )
