@@ -73,7 +73,6 @@ class ReplayMaster( object ):
                                 iov.load( tag )
                                 lastSince = iov.lastSince()
                                 print 'Last Since=%d' %(lastSince)
-                                connStr = "frontier://FrontierProd/"+accountName
                                 command = "cmscond_export_iov" + \
                                           " -s " + connStr + \
                                           " -d " + self.db + \
