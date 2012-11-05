@@ -160,14 +160,6 @@ def main():
         i += 1
         logging.info('[%s/%s] %s: Replaying run...', i, len(dropBoxRuns), runTimestamp)
 
-        if runTimestamp in truncates:
-            for tag in truncates[runTimestamp]:
-                logging.info('[%s/%s] %s: Truncating %s times tag %s...', i, len(dropBoxRuns), runTimestamp, truncates[runTimestamp][tag], tag)
-                for i in range(truncates[runTimestamp][tag]):
-                    execute('cmscond_truncate_iov -c %s -P %s -t %s' % (conf.destinationDB, conf.authpath, tag))
-
-        continue
-
         j = 0
         for fileName in dropBoxRuns[runTimestamp]:
             j += 1
@@ -210,6 +202,12 @@ def main():
                 logging.info('  [%s/%s] %s: Upload error: %s', j, len(dropBoxRuns[runTimestamp]), fileName, str(e))
 
         dropBoxBE.reprocess( runTimestamp )
+
+        if runTimestamp in truncates:
+            for tag in truncates[runTimestamp]:
+                logging.info('[%s/%s] %s: Truncating %s times tag %s...', i, len(dropBoxRuns), runTimestamp, truncates[runTimestamp][tag], tag)
+                for i in range(truncates[runTimestamp][tag]):
+                    execute('cmscond_truncate_iov -c %s -P %s -t %s' % (conf.destinationDB, conf.authpath, tag))
 
 
 if __name__ == '__main__':
