@@ -1,6 +1,7 @@
 #!/usr/bin/env python2.6
 
 import sys
+import json
 
 import conditionDatabase
 import config
@@ -11,6 +12,16 @@ replayDBConnStr = "oracle://cms_orcoff_prep/CMS_COND_DROPBOX"
 
 
 def main():
+
+    # The skipped tags are the ones from prep at the moment
+    skippedTags = set([])
+
+    with open('replayTags.json', 'rb') as f:
+        replayTags = json.load(f)
+
+    for destinationDatabase in replayTags:
+        if destinationDatabase.startswith('oracle://cms_orcoff_prep/'):
+            skippedTags.update(replayTags[destinationDatabase])
 
     conf = config.replay()
     _fwLoad = conditionDatabase.condDB.FWIncantation()
@@ -27,9 +38,10 @@ def main():
     replayDB = rdbms.getReadOnlyDB( replayDBConnStr )
     replayDB.startReadOnlyTransaction()
     replayTagList = replayDB.allTags().strip().split()
+    replayTagList = [x for x in replayTagList if x not in skippedTags]
     replayDB.commitTransaction()
     print 'Found %d tags in replay.' %(len(replayTagList)) 
-     
+
     if not len(refTagList)==len(replayTagList):
         print 'ERROR: Tag size content is different'
     missingTags = []
