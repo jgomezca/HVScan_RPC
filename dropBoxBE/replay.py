@@ -210,7 +210,7 @@ def main():
                 # it is a real problem with the upload.py script.
                 logging.info('  [%s/%s] %s: Upload error: %s', j, len(dropBoxRuns[runTimestamp]), fileName, str(e))
 
-        #dropBoxBE.reprocess( runTimestamp )
+        dropBoxBE.reprocess(runTimestamp)
 
         if runTimestamp in truncates:
             for runNumber in truncates[runTimestamp]:
