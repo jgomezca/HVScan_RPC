@@ -47,10 +47,29 @@ dropBoxLastRun = (datetime.datetime(2012, 11, 2, 16, 10), set([
 
 # To simulate manual interventions
 truncates = {
-    #datetime.datetime(2012, 8, 31, 14, 20): {
-    #    'TagA': 10,
-    #    'TagB': 2,
-    #},
+    datetime.datetime(2012, 10, 17, 2, 30): {
+        'SiStripBadChannel_PCL_v0_offline': 1,
+        'SiStripBadChannel_PCL_v0_prompt': 1,
+    },
+    datetime.datetime(2012, 10, 17, 4, 40): {
+        'BeamSpotObjects_PCL_byRun_v0_offline': 1,
+        'BeamSpotObjects_PCL_byRun_v0_prompt': 1,
+        'BeamSpotObjects_PCL_byLumi_v0_prompt': 13,
+    },
+    datetime.datetime(2012, 10, 17, 10, 30): {
+        'SiStripBadChannel_PCL_v0_offline': 1,
+        'SiStripBadChannel_PCL_v0_prompt': 1,
+    },
+    datetime.datetime(2012, 10, 17, 11, 30): {
+        'BeamSpotObjects_PCL_byRun_v0_offline': 1,
+        'BeamSpotObjects_PCL_byRun_v0_prompt': 1,
+        'BeamSpotObjects_PCL_byLumi_v0_prompt': 5,
+    },
+    datetime.datetime(2012, 10, 17, 13, 30): {
+        'BeamSpotObjects_PCL_byRun_v0_offline': 1,
+        'BeamSpotObjects_PCL_byRun_v0_prompt': 1,
+        'BeamSpotObjects_PCL_byLumi_v0_prompt': 26,
+    },
 }
 
 
