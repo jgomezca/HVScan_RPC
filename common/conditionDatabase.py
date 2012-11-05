@@ -202,7 +202,7 @@ Please check the status of this tag and inform Condition DB experts if the issue
         return time.asctime( time.gmtime( condDB.unpackTime( self._iovSequence.timestamp() )[ 0 ] ) )
 
     def timetype( self ):
-        return self._iovSequence.timetype()
+        return str(self._iovSequence.timetype())
 
 class ConditionDBChecker( object ):
     """
