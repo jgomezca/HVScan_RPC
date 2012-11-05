@@ -48,7 +48,7 @@ dropBoxLastRun = (datetime.datetime(2012, 11, 2, 16, 10), set([
 
 # To simulate manual interventions
 truncates = {
-    datetime.datetime(2012, 8, 31, 14, 20): {
+    datetime.datetime(2012, 10, 17, 13, 30): {
         205233: [
             'BeamSpotObjects_PCL_byRun_v0_offline',
             'BeamSpotObjects_PCL_byRun_v0_prompt',
