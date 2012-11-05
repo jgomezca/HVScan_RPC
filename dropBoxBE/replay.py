@@ -162,7 +162,7 @@ def main():
 
     # Replay all the runs
     _fwLoad = conditionDatabase.condDB.FWIncantation()
-    rdbms = conditionDatabase.condDB.RDBMS('')
+    rdbms = conditionDatabase.condDB.RDBMS(conf.authpath)
 
     i = 0
     for runTimestamp in sortedDropBoxRuns:
