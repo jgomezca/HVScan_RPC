@@ -26,7 +26,8 @@ import config
 import Dropbox
 
 dropBoxReplayFilesFolder = '/afs/cern.ch/work/g/govi/dropbox'
-dropBoxSnapshotTimestamp = datetime.datetime(2012, 8, 31, 7, 0, 0)
+dropBoxStartSnapshotTimestamp = datetime.datetime(2012, 8, 31, 7, 0, 0)
+dropBoxEndSnapshotTimestamp = datetime.datetime(2012, 11, 2, 18, 0, 0)
 replayMasterDB = '/afs/cern.ch/cms/DB/conddb/test/dropbox/replay/replayMaster.db'
 
 
@@ -35,6 +36,12 @@ dropBoxFirstRun = (datetime.datetime(2012, 8, 31, 10, 30), set([
     'BeamSpotObjects_PCL_byRun_v0_offline@d5474f75-8f5c-4851-bbb9-937d86409bed.tar.bz2',
     'BeamSpotObjects_PCL_byLumi_v0_prompt@2a13ed55-b5d9-4658-9266-3ad1181b1d75.tar.bz2',
     'SiStripBadChannel_PCL_v0_offline@e5c9f19f-b83f-48d4-85ff-5e6a3b97b75d.tar.bz2',
+]))
+
+dropBoxLastRun = (datetime.datetime(2012, 11, 2, 16, 10), set([
+    'BeamSpotObjects_PCL_byRun_v0_offline@fa7d1216-c899-4610-9298-758a43e6a2a8.tar.bz2',
+    'BeamSpotObjects_PCL_byLumi_v0_prompt@a4a033a1-1a7e-42b9-b55b-51743e4e9385.tar.bz2',
+    'SiStripBadChannel_PCL_v0_offline@d3d46531-7783-483a-9488-c6ec7a9f156b.tar.bz2',
 ]))
 
 
@@ -80,7 +87,9 @@ def getFiles():
     files = {}
     for fileName in os.listdir(dropBoxReplayFilesFolder):
         timestamp = datetime.datetime.fromtimestamp(os.stat(os.path.join(dropBoxReplayFilesFolder, fileName)).st_mtime)
-        if timestamp < dropBoxSnapshotTimestamp:
+        if timestamp < dropBoxStartSnapshotTimestamp:
+            continue
+        if timestamp > dropBoxEndSnapshotTimestamp:
             continue
         files[fileName] = timestamp
 
@@ -108,10 +117,12 @@ def main():
         logging.debug('%s: %s -> %s', fileName.split('@')[1], files[fileName], dropBoxTimestamp)
         dropBoxRuns.setdefault(dropBoxTimestamp, set([])).add(fileName)
 
-    # Validate that the first run is the one expected
+    # Validate that the first and last run are the expected ones
     sortedDropBoxRuns = sorted(dropBoxRuns)
     if sortedDropBoxRuns[0] != dropBoxFirstRun[0] or dropBoxRuns[dropBoxFirstRun[0]] != dropBoxFirstRun[1]:
         raise Exception('The expected first dropBox run is not the same as the calculated one.')
+    if sortedDropBoxRuns[-1] != dropBoxLastRun[0] or dropBoxRuns[dropBoxLastRun[0]] != dropBoxLastRun[1]:
+        raise Exception('The expected last dropBox run is not the same as the calculated one.')
 
     # Ask the frontend to clean up the files and database
     (username, account, password) = netrc.netrc().authenticators('newOffDb')
