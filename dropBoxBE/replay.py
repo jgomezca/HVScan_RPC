@@ -18,6 +18,7 @@ import subprocess
 
 import http
 import service
+import conditionDatabase
 
 import metadata
 import doUpload
@@ -47,10 +48,15 @@ dropBoxLastRun = (datetime.datetime(2012, 11, 2, 16, 10), set([
 
 # To simulate manual interventions
 truncates = {
-    #datetime.datetime(2012, 8, 31, 14, 20): {
-    #    'TagA': 10,
-    #    'TagB': 2,
-    #},
+    datetime.datetime(2012, 8, 31, 14, 20): {
+        205233: [
+            'BeamSpotObjects_PCL_byRun_v0_offline',
+            'BeamSpotObjects_PCL_byRun_v0_prompt',
+            'BeamSpotObjects_PCL_byLumi_v0_prompt',
+            'SiStripBadChannel_PCL_v0_offline',
+            'SiStripBadChannel_PCL_v0_prompt',
+        ],
+    },
 }
 
 
@@ -155,6 +161,9 @@ def main():
     dropBoxBE = Dropbox.Dropbox( conf )
 
     # Replay all the runs
+    _fwLoad = conditionDatabase.condDB.FWIncantation()
+    rdbms = conditionDatabase.condDB.RDBMS('')
+
     i = 0
     for runTimestamp in sortedDropBoxRuns:
         i += 1
@@ -201,13 +210,30 @@ def main():
                 # it is a real problem with the upload.py script.
                 logging.info('  [%s/%s] %s: Upload error: %s', j, len(dropBoxRuns[runTimestamp]), fileName, str(e))
 
-        dropBoxBE.reprocess( runTimestamp )
+        #dropBoxBE.reprocess( runTimestamp )
 
         if runTimestamp in truncates:
-            for tag in truncates[runTimestamp]:
-                logging.info('[%s/%s] %s: Truncating %s times tag %s...', i, len(dropBoxRuns), runTimestamp, truncates[runTimestamp][tag], tag)
-                for i in range(truncates[runTimestamp][tag]):
-                    execute('cmscond_truncate_iov -c %s -P %s -t %s' % (conf.destinationDB, conf.authpath, tag))
+            for runNumber in truncates[runTimestamp]:
+                for tag in truncates[runTimestamp][runNumber]:
+                    logging.info('[%s/%s] %s: Truncating up to %s tag %s...', i, len(dropBoxRuns), runTimestamp, runNumber, tag)
+
+                    while True:
+                        db = rdbms.getReadOnlyDB(conf.destinationDB)
+                        iov = conditionDatabase.IOVChecker(db)
+                        iov.load(tag)
+
+                        lastSince = iov.lastSince()
+                        if iov.timetype() == 'lumiid':
+                            lastSince >>= 32
+
+                        db.closeSession()
+
+                        logging.info('[%s/%s] %s: lastSince now is %s...', i, len(dropBoxRuns), runTimestamp, lastSince)
+
+                        if lastSince < runNumber:
+                            break
+
+                        execute('cmscond_truncate_iov -c %s -P %s -t %s' % (conf.destinationDB, conf.authpath, tag))
 
 
 if __name__ == '__main__':
