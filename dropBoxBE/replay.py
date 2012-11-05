@@ -38,6 +38,15 @@ dropBoxFirstRun = (datetime.datetime(2012, 8, 31, 10, 30), set([
 ]))
 
 
+# To simulate manual interventions
+truncates = {
+    #datetime.datetime(2012, 8, 31, 14, 20): {
+    #    'TagA': 10,
+    #    'TagB': 2,
+    #},
+}
+
+
 def getNextDropBoxRunTimestamp(timestamp):
     '''Given a timestamp, give the timestamp of the next dropBox run.
     i.e. the closest in the future.
@@ -139,6 +148,14 @@ def main():
     for runTimestamp in sortedDropBoxRuns:
         i += 1
         logging.info('[%s/%s] %s: Replaying run...', i, len(dropBoxRuns), runTimestamp)
+
+        if runTimestamp in truncates:
+            for tag in truncates[runTimestamp]:
+                logging.info('[%s/%s] %s: Truncating %s times tag %s...', i, len(dropBoxRuns), runTimestamp, truncates[runTimestamp][tag], tag)
+                for i in range(truncates[runTimestamp][tag]):
+                    execute('cmscond_truncate_iov -c %s -P %s -t %s' % (conf.destinationDB, conf.authpath, tag))
+
+        continue
 
         j = 0
         for fileName in dropBoxRuns[runTimestamp]:
