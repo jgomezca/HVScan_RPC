@@ -6,7 +6,7 @@ import json
 import conditionDatabase
 import config
 
-referenceDBConnStr = "sqlite_file:/afs/cern.ch/work/g/govi/dropbox_replay/replayReference.db"
+referenceDBConnStr = "sqlite_file:/afs/cern.ch/cms/DB/conddb/test/dropbox/replay/replayReference.db"
 replayDBConnStr = "oracle://cms_orcoff_prep/CMS_COND_DROPBOX"
 
 
