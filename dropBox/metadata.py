@@ -166,6 +166,14 @@ def port(metadata):
             # Bad userText in SiPixelTemplateDBObject_38T_IOV1_r194912@efb22762-1fa3-11e2-9fdd-003048d2bf8c.tar.bz2
             outputMetadata['userText'] = '%s %s' % (key, value)
 
+        elif key == 'fed':
+            # Bad userText in SiPixelQuality_v19@3beb7522-247a-11e2-a986-001e4f3e5c33.tar.bz2
+            outputMetadata['userText'] = '%s %s' % (key, value)
+
+        elif key == 'bugfix':
+            # Bad userText in SiPixelQuality_v04_offline@eff63846-247e-11e2-969c-001e4f3e5c33.tar.bz2
+            outputMetadata['userText'] = '%s %s' % (key, value)
+
         else:
             raise Exception('Invalid key: %s', key)
 
