@@ -25,7 +25,6 @@ import service
 
 import config
 import dropBox
-import checkTodo
 import conditionDatabase
 import conditionError
 import globalTagHandler
