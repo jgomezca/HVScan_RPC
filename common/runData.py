@@ -198,3 +198,17 @@ class RunData( object ):
 
     def __del__( self ):
         self._sqliteConnection.close()
+
+
+def main():
+    import service
+
+    rd = RunData(service.secrets['runInfo'])
+
+    if not rd._runsDumped:
+        rd._dumpRunsInSQLite()
+
+
+if __name__ == '__main__':
+    main()
+
