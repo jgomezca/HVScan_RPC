@@ -14,7 +14,7 @@ import subprocess
 
 
 frontendHost = socket.gethostname()
-frontendBaseUrl = 'https://%s/dropBox/' % frontendHost
+frontendBaseUrl = 'https://%s:8095/dropBox/' % frontendHost
 
 
 class UploadError(Exception):
