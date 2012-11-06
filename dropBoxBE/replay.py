@@ -162,7 +162,6 @@ def main():
 
     # Replay all the runs
     _fwLoad = conditionDatabase.condDB.FWIncantation()
-    rdbms = conditionDatabase.condDB.RDBMS(conf.authpath)
 
     i = 0
     for runTimestamp in sortedDropBoxRuns:
@@ -218,7 +217,8 @@ def main():
                     logging.info('[%s/%s] %s: Truncating up to %s tag %s...', i, len(dropBoxRuns), runTimestamp, runNumber, tag)
 
                     while True:
-                        db = rdbms.getReadOnlyDB(conf.destinationDB)
+                        # FIXME: Why can't we instantiate the RDBMS once?
+                        db = conditionDatabase.condDB.RDBMS(conf.authpath).getReadOnlyDB(conf.destinationDB)
                         iov = conditionDatabase.IOVChecker(db)
                         iov.load(tag)
 
