@@ -22,11 +22,11 @@ class UploadError(Exception):
         self.args = (message, )
 
 
-def upload(fileName):
+def upload(fileName, backend):
     '''Uploads a file to the frontend.
     '''
 
-    process = subprocess.Popen('../dropBox/upload.py -H %s %s' % (frontendHost, fileName), shell=True, stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    process = subprocess.Popen('../dropBox/upload.py -b %s -H %s %s' % (frontendHost, backend, fileName), shell=True, stdout=subprocess.PIPE,stderr=subprocess.PIPE)
     result = process.communicate()
     returnCode = process.returncode
 

@@ -43,7 +43,9 @@ class DropBoxTest(service.TestCase):
 
     def testGetFileList(self):
         self.signIn()
-        self.assertEqual(type(self.queryJson('getFileList')), list)
+        self.assertEqual(type(self.queryJson('getFileList', {
+            'backend': 'private',
+        })), list)
         self.signOut()
 
 
@@ -58,6 +60,7 @@ class DropBoxTest(service.TestCase):
         self.signIn()
         self.assertRaisesHTTPError(400, 'uploadFile', {
             'uploadedFile': 'asd',
+            'backend': 'private',
         })
         self.signOut()
 
@@ -118,12 +121,14 @@ class DropBoxTest(service.TestCase):
 
                 if folder == 'security':
                     # These files are sent directly, skipping upload.py
-                    error = self.assertRaisesHTTPError(400, 'uploadFile', files = {
+                    error = self.assertRaisesHTTPError(400, 'uploadFile', {
+                        'backend': 'private',
+                    }, files = {
                         'uploadedFile': test,
                     })
                 else:
                     # Use upload.py
-                    process = subprocess.Popen('./upload.py -H '+socket.gethostname()+' %s' % test, shell = True, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+                    process = subprocess.Popen('./upload.py -b %s -H %s %s' % ('private', socket.gethostname(), test), shell = True, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
                     error = process.communicate()[1].rsplit('\n', 1)[-2].partition('ERROR: ')[2]
 
                 with open('%s.out' % test, 'rb') as f:

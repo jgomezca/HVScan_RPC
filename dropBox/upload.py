@@ -25,18 +25,23 @@ import tempfile
 import pycurl
 
 
+allowedBackends = set(['online', 'tier0', 'offline', 'private'])
+defaultBackend = 'online'
 defaultHostname = 'mos-dev-slc6.cern.ch'
 defaultTemporaryFile = 'upload.tar.bz2'
 defaultNetrcHost = 'newOffDb'
 
 
-def _uploadFile(username, password, filename, hostname = defaultHostname):
+def _uploadFile(username, password, filename, backend = defaultBackend, hostname = defaultHostname):
     '''Uploads a raw file to the new dropBox.
 
     You should not use this directly. Look at uploadFiles() instead.
     '''
 
     url = 'https://%s/dropBox/' % hostname
+
+    if backend not in allowedBackends:
+        raise Exception('The backend %s is not any of the allowed ones: %s' % (repr(backend), repr(allowedBackends)))
 
     try:
         response = cStringIO.StringIO()
@@ -61,7 +66,8 @@ def _uploadFile(username, password, filename, hostname = defaultHostname):
         logging.info('%s: Uploading file...', filename)
         curl.setopt(curl.URL, url + 'uploadFile')
         curl.setopt(curl.HTTPPOST, [
-            ('uploadedFile', (curl.FORM_FILE, filename))
+            ('uploadedFile', (curl.FORM_FILE, filename)),
+            ('backend', backend),
         ])
         curl.perform()
 
@@ -88,7 +94,7 @@ def _uploadFile(username, password, filename, hostname = defaultHostname):
         return -1
 
 
-def uploadFiles(username, password, filenames, temporaryFile = defaultTemporaryFile, hostname = defaultHostname):
+def uploadFiles(username, password, filenames, backend = defaultBackend, hostname = defaultHostname, temporaryFile = defaultTemporaryFile):
     '''Uploads several files to the new dropBox.
 
     The filenames can be without extension, with .db or with .txt extension.
@@ -137,7 +143,7 @@ def uploadFiles(username, password, filenames, temporaryFile = defaultTemporaryF
 
         logging.info('%s: Uploading file...', basename)
         os.rename(temporaryFile, fileHash)
-        ret = _uploadFile(username, password, fileHash, hostname)
+        ret = _uploadFile(username, password, fileHash, backend = backend, hostname = hostname)
         os.unlink(fileHash)
 
         if ret != 0:
@@ -150,6 +156,12 @@ def main():
 
     parser = optparse.OptionParser(usage =
         'Usage: %prog <file> [<file> ...]\n'
+    )
+
+    parser.add_option('-b', '--backend',
+        dest = 'backend',
+        default = defaultHostname,
+        help = 'dropBox\'s backend to upload to. Default: %default',
     )
 
     parser.add_option('-H', '--hostname',
@@ -177,7 +189,7 @@ def main():
         return -3
 
     (username, account, password) = netrc.netrc().authenticators(options.netrcHost)
-    return uploadFiles(username, password, arguments, hostname = options.hostname)
+    return uploadFiles(username, password, arguments, backend = options.backend, hostname = options.hostname)
 
 
 if __name__ == '__main__':

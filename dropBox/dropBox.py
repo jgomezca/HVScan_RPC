@@ -105,11 +105,11 @@ def failUpload(fileHash):
     logging.info('uploadFile(): %s: The upload failed.', fileHash)
 
 
-def uploadFile(fileHash, fileContent, username):
+def uploadFile(fileHash, fileContent, username, backend):
     '''Uploads a file to the dropbox for online.
     '''
 
-    logging.debug('dropBox::uploadFile(%s, %s [len])', fileHash, len(fileContent))
+    logging.debug('dropBox::uploadFile(%s, %s [len], %s, %s)', fileHash, len(fileContent), username, backend)
 
     logging.info('uploadFile(): Checking whether the hash is valid...')
     checkHash(fileHash)
@@ -163,15 +163,16 @@ def uploadFile(fileHash, fileContent, username):
     logging.info('uploadFile(): %s: The upload was successful.', fileHash)
 
 
-def getFileList():
-    '''Returns a list of files yet to be pulled from online.
+def getFileList(backend):
+    '''Returns a list of files yet to be pulled from online
+    for the matching backend.
 
     The name of each file is the SHA1 checksum of the file itself.
 
     Called from online, but also public to allow people to see the list.
     '''
 
-    logging.debug('dropBox::getFileList()')
+    logging.debug('dropBox::getFileList(%s)', backend)
 
     logging.info('getFileList(): Getting the list of files...')
 

@@ -138,7 +138,7 @@ class DropBox(object):
 
     @checkSignedIn
     @handleDropBoxExceptions
-    def uploadFile(self, uploadedFile):
+    def uploadFile(self, uploadedFile, backend):
         '''Uploads a file to the dropbox.
 
         Called from offline.
@@ -150,15 +150,16 @@ class DropBox(object):
             # 400 Bad Request
             raise cherrypy.HTTPError(400, 'The parameter must be an uploaded file.')
 
-        logging.debug('server::uploadFile(%s)', uploadedFile.filename)
+        logging.debug('server::uploadFile(%s, %s)', uploadedFile.filename, backend)
 
-        dropBox.uploadFile(uploadedFile.filename, uploadedFile.file.read(), getUsername())
+        dropBox.uploadFile(uploadedFile.filename, uploadedFile.file.read(), getUsername(), backend)
 
 
     @checkSignedInOnline
     @handleDropBoxExceptions
-    def getFileList(self):
-        '''Returns a JSON list of files yet to be pulled from online.
+    def getFileList(self, backend):
+        '''Returns a JSON list of files yet to be pulled from online
+        for the matching backend.
 
         Called from online.
 
@@ -166,9 +167,9 @@ class DropBox(object):
         '''
 
         logging.debug('-'*80)
-        logging.debug('server::getFileList()')
+        logging.debug('server::getFileList(%s)', backend)
 
-        return service.setResponseJSON(dropBox.getFileList())
+        return service.setResponseJSON(dropBox.getFileList(backend))
 
 
     @checkSignedInOnline

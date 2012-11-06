@@ -201,7 +201,7 @@ def main():
             logging.info('  [%s/%s] %s: Uploading...', j, len(dropBoxRuns[runTimestamp]), fileName)
 
             try:
-                doUpload.upload('/tmp/replayRequest')
+                doUpload.upload('/tmp/replayRequest', 'private')
             except doUpload.UploadError as e:
                 # If it is a error from the server (i.e. UploadError),
                 # we can continue with the next files.
