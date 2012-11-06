@@ -1,3 +1,5 @@
+# coding=utf-8
+
 import collections
 import os
 import sys
@@ -20,24 +22,23 @@ class TestReleasesXml(unittest.TestCase):
 
     def test_architectures(self):
         architectures = self.rx.architectures()
-        self.assertIsInstance(architectures, collections.Iterable, "Architectures has be iterable")
+        self.assertTrue(isinstance(architectures, collections.Iterable), "Architectures has be iterable")
         for arch in architectures:
-            self.assertIsInstance(arch, basestring, "Architecture has to be string or unicode")
+            self.assertTrue(isinstance(arch, basestring), "Architecture has to be string or unicode")
 
     def test_has_architecture(self):
         self.assertTrue(self.rx.has_architecture("slc5_amd64_gcc472"))
 
     def test_releases(self):
         releases = self.rx.releases()
-        self.assertIsInstance(releases, collections.Iterable, "Releases has to be iterable")
+        self.assertTrue(isinstance(releases, collections.Iterable), "Releases has to be iterable")
         for rel in releases:
-            self.assertIsInstance(rel, Release, "Release ahs to be object of Release")
-
+            self.assertTrue(isinstance(rel, Release), "Release ahs to be object of Release")
 
         filtered_releases = self.rx.releases("slc5_amd64_gcc472")
         self.assertEqual(len(filtered_releases), 1)
-        self.assertIsInstance(filtered_releases, collections.Sequence)
-        self.assertIsInstance(filtered_releases[0], Release)
+        self.assertTrue(isinstance(filtered_releases, collections.Sequence))
+        self.assertTrue(isinstance(filtered_releases[0], Release))
         r = Release(name="CMSSW_6_0_0_patch1",arch="slc5_amd64_gcc472", type="Production", state="Announced")
         self.assertEqual(filtered_releases[0], r)
 

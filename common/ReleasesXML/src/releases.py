@@ -1,5 +1,8 @@
+# coding=utf-8
+
 from collections import namedtuple, defaultdict
-import xml.etree.ElementTree as ET
+from lxml import etree
+#Could be used "import xml.etree.ElementTree as etree" for python2.7
 
 Release = namedtuple('Release', ['name', 'arch', 'type', 'state'])
 
@@ -16,7 +19,7 @@ class ReleasesXml(object):
         :param data: ReleasesXML file content provided as string
         """
         self._data = data
-        self._root = ET.fromstring(self._data)
+        self._root = etree.fromstring(self._data)
         self._parse_data()
 
     def _parse_data(self):
