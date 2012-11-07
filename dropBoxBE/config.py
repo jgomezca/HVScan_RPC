@@ -25,7 +25,6 @@ class BaseConfig( object ) :
 
         self.debug = False
 
-        return
 
     def getDropBoxMainDir(self):
         return os.path.join( self.maindir, self.detector + self.label )
@@ -62,8 +61,6 @@ class online( BaseConfig ) :
         self.gtTags = {'hlt' : 'GR10_H_V5', 'express' : 'GR10_E_V5',
                        'prompt' : 'GR10_P_V5'} #-ap: get this from gtList (if we can)
 
-        return
-
 
 class offline( BaseConfig ) :
     def __init__(self) :
@@ -92,8 +89,6 @@ class offline( BaseConfig ) :
         self.gtDbName = "oracle://cms_orcon_adg/CMS_COND_31X_GLOBALTAG"
         self.gtTags = {'hlt' : 'GR10_H_V5', 'express' : 'GR10_E_V5',
                        'prompt' : 'GR10_P_V5'} #-ap: get this from gtList (if we can)
-
-        return
 
 
 class test( BaseConfig ) :
@@ -129,7 +124,6 @@ class test( BaseConfig ) :
 
         self.debug = True
 
-        return
 
 class replay( BaseConfig ) :
     def __init__(self) :
@@ -162,6 +156,4 @@ class replay( BaseConfig ) :
                        'prompt' : 'GR10_P_V5'} #-ap: get this from gtList (if we can)
 
         self.debug = True
-
-        return
 
