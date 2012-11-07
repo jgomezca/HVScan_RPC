@@ -531,3 +531,12 @@ class TestCase(unittest.TestCase):
         else:
             raise self.failureException, "HTTPError not raised"
 
+
+    def assertRaisesHTTPErrorMessage(self, code, message, *args, **kwargs):
+        '''Like assertRaises(http.HTTPError, self.query, ...),
+        but checking that the HTTP error code is the given one and that
+        the returned error message matches the given one.
+        '''
+
+        self.assertEqual(message, self.assertRaisesHTTPError(code, *args, **kwargs))
+
