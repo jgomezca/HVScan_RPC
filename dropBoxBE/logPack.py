@@ -9,48 +9,16 @@ __maintainer__ = 'Miguel Ojeda'
 __email__ = 'mojedasa@cern.ch'
 
 
-import uu
-import gzip
-import cStringIO
-
-
 def pack(log):
-    '''Packs a string into the .gz.uu format (i.e. compressing it with gzip
-    and encoding with uu for easy transfer as ASCII).
+    '''Packs a string into the .bz2 format.
     '''
 
-    # Compress with gzip
-    gzFile = cStringIO.StringIO()
-    f = gzip.GzipFile(fileobj = gzFile, mode = 'w')
-    f.write(log)
-    f.close()
-    gzFile.seek(0)
-
-    # Encode with uu
-    uuFile = cStringIO.StringIO()
-    uu.encode(gzFile, uuFile)
-    uuFile.seek(0)
-    log = uuFile.read()
-
-    return log
+    return log.encode('bz2')
 
 
 def unpack(log):
-    '''Unpacks a string from the .gz.uu format.
+    '''Unpacks a string from the .bz2 format.
     '''
 
-    # Decode with uu
-    uuFile = cStringIO.StringIO()
-    uuFile.write(log)
-    uuFile.seek(0)
-    gzFile = cStringIO.StringIO()
-    uu.decode(uuFile, gzFile)
-    gzFile.seek(0)
-
-    # Decompress with gzip
-    f = gzip.GzipFile(fileobj = gzFile)
-    log = f.read()
-    f.close()
-
-    return log
+    return log.decode('bz2')
 
