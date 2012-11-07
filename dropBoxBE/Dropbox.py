@@ -37,10 +37,6 @@ class Dropbox(object) :
 
         self.sortedFileList = []
 
-        self.statUpdater = StatusUpdater.StatusUpdater( self.config )
-
-        
-
         self.runChk = { }
 
         # counters:
@@ -419,6 +415,9 @@ class Dropbox(object) :
                       }
 
     def processAllFiles(self) :
+
+        # Recreate the statUpdater to get a new timestamp for the runLog table
+        self.statUpdater = StatusUpdater.StatusUpdater( self.config )
 
         # Recreate the logger to backup the previous file and start fresh a new file
         logFileName = os.path.join( self.logDir, self.config.detector+self.config.label+'.log' )
