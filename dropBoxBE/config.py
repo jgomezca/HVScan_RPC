@@ -102,6 +102,7 @@ class test( BaseConfig ) :
         self.destinationDB = "oracle://cms_orcoff_prep/CMS_COND_DROPBOX"
 
         # will be pointing to the location where the tester is keeping his test_dropbox key
+        # should become obsolete with new authentication
         self.authpath = '/afs/cern.ch/cms/DB/conddb/test/dropbox'
 
         # this is the URL for the dropBox frontend service, for testing/developing use the current host:
@@ -125,35 +126,9 @@ class test( BaseConfig ) :
         self.debug = True
 
 
-class replay( BaseConfig ) :
+class replay( test ) :
     def __init__(self) :
 
         super(replay, self).__init__()
 
-        self.maindir = os.path.abspath( os.path.join( os.getcwd(), '..', 'NewOfflineDropBoxBaseDir') )
-
-        self.destinationDB = "oracle://cms_orcoff_prep/CMS_COND_DROPBOX"
-
-        # should become obsolete with new authentication
-        self.authpath = '/afs/cern.ch/cms/DB/conddb/test/dropbox' # ADG'
-
-        # this is the URL for the dropBox frontend service, for testing/developing use the current host:
-        #self.baseUrl = 'https://%s/dropBox/' % (socket.gethostname(),)
-        self.baseUrl = 'https://%s:8095/dropBox/' %(socket.gethostname(),)
-
-        # be quicker in tests
-        self.delay = 10
-
-        #  used for sync to express and hlt
-        self.runInfoDbName = "oracle://cms_orcon_adg/CMS_COND_31X_RUN_INFO"  # ... in online (and cms_orcon_adg in offline)
-        self.runInfotag = "runinfo_start_31X_hlt"
-
-        # this will later go into the main DB:
-        self.logdb = 'sqlite_file:/tmp/TestOfflineDropBoxJobLog.db'
-
-        self.gtDbName = "oracle://cms_orcon_adg/CMS_COND_31X_GLOBALTAG"
-        self.gtTags = {'hlt' : 'GR10_H_V5', 'express' : 'GR10_E_V5',
-                       'prompt' : 'GR10_P_V5'} #-ap: get this from gtList (if we can)
-
-        self.debug = True
 
