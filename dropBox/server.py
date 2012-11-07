@@ -147,8 +147,7 @@ class DropBox(object):
         logging.debug('='*80)
         # Check that the parameter is a file
         if not hasattr(uploadedFile, 'file') or not hasattr(uploadedFile, 'filename'):
-            # 400 Bad Request
-            raise cherrypy.HTTPError(400, 'The parameter must be an uploaded file.')
+            raise dropBox.DropBoxError('The parameter must be an uploaded file.')
 
         logging.debug('server::uploadFile(%s, %s)', uploadedFile.filename, backend)
 

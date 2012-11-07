@@ -58,10 +58,13 @@ class DropBoxTest(service.TestCase):
 
     def testNotAFile(self):
         self.signIn()
-        self.assertRaisesHTTPError(400, 'uploadFile', {
-            'uploadedFile': 'asd',
-            'backend': 'private',
-        })
+        self.assertRaisesHTTPErrorMessage(400,
+            'The parameter must be an uploaded file.',
+            'uploadFile', {
+                'uploadedFile': 'asd',
+                'backend': 'private',
+            }
+        )
         self.signOut()
 
 
