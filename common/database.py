@@ -67,6 +67,15 @@ def convertFromOracle(data):
     return data
 
 
+class BLOB(str):
+    '''A BLOB: any string that needs to be stored in a BLOB column
+    must be wrapped with this class.
+    '''
+
+    def __new__(cls, *args, **kwargs):
+        return str.__new__(cls, *args, **kwargs)
+
+
 class Connection(object):
 
     def __init__(self, connectionDictionary):
@@ -84,7 +93,25 @@ class Connection(object):
 
 
     def execute(self, cursor, query, parameters = ()):
-        logging.debug('%s: Database Query: %s Params: %s', self, query, parameters)
+        if logging.getLogger().isEnabledFor(logging.DEBUG):
+            printParameters = []
+            for parameter in parameters:
+                if isinstance(parameter, BLOB):
+                    printParameters.append('BLOB %s [len]' % len(parameter))
+                else:
+                    printParameters.append(parameter)
+            logging.debug('%s: Database Query: %s Params: %s', self, query, printParameters)
+
+        inputSizes = []
+        for parameter in parameters:
+            if isinstance(parameter, BLOB):
+                inputSizes.append(cx_Oracle.BLOB)
+            else:
+                inputSizes.append(None)
+
+        if cx_Oracle.BLOB in inputSizes:
+            cursor.setinputsizes(*inputSizes)
+
         cursor.execute(query, parameters)
 
 
