@@ -14,7 +14,7 @@ import subprocess
 
 
 frontendHost = socket.gethostname()
-frontendBaseUrl = 'https://%s:8095/dropBox/' % frontendHost
+frontendUrlTemplate = 'https://%s:8095/dropBox/'
 
 
 class UploadError(Exception):
@@ -26,7 +26,7 @@ def upload(fileName, backend):
     '''Uploads a file to the frontend.
     '''
 
-    process = subprocess.Popen('../dropBox/upload.py -b %s -H %s %s' % (frontendHost, backend, fileName), shell=True, stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    process = subprocess.Popen('../dropBox/upload.py -b %s -H %s -u %s %s' % (backend, frontendHost, frontendUrlTemplate, fileName), shell=True, stdout=subprocess.PIPE,stderr=subprocess.PIPE)
     result = process.communicate()
     returnCode = process.returncode
 

@@ -14,10 +14,11 @@ __maintainer__ = 'Miguel Ojeda'
 __email__ = 'mojedasa@cern.ch'
 
 
-import os
 import logging
 import tarfile
 import json
+import cStringIO
+import tempfile
 import sqlite3
 
 import typeMatch
@@ -28,20 +29,6 @@ import dropBox
 import conditionDatabase
 import conditionError
 import globalTagHandler
-
-
-def getExtractedFilePath(fileHash):
-    '''Returns the path of the given extracted file.
-    '''
-
-    return os.path.join(config.extractedFilesPath, fileHash)
-
-
-def getFilePathInExtractedFile(fileHash, filename):
-    '''Returns the path of a file inside the given extracted file.
-    '''
-
-    return os.path.join(getExtractedFilePath(fileHash), filename)
 
 
 dataFilename = 'data.db'
@@ -70,16 +57,16 @@ def checkSynchronization(synchronizeTo, destinationDatabase, tag, gtHandle, prod
     raise dropBox.DropBoxError('The synchronization "%s" for tag "%s" in database "%s" provided in the metadata does not match the one in the global tag for workflow "%s".' % (synchronizeTo, tag, destinationDatabase, workflow))
 
 
-def checkContents(fileHash, data, metadata):
+def checkContents(fileHash, dataPath, metadata):
     '''Checks whether the data and metadata are correct.
 
     data is the filename of the sqlite file.
     metadata is a string with the metadata file itself.
     '''
 
-    logging.debug('check::checkContents(%s, %s, %s)', fileHash, data, repr(metadata))
+    logging.debug('check::checkContents(%s, %s, %s)', fileHash, dataPath, repr(metadata))
 
-    logging.info('checkContents(): %s: Checking metadata...', fileHash)
+    logging.info('checkContents(): %s: Checking metadata structure...', fileHash)
 
     workflows = (u'offline', u'hlt', u'express', u'prompt', u'pcl')
 
@@ -104,7 +91,9 @@ def checkContents(fileHash, data, metadata):
     except typeMatch.MatchError as e:
         raise dropBox.DropBoxError('In the metadata, ' + str(e))
 
-    db = conditionDatabase.ConditionDBChecker('sqlite_file:%s' % data, '')
+    logging.info('checkContents(): %s: Checking data with respect to metadata...', fileHash)
+
+    db = conditionDatabase.ConditionDBChecker('sqlite_file:%s' % dataPath, '')
 
     try:
         # Corrupted file
@@ -169,60 +158,63 @@ def checkContents(fileHash, data, metadata):
         db.close()
 
 
-def checkFile(filename):
+def checkFile(fileHash, fileContent):
     '''Checks that a tar file and its contents are correct.
 
     Called from the dropBox to check a file after it was received correctly.
     The received file is guaranteed to be already checksummed.
     '''
 
-    logging.debug('check::checkFile(%s)', filename)
-
-    fileHash = os.path.basename(filename)
+    logging.debug('check::checkFile(%s, %s [len])', fileHash, len(fileContent))
 
     logging.info('checkFile(): %s: Checking whether the file is a valid tar file...', fileHash)
+    fileObject = cStringIO.StringIO()
+    fileObject.write(fileContent)
+    fileObject.seek(0)
     try:
-        tarFile = tarfile.open(filename, 'r:bz2')
+        tarFile = tarfile.open(fileHash, 'r:bz2', fileobj = fileObject)
     except tarfile.TarError as e:
         raise dropBox.DropBoxError('The file is not a valid tar file.')
 
-    try:
-        logging.info('checkFile(): %s: Checking whether the tar file contains the and only the expected file names...', fileHash)
-        if tarFile.getnames() != [dataFilename, metadataFilename]:
-            raise dropBox.DropBoxError('The file tar file does not contain the and only the expected file names.')
+    with tempfile.NamedTemporaryFile() as temporaryDataFile:
+        try:
+            logging.info('checkFile(): %s: Checking whether the tar file contains the and only the expected file names...', fileHash)
+            if tarFile.getnames() != [dataFilename, metadataFilename]:
+                raise dropBox.DropBoxError('The file tar file does not contain the and only the expected file names.')
 
-        logging.info('checkFile(): %s: Checking whether each file has the expected attributes...', fileHash)
-        for tarInfo in tarFile.getmembers():
-            if tarInfo.mode != 0400 \
-                or tarInfo.uid != 0 \
-                or tarInfo.gid != 0 \
-                or tarInfo.mtime != 0 \
-                or tarInfo.uname != 'root' \
-                or tarInfo.gname != 'root':
-                raise dropBox.DropBoxError('The file %s has unexpected attributes.' % tarInfo.name)
+            logging.info('checkFile(): %s: Checking whether each file has the expected attributes...', fileHash)
+            for tarInfo in tarFile.getmembers():
+                if tarInfo.mode != 0400 \
+                    or tarInfo.uid != 0 \
+                    or tarInfo.gid != 0 \
+                    or tarInfo.mtime != 0 \
+                    or tarInfo.uname != 'root' \
+                    or tarInfo.gname != 'root':
+                    raise dropBox.DropBoxError('The file %s has unexpected attributes.' % tarInfo.name)
 
-        logging.info('checkFile(): %s: Extracting files...', fileHash)
-        extractedFolderPath = getExtractedFilePath(fileHash)
-        tarFile.extractall(extractedFolderPath)
-    finally:
-        tarFile.close()
+            logging.info('checkFile(): %s: Extracting metadata in memory...', fileHash)
+            metadata = tarFile.extractfile(metadataFilename).read()
 
-    try:
-        dataPath = getFilePathInExtractedFile(fileHash, dataFilename)
-        metadataPath = getFilePathInExtractedFile(fileHash, metadataFilename)
+            logging.info('checkFile(): %s: Extracting data in file %s...', fileHash, temporaryDataFile.name)
+            temporaryDataFile.write(tarFile.extractfile(dataFilename).read())
+            temporaryDataFile.flush()
+            # We do not need os.fsync(temporaryDataFile.fileno()) since
+            # we do not care if the file is in the disk or not if we lose it,
+            # it is a temporary file. Avoiding the fsync() will perform better.
+            # However, we do need flush(), otherwise some files will fail
+            # (e.g. small files that do not fill the buffer).
+        finally:
+            tarFile.close()
 
         try:
-            logging.info('checkFile(): %s: Reading metadata...', fileHash)
-            with open(metadataPath, 'rb') as f:
-                metadata = json.load(f)
+            logging.info('checkFile(): %s: Parsing JSON metadata...', fileHash)
+            metadata = json.loads(metadata)
         except ValueError:
             raise dropBox.DropBoxError('The metadata is not valid JSON.')
-        except Exception as e:
-            raise dropBox.DropBoxError('The metadata could not be read.')
 
         try:
-            logging.info('checkFile(): %s: Opening connection to data...', fileHash)
-            dataConnection = sqlite3.connect(dataPath)
+            logging.info('checkFile(): %s: Checking the data is a valid SQLite 3 database...', fileHash)
+            dataConnection = sqlite3.connect(temporaryDataFile.name)
             dataConnection.execute('select 1 from sqlite_master')
         except sqlite3.DatabaseError as e:
             raise dropBox.DropBoxError('The data is not a valid SQLite 3 database.')
@@ -231,12 +223,11 @@ def checkFile(filename):
         finally:
             dataConnection.close()
 
-        logging.info('checkFile(): %s: Checking content of the files...', fileHash)
-        checkContents(fileHash, dataPath, metadata)
-    finally:
-        logging.info('checkFile(): %s: Removing extracted files...', fileHash)
-        os.unlink(dataPath)
-        os.unlink(metadataPath)
-        os.rmdir(extractedFolderPath)
+        checkContents(fileHash, temporaryDataFile.name, metadata)
+
     logging.info('checkFile(): %s: Checking of the file was successful.', fileHash)
+
+    # To avoid uncompressing again the metadata again in dropBox.py
+    # (for uploading it to the database), we return it.
+    return metadata
 

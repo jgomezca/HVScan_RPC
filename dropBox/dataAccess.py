@@ -1,7 +1,4 @@
-'''Offline new dropBox's database-based log for the status of files and runs.
-
-In this file, only the functionality related to logging the status
-for the dropBox should be implemented.
+'''New dropBox's database access for the files, their logs and run logs.
 '''
 
 __author__ = 'Miguel Ojeda'
@@ -22,12 +19,64 @@ else:
     connection = database.Connection(service.secrets['connections']['dev'])
 
 
-def insertFileLog(fileHash, statusCode, username):
+def insertFile(fileHash, state, backend, username, fileContent):
+    connection.commit('''
+        insert into files
+        (fileHash, state, backend, username, fileContent)
+        values (:s, :s, :s, :s, :s)
+    ''', (fileHash, state, backend, username, database.BLOB(fileContent)))
+
+
+def getFileState(fileHash):
+    result = connection.fetch('''
+        select state
+        from files
+        where fileHash = :s
+    ''', (fileHash, ))
+
+    # File does not exist
+    if result == []:
+        return None
+
+    return result[0][0]
+
+
+def updateFileState(fileHash, state):
+    connection.commit('''
+        update files
+        set state = :s
+        where fileHash = :s
+    ''', (state, fileHash))
+
+
+def getPendingFiles(backend):
+    result = connection.fetch('''
+        select fileHash
+        from files
+        where state = 'Pending'
+            and backend = :s
+    ''', (backend, ))
+
+    if result == []:
+        return []
+
+    return zip(*result)[0]
+
+
+def getFileContent(fileHash):
+    return connection.fetch('''
+        select fileContent
+        from files
+        where fileHash = :s
+    ''', (fileHash, ))[0][0]
+
+
+def insertFileLog(fileHash, statusCode, metadata, userText):
     connection.commit('''
         insert into fileLog
-        (fileHash, statusCode, username)
-        values (:s, :s, :s)
-    ''', (fileHash, statusCode, username))
+        (fileHash, statusCode, metadata, userText)
+        values (:s, :s, :s, :s)
+    ''', (fileHash, statusCode, metadata, userText))
 
 
 def updateFileLogStatus(fileHash, statusCode):
@@ -43,7 +92,7 @@ def updateFileLogLog(fileHash, log, runLogCreationTimestamp):
         update fileLog
         set log = :s, runLogCreationTimestamp = to_timestamp(:s, 'YYYY-MM-DD HH24:MI:SS,FF3')
         where fileHash = :s
-    ''', (log, runLogCreationTimestamp, fileHash))
+    ''', (database.BLOB(log), runLogCreationTimestamp, fileHash))
 
 
 def insertOrUpdateRunLog(creationTimestamp, statusCode):
@@ -75,7 +124,7 @@ def updateRunLogInfo(creationTimestamp, downloadLog, globalLog):
         update runLog
         set downloadLog = :s, globalLog = :s
         where creationTimestamp = to_timestamp(:s, 'YYYY-MM-DD HH24:MI:SS,FF3')
-    ''', (downloadLog, globalLog, creationTimestamp))
+    ''', (database.BLOB(downloadLog), database.BLOB(globalLog), creationTimestamp))
 
 
 # For testing (test.py)
@@ -146,5 +195,8 @@ def cleanUp():
     ''')
     connection.commit('''
         delete from runLog
+    ''')
+    connection.commit('''
+        delete from files
     ''')
 

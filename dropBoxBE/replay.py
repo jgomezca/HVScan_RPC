@@ -133,7 +133,7 @@ def main():
     # Ask the frontend to clean up the files and database
     (username, account, password) = netrc.netrc().authenticators('newOffDb')
     frontendHttp = http.HTTP()
-    frontendHttp.setBaseUrl(doUpload.frontendBaseUrl)
+    frontendHttp.setBaseUrl(doUpload.frontendUrlTemplate % doUpload.frontendHost)
 
     logging.info('Signing in the frontend...')
     frontendHttp.query('signIn', {

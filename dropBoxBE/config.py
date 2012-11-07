@@ -35,6 +35,8 @@ class online( BaseConfig ) :
 
         super( online, self ).__init__( )
 
+        self.backend = 'online'
+
         self.maindir = '/nfshome0/popcondev/'
         self.detector = 'Test' # was PopCon
         self.label = 'DropBox'
@@ -67,6 +69,8 @@ class offline( BaseConfig ) :
 
         super(offline, self).__init__()
 
+        self.backend = 'offline'
+
         self.maindir = '/home/condbdev/'
         self.detector = 'Test'
         self.label = 'DropBox'
@@ -95,6 +99,8 @@ class test( BaseConfig ) :
     def __init__(self) :
 
         super(test, self).__init__()
+
+        self.backend = 'private'
 
         self.maindir = os.path.abspath( os.path.join( os.getcwd(), '..', 'NewOfflineDropBoxBaseDir') )
 

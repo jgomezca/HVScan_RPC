@@ -20,6 +20,8 @@ class FileDownloader( object ) :
 
         self.baseUrl = cfg.baseUrl
 
+        self.backend = cfg.backend
+
         self.logger = TeeFile.TeeFile( os.path.join(self.baseDir, 'logs', 'Downloader.log'), os.path.join( self.baseDir, 'logs' ), 'downloader')
         self.logger.info('Downloader starting ... ')
         self.logger.info( "baseDir = %s " % (self.baseDir, ) )
@@ -154,7 +156,7 @@ class FileDownloader( object ) :
         fileListUrl = self.baseUrl + 'getFileList'
         self.logger.info( "Retrieving file list from: " + fileListUrl )
         try :
-            jsonlist = self.curl.get( fileListUrl )
+            jsonlist = self.curl.get( fileListUrl, [('backend', self.backend)] )
             return jsonlist
         except Exception, e:
             self.logger.error("could not read file list, got: %s " % (str(e), ) )

@@ -17,6 +17,7 @@ import netrc
 import hashlib
 import subprocess
 import logging
+import tempfile
 
 import service
 
@@ -65,6 +66,22 @@ class DropBoxTest(service.TestCase):
                 'backend': 'private',
             }
         )
+        self.signOut()
+
+
+    def testInvalidBackend(self):
+        self.signIn()
+        with tempfile.NamedTemporaryFile() as f:
+            f.write('asd')
+            f.seek(0)
+            self.assertRaisesHTTPErrorMessage(400,
+                "The given backend private2 is not in the allowed ones for this server: set(['private']).",
+                'uploadFile', {
+                    'backend': 'private2',
+                }, files = {
+                    'uploadedFile': f.name,
+                }
+            )
         self.signOut()
 
 

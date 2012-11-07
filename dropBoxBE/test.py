@@ -26,9 +26,12 @@ import service
 import config
 import Dropbox
 import Constants
-import databaseLog
+import dataAccess
 import logPack
 import doUpload
+
+
+# FIXME: Fix the testcases after the replay.py works
 
 
 class DropBoxBETest(service.TestCase):
@@ -43,18 +46,18 @@ class DropBoxBETest(service.TestCase):
         for test in tests :
             i += 1
             logging.info( '%s   [%s/%s] %s: Uploading...', loggingPrefix, i, len( tests ), os.path.basename( test ) )
-            doUpload.upload(test)
+            doUpload.upload(test, 'private')
 
 
     def testRun(self):
         tstConfig = config.test()
 
         # override baseUrl to use private VM
-        tstConfig.baseUrl = doUpload.frontendBaseUrl
+        tstConfig.baseUrl = doUpload.frontendUrlTemplate % doUpload.frontendHost
 
         (username, account, password) = netrc.netrc().authenticators('newOffDb')
         frontendHttp = http.HTTP()
-        frontendHttp.setBaseUrl(doUpload.frontendBaseUrl)
+        frontendHttp.setBaseUrl(tstConfig.baseUrl)
 
         folders = os.listdir( 'testFiles' )
 
@@ -80,7 +83,7 @@ class DropBoxBETest(service.TestCase):
 
             # Wait until the dropBox has nothing to do
             logging.info( '%s Waiting for backend to be idle...', loggingPrefix)
-            while databaseLog.getLatestRunLogStatusCode() != Constants.NOTHING_TO_DO:
+            while dataAccess.getLatestRunLogStatusCode() != Constants.NOTHING_TO_DO:
                 time.sleep(2)
 
             # When we reach this point, the server will always report an empty
@@ -105,7 +108,7 @@ class DropBoxBETest(service.TestCase):
             # a finished status code
             logging.info('%s Waiting for backend to process files...', loggingPrefix)
             while True:
-                statusCode = databaseLog.getLatestRunLogStatusCode()
+                statusCode = dataAccess.getLatestRunLogStatusCode()
 
                 if statusCode in frozenset([Constants.DONE_WITH_ERRORS, Constants.DONE_ALL_OK]):
                     break
@@ -118,7 +121,7 @@ class DropBoxBETest(service.TestCase):
                 self.assertEqual(statusCode, getattr(Constants, f.read().strip()))
 
             # Then compare the runLog's logs
-            (creationTimestamp, downloadLog, globalLog) = databaseLog.getLatestRunLogInfo()
+            (creationTimestamp, downloadLog, globalLog) = dataAccess.getLatestRunLogInfo()
 
             downloadLog = logPack.unpack(downloadLog)
             globalLog = logPack.unpack(globalLog)
@@ -147,7 +150,7 @@ class DropBoxBETest(service.TestCase):
                 with open('%s.fileHash' % test, 'rb') as f:
                     fileHash = f.read().strip()
 
-                (fileStatusCode, fileLog, runLogCreationTimestamp) = databaseLog.getFileLogInfo(fileHash)
+                (fileStatusCode, fileLog, runLogCreationTimestamp) = dataAccess.getFileLogInfo(fileHash)
 
                 # Compare the foreign key
                 self.assertEqual(creationTimestamp, runLogCreationTimestamp)

@@ -14,28 +14,12 @@ import os
 
 group = 'cms-cond-dropbox'
 
-# Note: At the moment, all the paths should be in the same filesystem.
-# FIXME: Put the paths in /data/files/service/... (and create the paths
-#        automatically in deploy.py, if we do not use AFS or Oracle for
-#        the production version.
-
-# Base path for stored files
-filesPath = 'files'
-
-# Files just uploaded to the dropbox that are being checked
-uploadedFilesPath = os.path.join(filesPath, 'uploaded')
-
-# Files just extracted that are being checked
-extractedFilesPath = os.path.join(filesPath, 'extracted')
-
-# Files pending to be pulled from online
-pendingFilesPath = os.path.join(filesPath, 'pending')
-
-# Files that were acknowledged by online, kept for reference for some time
-acknowledgedFilesPath = os.path.join(filesPath, 'acknowledged')
-
-# Files that were malformed, kept for reference for some time
-badFilesPath = os.path.join(filesPath, 'bad')
+allowedBackends = {
+    'private': set(['private']),
+    'dev': set(['offline']),
+    'int': set(['online', 'tier0', 'offline']),
+    'pro': set(['online', 'tier0', 'offline']),
+}
 
 # Default dictionary for production Global Tags
 productionGlobalTags = {

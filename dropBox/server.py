@@ -145,11 +145,17 @@ class DropBox(object):
         '''
 
         logging.debug('='*80)
+
         # Check that the parameter is a file
         if not hasattr(uploadedFile, 'file') or not hasattr(uploadedFile, 'filename'):
             raise dropBox.DropBoxError('The parameter must be an uploaded file.')
 
         logging.debug('server::uploadFile(%s, %s)', uploadedFile.filename, backend)
+
+        logging.info('server::uploadFile(): Checking whether the backend is allowed...')
+        allowedBackends = config.allowedBackends[service.settings['productionLevel']]
+        if backend not in allowedBackends:
+            raise dropBox.DropBoxError('The given backend %s is not in the allowed ones for this server: %s.' % (backend, allowedBackends))
 
         dropBox.uploadFile(uploadedFile.filename, uploadedFile.file.read(), getUsername(), backend)
 
@@ -185,7 +191,7 @@ class DropBox(object):
 
         logging.debug('server::getFile(%s)', fileHash)
 
-        return cherrypy.lib.static.serve_file(os.path.abspath(dropBox.getFile(fileHash)), 'application/x-download', 'attachment')
+        return cherrypy.lib.static.serve_fileobj(dropBox.getFile(fileHash), 'application/x-download', 'attachment')
 
 
     @checkSignedInOnline
@@ -223,9 +229,9 @@ class DropBox(object):
         Called from online, after processing a file.
         '''
 
-        logging.debug('server::updateFileLog(%s, %s, %s)', fileHash, log, runLogCreationTimestamp)
+        logging.debug('server::updateFileLog(%s, %s [len], %s)', fileHash, len(log), runLogCreationTimestamp)
 
-        dropBox.updateFileLog(fileHash, log, runLogCreationTimestamp)
+        dropBox.updateFileLog(fileHash, log.decode('base64'), runLogCreationTimestamp)
 
 
     @checkSignedInOnline
@@ -262,9 +268,9 @@ class DropBox(object):
         Called from online, after processing zero or more files.
         '''
 
-        logging.debug('server::updateRunLog(%s, %s, %s)', creationTimestamp, downloadLog, globalLog)
+        logging.debug('server::updateRunLog(%s, %s [len], %s [len])', creationTimestamp, len(downloadLog), len(globalLog))
 
-        dropBox.updateRunLog(creationTimestamp, downloadLog, globalLog)
+        dropBox.updateRunLog(creationTimestamp, downloadLog.decode('base64'), globalLog.decode('base64'))
 
 
     @service.onlyPrivate

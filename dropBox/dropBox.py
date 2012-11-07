@@ -15,16 +15,15 @@ __email__ = 'mojedasa@cern.ch'
 
 
 import re
-import os
-import glob
-import shutil
 import logging
 import hashlib
+import cStringIO
+import json
 
 import cx_Oracle
 
 import config
-import databaseLog
+import dataAccess
 
 
 # Global variables used only for tuning behaviour while testing
@@ -39,34 +38,6 @@ class DropBoxError(Exception):
 
 
 import check
-
-
-def getUploadedFilePath(fileHash):
-    '''Returns the path of the given uploaded file.
-    '''
-
-    return os.path.join(config.uploadedFilesPath, fileHash)
-
-
-def getPendingFilePath(fileHash):
-    '''Returns the path of the given pending file.
-    '''
-
-    return os.path.join(config.pendingFilesPath, fileHash)
-
-
-def getAcknowledgedFilePath(fileHash):
-    '''Returns the path of the given acknowledged file.
-    '''
-
-    return os.path.join(config.acknowledgedFilesPath, fileHash)
-
-
-def getBadFilePath(fileHash):
-    '''Returns the path of the given bad file.
-    '''
-
-    return os.path.join(config.badFilesPath, fileHash)
 
 
 def getHash(data):
@@ -91,7 +62,7 @@ def checkPendingFile(fileHash):
     '''Checks whether a pending file exists.
     '''
 
-    if not os.path.exists(getPendingFilePath(fileHash)):
+    if dataAccess.getFileState(fileHash) != 'Pending':
         raise DropBoxError('The pending file %s does not exist.' % fileHash)
 
 
@@ -99,10 +70,23 @@ def failUpload(fileHash):
     '''Fails an upload moving it to the bad folder.
     '''
 
-    logging.info('uploadFile(): %s: Moving file to the bad folder...', fileHash)
-    os.rename(getUploadedFilePath(fileHash), getBadFilePath(fileHash))
+    logging.info('uploadFile(): %s: Updating state of the file to Bad...', fileHash)
+    dataAccess.updateFileState(fileHash, 'Bad')
 
     logging.info('uploadFile(): %s: The upload failed.', fileHash)
+
+
+def dumpJson(data, maxSize = 4000):
+    '''Returns the JSON representation of the data if it fits in the maxSize
+    in bytes. If not, it returns None (i.e. a NULL in the database).
+    '''
+
+    data = json.dumps(data)
+
+    if len(data) > maxSize:
+        return None
+
+    return data
 
 
 def uploadFile(fileHash, fileContent, username, backend):
@@ -120,45 +104,43 @@ def uploadFile(fileHash, fileContent, username, backend):
         raise DropBoxError('The given file hash %s does not match with the file content hash %s.' % (fileHash, fileContentHash))
 
     logging.info('uploadFile(): %s: Checking whether the file already exists...', fileHash)
+    state = dataAccess.getFileState(fileHash)
 
-    if os.path.exists(getUploadedFilePath(fileHash)):
+    if state == 'Uploaded':
         raise DropBoxError('The uploaded file with hash %s already exists in the Uploaded files (i.e. not yet processed). This probably means that you sent the same request twice in a short time.' % fileHash)
 
-    if os.path.exists(getPendingFilePath(fileHash)):
+    if state == 'Pending':
         raise DropBoxError('The uploaded file with hash %s already exists in the Pending files (i.e. files that are waiting to be pulled by online that were already checked). This probably means that you sent the same request twice in a short time.' % fileHash)
 
-    if os.path.exists(getAcknowledgedFilePath(fileHash)):
+    if state == 'Acknowledged':
         raise DropBoxError('The uploaded file with hash %s already exists in the Acknowledged files (i.e. files that were already pulled by online not too long ago -- we do not keep all of them forever). This probably means that you sent the same request twice after some time.' % fileHash)
 
-    if os.path.exists(getBadFilePath(fileHash)):
+    if state == 'Bad':
         raise DropBoxError('The uploaded file with hash %s already exists in the Bad files (i.e. files that were wrong for some reason). Therefore this file will be skipped since the results of the checks should be the same again (i.e. wrong).' % fileHash)
 
-    logging.info('uploadFile(): %s: Writing, flushing and fsyncing the uploaded file...', fileHash)
-    with open(getUploadedFilePath(fileHash), 'wb') as f:
-        f.write(fileContent)
-        f.flush()
-        os.fsync(f.fileno())
-
-    logging.info('uploadFile(): %s: Checking whether the uploaded file exists...', fileHash)
-    if not os.path.exists(getUploadedFilePath(fileHash)):
-        raise DropBoxError('The uploaded file %s does not exist.' % fileHash)
+    logging.info('uploadFile(): %s: Saving the uploaded file in the database...', fileHash)
+    dataAccess.insertFile(fileHash, 'Uploaded', backend, username, fileContent)
 
     logging.info('uploadFile(): %s: Checking the contents of the file...', fileHash)
     try:
-        check.checkFile(getUploadedFilePath(fileHash))
+        metadata = check.checkFile(fileHash, fileContent)
     except DropBoxError as e:
         failUpload(fileHash)
         raise e
 
-    logging.info('uploadFile(): %s: Inserting entry with username %s in the fileLog...', fileHash, username)
+    # Divide the metadata in the userText and the real metadata
+    userText = metadata['userText']
+    metadata['userText'] = ''
+
+    logging.info('uploadFile(): %s: Inserting entry in the fileLog...', fileHash)
     try:
-        databaseLog.insertFileLog(fileHash, 100, username)
+        dataAccess.insertFileLog(fileHash, 100, dumpJson(metadata), dumpJson(userText))
     except cx_Oracle.IntegrityError:
         failUpload(fileHash)
         raise DropBoxError('The uploaded file %s was already requested in the database.' % fileHash)
 
-    logging.info('uploadFile(): %s: Moving file to pending folder...', fileHash)
-    os.rename(getUploadedFilePath(fileHash), getPendingFilePath(fileHash))
+    logging.info('uploadFile(): %s: Updating state of the file to Pending...', fileHash)
+    dataAccess.updateFileState(fileHash, 'Pending')
 
     logging.info('uploadFile(): %s: The upload was successful.', fileHash)
 
@@ -180,10 +162,9 @@ def getFileList(backend):
         logging.debug('getFileList(): Holding files, i.e. returning empty list...')
         return []
 
-    fileList = os.listdir(config.pendingFilesPath)
-    fileList.remove('.gitignore')
+    fileList = dataAccess.getPendingFiles(backend)
 
-    logging.debug('getFileList(): found %i files : %s' % (len(fileList), ','.join(fileList)) )
+    logging.debug('getFileList(): Found %i files: %s' % (len(fileList), ','.join(fileList)))
 
     return fileList
 
@@ -206,8 +187,13 @@ def getFile(fileHash):
     logging.info('getFile(): %s: Checking whether the pending file exists...', fileHash)
     checkPendingFile(fileHash)
 
+    logging.info('getFile(): %s: Downloading file from database...', fileHash)
+    fileObject = cStringIO.StringIO()
+    fileObject.write(dataAccess.getFileContent(fileHash))
+    fileObject.seek(0)
+
     logging.info('getFile(): %s: Serving file...', fileHash)
-    return getPendingFilePath(fileHash)
+    return fileObject
 
 
 def acknowledgeFile(fileHash):
@@ -224,12 +210,8 @@ def acknowledgeFile(fileHash):
     logging.info('acknowledgeFile(): %s: Checking whether the pending file exists...', fileHash)
     checkPendingFile(fileHash)
 
-    logging.info('acknowledgeFile(): %s: Moving file to acknowledge folder...', fileHash)
-    os.rename(getPendingFilePath(fileHash), getAcknowledgedFilePath(fileHash))
-
-    logging.info('acknowledgeFile(): %s: Checking whether the acknowledged file exists...', fileHash)
-    if not os.path.exists(getAcknowledgedFilePath(fileHash)):
-        raise DropBoxError('The acknowledged file %s does not exist.' % fileHash)
+    logging.info('acknowledgeFile(): %s: Updating state of the file to Acknowledged...', fileHash)
+    dataAccess.updateFileState(fileHash, 'Acknowledged')
 
 
 def updateFileStatus(fileHash, statusCode):
@@ -240,7 +222,7 @@ def updateFileStatus(fileHash, statusCode):
 
     logging.debug('dropBox::updateFileStatus(%s, %s)', fileHash, statusCode)
 
-    databaseLog.updateFileLogStatus(fileHash, statusCode)
+    dataAccess.updateFileLogStatus(fileHash, statusCode)
 
 
 def updateFileLog(fileHash, log, runLogCreationTimestamp):
@@ -250,9 +232,9 @@ def updateFileLog(fileHash, log, runLogCreationTimestamp):
     Called from online, after processing a file.
     '''
 
-    logging.debug('dropBox::updateFileLog(%s, %s, %s)', fileHash, log, runLogCreationTimestamp)
+    logging.debug('dropBox::updateFileLog(%s, %s [len], %s)', fileHash, len(log), runLogCreationTimestamp)
 
-    databaseLog.updateFileLogLog(fileHash, log, runLogCreationTimestamp)
+    dataAccess.updateFileLogLog(fileHash, log, runLogCreationTimestamp)
 
 
 def updateRunStatus(creationTimestamp, statusCode):
@@ -263,7 +245,7 @@ def updateRunStatus(creationTimestamp, statusCode):
 
     logging.debug('dropBox::updateRunStatus(%s, %s)', creationTimestamp, statusCode)
 
-    databaseLog.insertOrUpdateRunLog(creationTimestamp, statusCode)
+    dataAccess.insertOrUpdateRunLog(creationTimestamp, statusCode)
 
 
 def updateRunRuns(creationTimestamp, firstConditionSafeRun, hltRun):
@@ -274,7 +256,7 @@ def updateRunRuns(creationTimestamp, firstConditionSafeRun, hltRun):
 
     logging.debug('dropBox::updateRunRuns(%s, %s, %s)', creationTimestamp, firstConditionSafeRun, hltRun)
 
-    databaseLog.updateRunLogRuns(creationTimestamp, firstConditionSafeRun, hltRun)
+    dataAccess.updateRunLogRuns(creationTimestamp, firstConditionSafeRun, hltRun)
 
 
 def updateRunLog(creationTimestamp, downloadLog, globalLog):
@@ -283,9 +265,9 @@ def updateRunLog(creationTimestamp, downloadLog, globalLog):
     Called from online, after processing zero or more files.
     '''
 
-    logging.debug('dropBox::updateRunLog(%s, %s, %s)', creationTimestamp, downloadLog, globalLog)
+    logging.debug('dropBox::updateRunLog(%s, %s [len], %s [len])', creationTimestamp, len(downloadLog), len(globalLog))
 
-    databaseLog.updateRunLogInfo(creationTimestamp, downloadLog, globalLog)
+    dataAccess.updateRunLogInfo(creationTimestamp, downloadLog, globalLog)
 
 
 def dumpDatabase():
@@ -294,7 +276,7 @@ def dumpDatabase():
 
     logging.debug('dropBox::dumpDatabase()')
 
-    return databaseLog.dumpDatabase()
+    return dataAccess.dumpDatabase()
 
 
 def closeDatabase():
@@ -303,7 +285,7 @@ def closeDatabase():
 
     logging.debug('dropBox::closeDatabase()')
 
-    return databaseLog.close()
+    return dataAccess.close()
 
 
 def cleanUp():
@@ -314,11 +296,7 @@ def cleanUp():
 
     logging.debug('dropBox::cleanUp()')
 
-    for fileName in glob.glob('files/*/*'):
-        logging.debug('Unlinking %s...', fileName)
-        os.unlink(fileName)
-
-    databaseLog.cleanUp()
+    dataAccess.cleanUp()
 
 
 def holdFiles():
@@ -367,65 +345,4 @@ def getRunTimestamp():
     logging.debug('dropBox::getRunTimestamp()')
 
     return _runTimestamp
-
-
-def getOnlineTestFilesList():
-    '''Returns the list of online test files.
-    '''
-
-    return [os.path.basename(x).partition('.out')[0] for x in glob.glob(os.path.join(config.securityTestFilesPath, '*.out'))]
-
-
-def removeOnlineTestFiles():
-    '''Removes the online test files from all folders.
-
-    Only meant for testing.
-
-    Called from online.
-    '''
-
-    logging.debug('dropBox::removeOnlineTestFiles()')
-
-    for fileHash in getOnlineTestFilesList():
-        try:
-            os.unlink(getUploadedFilePath(fileHash))
-            logging.info('Removed %s', getUploadedFilePath(fileHash))
-        except OSError:
-            pass
-
-        try:
-            os.unlink(getPendingFilePath(fileHash))
-            logging.info('Removed %s', getPendingFilePath(fileHash))
-        except OSError:
-            pass
-
-        try:
-            os.unlink(getAcknowledgedFilePath(fileHash))
-            logging.info('Removed %s', getAcknowledgedFilePath(fileHash))
-        except OSError:
-            pass
-
-        try:
-            os.unlink(getBadFilePath(fileHash))
-            logging.info('Removed %s', getBadFilePath(fileHash))
-        except OSError:
-            pass
-
-
-def copyOnlineTestFiles():
-    '''Copies the online test files to the pending folder,
-    bypassing the checking of updateFile().
-
-    Only meant for testing.
-
-    Called from online.
-    '''
-
-    logging.debug('dropBox::copyOnlineTestFiles()')
-
-    removeOnlineTestFiles()
-
-    for fileHash in getOnlineTestFilesList():
-        logging.info('Copying %s to %s', os.path.join(config.securityTestFilesPath, fileHash), getPendingFilePath(fileHash))
-        shutil.copyfile(os.path.join(config.securityTestFilesPath, fileHash), getPendingFilePath(fileHash))
 
