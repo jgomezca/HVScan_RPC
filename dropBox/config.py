@@ -37,6 +37,12 @@ acknowledgedFilesPath = os.path.join(filesPath, 'acknowledged')
 # Files that were malformed, kept for reference for some time
 badFilesPath = os.path.join(filesPath, 'bad')
 
+# Default dictionary for production Global Tags
+productionGlobalTags = {
+    'hlt': 'GR_H_V29',
+    'express': 'GR_E_V31',
+    'prompt': 'GR_P_V42',
+}
 
 # Base path for test files
 testFilesPath = 'testFiles'
@@ -44,7 +50,4 @@ testFilesPath = 'testFiles'
 # Files for security testing, crafted by createSecurityTestFiles.py, treated
 # specially by test.py and used by copyOnlineTestFiles()
 securityTestFilesPath = os.path.join(testFilesPath, 'security')
-
-# Default dictionary for production Global Tags
-productionGlobalTags = {'hlt' : 'GR_H_V29', 'express' : 'GR_E_V31', 'prompt' : 'GR_P_V42' }
 
