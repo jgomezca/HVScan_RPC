@@ -5,7 +5,6 @@
 drop table fileLog;
 drop table runLog;
 drop table files;
-commit;
 
 CREATE TABLE files (
     fileHash VARCHAR2(40 BYTE) NOT NULL,
