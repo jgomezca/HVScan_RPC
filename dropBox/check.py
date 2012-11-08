@@ -143,10 +143,7 @@ def checkContents(fileHash, dataPath, metadata):
             90,
         )
 
-        try:
-            productionGTsDict = gtHandle.getProductionGlobalTags()
-        except conditionError.ConditionError:
-            productionGTsDict = config.productionGlobalTags
+        productionGTsDict = config.productionGlobalTags
 
         for tag, synchronizationDict in metadata['destinationTags'].items():
             checkSynchronization(synchronizationDict['synchronizeTo'], destinationDatabase, tag, gtHandle, productionGTsDict)
