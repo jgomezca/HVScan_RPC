@@ -15,6 +15,7 @@ import logging
 import tarfile
 import netrc
 import subprocess
+import json
 
 import http
 import service
@@ -141,6 +142,9 @@ def calculateOldDropBoxRuns():
 def main():
     dropBoxRuns = calculateOldDropBoxRuns()
 
+    with open('/afs/cern.ch/cms/DB/conddb/test/dropbox/replay/runInfo.json', 'rb') as f:
+        runInfo = json.load(f)
+
     # Ask the frontend to clean up the files and database
     (username, account, password) = netrc.netrc().authenticators('newOffDb')
     frontendHttp = http.HTTP()
@@ -177,7 +181,8 @@ def main():
     i = 0
     for runTimestamp in sorted(dropBoxRuns):
         i += 1
-        logging.info('[%s/%s] %s: Replaying run...', i, len(dropBoxRuns), runTimestamp)
+        (hltRun, fcsRun) = runInfo[runTimestamp.strftime('%Y-%m-%d %H:%M:%S,%f')[:-3]]
+        logging.info('[%s/%s] %s: Replaying run with hltRun %s and fcsRun %s...', i, len(dropBoxRuns), runTimestamp, hltRun, fcsRun)
 
         j = 0
         for fileName in dropBoxRuns[runTimestamp]:
@@ -220,7 +225,7 @@ def main():
                 # it is a real problem with the upload.py script.
                 logging.info('  [%s/%s] %s: Upload error: %s', j, len(dropBoxRuns[runTimestamp]), fileName, str(e))
 
-        dropBoxBE.reprocess(runTimestamp)
+        dropBoxBE.reprocess(runTimestamp, hltRun, fcsRun)
 
         if runTimestamp in truncates:
             for runNumber in truncates[runTimestamp]:

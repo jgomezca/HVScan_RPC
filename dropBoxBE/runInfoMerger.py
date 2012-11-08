@@ -57,8 +57,8 @@ def main():
                 pair = (None, None)
             logging.info('  [%s/%s] %s: %s...', j, len(dropBoxRuns[runTimestamp]), fileName, pair)
 
-            mergedPair[0] = merge(mergedPair[0], pair[0])
-            mergedPair[1] = merge(mergedPair[1], pair[1])
+            mergedPair[0] = max(mergedPair[0], pair[0])
+            mergedPair[1] = max(mergedPair[1], pair[1])
 
         if mergedPair[0] is None and mergedPair[1] is None:
             emptyPairs += 1

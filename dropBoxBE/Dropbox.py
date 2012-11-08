@@ -372,12 +372,8 @@ class Dropbox(object) :
 
     def updateRunInfo(self):
 
-        hltLastRun = None
-        fcsr = None
-        
-        if( self.replayTimestamp == None):
+        if self.replayTimestamp is None:
             self.logger.debug('getting hlt run from runInfo ...')
-            
             hltLastRun = self.runInfoConnection.fetch('''
             select *
             from (
@@ -397,16 +393,12 @@ class Dropbox(object) :
             fcsr = t0DataSvc.getFirstSafeRun()
             self.logger.debug('found firstConditionSafeRun from Tier-0 to be %i ' % (fcsr,) )
 
-        # replay mode 
+        # replay mode
         else:
-            self.logger.debug('getting hlt run from runInfo ...')
-            runD = runData.RunData( service.secrets['runInfo'] )
-            hltLastRun = runD.getHLTSafeRunAtTime( self.replayTimestamp )
-            self.logger.debug('found hlt run from runInfo for timestamp %s to be %i ' % (self.replayTimestamp,hltLastRun,) )
-
-            self.logger.debug('getting firstConditionSafeRun run from Tier-0 ...')
-            fcsr = runD.getPromptRecoSafeRunAtTime( self.replayTimestamp )
-            self.logger.debug('found firstConditionSafeRun from Tier-0 for timestamp %s to be %i ' % (self.replayTimestamp,fcsr,) )
+            hltLastRun = self.replayHltRun
+            fcsr = self.replayFcsRun
+            self.logger.debug('Replaced hltLastRun with fake %s from replay' % hltLastRun)
+            self.logger.debug('Replaced fcsr with fake %s from replay' % fcsr)
 
         self.runChk = {'hlt'     : hltLastRun,
                        'express' : hltLastRun,
@@ -497,8 +489,10 @@ class Dropbox(object) :
         self.logger.info('Errors in contacting server for updates: %d' %(self.updateErrors))
         return True
 
-    def reprocess( self, timestamp ):
+    def reprocess( self, timestamp, hltRun, fcsRun ):
         self.replayTimestamp = timestamp
+        self.replayHltRun = hltRun
+        self.replayFcsRun = fcsRun
         return self.processAllFiles()
 
 

@@ -1,7 +1,7 @@
 import os
 import json
 
-data = json.loads(open('runInfoFromLog.json','rb').read())
+data = json.loads(open('/afs/cern.ch/cms/DB/conddb/test/dropbox/replay/runInfoFromLog.json','rb').read())
 runInfoData = {}
 emptyHltCount  = 0
 emptyPromptCount  = 0
@@ -30,9 +30,13 @@ for filename in data:
             prompt.add(value)
     
     if len(hlt)>1:
-        print filename,hlt
+        print 'HLT',data[filename],filename,hlt
+        hlt = set([max(hlt)])
+        print hlt
     if len(prompt)>1:
-        print filename,prompt
+        print 'PROMPT',data[filename],filename,prompt
+        prompt = set([max(prompt)])
+        print prompt
     if len(hlt)==0:
         hlt.add(None)
         emptyHltCount += 1
