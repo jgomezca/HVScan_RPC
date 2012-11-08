@@ -9,11 +9,17 @@ fileNameCount = 0
 exportCount = 0
 duplicateCount = 0
 fromDuplicate = False
+fromDropBoxRun = False
+dropboxRunCount = 0
 for filename in data:
     hlt = set()
     prompt = set()
     fromDuplicate = False
+    fromDropBoxRun = False
     for (i,t,value) in data[filename]:
+        value = int(value)
+        if i=='dropbox_run':
+            fromDropBoxRun = True
         if i=='export':
             exportCount += 1
         if i=='duplicate':
@@ -28,16 +34,18 @@ for filename in data:
     if len(prompt)>1:
         print filename,prompt
     if len(hlt)==0:
-        hlt.add(1)
+        hlt.add(None)
         emptyHltCount += 1
     if len(prompt)==0:
-        prompt.add(1)
+        prompt.add(None)
         emptyPromptCount += 1
     fileNameCount += 1
     runInfoData[filename] = (hlt.pop(),prompt.pop())
     if fromDuplicate:
         duplicateCount += 1
+    if fromDropBoxRun:
+        dropboxRunCount += 1
 
 with open('runInfoFromLogForReplay.json','wb') as f:
     json.dump(runInfoData,f)
-print 'Files: %d empty hlt: %d empty prompt: %d. From export: %d, from duplicate: %d.' %(fileNameCount,emptyHltCount,emptyPromptCount, exportCount, duplicateCount )
+print 'Files: %d empty hlt: %d empty prompt: %d. From dropbox_run %d, export: %d, from duplicate: %d.' %(fileNameCount,emptyHltCount,emptyPromptCount, dropboxRunCount, exportCount, duplicateCount )
