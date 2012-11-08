@@ -32,8 +32,8 @@ end;
 CREATE TABLE runLog (
     creationTimestamp TIMESTAMP NOT NULL CONSTRAINT ckRunLogCrets CHECK (creationTimestamp > to_date('2012-01-01', 'YYYY-MM-DD')),
     statusCode NUMBER NOT NULL,
-    firstConditionSafeRun NUMBER CONSTRAINT ckFirstConditionSafeRun CHECK (firstConditionSafeRun > 0),
-    hltRun NUMBER CONSTRAINT ckHltRun CHECK (hltRun > 0),
+    firstConditionSafeRun NUMBER CONSTRAINT ckFirstConditionSafeRun CHECK (firstConditionSafeRun >= 0),
+    hltRun NUMBER CONSTRAINT ckHltRun CHECK (hltRun >= 0),
     downloadLog BLOB,
     globalLog BLOB,
     modificationTimestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,

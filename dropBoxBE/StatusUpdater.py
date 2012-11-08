@@ -84,7 +84,12 @@ class StatusUpdater( object ) :
         Updates the status code of a run.
         '''
 
-        logging.info('going to update run numbers for run of "%s" fcsr: %i, hlt: %s' % (self.creationTimeStamp, fcsr, hltRun ))
+        if hltRun is None:
+            hltRun = 0
+        if fcsr is None:
+            fcsr = 0
+
+        logging.info('going to update run numbers for run of "%s" fcsr: %s, hlt: %s' % (self.creationTimeStamp, fcsr, hltRun ))
 
         ret = ''
         ret = self.curler.get( self.baseUrl + 'updateRunRuns',
