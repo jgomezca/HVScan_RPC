@@ -113,7 +113,12 @@ def execute(command, stdin = None):
         raise Exception('Executing %s failed with return code %s: stdout = %s, stderr = %s', repr(command), returnCode, repr(stdout), repr(stderr))
 
 
-def main():
+def calculateOldDropBoxRuns():
+    '''Returns a dictionary mapping an old dropBox run (timestamp) to its files.
+
+    This is used by runInfoMerger.py as well.
+    '''
+
     dropBoxRuns = {}
 
     # Calculate the old dropBox non-empty runs that will be replayed, with their corresponding files
@@ -129,6 +134,12 @@ def main():
         raise Exception('The expected first dropBox run is not the same as the calculated one.')
     if sortedDropBoxRuns[-1] != dropBoxLastRun[0] or dropBoxRuns[dropBoxLastRun[0]] != dropBoxLastRun[1]:
         raise Exception('The expected last dropBox run is not the same as the calculated one.')
+
+    return dropBoxRuns
+
+
+def main():
+    dropBoxRuns = calculateOldDropBoxRuns()
 
     # Ask the frontend to clean up the files and database
     (username, account, password) = netrc.netrc().authenticators('newOffDb')
@@ -164,7 +175,7 @@ def main():
     _fwLoad = conditionDatabase.condDB.FWIncantation()
 
     i = 0
-    for runTimestamp in sortedDropBoxRuns:
+    for runTimestamp in sorted(dropBoxRuns):
         i += 1
         logging.info('[%s/%s] %s: Replaying run...', i, len(dropBoxRuns), runTimestamp)
 
