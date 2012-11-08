@@ -7,6 +7,7 @@ import conditionDatabase
 import config
 
 referenceDBConnStr = "sqlite_file:/afs/cern.ch/cms/DB/conddb/test/dropbox/replay/replayReference.db"
+replayMaster = "sqlite_file:/afs/cern.ch/cms/DB/conddb/test/dropbox/replay/replayMaster.db"
 replayDBConnStr = "oracle://cms_orcoff_prep/CMS_COND_DROPBOX"
 
 
@@ -14,14 +15,16 @@ replayDBConnStr = "oracle://cms_orcoff_prep/CMS_COND_DROPBOX"
 def main():
 
     # The skipped tags are the ones from prep at the moment
-    skippedTags = set([])
+    prepTags = []
 
     with open('replayTags.json', 'rb') as f:
         replayTags = json.load(f)
 
     for destinationDatabase in replayTags:
         if destinationDatabase.startswith('oracle://cms_orcoff_prep/'):
-            skippedTags.update(replayTags[destinationDatabase])
+            for t in replayTags[destinationDatabase]:
+                prepTags.append(str(t))
+                print "WARNING: Tag %s has been targeted to PREP DB in the replay files." %(t)
 
     conf = config.replay()
     _fwLoad = conditionDatabase.condDB.FWIncantation()
@@ -38,7 +41,7 @@ def main():
     replayDB = rdbms.getReadOnlyDB( replayDBConnStr )
     replayDB.startReadOnlyTransaction()
     replayTagList = replayDB.allTags().strip().split()
-    replayTagList = [x for x in replayTagList if x not in skippedTags]
+    #replayTagList = [x for x in replayTagList if x not in skippedTags]
     replayDB.commitTransaction()
     print 'Found %d tags in replay.' %(len(replayTagList)) 
 
@@ -51,14 +54,14 @@ def main():
             missingTags.append( tag )
     for tag in replayTagList:
         if not tag in refTagList:
-            print "ERROR: Replay tag %s has not been found in the reference database." %(tag)
+            if not tag in prepTags:
+                print "ERROR: Replay tag %s has not been found in the reference database." %(tag)
 
     refIov = conditionDatabase.IOVChecker( referenceDB )
     replayIov = conditionDatabase.IOVChecker( replayDB  )
     numberOfErrors = 0
     numberOfComparison = 0
     for tag in refTagList:
-        error = False
         if tag in missingTags:
             continue
         numberOfComparison += 1
@@ -70,29 +73,37 @@ def main():
         print "     Size in ref DB: %d; in replay: %d" %(refSize,replaySize)
         refIovs = refIov.getAllSinceValues()
         replayIovs = replayIov.getAllSinceValues()
-        if not refSize == replaySize:
-            error = True
         if not refIovs == replayIovs:
+            timeType = refIov.timetype()
             error = True
-            #for iov in replayIovs:
-            #    if not iov in refIovs:
-            #       print "     Iov element %s from replay has not been found in the reference." %(iov)
-            #for iov in refIovs:
-            #    if not iov in replayIovs:
-            #       print "     Iov element %s from reference has not been found in the replay." %(iov)
-        if error:
             print '     ERROR: IOV content is different'
             print "     List of different elements:"
             numberOfErrors += 1
+            printElem = False
+            kLowMask = 0XFFFFFFFF
             for i in range(max(refSize,replaySize)):
                 ref = ''
                 rep = ''
                 if i<refSize:
-                    ref = str(refIovs[i])
+                    refElem = refIovs[i]
+                    if str(timeType) == 'lumiid':
+                        lumiBlock = refElem & kLowMask
+                        refElem = refElem >> 32
+                        ref = "%s/%s" %(refElem,lumiBlock)
+                    else:
+                        ref = str(refElem)
                 if i<replaySize:
-                    rep = str(replayIovs[i])
+                    repElem = replayIovs[i]
+                    if str(timeType) == 'lumiid':
+                        lumiBlock = repElem & kLowMask
+                        repElem = repElem >> 32
+                        rep = "%s/%s" %(repElem,lumiBlock)
+                    else:
+                        rep = str(repElem)
                 if not ref == rep:
-                    print '        Elem[%d] ref=%s replay=%s' %(i,ref,rep)
+                    printElem = True
+                if printElem:
+                    print '        Elem[%d] ref=%s     replay=%s' %(i,ref,rep)
         else:
             print '     Comparison OK.'
     print "\n" 
