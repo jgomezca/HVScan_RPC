@@ -240,6 +240,9 @@ class Dropbox(object) :
         syncSince = firstSince
         if syncTarget != 'offline':
             syncValue = self.runChk[syncTarget]
+            if syncValue is None:
+                fileLogger.error('Synchronization to %s failed since syncValue is None.' % syncTarget)
+                return None
             fileLogger.info( 'Synchronizing since value:%d to "%s" with run=%d' % (firstSince, syncTarget, syncValue ) )
             if firstSince < syncValue:
                 syncSince = syncValue
