@@ -334,6 +334,11 @@ class Dropbox(object) :
                 depTags = tagSpec[ 'dependencies' ]
                 for depTag, depSynch in depTags.items():
                     depSince = self.getDestSince( fileHash, depSynch, fileLogger )
+                    if depSince == None:
+                        self.logger.error( 'Could not resolve the dependency since' )
+                        self.updateFileStatus( fileHash, Constants.PROCESSING_FAILURE )
+                        errorInExporting = True
+                        continue
                     msg = 'going to duplicate input tag %s for %s inputSince %s to dest tag(s) %s with destSince %s in %s, user comment: "%s"' % (dTag, depSynch, destSince, depTag, depSince, destDB, comment)
                     self.logger.info( msg )
                     fileLogger.info ( msg )
