@@ -20,12 +20,6 @@ def port(metadata):
     '''Ports metadata into the new format.
     '''
 
-    try:
-        json.loads(metadata)
-        raise Exception('Looks like JSON, i.e. probably already ported to the new format.')
-    except ValueError:
-        pass
-
     # Defaults
     outputMetadata = {
         'userText': '',
