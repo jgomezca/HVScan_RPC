@@ -95,6 +95,29 @@ class offline( BaseConfig ) :
                        'prompt' : 'GR10_P_V5'} #-ap: get this from gtList (if we can)
 
 
+class tier0Online( online ) :
+    def __init__(self) :
+        super( tier0Online, self ).__init__( )
+
+        self.backend = 'tier0Online'
+        self.detector = 'T0Online' # was PopCon
+
+        self.delay = None     # flag that we are Tier-0 and need to sleep until the next 10-min boundary
+
+        # take all the other params from the online base class ...
+
+class tier0Offline( offline ) :
+    def __init__(self) :
+        super( tier0Offline, self ).__init__( )
+
+        self.backend = 'tier0Offline'
+        self.detector = 'T0Offline'
+
+        self.delay = None     # flag that we are Tier-0 and need to sleep until the next 10-min boundary
+
+        # take all the other params from the offline base class ...
+
+
 class test( BaseConfig ) :
     def __init__(self) :
 
@@ -130,6 +153,18 @@ class test( BaseConfig ) :
                        'prompt' : 'GR10_P_V5'} #-ap: get this from gtList (if we can)
 
         self.debug = True
+
+
+class tier0Test( offline ) :
+    def __init__(self) :
+        super( tier0Test, self ).__init__( )
+
+        self.backend = 'tier0Test'
+        self.detector = 'T0Test'
+
+        self.delay = None     # flag that we are Tier-0 and need to sleep until the next 10-min boundary
+
+        # take all the other params from the test base class ...
 
 
 class replay( test ) :

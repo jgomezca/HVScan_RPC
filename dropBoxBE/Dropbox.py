@@ -2,6 +2,7 @@ import os
 import logging
 import glob
 import json
+import time, datetime
 
 import TeeFile
 import TagHandler
@@ -15,6 +16,37 @@ from tier0 import Tier0Handler
 
 import database
 import service
+
+
+# helper functions -- todo: this should probably go into a more common place ?? (used also in replay)
+
+def getNextDropBoxRunTimestamp( timestamp ) :
+    '''Given a timestamp, give the timestamp of the next dropBox run.
+    i.e. the closest in the future.
+    '''
+
+    closeDropBoxRuns = [
+        timestamp.replace( minute=0, second=0, microsecond=0 ),
+        timestamp.replace( minute=10, second=0, microsecond=0 ),
+        timestamp.replace( minute=20, second=0, microsecond=0 ),
+        timestamp.replace( minute=30, second=0, microsecond=0 ),
+        timestamp.replace( minute=40, second=0, microsecond=0 ),
+        timestamp.replace( minute=50, second=0, microsecond=0 ),
+        timestamp.replace( minute=0, second=0, microsecond=0 )
+        + datetime.timedelta( hours=1 ),
+    ]
+
+    for run in closeDropBoxRuns :
+        if timestamp < run :
+            return run
+
+    raise Exception( 'This should not happen.' )
+
+
+def secUntilNext10Min() :
+    timestamp = datetime.datetime.fromtimestamp( time.time( ) )
+    next = getNextDropBoxRunTimestamp( timestamp )
+    return ( next - timestamp ).seconds
 
 
 # main handler for the new Dropbox
@@ -169,8 +201,7 @@ class Dropbox(object) :
             self.logger.info('uploading logs for %s returned %s.' % (fileHash, str(ret)) )
         except Exception as exc:
             self.updateErrors += 1
-            self.logger.error('Failed in uploading log: %s' %(exc))
-            
+            self.logger.error('Failed in uploading log: %s' %(exc,) )
 
     def updateFileStatus(self, fileHash, status) :
         self.logger.info('updating status for %s to %s ' % (fileHash, status,) )
@@ -229,7 +260,7 @@ class Dropbox(object) :
 
         if timeType == 'timestamp' or timeType == 'hash' or timeType == 'userid':
             return firstSince
-            
+
         if timeType == 'lumiid' :
             firstSince, lumi = self.unpackLumiId( firstSince )
 
@@ -247,7 +278,7 @@ class Dropbox(object) :
             if firstSince < syncValue:
                 syncSince = syncValue
         else:
-            fileLogger.info( 'Keeping since value:%d for "%s" synchronization' % (firstSince, syncTarget) )            
+            fileLogger.info( 'Keeping since value:%d for "%s" synchronization' % (firstSince, syncTarget) )
 
         # check on timeType in metadata and re-pack run number for non-run types
         if timeType == 'lumiid' :
@@ -360,7 +391,7 @@ class Dropbox(object) :
             self.moveToDir( fileHash, 'processError')
         else:
             self.moveToDir( fileHash, 'exported' )
-                
+
         # -----------------------------------------------------------------
         # the following needs to be done even if exportation failed:
 
@@ -441,6 +472,11 @@ class Dropbox(object) :
         if nFiles == 0:
             # todo: update timestamp for logging of main dropbox every time the state changes to 0 files
             self.updateRunStatus( Constants.NOTHING_TO_DO )
+            if self.config.delay:
+                time.sleep( self.config.delay )
+            else:  # if delay is not set, it means we're Tier-0 and need to run at next 10 min interval:
+                time.sleep( secUntilNext10Min() )
+
             return True
 
         # now update runChk values from firstsaferun and runInfo, send info back to frontend for logging
@@ -449,7 +485,7 @@ class Dropbox(object) :
             self.statUpdater.updateRunRunInfo(self.runChk['prompt'], self.runChk['hlt'])
         except Exception as exc:
             self.updateErrors += 1
-            self.logger.error('Failed to update run info values into frontend database: %s' %(exc)) 
+            self.logger.error('Failed to update run info values into frontend database: %s' %(exc,) )
         dwnldr.downloadAll()
         ( self.donwloadProc, self.downloadOK ) = dwnldr.getSummary()
         del dwnldr
@@ -484,7 +520,7 @@ class Dropbox(object) :
             )
         except Exception as exc:
             self.updateErrors += 1
-            self.logger.error('Failed to uploading the logs into frontend database: %s' %(exc))             
+            self.logger.error('Failed to uploading the logs into frontend database: %s' %(exc,) )
 
         if errors:
             self.logger.info('finished, with errors')
@@ -493,8 +529,8 @@ class Dropbox(object) :
             self.logger.info('finished, all OK')
             self.updateRunStatus(Constants.DONE_ALL_OK)
 
-        self.logger.info('Files processed (incremental):%d'%(self.processedFiles) )
-        self.logger.info('Errors in contacting server for updates: %d' %(self.updateErrors))
+        self.logger.info('Files processed (incremental):%d' % (self.processedFiles,) )
+        self.logger.info('Errors in contacting server for updates: %d' % (self.updateErrors,) )
         return True
 
     def reprocess( self, timestamp, hltRun, fcsRun ):
