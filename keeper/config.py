@@ -157,17 +157,17 @@ servicesConfiguration = {
 		'hidden':         False,
 	},
 
-	'dropBox': {
-		'filename':       'server.py',
-		'listeningPort':  8095,
-		'hidden':         False,
-	},
+	#'dropBox': {
+	#	'filename':       'server.py',
+	#	'listeningPort':  8095,
+	#	'hidden':         False,
+	#},
 
-	'dropBoxBE': {
-		'filename':       'server.py',
-		'listeningPort':  8096,
-		'hidden':         True,
-	},
+	#'dropBoxBE': {
+	#	'filename':       'server.py',
+	#	'listeningPort':  8096,
+	#	'hidden':         True,
+	#},
 
 	'getLumi': {
 		'filename':       'lumidb_server.py',
