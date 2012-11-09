@@ -2,7 +2,6 @@ import os
 import logging
 import glob
 import json
-import time, datetime
 
 import TeeFile
 import TagHandler
@@ -16,37 +15,6 @@ from tier0 import Tier0Handler
 
 import database
 import service
-
-
-# helper functions -- todo: this should probably go into a more common place ?? (used also in replay)
-
-def getNextDropBoxRunTimestamp( timestamp ) :
-    '''Given a timestamp, give the timestamp of the next dropBox run.
-    i.e. the closest in the future.
-    '''
-
-    closeDropBoxRuns = [
-        timestamp.replace( minute=0, second=0, microsecond=0 ),
-        timestamp.replace( minute=10, second=0, microsecond=0 ),
-        timestamp.replace( minute=20, second=0, microsecond=0 ),
-        timestamp.replace( minute=30, second=0, microsecond=0 ),
-        timestamp.replace( minute=40, second=0, microsecond=0 ),
-        timestamp.replace( minute=50, second=0, microsecond=0 ),
-        timestamp.replace( minute=0, second=0, microsecond=0 )
-        + datetime.timedelta( hours=1 ),
-    ]
-
-    for run in closeDropBoxRuns :
-        if timestamp < run :
-            return run
-
-    raise Exception( 'This should not happen.' )
-
-
-def secUntilNext10Min() :
-    timestamp = datetime.datetime.fromtimestamp( time.time( ) )
-    next = getNextDropBoxRunTimestamp( timestamp )
-    return ( next - timestamp ).seconds
 
 
 # main handler for the new Dropbox
@@ -472,11 +440,6 @@ class Dropbox(object) :
         if nFiles == 0:
             # todo: update timestamp for logging of main dropbox every time the state changes to 0 files
             self.updateRunStatus( Constants.NOTHING_TO_DO )
-            if self.config.delay:
-                time.sleep( self.config.delay )
-            else:  # if delay is not set, it means we're Tier-0 and need to run at next 10 min interval:
-                time.sleep( secUntilNext10Min() )
-
             return True
 
         # now update runChk values from firstsaferun and runInfo, send info back to frontend for logging

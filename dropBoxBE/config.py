@@ -155,7 +155,7 @@ class test( BaseConfig ) :
         self.debug = True
 
 
-class tier0Test( offline ) :
+class tier0Test( test ) :
     def __init__(self) :
         super( tier0Test, self ).__init__( )
 
