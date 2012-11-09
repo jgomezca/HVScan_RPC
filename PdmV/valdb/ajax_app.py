@@ -269,7 +269,7 @@ The full details was sent to %s find it there""" %(relName.upper(), cat.upper(),
                 
             elif (cat.upper() == 'RECONSTRUCTION') and (statusKind.upper() == 'MUON'): #same for Reco Moun as for all HLT
                 reco_msg_id = email.utils.make_msgid()
-                hn_address = 'hn-cms-moun-object-validation@cern.ch'
+                hn_address = 'hn-cms-muon-object-validation@cern.ch'
                 #hn_address = 'hn-cms-hnTest@cern.ch'  # Testing adresses
                 #hn_address = 'antanas.norkus@cern.ch'
                 self.sendMailOnChanges(msgText, msgSubject, None, reco_msg_id, userName, hn_address) #mail to Moun HN without threading
