@@ -201,13 +201,8 @@ def main():
             if set([dbFileName, txtFileName]) != set(names):
                 raise Exception('%s: Invalid file names in tar file.', fileName)
 
-            # This one is to easily inspect the old metadata in case the porting fails
-            oldMetadata = tarFile.extractfile(txtFileName).read()
-            with open('/tmp/replayRequest.old', 'wb') as f:
-                f.write(oldMetadata)
-
             with open('/tmp/replayRequest.txt', 'wb') as f:
-                f.write(metadata.port(oldMetadata))
+                f.write(metadata.port(tarFile.extractfile(txtFileName).read()))
 
             with open('/tmp/replayRequest.db', 'wb') as f:
                 f.write(tarFile.extractfile(dbFileName).read())
