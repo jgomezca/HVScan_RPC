@@ -16,9 +16,9 @@ group = 'cms-cond-dropbox'
 
 allowedBackends = {
     'private': set(['private']),
-    'dev': set(['offline']),
-    'int': set(['online', 'tier0', 'offline']),
-    'pro': set(['online', 'tier0', 'offline']),
+    'dev': set(['offline', 'tier0Test']),
+    'int': set(['online', 'tier0Online', 'offline', 'tier0Offline', 'tier0Test']),
+    'pro': set(['online', 'tier0Online', 'offline', 'tier0Offline', 'tier0Test']),
 }
 
 # Default dictionary for production Global Tags
