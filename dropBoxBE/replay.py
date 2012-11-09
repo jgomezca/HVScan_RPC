@@ -27,7 +27,7 @@ import doUpload
 import config
 import Dropbox
 
-dropBoxReplayFilesFolder = '/afs/cern.ch/work/g/govi/dropbox'
+dropBoxReplayFilesFolder = '/afs/cern.ch/cms/DB/conddb/test/dropbox/replay/files'
 dropBoxStartSnapshotTimestamp = datetime.datetime(2012, 8, 31, 7, 0, 0)
 dropBoxEndSnapshotTimestamp = datetime.datetime(2012, 11, 2, 18, 0, 0)
 replayMasterDB = '/afs/cern.ch/cms/DB/conddb/test/dropbox/replay/replayMaster.db'
