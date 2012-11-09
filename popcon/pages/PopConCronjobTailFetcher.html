@@ -5,16 +5,16 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <link href="css/popcon.css" rel="stylesheet" type="text/css" />
     <link rel="stylesheet" href="css/form.css" type="text/css" media="all" />
-    <link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.7.2/themes/base/ui.all.css" type="text/css" media="all" />
-    <script src="http://www.google.com/jsapi?key=ABQIAAAA77AvVXGr-NXQPnb-teNgXBTazzi4P4lW63pXwfn9Om7sI6mhvhSYq9j0-z34cphuvaZpWWD77sZMMA" type="text/javascript"></script>
+    <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.7.2/themes/base/ui.all.css" type="text/css" media="all" />
+    <script src="https://www.google.com/jsapi?key=ABQIAAAA77AvVXGr-NXQPnb-teNgXBTazzi4P4lW63pXwfn9Om7sI6mhvhSYq9j0-z34cphuvaZpWWD77sZMMA" type="text/javascript"></script>
     <script type="text/javascript">
-      google.load("jquery", "1.5.2");
+      google.load("jquery", "1.7");
     </script>
-    <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.7.3/jquery-ui.min.js" type="text/javascript"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.7.3/jquery-ui.min.js" type="text/javascript"></script>
   </head>
   <body>
     <div id="header">
-      <h1><a href="#"><img src="images/blank.png" alt=""></a> 
+      <h1><a href="#"><img src="images/blank.png" alt=""></a>
         Pop<span style="font-weight:bold; color:#73868C;">Con</span> monitor
       </h1>
     </div>
@@ -28,7 +28,7 @@
         </ul>
       </div>
       <div id="contentleft">
-        <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.7.2/jquery-ui.min.js" type="text/javascript"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.7.2/jquery-ui.min.js" type="text/javascript"></script>
         <script type="text/javascript" src="js/jquery.blockUI.js"></script>
         <script type="text/javascript">
           var wsw	=	window.screen.width;
@@ -38,17 +38,17 @@
             $.blockUI({ message: $('#processing') });
             var hashName = "";
             hashName = window.location.hash.substring(1);
-            if ((hashName != "EcalLaserExpressTimeBasedO2O") && 
-               (hashName != "EcalDAQO2O") && 
+            if ((hashName != "EcalLaserExpressTimeBasedO2O") &&
+               (hashName != "EcalDAQO2O") &&
                (hashName != "SiStripDetVOffTimeBasedO2O") &&
-               (hashName != "RunInfoStart") && 
+               (hashName != "RunInfoStart") &&
                (hashName != "OfflineDropBox") &&
                (hashName != "EcalPedestalsTimeBasedO2O") &&
                (hashName != "EcalDCSO2O") &&
-               (hashName != "RunInfoStop") && 
+               (hashName != "RunInfoStop") &&
                (hashName != "EcalLaserTimeBasedO2O")){
                 hashName = "";
-            }      
+            }
             if (hashName == ""){
               serverFunctionName = "PopConCronjobTailFetcher";
               displayData(true, hashName);
@@ -66,7 +66,7 @@
               data: {hashName: hashName},
               async: one,
               dataType: 'json',
-              success:                               
+              success:
                 function(data) {
                   var _tabs       =   $('#tabs');
                   $.each(data.items, function(i,item){
@@ -103,7 +103,7 @@
                             });
                           }
                         });
-                      });             
+                      });
                     });
                   });
                   if (one == true) {
@@ -115,7 +115,7 @@
                     $.unblockUI();
                   }
                   fix_data_size();
-                },                       
+                },
               error: function() { alert("Error in data send"); }
             });
           }
