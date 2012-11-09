@@ -1,4 +1,30 @@
 '''dropBox backend's script that replays the original dropBox files in the new dropBox.
+
+How to run a replay:
+
+    # Make sure you got fresh tokens
+    unlog
+    kinit
+    tokens # check that you got 25 hours more
+
+    # (Re)start the frontend
+    /data/services/keeper/keeper.py restart dropBox
+    cat /data/logs/dropBox/log # check if the server started correctly
+
+    DATETIME=$(python -c 'import datetime; print datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")')
+
+    # Run the replay
+    nohup /data/services/keeper/keeper.py run dropBoxBE replay.py > /data/logs/replayOutput-${DATETIME}.txt 2>&1 &
+    tail -f /data/logs/replayOutput-${DATETIME}.txt # check everything is fine up to a few dropBox runs
+
+    # When finished, copy the output to the official place
+    cp /data/logs/replayOutput-${DATETIME}.txt /afs/cern.ch/cms/DB/conddb/test/dropbox/replay/replayOutputs/
+
+    # Also copy the frontend's logs, which are usually the last two files
+    # (because the log gets rotated since it is too big)
+
+    # Run the script that checks the results
+    /data/services/keeper/keeper.py run dropBoxBE checkReplay.py > /afs/cern.ch/cms/DB/conddb/test/dropbox/replay/replayOutputs/replayOutput-${DATETIME}.check 2>&1
 '''
 
 __author__ = 'Miguel Ojeda'
