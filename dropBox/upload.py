@@ -26,7 +26,7 @@ import pycurl
 
 
 defaultBackend = 'online'
-defaultHostname = 'mos-dev-slc6.cern.ch'
+defaultHostname = 'cms-conddb-int.cern.ch'
 defaultUrlTemplate = 'https://%s/dropBox/'
 defaultTemporaryFile = 'upload.tar.bz2'
 defaultNetrcHost = 'newOffDb'
