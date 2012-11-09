@@ -43,7 +43,7 @@ def main():
         if set([dbFileName, txtFileName]) != set(names):
             raise Exception('%s: Invalid file names in tar file.', fileName)
         
-        newMetadata = json.loads(metadata.port(tarFile.extractfile(txtFileName).read()))
+        newMetadata = json.loads(metadata.port(tarFile.extractfile(txtFileName).read(), fileName))
         tarFile.close()
 
         for tag in newMetadata['destinationTags']:

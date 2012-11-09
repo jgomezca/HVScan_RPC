@@ -228,7 +228,7 @@ def main():
                 raise Exception('%s: Invalid file names in tar file.', fileName)
 
             with open('/tmp/replayRequest.txt', 'wb') as f:
-                f.write(metadata.port(tarFile.extractfile(txtFileName).read()))
+                f.write(metadata.port(tarFile.extractfile(txtFileName).read(), fileName))
 
             with open('/tmp/replayRequest.db', 'wb') as f:
                 f.write(tarFile.extractfile(dbFileName).read())

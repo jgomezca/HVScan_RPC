@@ -16,7 +16,7 @@ import service
 import globalTagHandler
 
 
-def port(metadata):
+def port(metadata, fileName):
     '''Ports metadata into the new format.
     '''
 
@@ -170,6 +170,20 @@ def port(metadata):
 
         else:
             raise Exception('Invalid key: %s', key)
+
+    # In the old dropBox we allowed either None or a since which was smaller
+    # that the one in the data, which made the one in the data being used.
+    # Since in the new dropBox we only allow None to mean 'take the one from
+    # the data', we overwrite it here so that we do not discard the file.
+    if fileName in set([
+        'HcalGains_v2.08_hlt@b9cede0a-0974-11e2-a30b-003048f0e7a2.tar.bz2',
+        'HcalRespCorrs_v1.02_hlt@d21bd65c-0974-11e2-89b2-003048f0e7a2.tar.bz2',
+        'HcalRespCorrs_v1.02_express@6c984812-16a6-11e2-bae5-003048d3c892.tar.bz2',
+    ]):
+        if outputMetadata['since'] != 1:
+            raise Exception('%s: Expected since == 1 for the manual fix to None.' % fileName)
+
+        outputMetadata['since'] = None
 
     return json.dumps(outputMetadata, sort_keys = True, indent = 4)
 
