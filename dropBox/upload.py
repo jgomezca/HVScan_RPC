@@ -25,7 +25,6 @@ import tempfile
 import pycurl
 
 
-allowedBackends = set(['online', 'tier0', 'offline', 'private'])
 defaultBackend = 'online'
 defaultHostname = 'mos-dev-slc6.cern.ch'
 defaultUrlTemplate = 'https://%s/dropBox/'
@@ -40,9 +39,6 @@ def _uploadFile(username, password, filename, backend = defaultBackend, hostname
     '''
 
     url = urlTemplate % hostname
-
-    if backend not in allowedBackends:
-        raise Exception('The backend %s is not any of the allowed ones: %s' % (repr(backend), repr(allowedBackends)))
 
     try:
         response = cStringIO.StringIO()
