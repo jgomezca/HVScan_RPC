@@ -13,7 +13,7 @@ import database
 import config
 
 
-connection = database.Connection(config.connectionString)
+connection = database.Connection(config.connectionDictionary)
 
 
 def insertFile(fileHash, state, backend, username, fileContent):

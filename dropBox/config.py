@@ -21,15 +21,15 @@ group = 'cms-cond-dropbox'
 if service.settings['productionLevel'] in set(['int', 'pro']):
     # FIXME: For the moment, until we finish the tier0 tests and we get
     #        the new CMSR account, we will use the prep one as well.
-    connectionString = service.secrets['connections']['dev']
+    connectionDictionary = service.secrets['connections']['dev']
 
 # For development, we use the prep dropBox database
 elif service.settings['productionLevel'] in set(['dev']):
-    connectionString = service.secrets['connections']['dev']
+    connectionDictionary = service.secrets['connections']['dev']
 
 # In private instances, we take it from netrc
 elif service.settings['productionLevel'] in set(['private']):
-    connectionString = service.getConnectionDictionaryFromNetrc('dropBoxDatabase')
+    connectionDictionary = service.getConnectionDictionaryFromNetrc('dropBoxDatabase')
 
 else:
     raise Exception('Unknown production level.')
