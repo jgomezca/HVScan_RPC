@@ -21,7 +21,7 @@ class TagHandler( object ):
         self.exportTag = None
         self.exportSince = None
         self.fileLogger = fileLogger
-        self.logDB = "sqlite_file:log.db"
+        self.logDB = config.logdb
 
 
     def executeAndLog(self, command, verbose=False):
