@@ -157,7 +157,7 @@ def main():
 
     parser.add_option('-b', '--backend',
         dest = 'backend',
-        default = defaultHostname,
+        default = defaultBackend,
         help = 'dropBox\'s backend to upload to. Default: %default',
     )
 
