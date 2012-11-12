@@ -74,7 +74,7 @@ class offline( BaseConfig ) :
 
         self.backend = 'offline'
 
-        self.maindir = '/home/condbdev/'
+        self.maindir = os.path.abspath( os.path.join( os.getcwd(), '..', 'NewOfflineDropBoxBaseDir') )
         self.detector = 'Test'
         self.label = 'DropBox'
 
@@ -91,7 +91,7 @@ class offline( BaseConfig ) :
         self.runInfotag = "runinfo_start_31X_hlt"
 
         # this will later go into the main DB:
-        self.logdb = 'sqlite_file:/tmp/PopConJobLog.db'
+        self.logdb = 'oracle://cms_orcoff_prep/CMS_COND_POPCONLOG'
 
         self.gtDbName = "oracle://cms_orcon_adg/CMS_COND_31X_GLOBALTAG"
         self.gtTags = {'hlt' : 'GR10_H_V5', 'express' : 'GR10_E_V5',
@@ -156,7 +156,7 @@ class test( BaseConfig ) :
         self.debug = True
 
 
-class tier0Test( test ) :
+class tier0Test( offline ) :
     def __init__(self) :
         super( tier0Test, self ).__init__( )
 
