@@ -296,7 +296,8 @@ class Dropbox(object) :
         tagHandler = TagHandler.TagHandler( srcDB      = srcDB,
                                             destDB     = destDB,
                                             inputTag   = inputTag,
-                                            fileLogger = fileLogger )
+                                            fileLogger = fileLogger,
+                                            config     = self.config )
 
         errorInExporting = False
         for dTag, tagSpec in destTags.items():

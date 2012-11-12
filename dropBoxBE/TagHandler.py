@@ -1,21 +1,27 @@
 import subprocess
 
+import service
+
 
 class TagHandler( object ):
-    def __init__(self, srcDB, destDB, inputTag, fileLogger ):
+    def __init__(self, srcDB, destDB, inputTag, fileLogger, config ):
         self.srcDB = srcDB
         self.inputTag = inputTag
-        #self.exportDB = destDB
-        # fix me: testing phase!!!
-        self.exportDB = destDB
-        
-        self.exportDB = "oracle://cms_orcoff_prep/CMS_COND_DROPBOX"
+
+        if config.destinationDB is None:
+            # In production, use the destination DB from the metadata
+            self.exportDB = destDB
+        else:
+            # While testing, override with the one in the config
+            self.exportDB = config.destinationDB
+
+        # fix me : will be removed (no needed with key authentication)
+        self.authpath = config.authpath
+
         self.exportTag = None
         self.exportSince = None
         self.fileLogger = fileLogger
         self.logDB = "sqlite_file:log.db"
-        # fix me : will be removed (no needed with key authentication
-        self.authpath = '/afs/cern.ch/cms/DB/conddb/test/dropbox'
 
 
     def executeAndLog(self, command, verbose=False):
