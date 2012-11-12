@@ -335,63 +335,6 @@ class DropBox(object):
         dropBox.releaseFiles()
 
 
-    @service.onlyPrivate
-    @checkSignedInOnline
-    def setRunTimestamp(self, runTimestamp):
-        '''Set timestamp of the run.
-
-        Only meant for testing.
-        '''
-
-        logging.debug('server::setRunTimestamp(%s)', runTimestamp)
-
-        dropBox.setRunTimestamp(runTimestamp)
-
-
-    @service.onlyPrivate
-    @checkSignedInOnline
-    def getRunTimestamp(self):
-        '''Get timestamp of the run.
-
-        Only meant for testing.
-        '''
-
-        logging.debug('server::getRunTimestamp()')
-
-        return dropBox.getRunTimestamp()
-
-
-    @service.onlyPrivate
-    @checkSignedInOnline
-    def removeOnlineTestFiles(self):
-        '''Removes the online test files from all folders.
-
-        Only meant for testing.
-
-        Called from online.
-        '''
-
-        logging.debug('server::removeOnlineTestFiles()')
-
-        dropBox.removeOnlineTestFiles()
-
-
-    @service.onlyPrivate
-    @checkSignedInOnline
-    def copyOnlineTestFiles(self):
-        '''Copies the online test files to the pending folder,
-        bypassing the checking of updateFile().
-
-        Only meant for testing.
-
-        Called from online.
-        '''
-
-        logging.debug('server::copyOnlineTestFiles()')
-
-        dropBox.copyOnlineTestFiles()
-
-
 def main():
     service.start(DropBox())
 

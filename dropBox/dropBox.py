@@ -324,25 +324,3 @@ def releaseFiles():
     _holdFiles = False
 
 
-def setRunTimestamp(runTimestamp):
-    '''Set timestamp of the run.
-
-    Only meant for testing.
-    '''
-
-    logging.debug('dropBox::setRunTimestamp(%s)', runTimestamp)
-
-    global _runTimestamp
-    _runTimestamp = runTimestamp
-
-
-def getRunTimestamp():
-    '''Get timestamp of the run.
-
-    Only meant for testing.
-    '''
-
-    logging.debug('dropBox::getRunTimestamp()')
-
-    return _runTimestamp
-
