@@ -81,7 +81,7 @@ class offline( BaseConfig ) :
         self.destinationDB = None
 
         # should become obsolete with new authentication
-        self.authpath = '/afs/cern.ch/cms/DB/conddb'
+        self.authpath = '/data/secrets'
 
         # this is the URL for the dropBox frontend service:
         self.baseUrl = 'https://cms-conddb-int.cern.ch/dropBox/'
