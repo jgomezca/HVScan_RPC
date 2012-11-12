@@ -10,13 +10,10 @@ __email__ = 'mojedasa@cern.ch'
 
 
 import database
-import service
+import config
 
 
-if service.settings['productionLevel'] == 'private':
-    connection = database.Connection(service.getConnectionDictionaryFromNetrc('dropBoxDatabase'))
-else:
-    connection = database.Connection(service.secrets['connections']['dev'])
+connection = database.Connection(config.connectionString)
 
 
 def insertFile(fileHash, state, backend, username, fileContent):
