@@ -123,7 +123,7 @@ def uploadFile(fileHash, fileContent, username, backend):
 
     logging.info('uploadFile(): %s: Checking the contents of the file...', fileHash)
     try:
-        metadata = check.checkFile(fileHash, fileContent)
+        metadata = check.checkFile(fileHash, fileContent, backend)
     except DropBoxError as e:
         failUpload(fileHash)
         raise e

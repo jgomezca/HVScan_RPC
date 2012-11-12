@@ -26,6 +26,7 @@ import service
 
 import config
 import dropBox
+import databaseServices
 import conditionDatabase
 import conditionError
 import globalTagHandler
@@ -57,7 +58,7 @@ def checkSynchronization(synchronizeTo, destinationDatabase, tag, gtHandle, prod
     raise dropBox.DropBoxError('The synchronization "%s" for tag "%s" in database "%s" provided in the metadata does not match the one in the global tag for workflow "%s".' % (synchronizeTo, tag, destinationDatabase, workflow))
 
 
-def checkContents(fileHash, dataPath, metadata):
+def checkContents(fileHash, dataPath, metadata, backend):
     '''Checks whether the data and metadata are correct.
 
     data is the filename of the sqlite file.
@@ -116,11 +117,19 @@ def checkContents(fileHash, dataPath, metadata):
             raise dropBox.DropBoxError('Oracle is the only supported service.')
 
         # Invalid connection string
-        try:
-            if not conditionDatabase.checkConnectionString(destinationDatabase, True):
-                raise dropBox.DropBoxError('The destination database cannot point to read-only services.')
-        except conditionError.ConditionError as err:
-            raise dropBox.DropBoxError('The connection string is not correct. The reason is: %s' % err)
+        allowedServices = config.allowedServices[backend]
+        if allowedServices is not None:
+            serviceName = service.getProtocolServiceAndAccountFromConnectionString(destinationDatabase)['service']
+            if serviceName is None:
+                raise dropBox.DropBoxError('The connection string is not correct.')
+
+            ok = False
+            for allowedService in allowedServices:
+                if serviceName in databaseServices.services[allowedService]['oracle']:
+                    ok = True
+
+            if not ok:
+                raise dropBox.DropBoxError('The destination database is not supported.')
 
         # Invalid since
         since = metadata['since']
@@ -155,14 +164,14 @@ def checkContents(fileHash, dataPath, metadata):
         db.close()
 
 
-def checkFile(fileHash, fileContent):
+def checkFile(fileHash, fileContent, backend):
     '''Checks that a tar file and its contents are correct.
 
     Called from the dropBox to check a file after it was received correctly.
     The received file is guaranteed to be already checksummed.
     '''
 
-    logging.debug('check::checkFile(%s, %s [len])', fileHash, len(fileContent))
+    logging.debug('check::checkFile(%s, %s [len], %s)', fileHash, len(fileContent), backend)
 
     logging.info('checkFile(): %s: Checking whether the file is a valid tar file...', fileHash)
     fileObject = cStringIO.StringIO()
@@ -220,7 +229,7 @@ def checkFile(fileHash, fileContent):
         finally:
             dataConnection.close()
 
-        checkContents(fileHash, temporaryDataFile.name, metadata)
+        checkContents(fileHash, temporaryDataFile.name, metadata, backend)
 
     logging.info('checkFile(): %s: Checking of the file was successful.', fileHash)
 
