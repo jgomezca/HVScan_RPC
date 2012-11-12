@@ -1,6 +1,9 @@
 import os
 import socket
 
+import service
+
+
 class BaseConfig( object ) :
     def __init__(self) :
 
@@ -112,16 +115,25 @@ class test( BaseConfig ) :
 
         super(test, self).__init__()
 
-        self.backend = 'private'
-
         self.maindir = os.path.abspath( os.path.join( os.getcwd(), '..', 'NewOfflineDropBoxBaseDir') )
 
-        # this will be changed to use the 'private' db in the .netrc
-        self.destinationDB = "oracle://cms_orcoff_prep/CMS_COND_DROPBOX"
+        # For development, we use the prep dropBox database
+        if service.settings['productionLevel'] in set(['dev']):
+            self.backend = 'dev'
+            self.destinationDB = 'oracle://cms_orcoff_prep/CMS_COND_DROPBOX'
+            self.authpath = '/afs/cern.ch/cms/DB/conddb/test/dropbox'
 
-        # will be pointing to the location where the tester is keeping his test_dropbox key
-        # should become obsolete with new authentication
-        self.authpath = '/afs/cern.ch/cms/DB/conddb/test/dropbox'
+        # In private instances, we take it from netrc
+        elif service.settings['productionLevel'] in set(['private']):
+            self.backend = 'private'
+            connectionDictionary = service.getConnectionDictionaryFromNetrc('dropBoxDatabase')
+            self.destinationDB = 'oracle://%s/%s' % (connectionDictionary['db_name'], connectionDictionary['user'])
+            # will be pointing to the location where the tester is keeping his test_dropbox key
+            # should become obsolete with new authentication
+            self.authpath = '/data/secrets'
+
+        else:
+            raise Exception('Unknown production level.')
 
         # this is the URL for the dropBox frontend service, for testing/developing use the current host:
         #self.baseUrl = 'https://%s/dropBox/' % (socket.gethostname(),)
