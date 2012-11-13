@@ -156,7 +156,7 @@ def getFileList(backend):
 
     logging.debug('dropBox::getFileList(%s)', backend)
 
-    logging.info('getFileList(): Getting the list of files...')
+    logging.info('getFileList(): Getting the list of files for %s...', backend)
 
     if _holdFiles:
         logging.debug('getFileList(): Holding files, i.e. returning empty list...')
