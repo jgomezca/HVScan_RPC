@@ -183,7 +183,7 @@ class DropBox(object):
         self.signOut()
 
         logging.info('%s: Saving new version...', self.hostname)
-        with open('upload.py', 'wb') as f:
+        with open(sys.argv[0], 'wb') as f:
             f.write(uploadScript)
 
         logging.info('%s: Executing new version...', self.hostname)
