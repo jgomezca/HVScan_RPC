@@ -8,6 +8,7 @@ __credits__ = ['Giacomo Govi', 'Salvatore Di Guida', 'Miguel Ojeda', 'Andreas Pf
 __license__ = 'Unknown'
 __maintainer__ = 'Miguel Ojeda'
 __email__ = 'mojedasa@cern.ch'
+__version__ = 1
 
 
 import os
@@ -147,6 +148,79 @@ def uploadFiles(username, password, filenames, backend = defaultBackend, hostnam
             return ret
 
 
+def checkForUpdates(username, password, hostname = defaultHostname, urlTemplate = defaultUrlTemplate):
+    '''Updates this script, if a new version is found.
+    '''
+
+    url = urlTemplate % hostname
+
+    try:
+        response = cStringIO.StringIO()
+        curl = pycurl.Curl()
+        curl.setopt(curl.POST, 1)
+        curl.setopt(curl.COOKIEFILE, '')
+        curl.setopt(curl.SSL_VERIFYPEER, 0)
+        curl.setopt(curl.SSL_VERIFYHOST, 0)
+        curl.setopt(curl.WRITEFUNCTION, response.write)
+
+        logging.info('Signing in...')
+        curl.setopt(curl.URL, url + 'signIn')
+        curl.setopt(curl.HTTPPOST, [
+            ('username', username),
+            ('password', password),
+        ])
+        curl.perform()
+
+        if curl.getinfo(curl.RESPONSE_CODE) != 200:
+            raise Exception(response.getvalue())
+
+        logging.info('Checking for updates...')
+        response.truncate(0)
+        curl.setopt(curl.URL, url + 'getUploadScriptVersion')
+        curl.setopt(curl.HTTPGET, 1)
+        curl.perform()
+
+        if curl.getinfo(curl.RESPONSE_CODE) != 200:
+            raise Exception(response.getvalue())
+
+        version = int(response.getvalue())
+        if version > __version__:
+            logging.info('The version in the server (%s) is newer than the current one (%s).', version, __version__)
+
+            logging.info('Downloading new version...')
+            response.truncate(0)
+            curl.setopt(curl.URL, url + 'getUploadScript')
+            curl.setopt(curl.HTTPGET, 1)
+            curl.perform()
+
+            if curl.getinfo(curl.RESPONSE_CODE) != 200:
+                raise Exception(response.getvalue())
+
+            with open('upload.py', 'wb') as f:
+                f.write(response.getvalue())
+
+            logging.info('Executing new version...')
+            os.execl(sys.executable, *([sys.executable] + sys.argv))
+
+        logging.info('Signing out...')
+        response.truncate(0)
+        curl.setopt(curl.URL, url + 'signOut')
+        curl.setopt(curl.HTTPGET, 1)
+        curl.perform()
+
+        if curl.getinfo(curl.RESPONSE_CODE) != 200:
+            raise Exception(response.getvalue())
+
+        curl.close()
+        response.close()
+
+    except pycurl.error as error:
+        raise Exception('%s (errno = %s)', error[1], error[0])
+
+    except Exception as e:
+        raise Exception(e.args[0].split('<p>')[1].split('</p>')[0])
+
+    
 def main():
     '''Entry point.
     '''
@@ -192,6 +266,9 @@ def main():
         return -3
 
     (username, account, password) = netrc.netrc().authenticators(options.netrcHost)
+
+    checkForUpdates(username, password)
+
     return uploadFiles(username, password, arguments, backend = options.backend, hostname = options.hostname, urlTemplate = options.urlTemplate)
 
 

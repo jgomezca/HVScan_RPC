@@ -24,6 +24,7 @@ import cherrypy.lib.static
 
 import dropBox
 import config
+import upload
 
 import service
 
@@ -134,6 +135,30 @@ class DropBox(object):
             del cherrypy.session['username']
 
         cherrypy.lib.sessions.expire()
+
+
+    @checkSignedIn
+    def getUploadScriptVersion(self):
+        '''Returns the version of the upload script (of this server).
+
+        Called from offline.
+        '''
+
+        logging.debug('server::getUploadScriptVersion()')
+
+        return service.setResponsePlainText(str(upload.__version__))
+
+
+    @checkSignedIn
+    def getUploadScript(self):
+        '''Returns the upload script (of this server).
+
+        Called from offline.
+        '''
+
+        logging.debug('server::getUploadScript()')
+
+        return cherrypy.lib.static.serve_file('/data/services/dropBox/upload.py', 'application/x-download', 'attachment')
 
 
     @checkSignedIn
