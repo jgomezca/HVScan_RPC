@@ -43,7 +43,12 @@ class HTTPError(Exception):
     def __init__(self, code, response):
         self.code = code
         self.response = response
-        self.args = (self.response, )
+
+        # Try to extract the error message if possible (i.e. known error page format)
+        try:
+            self.args = (response.split('<p>')[1].split('</p>')[0], )
+        except Exception:
+            self.args = (self.response, )
 
 
 class HTTP(object):
@@ -122,120 +127,118 @@ class HTTP(object):
         return response.getvalue()
 
 
-def _uploadFile(username, password, filename, backend = defaultBackend, hostname = defaultHostname, urlTemplate = defaultUrlTemplate):
-    '''Uploads a raw file to the new dropBox.
+def addToTarFile(tarFile, fileobj, arcname):
+    tarInfo = tarFile.gettarinfo(fileobj = fileobj, arcname = arcname)
+    tarInfo.mode = 0400
+    tarInfo.uid = tarInfo.gid = tarInfo.mtime = 0
+    tarInfo.uname = tarInfo.gname = 'root'
+    tarFile.addfile(tarInfo, fileobj)
 
-    You should not use this directly. Look at uploadFiles() instead.
+
+class DropBox(object):
+    '''A dropBox API class.
     '''
 
-    http = HTTP()
-    http.setBaseUrl(urlTemplate % hostname)
-
-    logging.info('%s: Signing in...', filename)
-    http.query('signIn', {
-        'username': username,
-        'password': password,
-    })
-
-    logging.info('%s: Uploading file...', filename)
-    http.query('uploadFile', {
-        'backend': backend,
-    }, files = {
-        'uploadedFile': filename,
-    })
-
-    logging.info('%s: Signing out...', filename)
-    http.query('signOut')
+    def __init__(self, hostname = defaultHostname, urlTemplate = defaultUrlTemplate):
+        self.hostname = hostname
+        self.http = HTTP()
+        self.http.setBaseUrl(urlTemplate % hostname)
 
 
-def uploadFiles(username, password, filenames, backend = defaultBackend, hostname = defaultHostname, urlTemplate = defaultUrlTemplate, temporaryFile = defaultTemporaryFile):
-    '''Uploads several files to the new dropBox.
+    def signIn(self, username, password):
+        '''Signs in the server.
+        '''
 
-    The filenames can be without extension, with .db or with .txt extension.
-    It will be stripped and then both .db and .txt files are used.
-    '''
+        logging.info('%s: Signing in...', self.hostname)
+        self.http.query('signIn', {
+            'username': username,
+            'password': password,
+        })
 
-    def add(tarFile, fileobj, arcname):
-        tarInfo = tarFile.gettarinfo(fileobj = fileobj, arcname = arcname)
-        tarInfo.mode = 0400
-        tarInfo.uid = tarInfo.gid = tarInfo.mtime = 0
-        tarInfo.uname = tarInfo.gname = 'root'
-        tarFile.addfile(tarInfo, fileobj)
 
-    for filename in filenames:
+    def signOut(self):
+        '''Signs out the server.
+        '''
+
+        logging.info('%s: Signing out...', self.hostname)
+        self.http.query('signOut')
+
+
+    def _checkForUpdates(self):
+        '''Updates this script, if a new version is found.
+        '''
+
+        logging.info('%s: Checking for updates...', self.hostname)
+        version = int(self.http.query('getUploadScriptVersion'))
+
+        if version <= __version__:
+            logging.info('%s: Up to date.', self.hostname)
+            return
+
+        logging.info('%s: There is a newer version (%s) than the current one (%s): Updating...', self.hostname, version, __version__)
+
+        logging.info('%s: Downloading new version...', self.hostname)
+        uploadScript = self.http.query('getUploadScript')
+
+        self.signOut()
+
+        logging.info('%s: Saving new version...', self.hostname)
+        with open('upload.py', 'wb') as f:
+            f.write(uploadScript)
+
+        logging.info('%s: Executing new version...', self.hostname)
+        os.execl(sys.executable, *([sys.executable] + sys.argv))
+
+
+    def uploadFile(self, filename, backend = defaultBackend, temporaryFile = defaultTemporaryFile):
+        '''Uploads a file to the dropBox.
+
+        The filename can be without extension, with .db or with .txt extension.
+        It will be stripped and then both .db and .txt files are used.
+        '''
+
         basename = filename.rsplit('.db', 1)[0].rsplit('.txt', 1)[0]
 
-        logging.info('%s: Creating tar file...', basename)
+        logging.info('%s: %s: Creating tar file...', self.hostname, basename)
 
         tarFile = tarfile.open(temporaryFile, 'w:bz2')
 
         with open('%s.db' % basename, 'rb') as data:
-            add(tarFile, data, 'data.db')
+            addToTarFile(tarFile, data, 'data.db')
 
         with tempfile.NamedTemporaryFile() as metadata:
             with open('%s.txt' % basename, 'rb') as originalMetadata:
                 json.dump(json.load(originalMetadata), metadata, sort_keys = True, indent = 4)
+
             metadata.seek(0)
-            add(tarFile, metadata, 'metadata.txt')
+            addToTarFile(tarFile, metadata, 'metadata.txt')
 
         tarFile.close()
 
-        logging.info('%s: Calculating hash...', basename)
+        logging.info('%s: %s: Calculating hash...', self.hostname, basename)
 
         fileHash = hashlib.sha1()
-
         with open(temporaryFile, 'rb') as f:
             while True:
                 data = f.read(4 * 1024 * 1024)
+
                 if not data:
                     break
+
                 fileHash.update(data)
-        
+
         fileHash = fileHash.hexdigest()
 
-        logging.info('%s: Hash: %s', basename, fileHash)
+        logging.info('%s: %s: Hash: %s', self.hostname, basename, fileHash)
 
-        logging.info('%s: Uploading file...', basename)
+        logging.info('%s: %s: Uploading file for the %s backend...', self.hostname, basename, backend)
         os.rename(temporaryFile, fileHash)
-        _uploadFile(username, password, fileHash, backend = backend, hostname = hostname, urlTemplate = urlTemplate)
+        self.http.query('uploadFile', {
+            'backend': backend,
+        }, files = {
+            'uploadedFile': fileHash,
+        })
         os.unlink(fileHash)
-
-
-def checkForUpdates(username, password, hostname = defaultHostname, urlTemplate = defaultUrlTemplate):
-    '''Updates this script, if a new version is found.
-    '''
-
-    http = HTTP()
-    http.setBaseUrl(urlTemplate % hostname)
-
-    logging.info('Signing in...')
-    http.query('signIn', {
-        'username': username,
-        'password': password,
-    })
-
-    logging.info('Checking for updates...')
-    version = int(http.query('getUploadScriptVersion'))
-
-    if version <= __version__:
-        logging.info('Signing out...')
-        http.query('signOut')
-        return
-
-    logging.info('The version in the server (%s) is newer than the current one (%s).', version, __version__)
-
-    logging.info('Downloading new version...')
-    uploadScript = http.query('getUploadScript')
-
-    logging.info('Signing out...')
-    http.query('signOut')
-
-    logging.info('Saving new version...')
-    with open('upload.py', 'wb') as f:
-        f.write(uploadScript)
-
-    logging.info('Executing new version...')
-    os.execl(sys.executable, *([sys.executable] + sys.argv))
 
 
 def main():
@@ -280,13 +283,22 @@ def main():
 
     if len(arguments) < 1:
         parser.print_help()
-        return -3
+        return -2
 
     (username, account, password) = netrc.netrc().authenticators(options.netrcHost)
 
-    checkForUpdates(username, password)
+    try:
+        dropBox = DropBox(options.hostname, options.urlTemplate)
+        dropBox.signIn(username, password)
+        dropBox._checkForUpdates()
 
-    uploadFiles(username, password, arguments, backend = options.backend, hostname = options.hostname, urlTemplate = options.urlTemplate)
+        for filename in arguments:
+            dropBox.uploadFile(filename, options.backend, options.temporaryFile)
+
+        dropBox.signOut()
+    except HTTPError as e:
+        logging.error(e)
+        return -1
 
 
 if __name__ == '__main__':
