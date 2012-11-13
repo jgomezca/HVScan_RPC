@@ -3,8 +3,9 @@ import os
 import tarfile
 import hashlib
 import shutil
-import netrc
 import subprocess
+
+import service
 
 import Constants
 import TeeFile
@@ -127,11 +128,11 @@ class FileDownloader( object ) :
         return False
 
     def login(self) :
-        nrc = netrc.netrc( )
-        (login, account, password) = nrc.authenticators( 'newOffDb' )
-
         url = self.baseUrl + '/signIn'
-        response = self.curl.get( url, [ ('username', login), ('password', password) ] )
+        response = self.curl.get( url, [
+            ('username', service.secrets['onlineUser']['user']),
+            ('password', service.secrets['onlineUser']['password']),
+        ] )
 
         msg = '\n'.join( response ).strip()
         if msg:

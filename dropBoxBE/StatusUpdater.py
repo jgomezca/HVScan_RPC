@@ -1,8 +1,11 @@
 import logging
-import netrc
 import datetime
+
+import service
+
 import PyCurler
 import logPack
+
 
 class StatusUpdater( object ) :
     def __init__(self, cfg):
@@ -20,11 +23,11 @@ class StatusUpdater( object ) :
         self.logout()
 
     def login(self) :
-        nrc = netrc.netrc( )
-        (login, account, password) = nrc.authenticators( 'newOffDb' )
-
         url = self.baseUrl + '/signIn'
-        response = self.curler.get( url, [ ('username', login), ('password', password) ] )
+        response = self.curler.get( url, [
+            ('username', service.secrets['onlineUser']['user']),
+            ('password', service.secrets['onlineUser']['password']),
+        ] )
 
         msg = '\n'.join( response ).strip( )
         if msg :
