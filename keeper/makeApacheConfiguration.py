@@ -828,6 +828,34 @@ shibbolethXMLTemplate = '''
 '''
 
 
+attributeMap = '''<Attributes xmlns="urn:mace:shibboleth:2.0:attribute-map"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="urn:mace:shibboleth:2.0:attribute-map /usr/share/xml/shibboleth/shibboleth-2.0-attribute-map.xsd">
+
+<Attribute name="Group" nameFormat="http://schemas.xmlsoap.org/claims" id="ADFS_GROUP" />
+<Attribute name="http://schemas.xmlsoap.org/claims/UPN" id="user"/>
+<Attribute name="EmailAddress" nameFormat="http://schemas.xmlsoap.org/claims" id="ADFS_EMAIL"/>
+<Attribute name="CommonName" nameFormat="http://schemas.xmlsoap.org/claims" id="ADFS_LOGIN"/>
+<Attribute name="DisplayName" nameFormat="http://schemas.xmlsoap.org/claims" id="ADFS_FULLNAME"/>
+<Attribute name="PhoneNumber" nameFormat="http://schemas.xmlsoap.org/claims" id="ADFS_PHONENUMBER"/>
+<Attribute name="FaxNumber" nameFormat="http://schemas.xmlsoap.org/claims" id="ADFS_FAXNUMBER"/>
+<Attribute name="MobileNumber" nameFormat="http://schemas.xmlsoap.org/claims" id="ADFS_MOBILENUMBER"/>
+<Attribute name="Building" nameFormat="http://schemas.xmlsoap.org/claims" id="ADFS_BUILDING"/>
+<Attribute name="Firstname" nameFormat="http://schemas.xmlsoap.org/claims" id="ADFS_FIRSTNAME"/>
+<Attribute name="Lastname" nameFormat="http://schemas.xmlsoap.org/claims" id="ADFS_LASTNAME"/>
+<Attribute name="Department" nameFormat="http://schemas.xmlsoap.org/claims" id="ADFS_DEPARTMENT"/>
+<Attribute name="HomeInstitute" nameFormat="http://schemas.xmlsoap.org/claims" id="ADFS_HOMEINSTITUTE"/>
+<Attribute name="HomeDir" nameFormat="http://schemas.xmlsoap.org/claims" id="ADFS_HOMEDIR"/>
+<Attribute name="PersonID" nameFormat="http://schemas.xmlsoap.org/claims" id="ADFS_PERSONID"/>
+<Attribute name="PreferredLanguage" nameFormat="http://schemas.xmlsoap.org/claims" id="ADFS_PREFERREDLANGUAGE"/>
+<Attribute name="role" nameFormat="http://schemas.microsoft.com/ws/2008/06/identity/claims" id="ADFS_ROLE"/>
+<Attribute name="IdentityClass" nameFormat="http://schemas.xmlsoap.org/claims" id="ADFS_IDENTITYCLASS"/>
+
+</Attributes>
+
+'''
+
+
 class NotRegisteredError(Exception):
     pass
 
@@ -1048,7 +1076,8 @@ def vhosts(arguments):
 
 
 def shib(arguments):
-    '''Generates the main Shibboleth configuration file (shibboleth2.xml) for the given frontend.
+    '''Generates the main Shibboleth configuration file (shibboleth2.xml)
+    and related files (attribute-map.xml) for the given frontend.
     '''
 
     parser = optparse.OptionParser(usage =
@@ -1061,18 +1090,24 @@ def shib(arguments):
         help = 'The frontend for which the file will be generated. Default: %default'
     )
 
-    parser.add_option('-o', '--outputFile',
-        dest = 'outputFile',
-        default = '/etc/shibboleth/shibboleth2.xml',
-        help = 'The output file. Default: %default'
+    parser.add_option('-o', '--outputPath',
+        dest = 'outputPath',
+        default = '/etc/shibboleth',
+        help = 'The output path. Default: %default'
     )
 
     (options, arguments) = parser.parse_args(arguments)
 
     output = makeShibbolethConfiguration(options.frontend)
-    with open(options.outputFile, 'w') as f:
-        logging.info('Generating: %s', options.outputFile)
+    outputFile = os.path.join(options.outputPath, 'shibboleth2.xml')
+    with open(outputFile, 'w') as f:
+        logging.info('Generating: %s', outputFile)
         f.write(output)
+
+    outputFile = os.path.join(options.outputPath, 'attribute-map.xml')
+    with open(outputFile, 'w') as f:
+        logging.info('Generating: %s', outputFile)
+        f.write(attributeMap)
 
 
 def runAll(arguments):
