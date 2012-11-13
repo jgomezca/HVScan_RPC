@@ -33,63 +33,119 @@ defaultTemporaryFile = 'upload.tar.bz2'
 defaultNetrcHost = 'newOffDb'
 
 
+class HTTPError(Exception):
+    '''A common HTTP exception.
+
+    self.code is the response HTTP code as an integer.
+    self.response is the response body (i.e. page).
+    '''
+
+    def __init__(self, code, response):
+        self.code = code
+        self.response = response
+        self.args = (self.response, )
+
+
+class HTTP(object):
+    '''Class used for querying URLs using the HTTP protocol.
+    '''
+
+    def __init__(self):
+        self.setBaseUrl()
+        self.discardCookies()
+
+
+    def discardCookies(self):
+        '''Discards cookies.
+        '''
+
+        self.curl = pycurl.Curl()
+        self.curl.setopt(self.curl.COOKIEFILE, '')
+        self.curl.setopt(self.curl.SSL_VERIFYPEER, 0)
+        self.curl.setopt(self.curl.SSL_VERIFYHOST, 0)
+
+
+    def setBaseUrl(self, baseUrl = ''):
+        '''Allows to set a base URL which will be prefixed to all the URLs
+        that will be queried later.
+        '''
+
+        self.baseUrl = baseUrl
+
+
+    def query(self, url, data = None, files = None, keepCookies = True):
+        '''Queries a URL, optionally with some data (dictionary).
+
+        If no data is specified, a GET request will be used.
+        If some data is specified, a POST request will be used.
+
+        If files is specified, it must be a dictionary like data but
+        the values are filenames.
+
+        By default, cookies are kept in-between requests.
+
+        A HTTPError exception is raised if the response's HTTP code is not 200.
+        '''
+
+        if not keepCookies:
+            self.discardCookies()
+
+        response = cStringIO.StringIO()
+
+        url = self.baseUrl + url
+
+        self.curl.setopt(self.curl.URL, url)
+        self.curl.setopt(self.curl.HTTPGET, 1)
+
+        if data is not None or files is not None:
+            # If there is data or files to send, use a POST request
+
+            finalData = {}
+
+            if data is not None:
+                finalData.update(data)
+
+            if files is not None:
+                for (key, fileName) in files.items():
+                    finalData[key] = (self.curl.FORM_FILE, fileName)
+
+            self.curl.setopt(self.curl.HTTPPOST, finalData.items())
+
+        self.curl.setopt(self.curl.WRITEFUNCTION, response.write)
+        self.curl.perform()
+
+        code = self.curl.getinfo(self.curl.RESPONSE_CODE)
+
+        if code != 200:
+            raise HTTPError(code, response.getvalue())
+
+        return response.getvalue()
+
+
 def _uploadFile(username, password, filename, backend = defaultBackend, hostname = defaultHostname, urlTemplate = defaultUrlTemplate):
     '''Uploads a raw file to the new dropBox.
 
     You should not use this directly. Look at uploadFiles() instead.
     '''
 
-    url = urlTemplate % hostname
+    http = HTTP()
+    http.setBaseUrl(urlTemplate % hostname)
 
-    try:
-        response = cStringIO.StringIO()
-        curl = pycurl.Curl()
-        curl.setopt(curl.POST, 1)
-        curl.setopt(curl.COOKIEFILE, '')
-        curl.setopt(curl.SSL_VERIFYPEER, 0)
-        curl.setopt(curl.SSL_VERIFYHOST, 0)
-        curl.setopt(curl.WRITEFUNCTION, response.write)
+    logging.info('%s: Signing in...', filename)
+    http.query('signIn', {
+        'username': username,
+        'password': password,
+    })
 
-        logging.info('%s: Signing in...', filename)
-        curl.setopt(curl.URL, url + 'signIn')
-        curl.setopt(curl.HTTPPOST, [
-            ('username', username),
-            ('password', password),
-        ])
-        curl.perform()
+    logging.info('%s: Uploading file...', filename)
+    http.query('uploadFile', {
+        'backend': backend,
+    }, files = {
+        'uploadedFile': filename,
+    })
 
-        if curl.getinfo(curl.RESPONSE_CODE) != 200:
-            raise Exception(response.getvalue())
-
-        logging.info('%s: Uploading file...', filename)
-        curl.setopt(curl.URL, url + 'uploadFile')
-        curl.setopt(curl.HTTPPOST, [
-            ('uploadedFile', (curl.FORM_FILE, filename)),
-            ('backend', backend),
-        ])
-        curl.perform()
-
-        if curl.getinfo(curl.RESPONSE_CODE) != 200:
-            raise Exception(response.getvalue())
-
-        logging.info('%s: Signing out...', filename)
-        curl.setopt(curl.URL, url + 'signOut')
-        curl.setopt(curl.HTTPGET, 1)
-        curl.perform()
-
-        if curl.getinfo(curl.RESPONSE_CODE) != 200:
-            raise Exception(response.getvalue())
-
-        curl.close()
-        response.close()
-
-    except pycurl.error as error:
-        logging.error('%s (errno = %s)', error[1], error[0])
-        return -2
-
-    except Exception as e:
-        logging.error(e.args[0].split('<p>')[1].split('</p>')[0])
-        return -1
+    logging.info('%s: Signing out...', filename)
+    http.query('signOut')
 
 
 def uploadFiles(username, password, filenames, backend = defaultBackend, hostname = defaultHostname, urlTemplate = defaultUrlTemplate, temporaryFile = defaultTemporaryFile):
@@ -141,86 +197,47 @@ def uploadFiles(username, password, filenames, backend = defaultBackend, hostnam
 
         logging.info('%s: Uploading file...', basename)
         os.rename(temporaryFile, fileHash)
-        ret = _uploadFile(username, password, fileHash, backend = backend, hostname = hostname, urlTemplate = urlTemplate)
+        _uploadFile(username, password, fileHash, backend = backend, hostname = hostname, urlTemplate = urlTemplate)
         os.unlink(fileHash)
-
-        if ret != 0:
-            return ret
 
 
 def checkForUpdates(username, password, hostname = defaultHostname, urlTemplate = defaultUrlTemplate):
     '''Updates this script, if a new version is found.
     '''
 
-    url = urlTemplate % hostname
+    http = HTTP()
+    http.setBaseUrl(urlTemplate % hostname)
 
-    try:
-        response = cStringIO.StringIO()
-        curl = pycurl.Curl()
-        curl.setopt(curl.POST, 1)
-        curl.setopt(curl.COOKIEFILE, '')
-        curl.setopt(curl.SSL_VERIFYPEER, 0)
-        curl.setopt(curl.SSL_VERIFYHOST, 0)
-        curl.setopt(curl.WRITEFUNCTION, response.write)
+    logging.info('Signing in...')
+    http.query('signIn', {
+        'username': username,
+        'password': password,
+    })
 
-        logging.info('Signing in...')
-        curl.setopt(curl.URL, url + 'signIn')
-        curl.setopt(curl.HTTPPOST, [
-            ('username', username),
-            ('password', password),
-        ])
-        curl.perform()
+    logging.info('Checking for updates...')
+    version = int(http.query('getUploadScriptVersion'))
 
-        if curl.getinfo(curl.RESPONSE_CODE) != 200:
-            raise Exception(response.getvalue())
-
-        logging.info('Checking for updates...')
-        response.truncate(0)
-        curl.setopt(curl.URL, url + 'getUploadScriptVersion')
-        curl.setopt(curl.HTTPGET, 1)
-        curl.perform()
-
-        if curl.getinfo(curl.RESPONSE_CODE) != 200:
-            raise Exception(response.getvalue())
-
-        version = int(response.getvalue())
-        if version > __version__:
-            logging.info('The version in the server (%s) is newer than the current one (%s).', version, __version__)
-
-            logging.info('Downloading new version...')
-            response.truncate(0)
-            curl.setopt(curl.URL, url + 'getUploadScript')
-            curl.setopt(curl.HTTPGET, 1)
-            curl.perform()
-
-            if curl.getinfo(curl.RESPONSE_CODE) != 200:
-                raise Exception(response.getvalue())
-
-            with open('upload.py', 'wb') as f:
-                f.write(response.getvalue())
-
-            logging.info('Executing new version...')
-            os.execl(sys.executable, *([sys.executable] + sys.argv))
-
+    if version <= __version__:
         logging.info('Signing out...')
-        response.truncate(0)
-        curl.setopt(curl.URL, url + 'signOut')
-        curl.setopt(curl.HTTPGET, 1)
-        curl.perform()
+        http.query('signOut')
+        return
 
-        if curl.getinfo(curl.RESPONSE_CODE) != 200:
-            raise Exception(response.getvalue())
+    logging.info('The version in the server (%s) is newer than the current one (%s).', version, __version__)
 
-        curl.close()
-        response.close()
+    logging.info('Downloading new version...')
+    uploadScript = http.query('getUploadScript')
 
-    except pycurl.error as error:
-        raise Exception('%s (errno = %s)', error[1], error[0])
+    logging.info('Signing out...')
+    http.query('signOut')
 
-    except Exception as e:
-        raise Exception(e.args[0].split('<p>')[1].split('</p>')[0])
+    logging.info('Saving new version...')
+    with open('upload.py', 'wb') as f:
+        f.write(uploadScript)
 
-    
+    logging.info('Executing new version...')
+    os.execl(sys.executable, *([sys.executable] + sys.argv))
+
+
 def main():
     '''Entry point.
     '''
@@ -269,7 +286,7 @@ def main():
 
     checkForUpdates(username, password)
 
-    return uploadFiles(username, password, arguments, backend = options.backend, hostname = options.hostname, urlTemplate = options.urlTemplate)
+    uploadFiles(username, password, arguments, backend = options.backend, hostname = options.hostname, urlTemplate = options.urlTemplate)
 
 
 if __name__ == '__main__':
