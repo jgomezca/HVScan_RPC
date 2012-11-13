@@ -1,4 +1,4 @@
-'''dropBox backend's web server.
+'''dropBox backend.
 '''
 
 __author__ = 'Miguel Ojeda'
