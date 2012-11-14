@@ -76,6 +76,47 @@ class BLOB(str):
         return str.__new__(cls, *args, **kwargs)
 
 
+def transaction(f):
+    def newf(self, *args, **kwargs):
+        tries = 2
+        while True:
+            try:
+                logging.debug('%s: Creating cursor...', self)
+                cursor = self.connection.cursor()
+                try:
+                    logging.debug('%s: Calling transaction function...', self)
+                    return f(self, cursor, *args, **kwargs)
+                finally:
+                    logging.debug('%s: Closing cursor...', self)
+                    cursor.close()
+            except cx_Oracle.Error as e:
+                logging.error('%s: Database Exception: %s', self, e)
+
+                if isReconnectException(e):
+                    logging.error('%s: Database Exception: This exception requires a reconnection.', self)
+
+                    logging.error('%s: Database Exception: Reconnection tries: %s', self, tries)
+                    if tries == 0:
+                        logging.critical('%s: Database Exception: Impossible to reconnect.', self)
+                        raise e
+                    tries -= 1
+
+                    try:
+                        self.reconnect()
+                    except Exception as e:
+                        logging.error('%s: Exception while reconnecting: %s', self, e)
+                else:
+                    logging.error('%s: Database Exception: This exception does not require a reconnection.', self)
+                    self.connection.rollback()
+                    raise e
+            except Exception as e:
+                logging.error('%s: Exception (not database related): %s', self, e)
+                self.connection.rollback()
+                raise e
+
+    return newf
+
+
 class Connection(object):
 
     def __init__(self, connectionDictionary):
@@ -113,47 +154,6 @@ class Connection(object):
             cursor.setinputsizes(*inputSizes)
 
         cursor.execute(query, parameters)
-
-
-    def transaction(f):
-        def newf(self, *args, **kwargs):
-            tries = 2
-            while True:
-                try:
-                    logging.debug('%s: Creating cursor...', self)
-                    cursor = self.connection.cursor()
-                    try:
-                        logging.debug('%s: Calling transaction function...', self)
-                        return f(self, cursor, *args, **kwargs)
-                    finally:
-                        logging.debug('%s: Closing cursor...', self)
-                        cursor.close()
-                except cx_Oracle.Error as e:
-                    logging.error('%s: Database Exception: %s', self, e)
-
-                    if isReconnectException(e):
-                        logging.error('%s: Database Exception: This exception requires a reconnection.', self)
-
-                        logging.error('%s: Database Exception: Reconnection tries: %s', self, tries)
-                        if tries == 0:
-                            logging.critical('%s: Database Exception: Impossible to reconnect.', self)
-                            raise e
-                        tries -= 1
-
-                        try:
-                            self.reconnect()
-                        except Exception as e:
-                            logging.error('%s: Exception while reconnecting: %s', self, e)
-                    else:
-                        logging.error('%s: Database Exception: This exception does not require a reconnection.', self)
-                        self.connection.rollback()
-                        raise e
-                except Exception as e:
-                    logging.error('%s: Exception (not database related): %s', self, e)
-                    self.connection.rollback()
-                    raise e
-
-        return newf
 
 
     # Trivial transactions
