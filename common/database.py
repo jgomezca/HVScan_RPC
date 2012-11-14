@@ -156,9 +156,14 @@ class Connection(object):
         cursor.execute(query, parameters)
 
 
-    # Trivial transactions
-    @transaction
-    def fetch(self, cursor, query, parameters = ()):
+    # These are not transactions, intended to be used within
+    # complex user transactions
+    def _commit(self):
+        logging.debug('%s: Committing...', self)
+        self.connection.commit()
+
+
+    def _fetch(self, cursor, query, parameters = ()):
         self.execute(cursor, query, parameters)
 
         result = []
@@ -174,12 +179,18 @@ class Connection(object):
         return result
 
 
+    # Trivial transactions
+    @transaction
+    def fetch(self, cursor, query, parameters = ()):
+        return self._fetch(cursor, query, parameters)
+
+
     @transaction
     def commit(self, cursor, query = None, parameters = ()):
         if query is not None:
             self.execute(cursor, query, parameters)
 
-        self.connection.commit()
+        self._commit()
 
 
     def close(self):
