@@ -253,6 +253,8 @@ class Connection(object):
 
             result.append(convertFromOracle(row))
 
+        logging.debug('%s: Fetched: %s', self, result)
+
         return result
 
 
