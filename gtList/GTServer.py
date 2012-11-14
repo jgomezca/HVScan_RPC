@@ -72,6 +72,21 @@ class UploadGTServer(object):
         return "Mail was sent successfuly"
 
     @cherrypy.expose
+    def GTdiff_html(self, **kwargs):
+        if len(kwargs) == 2:
+            if "GlobalTag" in kwargs and "GlobalTag2" in kwargs:
+                gtList = self._getGTList()
+                if kwargs["GlobalTag"] in gtList and kwargs["GlobalTag2"] in gtList:
+                    return open(os.path.join(PAGES_DIR, 'GTdiff.html'), "rb").read()
+                else:
+                    raise cherrypy.HTTPError(405, "Error!!! There is no such Global Tag!!!")
+            else:
+                raise cherrypy.HTTPError(405, "Query has to have 2 parameters - GlobalTag and GlobalTag2 with values!!!")
+        else:
+            raise cherrypy.HTTPError(405, "Error!!! There has to be only 2 parameters: GlobalTag and GlobalTag2 with values!!!")
+
+
+    @cherrypy.expose
     def index(self, *args, **kwargs):
         if len(args) == 0:
             if len(kwargs) == 3:
@@ -88,39 +103,25 @@ class UploadGTServer(object):
                 return open(os.path.join(PAGES_DIR, 'mainPage.html'), "rb").read()
             else:
                 raise cherrypy.HTTPError(405, "Error!!! Bad request should be 2 or 3 or 0 parameters!!!(?GloabalTag=...&GlobalTag2=... OR ?GlogabTag=...&GlobalTag2=...&filter=")
-        elif len(args) == 1:
-            if "GTdiff.html" in args:
-                if len(kwargs) == 2:
-                    if "GlobalTag" in kwargs and "GlobalTag2" in kwargs:
-                        gtList = self._getGTList()
-                        if kwargs["GlobalTag"] in gtList and kwargs["GlobalTag2"] in gtList:
-                            return open(os.path.join(PAGES_DIR, 'GTdiff.html'), "rb").read()
-                        else:
-                            raise cherrypy.HTTPError(405, "Error!!! There is no such Global Tag!!!")
+
+        elif len(kwargs) == 1:
+            if "message-box.html" in args:
+                if "msg_name" in kwargs:
+                    if kwargs["msg_name"] == "Server Not Available":
+                        cherrypy.response.headers['info'] = "server not available"
+                    elif kwargs["msg_name"] == "Refreshing":
+                        cherrypy.response.headers['info'] = "refreshing"
+                    elif kwargs["msg_name"] == "missingRecordName":
+                        cherrypy.response.headers['info'] = "missingrecordname"
                     else:
-                        raise cherrypy.HTTPError(405, "Query has to have 2 parameters - GlobalTag and GlobalTag2 with values!!!")
+                        raise cherrypy.HTTPError(405, "Bad error message parameter value!!!")
                 else:
-                    raise cherrypy.HTTPError(405, "Error!!! There has to be only 2 parameters: GlobalTag and GlobalTag2 with values!!!")
-            elif len(kwargs) == 1:
-                if "message-box.html" in args:
-                    if "msg_name" in kwargs:
-                        if kwargs["msg_name"] == "Server Not Available":
-                            cherrypy.response.headers['info'] = "server not available"
-                        elif kwargs["msg_name"] == "Refreshing":
-                            cherrypy.response.headers['info'] = "refreshing"
-                        elif kwargs["msg_name"] == "missingRecordName":
-                            cherrypy.response.headers['info'] = "missingrecordname"
-                        else:
-                            raise cherrypy.HTTPError(405, "Bad error message parameter value!!!")
-                    else:
-                        raise cherrypy.HTTPError(405, "Missing parameter msg_name!!!")
-                    return open(os.path.join(PAGES_DIR, 'message-box.html'), "rb").read()
-                else:
-                    raise cherrypy.HTTPError(405, "Bad error message query!!! Should be /message-box.html?msg_name=ERROR_NAME")
+                    raise cherrypy.HTTPError(405, "Missing parameter msg_name!!!")
+                return open(os.path.join(PAGES_DIR, 'message-box.html'), "rb").read()
             else:
-                raise cherrypy.HTTPError(405, "Error message request has to be with only one parameter msg_name!!!")
+                raise cherrypy.HTTPError(405, "Bad error message query!!! Should be /message-box.html?msg_name=ERROR_NAME")
         else:
-            raise cherrypy.HTTPError(405, "Only 2 requests available with information within /.../ !!! It is /message-box.html?msg_name=ERROR_NAME or /GTdiff.html?GlobalTag=...&GlobalTag2=...   AND other request without information within /.../ with parameters or withount anything. Example with parameters: ?GlobalTag=GR_P_V32&GlobalTag2=GR_P_V32")
+            raise cherrypy.HTTPError(405, "Error message request has to be with only one parameter msg_name!!!")
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
