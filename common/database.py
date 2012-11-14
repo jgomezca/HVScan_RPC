@@ -133,6 +133,11 @@ class Connection(object):
         self.connection = cx_Oracle.connect(service.getCxOracleConnectionString(self.connectionDictionary), threaded = True)
 
 
+    def close(self):
+        logging.info('%s: Closing connection...', self)
+        self.connection.close()
+
+
     def execute(self, cursor, query, parameters = ()):
         if logging.getLogger().isEnabledFor(logging.DEBUG):
             printParameters = []
@@ -191,9 +196,4 @@ class Connection(object):
             self.execute(cursor, query, parameters)
 
         self._commit()
-
-
-    def close(self):
-        logging.info('%s: Closing connection...', self)
-        self.connection.close()
 
