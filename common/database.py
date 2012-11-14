@@ -130,7 +130,15 @@ def transaction(f):
                     return f(self, cursor, *args, **kwargs)
                 finally:
                     logging.debug('%s: Closing cursor...', self)
-                    cursor.close()
+                    try:
+                        cursor.close()
+                    except cx_Oracle.Error as e:
+                        # Ignore reconnection exceptions when closing the cursor
+                        # since the user probably does not want to rerun
+                        # the full transaction (since it successfully finished)
+                        logging.error('%s: Exception while closing cursor: %s', self, e)
+                        if not isReconnectException(e):
+                            raise e
             except cx_Oracle.Error as e:
                 logging.error('%s: Database Exception: %s', self, e)
 
