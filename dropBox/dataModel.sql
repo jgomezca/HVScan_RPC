@@ -2,6 +2,8 @@
 -- SQL script to create the new frontend dropBox database
 --
 
+drop table emails;
+drop sequence seqEmailsId;
 drop table fileLog;
 drop table runLog;
 drop table files;
@@ -70,6 +72,41 @@ create index idxFileLogRunLogCrets on fileLog (runLogCreationTimestamp);
 
 create or replace trigger tumFileLog
 before update on fileLog
+for each row
+begin
+        :new.modificationTimestamp := CURRENT_TIMESTAMP;
+end;
+/
+
+CREATE TABLE emails (
+    id NUMBER NOT NULL,
+    subject VARCHAR2(1000 BYTE) NOT NULL,
+    body BLOB NOT NULL,
+    fromAddress VARCHAR2(200 BYTE) NOT NULL,
+    toAddresses VARCHAR2(4000 BYTE) NOT NULL,
+    ccAddresses VARCHAR2(4000 BYTE) NULL,
+    creationTimestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL CONSTRAINT ckEmailsCrets CHECK (creationTimestamp > to_date('2012-01-01', 'YYYY-MM-DD')),
+    modificationTimestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    PRIMARY KEY (id)
+)
+;
+
+create sequence seqEmailsId
+start with 1
+increment by 1
+nocache
+nocycle;
+
+create or replace trigger trgEmailsId
+before insert on emails
+for each row
+begin
+  select seqEmailsId.nextval into :new.id from dual;
+end;
+/
+
+create or replace trigger tumEmails
+before update on emails
 for each row
 begin
         :new.modificationTimestamp := CURRENT_TIMESTAMP;
