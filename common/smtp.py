@@ -69,7 +69,7 @@ class SMTP(object):
             smtp.login(fromAddress, self.password)
 
         logging.debug('%s: Email from %s with subject %s: Sending...', self, fromAddress, repr(subject))
-        smtp.sendmail(fromAddress, set(toAddresses + ccAddresses), text.as_string())
+        smtp.sendmail(fromAddress, set(toAddresses) | set(ccAddresses), text.as_string())
 
         smtp.quit()
 
