@@ -46,7 +46,7 @@ class SMTP(object):
         return 'SMTP %s' % self.server
 
 
-    def sendEmail(self, subject, body, fromAddress, toAddresses, ccAddresses = []):
+    def sendEmail(self, subject, body, fromAddress, toAddresses, ccAddresses = ()):
         '''Sends an email.
 
         Note that toAddresses and ccAddresses are lists of emails.
