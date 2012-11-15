@@ -62,9 +62,13 @@ def main():
     if fqdn.endswith('.cms'):
         logging.info('Using online configuration.')
         dropBoxConfig = config.online()
+    elif fqdn == 'vocms226.cern.ch':
+        # FIXME: This will be in the online soon.
+        logging.info('Using tier0Test configuration.')
+        dropBoxConfig = config.tier0Test()
     elif fqdn.endswith('.cern.ch'):
         logging.info('Using test configuration.')
-        dropBoxConfig = config.tier0Test()
+        dropBoxConfig = config.test()
     else:
         raise Exception('Not running at CERN.')
 
