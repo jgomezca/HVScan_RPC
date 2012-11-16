@@ -46,6 +46,10 @@ DUPLICATING_OK     = 4399
 PROCESSING_FAILURE = 4910
 PROCESSING_OK      = 4999
 
-
+# For scripts that need to show a human-string of the value
+inverseMapping = {}
+for name in dict(vars()):
+    if not name.startswith('_') and isinstance(vars()[name], int):
+        inverseMapping[vars()[name]] = name
 
 # ------------------------------------------------

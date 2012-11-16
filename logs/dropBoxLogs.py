@@ -17,6 +17,7 @@ import jinja2
 import database
 
 import logPack
+import Constants
 import config
 
 
@@ -76,29 +77,25 @@ def getRunGlobalLog(creationTimestamp):
 
 
 mainTemplate = jinja2.Template('''
-<div class="tabs">
+<div id="dropBoxTabs">
     <ul>
-        {% for tabName in tabs %}
+        {% for tabName in sortedTabs %}
             <li><a href="#{{tabName}}">{{tabName}}</a></li>
         {% endfor %}
     </ul>
-    {% for tabName in tabs %}
+    {% for tabName in sortedTabs %}
         <div id="{{tabName}}">{{tabs[tabName]}}</div>
     {% endfor %}
 </div>
 <script>
-    $('.tabs').tabs();
-    $('.dataTable').dataTable({
-        "bJQueryUI": true,
-        "sPaginationType": "full_numbers"
-    });
+    $('#dropBoxTabs').tabs();
 </script>
 ''')
 
 
 tableTemplate = jinja2.Template('''
 <h2>{{title}}</h2>
-<table class="dataTable">
+<table id="{{name}}Table">
     <thead>
         <tr>
             {% for header in headers %}
@@ -116,24 +113,35 @@ tableTemplate = jinja2.Template('''
                 {% if link %}
                     <td><a target="_blank" href="{{link[0]}}{{row[0][0]}}">{{link[1]}}</a></td>
                 {% else %}
-                    <td>No log</td>
+                    <td>-</td>
                 {% endif %}
             {% endfor %}
         </tr>
     {% endfor %}
     </tbody>
 </table>
+<script>
+    $('#{{name}}Table').dataTable({
+        "bJQueryUI": true,
+        "sPaginationType": "full_numbers",
+        "aaSorting": [{{sortOn}}]
+    });
+</script>
 ''')
 
 
-def convertDatetimes(table):
+def transformData(table, headers, transformFunctions):
     newTable = []
 
     for row in table:
         newRow = []
-        for value in row:
-            if isinstance(value, datetime.datetime):
+        for (index, value) in enumerate(row):
+            if headers[index] in transformFunctions:
+                newRow.append(transformFunctions[headers[index]](value))
+            elif isinstance(value, datetime.datetime):
                 newRow.append(value.strftime('%Y-%m-%d %H:%M:%S,%f')[:-3])
+            elif value is None:
+                newRow.append('-')
             else:
                 newRow.append(value)
         newTable.append(newRow)
@@ -141,8 +149,8 @@ def convertDatetimes(table):
     return newTable
 
 
-def renderTable(table):
-    table['table'] = convertDatetimes(table['table'])
+def renderTable(name, table):
+    table['table'] = transformData(table['table'], table['headers'], table['transform'])
 
     newTable = []
     for row in table['table']:
@@ -157,21 +165,39 @@ def renderTable(table):
         else:
             newTable.append([row[:-len(table['links'])], links])
 
+    if table['sortOn'] is None:
+        table['sortOn'] = "[0, 'desc']"
+
     return tableTemplate.render(
+        name = name,
         title = table['title'],
         headers = table['headers'],
+        sortOn = table['sortOn'],
         table = newTable,
     )
 
 
+def getStatusCodeHumanString(statusCode):
+    try:
+        return '%s (%s)' % (statusCode, Constants.inverseMapping[int(statusCode)])
+    except KeyError:
+        return statusCode
+
+
 def renderLogs():
+    sortedTabs = ['runLog', 'fileLog', 'files', 'emails']
+
     tabs = {
         'runLog': {
             'title': 'Logs of each run of the dropBox',
             'headers': [
-                'creationTimestamp', 'statusCode', 'firstConditionSafeRun', 'hltRun',
+                'creationTimestamp', 'statusCode', 'fcsRun', 'hltRun',
                 'modificationTimestamp', 'downloadLog', 'globalLog',
             ],
+            'sortOn': None,
+            'transform': {
+                'statusCode': getStatusCodeHumanString
+            },
             'table': getRunLogs(),
             'links': [
                 ('getRunDownloadLog?creationTimestamp=', 'Read log'),
@@ -185,6 +211,10 @@ def renderLogs():
                 'fileHash', 'statusCode', 'metadata', 'userText', 'runLogCreationTimestamp',
                 'creationTimestamp', 'modificationTimestamp', 'log',
             ],
+            'sortOn': "[5, 'desc']",
+            'transform': {
+                'statusCode': getStatusCodeHumanString
+            },
             'table': getFileLogs(),
             'links': [
                 ('getFileLog?fileHash=', 'Read log'),
@@ -197,6 +227,8 @@ def renderLogs():
                 'fileHash', 'state', 'backend', 'username',
                 'creationTimestamp', 'modificationTimestamp'
             ],
+            'sortOn': "[4, 'desc']",
+            'transform': {},
             'table': getFiles(),
             'links': [
             ],
@@ -207,6 +239,8 @@ def renderLogs():
             'headers': [
                 'id', 'subject', 'fromAddress', 'toAddresses', 'ccAddresses', 'creationTimestamp', 'modificationTimestamp'
             ],
+            'sortOn': None,
+            'transform': {},
             'table': getEmails(),
             'links': [
             ],
@@ -215,7 +249,7 @@ def renderLogs():
 
     renderedTabs = {}
     for tab in tabs:
-        renderedTabs[tab] = renderTable(tabs[tab])
+        renderedTabs[tab] = renderTable(tab, tabs[tab])
 
-    return mainTemplate.render(tabs = renderedTabs)
+    return mainTemplate.render(sortedTabs = sortedTabs, tabs = renderedTabs)
 
