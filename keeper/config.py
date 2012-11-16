@@ -197,6 +197,12 @@ servicesConfiguration = {
 		'hidden':         True,
 	},
 
+	'logs': {
+		'filename':       'logs.py',
+		'listeningPort':  8097,
+		'hidden':         False,
+	},
+
 	'payloadInspector': {
 		'filename':       'PayloadInspector_backend.py',
 		'listeningPort':  8087,
