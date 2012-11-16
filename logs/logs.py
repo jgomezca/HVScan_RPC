@@ -14,7 +14,7 @@ import jinja2
 
 import service
 
-import dropBoxLogs
+import dropBox.logs
 
 
 mainTemplate = jinja2.Template('''
@@ -102,22 +102,22 @@ class DropBoxLogs(object):
 
     @cherrypy.expose
     def index(self):
-        return renderPage(dropBoxLogs.renderLogs())
+        return renderPage(dropBox.logs.renderLogs())
 
 
     @cherrypy.expose
     def getRunDownloadLog(self, creationTimestamp):
-        return service.setResponsePlainText(dropBoxLogs.getRunDownloadLog(creationTimestamp))
+        return service.setResponsePlainText(dropBox.logs.getRunDownloadLog(creationTimestamp))
 
 
     @cherrypy.expose
     def getRunGlobalLog(self, creationTimestamp):
-        return service.setResponsePlainText(dropBoxLogs.getRunGlobalLog(creationTimestamp))
+        return service.setResponsePlainText(dropBox.logs.getRunGlobalLog(creationTimestamp))
 
 
     @cherrypy.expose
     def getFileLog(self, fileHash):
-        return service.setResponsePlainText(dropBoxLogs.getFileLog(fileHash))
+        return service.setResponsePlainText(dropBox.logs.getFileLog(fileHash))
 
 
 class Logs(object):
