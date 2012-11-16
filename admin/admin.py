@@ -40,7 +40,7 @@ def check_output(*popenargs, **kwargs):
 	return stdout
 
 
-class Admin:
+class Admin(object):
 	'''Admin server.
 	'''
 

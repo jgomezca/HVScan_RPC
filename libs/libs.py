@@ -12,7 +12,7 @@ __email__ = 'mojedasa@cern.ch'
 import service
 
 
-class Libs:
+class Libs(object):
 	'''Libs server.
 	'''
 
