@@ -49,7 +49,12 @@ def getNextDropBoxRunTimestamp( timestamp ) :
 def secUntilNext10Min() :
     timestamp = datetime.datetime.fromtimestamp( time.time( ) )
     next = getNextDropBoxRunTimestamp( timestamp )
-    return ( next - timestamp ).seconds
+    # Add 3 more seconds to avoid races (i.e. .seconds does
+    # not contain the microseconds part and even them we would
+    # be asking for trouble, so just add 3 full seconds since
+    # we do not need precise runs at :10 minute marks (even
+    # 1 or 2 seconds should be enough).
+    return ( next - timestamp ).seconds + 3
 
 def main():
     '''Runs the dropBox forever.
