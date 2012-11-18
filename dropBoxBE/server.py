@@ -64,7 +64,10 @@ def main():
 
     fqdn = socket.getfqdn()
 
-    if fqdn.endswith('.cms'):
+    if fqdn == 'srv-C2C05-11.cms':
+        logging.info('Using tier0Test configuration.')
+        dropBoxConfig = config.tier0Test()
+    elif fqdn == 'srv-C2C05-15.cms':
         logging.info('Using online configuration.')
         dropBoxConfig = config.online()
     elif fqdn == 'vocms226.cern.ch':
