@@ -227,7 +227,7 @@ def renderLogs():
                 'fileHash', 'state', 'backend', 'username', 'fileName',
                 'creationTimestamp', 'modificationTimestamp'
             ],
-            'sortOn': "[4, 'desc']",
+            'sortOn': "[5, 'desc']",
             'transform': {},
             'table': getFiles(),
             'links': [
