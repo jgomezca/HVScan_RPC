@@ -65,8 +65,8 @@ def main():
     fqdn = socket.getfqdn()
 
     if fqdn == 'srv-C2C05-11.cms':
-        logging.info('Using tier0Test configuration.')
-        dropBoxConfig = config.tier0Test()
+        logging.info('Using tier0 configuration.')
+        dropBoxConfig = config.tier0()
     elif fqdn == 'srv-C2C05-15.cms':
         logging.info('Using online configuration.')
         dropBoxConfig = config.online()
