@@ -9,6 +9,7 @@ __maintainer__ = 'Miguel Ojeda'
 __email__ = 'mojedasa@cern.ch'
 
 
+import time
 import logging
 import cStringIO
 
@@ -34,8 +35,12 @@ class HTTP(object):
     '''Class used for querying URLs using the HTTP protocol.
     '''
 
+    retryCodes = frozenset([502])
+
+
     def __init__(self):
         self.setBaseUrl()
+        self.setRetries()
 
         self.curl = pycurl.Curl()
         self.curl.setopt(self.curl.COOKIEFILE, '')
@@ -65,6 +70,21 @@ class HTTP(object):
         self.curl.setopt(self.curl.PROXY, proxy)
 
 
+    def setRetries(self, retries = ()):
+        '''Allows to set retries.
+
+        The retries are a sequence of the seconds to wait per retry.
+
+        The retries are done on:
+            * PyCurl errors (includes network problems, e.g. not being able
+              to connect to the host).
+            * 502 Bad Gateway (for the moment, to avoid temporary
+              Apache-CherryPy issues).
+        '''
+
+        self.retries = retries
+
+
     def query(self, url, data = None, files = None, keepCookies = True):
         '''Queries a URL, optionally with some data (dictionary).
 
@@ -82,8 +102,6 @@ class HTTP(object):
         if not keepCookies:
             self.discardCookies()
 
-        response = cStringIO.StringIO()
-
         url = self.baseUrl + url
 
         # make sure the logs are safe ... at least somewhat :)
@@ -91,32 +109,50 @@ class HTTP(object):
         if data4log:
             if 'password' in data4log.keys():
                 data4log['password'] = '*'
-        logging.debug('Querying %s with data %s and files %s...', url, data4log, files)
 
-        self.curl.setopt(self.curl.URL, url)
-        self.curl.setopt(self.curl.HTTPGET, 1)
+        retries = [0] + list(self.retries)
 
-        if data is not None or files is not None:
-            # If there is data or files to send, use a POST request
+        while True:
+            logging.debug('Querying %s with data %s and files %s (retries left: %s, current sleep: %s)...', url, data4log, files, len(retries), retries[0])
 
-            finalData = {}
+            time.sleep(retries.pop(0))
 
-            if data is not None:
-                finalData.update(data)
+            try:
+                self.curl.setopt(self.curl.URL, url)
+                self.curl.setopt(self.curl.HTTPGET, 1)
 
-            if files is not None:
-                for (key, fileName) in files.items():
-                    finalData[key] = (self.curl.FORM_FILE, fileName)
+                if data is not None or files is not None:
+                    # If there is data or files to send, use a POST request
 
-            self.curl.setopt(self.curl.HTTPPOST, finalData.items())
+                    finalData = {}
 
-        self.curl.setopt(self.curl.WRITEFUNCTION, response.write)
-        self.curl.perform()
+                    if data is not None:
+                        finalData.update(data)
 
-        code = self.curl.getinfo(self.curl.RESPONSE_CODE)
+                    if files is not None:
+                        for (key, fileName) in files.items():
+                            finalData[key] = (self.curl.FORM_FILE, fileName)
 
-        if code != 200:
-            raise HTTPError(code, response.getvalue())
+                    self.curl.setopt(self.curl.HTTPPOST, finalData.items())
 
-        return response.getvalue()
+                response = cStringIO.StringIO()
+                self.curl.setopt(self.curl.WRITEFUNCTION, response.write)
+                self.curl.perform()
+
+                code = self.curl.getinfo(self.curl.RESPONSE_CODE)
+
+                if code in self.retryCodes and len(retries) > 0:
+                    logging.debug('Retrying since we got the %s error code...', code)
+                    continue
+
+                if code != 200:
+                    raise HTTPError(code, response.getvalue())
+
+                return response.getvalue()
+
+            except pycurl.error as e:
+                if len(retries) == 0:
+                    raise e
+
+                logging.debug('Retrying since we got the %s pycurl exception...', str(e))
 
