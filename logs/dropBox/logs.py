@@ -14,6 +14,7 @@ import json
 
 import jinja2
 
+import html
 import database
 
 import logPack
@@ -137,13 +138,12 @@ def transformData(table, headers, transformFunctions):
         newRow = []
         for (index, value) in enumerate(row):
             if headers[index] in transformFunctions:
-                newRow.append(transformFunctions[headers[index]](value))
+                value = transformFunctions[headers[index]](value)
             elif isinstance(value, datetime.datetime):
-                newRow.append(value.strftime('%Y-%m-%d %H:%M:%S,%f')[:-3])
+                value = value.strftime('%Y-%m-%d %H:%M:%S,%f')[:-3]
             elif value is None:
-                newRow.append('-')
-            else:
-                newRow.append(value)
+                value = '-'
+            newRow.append(html.escape(value))
         newTable.append(newRow)
 
     return newTable
