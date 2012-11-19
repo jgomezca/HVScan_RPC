@@ -1,44 +1,24 @@
-import pycurl
+import http
 import json
-import cStringIO
 
 class Curler( object ) :
-    def __init__(self) :
-        self.curl = pycurl.Curl( )
-        self.curl.setopt( self.curl.COOKIEFILE, '' )
-        self.curl.setopt( pycurl.SSL_VERIFYPEER, 0 )
-        self.curl.setopt( pycurl.SSL_VERIFYHOST, 0 )
-
-    def setVerbose(self, verb):
-        if verb:
-            self.curl.setopt( pycurl.VERBOSE, 1 )
-        else:
-            self.curl.setopt( pycurl.VERBOSE, 0 )
+    def __init__(self, config) :
+        self.curl = http.HTTP()
+        self.curl.setProxy(config.proxy)
+        self.curl.setTimeout(config.timeout)
+        self.curl.setRetries(config.retriesPyCurler)
 
     def get(self, url, data=None) :
-        response = cStringIO.StringIO( )
-        self.curl.setopt( self.curl.WRITEFUNCTION, response.write )
+        if data is not None:
+            data = dict(data)
 
-        self.curl.setopt( self.curl.URL, url )
-
-        if data :
-            self.curl.setopt( self.curl.HTTPPOST, data )
-        else :
-            self.curl.setopt( self.curl.HTTPGET, 1 )
-
-        self.curl.perform( )
-
-        if self.curl.getinfo( self.curl.RESPONSE_CODE ) != 200 :
-            raise Exception( response.getvalue( ) )
+        result = self.curl.query(url, data)
 
         try :
-            result = json.loads( response.getvalue( ) )
+            result = json.loads(result)
         except Exception, e :
-            if "No JSON object could be decoded" in str( e ) :
-                result = response.getvalue( )
-            else :
+            if "No JSON object could be decoded" not in str( e ) :
                 raise e
-        response.close( )
 
         return result
 

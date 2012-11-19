@@ -21,6 +21,7 @@ class BaseConfig( object ) :
         self.src = "https://cmsweb.cern.ch/tier0"
         self.timeout     = 5
         self.retries     = 3
+        self.retriesPyCurler = [30, 30, 30] # FIXME: Move to self.retries when we change tier0.py to use http.py
         self.retryPeriod = 30
         self.proxy = None
         if os.environ.has_key('http_proxy'):
@@ -50,7 +51,7 @@ class online( BaseConfig ) :
         self.authpath = '/nfshome0/popcondev/conddb'
 
         # this is the URL for the dropBox frontend service:
-        self.baseUrl = 'https://cms-conddb-prod.cern.ch/dropBox/'
+        self.baseUrl = 'https://cms-conddb-int.cern.ch/dropBox/'
 
         #  used for sync to express and hlt
         self.runInfoDbName = "oracle://cms_orcon_prod/CMS_COND_31X_RUN_INFO"  # ... in online (and cms_orcon_adg in offline)
@@ -84,7 +85,7 @@ class offline( BaseConfig ) :
         self.authpath = '/data/secrets'
 
         # this is the URL for the dropBox frontend service:
-        self.baseUrl = 'https://vocms146.cern.ch:8095/dropBox/'
+        self.baseUrl = 'https://cms-conddb-int.cern.ch/dropBox/'
 
         #  used for sync to express and hlt
         self.runInfoDbName = "oracle://cms_orcon_adg/CMS_COND_31X_RUN_INFO"  # ... in online (and cms_orcon_adg in offline)
@@ -136,8 +137,7 @@ class test( BaseConfig ) :
             raise Exception('Unknown production level.')
 
         # this is the URL for the dropBox frontend service, for testing/developing use the current host:
-        #self.baseUrl = 'https://%s/dropBox/' % (socket.gethostname(),)
-        self.baseUrl = 'https://%s:8095/dropBox/' %(socket.gethostname(),)
+        self.baseUrl = 'https://%s/dropBox/' % (socket.gethostname(),)
 
         # be quicker in tests
         self.delay = 10

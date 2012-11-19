@@ -14,7 +14,7 @@ class StatusUpdater( object ) :
 
         self.creationTimeStamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]  # works: '2012-02-20 22:53:48,140'
 
-        self.curler = PyCurler.Curler()
+        self.curler = PyCurler.Curler(cfg)
         # self.curler.setVerbose(True)
 
         self.login()

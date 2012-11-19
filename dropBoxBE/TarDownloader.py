@@ -41,7 +41,7 @@ class FileDownloader( object ) :
         self.baseProcDir = os.path.join( self.baseDir, 'dropbox' )
         if not os.path.exists( self.baseProcDir ) : os.makedirs( self.baseProcDir )
 
-        self.curl = Curler()
+        self.curl = Curler(cfg)
 
         self.fileList = []
 
