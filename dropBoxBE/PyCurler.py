@@ -4,7 +4,8 @@ import json
 class Curler( object ) :
     def __init__(self, config) :
         self.curl = http.HTTP()
-        self.curl.setProxy(config.proxy)
+        if config.proxy:
+            self.curl.setProxy(config.proxy)
         self.curl.setTimeout(config.timeout)
         self.curl.setRetries(config.retriesPyCurler)
 
