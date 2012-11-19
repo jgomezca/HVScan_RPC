@@ -70,6 +70,13 @@ class HTTP(object):
         self.curl.setopt(self.curl.PROXY, proxy)
 
 
+    def setTimeout(self, timeout = 0):
+        '''Allows to set a timeout.
+        '''
+
+        self.curl.setopt(self.curl.TIMEOUT, timeout)
+
+
     def setRetries(self, retries = ()):
         '''Allows to set retries.
 
