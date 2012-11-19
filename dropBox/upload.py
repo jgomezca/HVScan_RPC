@@ -8,7 +8,7 @@ __credits__ = ['Giacomo Govi', 'Salvatore Di Guida', 'Miguel Ojeda', 'Andreas Pf
 __license__ = 'Unknown'
 __maintainer__ = 'Miguel Ojeda'
 __email__ = 'mojedasa@cern.ch'
-__version__ = 1
+__version__ = 2
 
 
 import os
@@ -197,17 +197,18 @@ class DropBox(object):
         It will be stripped and then both .db and .txt files are used.
         '''
 
-        basename = filename.rsplit('.db', 1)[0].rsplit('.txt', 1)[0]
+        basepath = filename.rsplit('.db', 1)[0].rsplit('.txt', 1)[0]
+        basename = os.path.basename(basepath)
 
         logging.info('%s: %s: Creating tar file...', self.hostname, basename)
 
         tarFile = tarfile.open(temporaryFile, 'w:bz2')
 
-        with open('%s.db' % basename, 'rb') as data:
+        with open('%s.db' % basepath, 'rb') as data:
             addToTarFile(tarFile, data, 'data.db')
 
         with tempfile.NamedTemporaryFile() as metadata:
-            with open('%s.txt' % basename, 'rb') as originalMetadata:
+            with open('%s.txt' % basepath, 'rb') as originalMetadata:
                 json.dump(json.load(originalMetadata), metadata, sort_keys = True, indent = 4)
 
             metadata.seek(0)
@@ -235,6 +236,7 @@ class DropBox(object):
         os.rename(temporaryFile, fileHash)
         self.http.query('uploadFile', {
             'backend': backend,
+            'fileName': basename,
         }, files = {
             'uploadedFile': fileHash,
         })

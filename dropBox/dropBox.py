@@ -89,11 +89,11 @@ def dumpJson(data, maxSize = 4000):
     return data
 
 
-def uploadFile(fileHash, fileContent, username, backend):
+def uploadFile(fileHash, fileContent, username, backend, fileName):
     '''Uploads a file to the dropbox for online.
     '''
 
-    logging.debug('dropBox::uploadFile(%s, %s [len], %s, %s)', fileHash, len(fileContent), username, backend)
+    logging.debug('dropBox::uploadFile(%s, %s [len], %s, %s, %s)', fileHash, len(fileContent), username, backend, fileName)
 
     logging.info('uploadFile(): Checking whether the hash is valid...')
     checkHash(fileHash)
@@ -119,7 +119,7 @@ def uploadFile(fileHash, fileContent, username, backend):
         raise DropBoxError('The uploaded file with hash %s already exists in the Bad files (i.e. files that were wrong for some reason). Therefore this file will be skipped since the results of the checks should be the same again (i.e. wrong).' % fileHash)
 
     logging.info('uploadFile(): %s: Saving the uploaded file in the database...', fileHash)
-    dataAccess.insertFile(fileHash, 'Uploaded', backend, username, fileContent)
+    dataAccess.insertFile(fileHash, 'Uploaded', backend, username, fileName, fileContent)
 
     logging.info('uploadFile(): %s: Checking the contents of the file...', fileHash)
     try:

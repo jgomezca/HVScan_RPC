@@ -26,7 +26,7 @@ connection = database.Connection(config.connections['dropBox'])
 
 def getFiles():
     return connection.fetch('''
-        select fileHash, state, backend, username, creationTimestamp, modificationTimestamp
+        select fileHash, state, backend, username, fileName, creationTimestamp, modificationTimestamp
         from files
     ''')
 
@@ -224,7 +224,7 @@ def renderLogs():
         'files': {
             'title': 'All files (requests) of the dropBox',
             'headers': [
-                'fileHash', 'state', 'backend', 'username',
+                'fileHash', 'state', 'backend', 'username', 'fileName',
                 'creationTimestamp', 'modificationTimestamp'
             ],
             'sortOn': "[4, 'desc']",

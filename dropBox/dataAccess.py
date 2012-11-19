@@ -19,12 +19,12 @@ import config
 connection = database.Connection(config.connectionDictionary)
 
 
-def insertFile(fileHash, state, backend, username, fileContent):
+def insertFile(fileHash, state, backend, username, fileName, fileContent):
     connection.commit('''
         insert into files
-        (fileHash, state, backend, username, fileContent)
-        values (:s, :s, :s, :s, :s)
-    ''', (fileHash, state, backend, username, database.BLOB(fileContent)))
+        (fileHash, state, backend, username, fileName, fileContent)
+        values (:s, :s, :s, :s, :s, :s)
+    ''', (fileHash, state, backend, username, fileName, database.BLOB(fileContent)))
 
 
 def getFileState(fileHash):

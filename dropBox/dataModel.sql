@@ -13,6 +13,7 @@ CREATE TABLE files (
     state VARCHAR2(12 BYTE) NOT NULL CONSTRAINT ckFilesState CHECK (state in ('Uploaded', 'Pending', 'Acknowledged', 'Bad')),
     backend VARCHAR2(20 BYTE) NOT NULL,
     username VARCHAR2(100 BYTE) NOT NULL,
+    fileName VARCHAR2(255 BYTE) NOT NULL,
     fileContent BLOB,
     creationTimestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL CONSTRAINT ckFilesCrets CHECK (creationTimestamp > to_date('2012-01-01', 'YYYY-MM-DD')),
     modificationTimestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
@@ -22,6 +23,9 @@ CREATE TABLE files (
 ;
 
 create index idxFilesState on files (state, backend);
+
+-- for Gianluca and others since they will query the original filename often
+create index idxFilesFileName on files (fileName);
 
 create or replace trigger tumFiles
 before update on files

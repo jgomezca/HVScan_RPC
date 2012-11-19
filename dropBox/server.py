@@ -163,7 +163,7 @@ class DropBox(object):
 
     @checkSignedIn
     @handleDropBoxExceptions
-    def uploadFile(self, uploadedFile, backend):
+    def uploadFile(self, uploadedFile, backend, fileName):
         '''Uploads a file to the dropbox.
 
         Called from offline.
@@ -175,14 +175,23 @@ class DropBox(object):
         if not hasattr(uploadedFile, 'file') or not hasattr(uploadedFile, 'filename'):
             raise dropBox.DropBoxError('The parameter must be an uploaded file.')
 
-        logging.debug('server::uploadFile(%s, %s)', uploadedFile.filename, backend)
+        logging.debug('server::uploadFile(%s, %s, %s)', uploadedFile.filename, backend, fileName)
 
         logging.info('server::uploadFile(): Checking whether the backend is allowed...')
         allowedBackends = config.allowedBackends[service.settings['productionLevel']]
         if backend not in allowedBackends:
             raise dropBox.DropBoxError('The given backend %s is not in the allowed ones for this server: %s.' % (backend, allowedBackends))
 
-        dropBox.uploadFile(uploadedFile.filename, uploadedFile.file.read(), getUsername(), backend)
+        # Take out any paths in the fileName
+        fileName = os.path.basename(fileName)
+
+        # Most UNIX filesystems restrict names to 255 bytes, so if we get here
+        # someone is trying to do something probably wrong, therefore we just stop
+        logging.info('server::uploadFile(): Checking whether the length of the filename does not exceed 255 bytes...')
+        if len(fileName) > 255:
+            raise dropBox.DropBoxError('The length of the filename exceeds 255 bytes.')
+
+        dropBox.uploadFile(uploadedFile.filename, uploadedFile.file.read(), getUsername(), backend, fileName)
 
 
     @checkSignedInOnline
