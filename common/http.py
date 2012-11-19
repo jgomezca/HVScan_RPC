@@ -35,7 +35,7 @@ class HTTP(object):
     '''Class used for querying URLs using the HTTP protocol.
     '''
 
-    retryCodes = frozenset([502])
+    retryCodes = frozenset([502, 503])
 
 
     def __init__(self):
@@ -87,6 +87,8 @@ class HTTP(object):
               to connect to the host).
             * 502 Bad Gateway (for the moment, to avoid temporary
               Apache-CherryPy issues).
+            * 503 Service Temporarily Unavailable (for when we update
+              the frontends).
         '''
 
         self.retries = retries
