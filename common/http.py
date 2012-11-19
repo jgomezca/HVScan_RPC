@@ -36,17 +36,18 @@ class HTTP(object):
 
     def __init__(self):
         self.setBaseUrl()
-        self.discardCookies()
+
+        self.curl = pycurl.Curl()
+        self.curl.setopt(self.curl.COOKIEFILE, '')
+        self.curl.setopt(self.curl.SSL_VERIFYPEER, 0)
+        self.curl.setopt(self.curl.SSL_VERIFYHOST, 0)
 
 
     def discardCookies(self):
         '''Discards cookies.
         '''
 
-        self.curl = pycurl.Curl()
-        self.curl.setopt(self.curl.COOKIEFILE, '')
-        self.curl.setopt(self.curl.SSL_VERIFYPEER, 0)
-        self.curl.setopt(self.curl.SSL_VERIFYHOST, 0)
+        self.curl.setopt(self.curl.COOKIELIST, 'ALL')
 
 
     def setBaseUrl(self, baseUrl = ''):
@@ -55,6 +56,13 @@ class HTTP(object):
         '''
 
         self.baseUrl = baseUrl
+
+
+    def setProxy(self, proxy = ''):
+        '''Allows to set a proxy.
+        '''
+
+        self.curl.setopt(self.curl.PROXY, proxy)
 
 
     def query(self, url, data = None, files = None, keepCookies = True):
