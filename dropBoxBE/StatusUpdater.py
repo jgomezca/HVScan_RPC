@@ -12,7 +12,7 @@ class StatusUpdater( object ) :
         self.config = cfg
         self.baseUrl = self.config.baseUrl
 
-        self.creationTimeStamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]  # works: '2012-02-20 22:53:48,140'
+        self.creationTimeStamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S,%f")[:-3]  # works: '2012-02-20 22:53:48,140'
         self.backend = cfg.backend
 
         self.curler = PyCurler.Curler(cfg)
