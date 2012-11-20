@@ -71,6 +71,49 @@ class API(object):
     def all_releases(self):
         data = self.parent_obj.submit('*')
         return data
+        
+    @cherrypy.expose
+    def add_release(self, release_name, catSubCat, relmon_url=False):
+        catSubCatList = catSubCat.split(',')
+        if not relmon_url:
+            relmon_url = ""
+        defaultKeys = []
+        mailId = self.parent_obj.getMsgId()
+        print catSubCatList
+        for cat in catSubCatList: #in case user specified a comma separated list for releases CatSubCats
+            if cat[0].upper() == 'R': #get subCategory collumn list
+                defaultKeys = ["CSC", "TAU", "TRACKING", "BTAG", "JET", "ECAL", "RPC", "PHOTON", "MUON", "MET", "ELECTRON", "TK", "HCAL", "DT", "SUMMARY"]
+            elif cat[0].upper() == 'H':
+                defaultKeys = ["TAU", "JET", "HIGGS", "TOP", "MUON", "PHOTON", "MET", "ELECTRON", "EXOTICA", "SUSY", "SMP", "FWD", "BTAG", "TRACKING", "B", "SUMMARY"]
+            elif cat[0].upper() == 'P':
+                defaultKeys = ["B", "HIGGS", "FWD", "TOP", "SMP", "EXOTICA", "SUSY", "SUMMARY"]
+            subCat = self.parent_obj.configuration[cat]
+            StatList = []
+            StatValList = []
+            StatComments = []
+            StatAuthor = []
+            StatLinks = []
+            for key in defaultKeys:
+                StatList.append(key)
+                StatValList.append("NOT YET DONE")
+                StatComments.append("")
+                StatAuthor.append("")
+                StatLinks.append("")
+            #(self, sendMail, categ, subCat, relName, statusNames, statusValues, statComments, statAuthors, statLinks, mailID, relMonURL, **kwargs):
+            returninfo =  json.loads(self.parent_obj.addNewRelease(self, subCat[0], subCat[1], release_name, StatList, StatValList, StatComments, StatAuthor, StatLinks, mailId, relmon_url))
+            if returninfo[0] == "New release added successfuly":
+                added = True
+            else:
+                added = False
+                return "Failure in adding: %s" %(returninfo[0])
+        if added:
+            msgSubject = "New release "+release_name+" added"
+            msgText = "New release: "+release_name +" was added by "+self.parent_obj.get_username()+". Please check it!"
+          ##sendMail(self, messageText, emailSubject, org_message_ID, new_message_ID, username=False, **kwargs):
+            self.parent_obj.sendMail(msgText, msgSubject, "", mailId, "vlimant") ##send emails from Jean-Roch as for now (its Robot uses api)
+            return "Added successfuly"
+        else:
+            return returninfo[0] #Failure in adding -> return DB interface output
 
 class AjaxApp(object):
     def __init__(self):
@@ -482,7 +525,7 @@ The full details was sent to %s find it there""" %(relName.upper(), cat.upper(),
         if username != False:
             send_from = getUserEmail(username, Session)
         else:
-            send_from = username + "@cern.ch"
+            send_from = "anorkus@cern.ch"
         msg['From'] = send_from
         send_to = self.MAILING_LIST
         if username != False:
