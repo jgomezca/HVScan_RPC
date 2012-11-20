@@ -256,55 +256,55 @@ class DropBox(object):
 
     @checkSignedInOnline
     @handleDropBoxExceptions
-    def updateFileLog(self, fileHash, log, runLogCreationTimestamp):
+    def updateFileLog(self, fileHash, log, runLogCreationTimestamp, runLogBackend):
         '''Uploads the log of a file and the creationTimestamp of the run
         where the file has been processed.
 
         Called from online, after processing a file.
         '''
 
-        logging.debug('server::updateFileLog(%s, %s [len], %s)', fileHash, len(log), runLogCreationTimestamp)
+        logging.debug('server::updateFileLog(%s, %s [len], %s, %s)', fileHash, len(log), runLogCreationTimestamp, runLogBackend)
 
-        dropBox.updateFileLog(fileHash, log.decode('base64'), runLogCreationTimestamp)
+        dropBox.updateFileLog(fileHash, log.decode('base64'), runLogCreationTimestamp, runLogBackend)
 
 
     @checkSignedInOnline
     @handleDropBoxExceptions
-    def updateRunStatus(self, creationTimestamp, statusCode):
+    def updateRunStatus(self, creationTimestamp, backend, statusCode):
         '''Updates the status code of a run.
 
         Called from online, while it processes zero or more files.
         '''
 
-        logging.debug('server::updateRunStatus(%s, %s)', creationTimestamp, statusCode)
+        logging.debug('server::updateRunStatus(%s, %s, %s)', creationTimestamp, backend, statusCode)
 
-        dropBox.updateRunStatus(creationTimestamp, statusCode)
+        dropBox.updateRunStatus(creationTimestamp, backend, statusCode)
 
 
     @checkSignedInOnline
     @handleDropBoxExceptions
-    def updateRunRuns(self, creationTimestamp, firstConditionSafeRun, hltRun):
+    def updateRunRuns(self, creationTimestamp, backend, firstConditionSafeRun, hltRun):
         '''Updates the runs (run numbers) of a run (online dropBox run).
 
         Called from online.
         '''
 
-        logging.debug('server::updateRunRuns(%s, %s, %s)', creationTimestamp, firstConditionSafeRun, hltRun)
+        logging.debug('server::updateRunRuns(%s, %s, %s, %s)', creationTimestamp, backend, firstConditionSafeRun, hltRun)
 
-        dropBox.updateRunRuns(creationTimestamp, firstConditionSafeRun, hltRun)
+        dropBox.updateRunRuns(creationTimestamp, backend, firstConditionSafeRun, hltRun)
 
 
     @checkSignedInOnline
     @handleDropBoxExceptions
-    def updateRunLog(self, creationTimestamp, downloadLog, globalLog):
+    def updateRunLog(self, creationTimestamp, backend, downloadLog, globalLog):
         '''Uploads the logs and final statistics of a run.
 
         Called from online, after processing zero or more files.
         '''
 
-        logging.debug('server::updateRunLog(%s, %s [len], %s [len])', creationTimestamp, len(downloadLog), len(globalLog))
+        logging.debug('server::updateRunLog(%s, %s, %s [len], %s [len])', creationTimestamp, backend, len(downloadLog), len(globalLog))
 
-        dropBox.updateRunLog(creationTimestamp, downloadLog.decode('base64'), globalLog.decode('base64'))
+        dropBox.updateRunLog(creationTimestamp, backend, downloadLog.decode('base64'), globalLog.decode('base64'))
 
 
     @service.onlyPrivate

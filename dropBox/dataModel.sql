@@ -37,16 +37,19 @@ end;
 
 CREATE TABLE runLog (
     creationTimestamp TIMESTAMP NOT NULL CONSTRAINT ckRunLogCrets CHECK (creationTimestamp > to_date('2012-01-01', 'YYYY-MM-DD')),
+    backend VARCHAR2(20 BYTE) NOT NULL,
     statusCode NUMBER NOT NULL,
     firstConditionSafeRun NUMBER CONSTRAINT ckFirstConditionSafeRun CHECK (firstConditionSafeRun >= 0),
     hltRun NUMBER CONSTRAINT ckHltRun CHECK (hltRun >= 0),
     downloadLog BLOB,
     globalLog BLOB,
     modificationTimestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    PRIMARY KEY (creationTimestamp),
+    PRIMARY KEY (backend, creationTimestamp),
     CONSTRAINT ckRunLogModGtCre CHECK (modificationTimestamp >= creationTimestamp)
 )
 ;
+
+create index idxRunLogCrets on runLog (creationTimestamp);
 
 create or replace trigger tumRunLog
 before update on runLog
@@ -63,15 +66,17 @@ CREATE TABLE fileLog (
     userText VARCHAR2(4000 BYTE),
     log BLOB,
     runLogCreationTimestamp TIMESTAMP CONSTRAINT ckFileLogRunLogCrets CHECK (runLogCreationTimestamp > to_date('2012-01-01', 'YYYY-MM-DD')),
+    runLogBackend VARCHAR2(20 BYTE),
     creationTimestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL CONSTRAINT ckFileLogCrets CHECK (creationTimestamp > to_date('2012-01-01', 'YYYY-MM-DD')),
     modificationTimestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     PRIMARY KEY (fileHash),
     CONSTRAINT ckFileLogModGtCre CHECK (modificationTimestamp >= creationTimestamp),
     CONSTRAINT fkFileLogFilesFileHash FOREIGN KEY (fileHash) REFERENCES files (fileHash),
-    CONSTRAINT fkFileLogRunLogCre FOREIGN KEY (runLogCreationTimestamp) REFERENCES runLog (creationTimestamp)
+    CONSTRAINT fkFileLogRunLogBackendCrets FOREIGN KEY (runLogBackend, runLogCreationTimestamp) REFERENCES runLog (backend, creationTimestamp)
 )
 ;
 
+create index idxFileLogRunLogBackendCrets on fileLog (runLogBackend, runLogCreationTimestamp);
 create index idxFileLogRunLogCrets on fileLog (runLogCreationTimestamp);
 
 create or replace trigger tumFileLog

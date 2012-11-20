@@ -225,49 +225,49 @@ def updateFileStatus(fileHash, statusCode):
     dataAccess.updateFileLogStatus(fileHash, statusCode)
 
 
-def updateFileLog(fileHash, log, runLogCreationTimestamp):
+def updateFileLog(fileHash, log, runLogCreationTimestamp, runLogBackend):
     '''Uploads the log of a file and the creationTimestamp of the run
     where the file has been processed.
 
     Called from online, after processing a file.
     '''
 
-    logging.debug('dropBox::updateFileLog(%s, %s [len], %s)', fileHash, len(log), runLogCreationTimestamp)
+    logging.debug('dropBox::updateFileLog(%s, %s [len], %s, %s)', fileHash, len(log), runLogCreationTimestamp, runLogBackend)
 
-    dataAccess.updateFileLogLog(fileHash, log, runLogCreationTimestamp)
+    dataAccess.updateFileLogLog(fileHash, log, runLogCreationTimestamp, runLogBackend)
 
 
-def updateRunStatus(creationTimestamp, statusCode):
+def updateRunStatus(creationTimestamp, backend, statusCode):
     '''Updates the status code of a run.
 
     Called from online, while it processes zero or more files.
     '''
 
-    logging.debug('dropBox::updateRunStatus(%s, %s)', creationTimestamp, statusCode)
+    logging.debug('dropBox::updateRunStatus(%s, %s, %s)', creationTimestamp, backend, statusCode)
 
-    dataAccess.insertOrUpdateRunLog(creationTimestamp, statusCode)
+    dataAccess.insertOrUpdateRunLog(creationTimestamp, backend, statusCode)
 
 
-def updateRunRuns(creationTimestamp, firstConditionSafeRun, hltRun):
+def updateRunRuns(creationTimestamp, backend, firstConditionSafeRun, hltRun):
     '''Updates the runs (run numbers) of a run (online dropBox run).
 
     Called from online.
     '''
 
-    logging.debug('dropBox::updateRunRuns(%s, %s, %s)', creationTimestamp, firstConditionSafeRun, hltRun)
+    logging.debug('dropBox::updateRunRuns(%s, %s, %s, %s)', creationTimestamp, backend, firstConditionSafeRun, hltRun)
 
-    dataAccess.updateRunLogRuns(creationTimestamp, firstConditionSafeRun, hltRun)
+    dataAccess.updateRunLogRuns(creationTimestamp, backend, firstConditionSafeRun, hltRun)
 
 
-def updateRunLog(creationTimestamp, downloadLog, globalLog):
+def updateRunLog(creationTimestamp, backend, downloadLog, globalLog):
     '''Uploads the logs and final statistics of a run.
 
     Called from online, after processing zero or more files.
     '''
 
-    logging.debug('dropBox::updateRunLog(%s, %s [len], %s [len])', creationTimestamp, len(downloadLog), len(globalLog))
+    logging.debug('dropBox::updateRunLog(%s, %s, %s [len], %s [len])', creationTimestamp, backend, len(downloadLog), len(globalLog))
 
-    dataAccess.updateRunLogInfo(creationTimestamp, downloadLog, globalLog)
+    dataAccess.updateRunLogInfo(creationTimestamp, backend, downloadLog, globalLog)
 
 
 def dumpDatabase():

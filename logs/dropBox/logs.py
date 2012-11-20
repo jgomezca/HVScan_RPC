@@ -34,7 +34,7 @@ def getFiles():
 
 def getRunLogs():
     return connection.fetch('''
-        select creationTimestamp, statusCode, firstConditionSafeRun, hltRun, modificationTimestamp, nvl2(downloadLog, 1, 0), nvl2(globalLog, 1, 0)
+        select creationTimestamp, backend, statusCode, firstConditionSafeRun, hltRun, modificationTimestamp, nvl2(downloadLog, 1, 0), nvl2(globalLog, 1, 0)
         from runLog
     ''')
 
@@ -61,20 +61,22 @@ def getFileLog(fileHash):
     ''', (fileHash, ))[0][0])
 
 
-def getRunDownloadLog(creationTimestamp):
+def getRunDownloadLog(creationTimestamp, backend):
     return logPack.unpack(connection.fetch('''
         select downloadLog
         from runLog
         where creationTimestamp = to_timestamp(:s, 'YYYY-MM-DD HH24:MI:SS,FF3')
-    ''', (creationTimestamp, ))[0][0])
+            and backend = :s
+    ''', (creationTimestamp, backend))[0][0])
 
 
-def getRunGlobalLog(creationTimestamp):
+def getRunGlobalLog(creationTimestamp, backend):
     return logPack.unpack(connection.fetch('''
         select globalLog
         from runLog
         where creationTimestamp = to_timestamp(:s, 'YYYY-MM-DD HH24:MI:SS,FF3')
-    ''', (creationTimestamp, ))[0][0])
+            and backend = :s
+    ''', (creationTimestamp, backend))[0][0])
 
 
 mainTemplate = jinja2.Template('''
@@ -112,7 +114,7 @@ tableTemplate = jinja2.Template('''
             {% endfor %}
             {% for link in row[1] %}
                 {% if link %}
-                    <td><a target="_blank" href="{{link[0]}}{{row[0][0]}}">{{link[1]}}</a></td>
+                    <td><a target="_blank" href="{{link[0]}}">{{link[1]}}</a></td>
                 {% else %}
                     <td>-</td>
                 {% endif %}
@@ -157,7 +159,7 @@ def renderTable(name, table):
         links = []
         for (index, link) in enumerate(table['links']):
             if row[-len(table['links'])+index]:
-                links.append(link)
+                links.append((link[0] % tuple(row[:link[0].count('%s')]), link[1]))
             else:
                 links.append(None)
         if len(links) == 0:
@@ -191,7 +193,7 @@ def renderLogs():
         'runLog': {
             'title': 'Logs of each run of the dropBox',
             'headers': [
-                'creationTimestamp', 'statusCode', 'fcsRun', 'hltRun',
+                'creationTimestamp', 'backend', 'statusCode', 'fcsRun', 'hltRun',
                 'modificationTimestamp', 'downloadLog', 'globalLog',
             ],
             'sortOn': None,
@@ -200,8 +202,8 @@ def renderLogs():
             },
             'table': getRunLogs(),
             'links': [
-                ('getRunDownloadLog?creationTimestamp=', 'Read log'),
-                ('getRunGlobalLog?creationTimestamp=', 'Read log'),
+                ('getRunDownloadLog?creationTimestamp=%s&backend=%s', 'Read log'),
+                ('getRunGlobalLog?creationTimestamp=%s&backend=%s', 'Read log'),
             ],
         },
 
@@ -217,7 +219,7 @@ def renderLogs():
             },
             'table': getFileLogs(),
             'links': [
-                ('getFileLog?fileHash=', 'Read log'),
+                ('getFileLog?fileHash=%s', 'Read log'),
             ],
         },
 

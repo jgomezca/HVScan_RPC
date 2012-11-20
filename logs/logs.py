@@ -106,13 +106,13 @@ class DropBoxLogs(object):
 
 
     @cherrypy.expose
-    def getRunDownloadLog(self, creationTimestamp):
-        return service.setResponsePlainText(dropBox.logs.getRunDownloadLog(creationTimestamp))
+    def getRunDownloadLog(self, creationTimestamp, backend):
+        return service.setResponsePlainText(dropBox.logs.getRunDownloadLog(creationTimestamp, backend))
 
 
     @cherrypy.expose
-    def getRunGlobalLog(self, creationTimestamp):
-        return service.setResponsePlainText(dropBox.logs.getRunGlobalLog(creationTimestamp))
+    def getRunGlobalLog(self, creationTimestamp, backend):
+        return service.setResponsePlainText(dropBox.logs.getRunGlobalLog(creationTimestamp, backend))
 
 
     @cherrypy.expose

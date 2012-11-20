@@ -13,6 +13,7 @@ class StatusUpdater( object ) :
         self.baseUrl = self.config.baseUrl
 
         self.creationTimeStamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]  # works: '2012-02-20 22:53:48,140'
+        self.backend = cfg.backend
 
         self.curler = PyCurler.Curler(cfg)
         # self.curler.setVerbose(True)
@@ -74,6 +75,7 @@ class StatusUpdater( object ) :
                                [ ('fileHash', hash),
                                  ('log', logPack.pack(log).encode('base64') ),
                                  ( 'runLogCreationTimestamp', str(self.creationTimeStamp) ),
+                                 ( 'runLogBackend', str(self.backend) ),
                                 ] )
 
         retMsg = '\n'.join( ret ).strip( )
@@ -97,6 +99,7 @@ class StatusUpdater( object ) :
         ret = ''
         ret = self.curler.get( self.baseUrl + 'updateRunRuns',
                                [ ( 'creationTimestamp', str( self.creationTimeStamp ) ),
+                                 ( 'backend', str( self.backend ) ),
                                  ( 'firstConditionSafeRun', str( int( fcsr   ) ) ),    # make sure we send a str of an int :)
                                  ( 'hltRun'               , str( int( hltRun ) ) ),    # make sure we send a str of an int :)
                                ]
@@ -117,6 +120,7 @@ class StatusUpdater( object ) :
         ret = ''
         ret = self.curler.get( self.baseUrl + 'updateRunStatus',
                                [ ( 'creationTimestamp', str(self.creationTimeStamp) ),
+                                 ( 'backend', str( self.backend ) ),
                                  ( 'statusCode', str(int(statusCode)) ) ] # make sure we send a str of an int :)
                               )
 
@@ -136,6 +140,7 @@ class StatusUpdater( object ) :
         ret = ''
         ret = self.curler.get( self.baseUrl + 'updateRunLog',
                                [ ( 'creationTimestamp', self.creationTimeStamp ),
+                                 ( 'backend', str( self.backend ) ),
                                  ( 'downloadLog', logPack.pack(downloadLog).encode('base64') ),
                                  ( 'globalLog'  , logPack.pack(globalLog).encode('base64') )
                                ]

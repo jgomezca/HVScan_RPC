@@ -87,44 +87,51 @@ def updateFileLogStatus(fileHash, statusCode):
     ''', (statusCode, fileHash))
 
 
-def updateFileLogLog(fileHash, log, runLogCreationTimestamp):
+def updateFileLogLog(fileHash, log, runLogCreationTimestamp, runLogBackend):
     connection.commit('''
         update fileLog
-        set log = :s, runLogCreationTimestamp = to_timestamp(:s, 'YYYY-MM-DD HH24:MI:SS,FF3')
+        set log = :s,
+            runLogCreationTimestamp = to_timestamp(:s, 'YYYY-MM-DD HH24:MI:SS,FF3'),
+            runLogBackend = :s
         where fileHash = :s
-    ''', (database.BLOB(log), runLogCreationTimestamp, fileHash))
+    ''', (database.BLOB(log), runLogCreationTimestamp, runLogBackend, fileHash))
 
 
-def insertOrUpdateRunLog(creationTimestamp, statusCode):
+def insertOrUpdateRunLog(creationTimestamp, backend, statusCode):
     connection.commit('''
         merge into runLog
         using dual
-        on (creationTimestamp = to_timestamp(:s, 'YYYY-MM-DD HH24:MI:SS,FF3'))
+        on (creationTimestamp = to_timestamp(:s, 'YYYY-MM-DD HH24:MI:SS,FF3')
+            and backend = :s
+        )
         when matched then
             update
             set statusCode = :s
             where creationTimestamp = to_timestamp(:s, 'YYYY-MM-DD HH24:MI:SS,FF3')
+                and backend = :s
         when not matched then
             insert
-            (creationTimestamp, statusCode)
-            values (to_timestamp(:s, 'YYYY-MM-DD HH24:MI:SS,FF3'), :s)
-    ''', (creationTimestamp, statusCode, creationTimestamp, creationTimestamp, statusCode))
+            (creationTimestamp, backend, statusCode)
+            values (to_timestamp(:s, 'YYYY-MM-DD HH24:MI:SS,FF3'), :s, :s)
+    ''', (creationTimestamp, backend, statusCode, creationTimestamp, backend, creationTimestamp, backend, statusCode))
 
 
-def updateRunLogRuns(creationTimestamp, firstConditionSafeRun, hltRun):
+def updateRunLogRuns(creationTimestamp, backend, firstConditionSafeRun, hltRun):
     connection.commit('''
         update runLog
         set firstConditionSafeRun = :s, hltRun = :s
         where creationTimestamp = to_timestamp(:s, 'YYYY-MM-DD HH24:MI:SS,FF3')
-    ''', (firstConditionSafeRun, hltRun, creationTimestamp))
+            and backend = :s
+    ''', (firstConditionSafeRun, hltRun, creationTimestamp, backend))
 
 
-def updateRunLogInfo(creationTimestamp, downloadLog, globalLog):
+def updateRunLogInfo(creationTimestamp, backend, downloadLog, globalLog):
     connection.commit('''
         update runLog
         set downloadLog = :s, globalLog = :s
         where creationTimestamp = to_timestamp(:s, 'YYYY-MM-DD HH24:MI:SS,FF3')
-    ''', (database.BLOB(downloadLog), database.BLOB(globalLog), creationTimestamp))
+            and backend = :s
+    ''', (database.BLOB(downloadLog), database.BLOB(globalLog), creationTimestamp, backend))
 
 
 def insertEmail(subject, body, fromAddress, toAddresses, ccAddresses):
