@@ -1,8 +1,8 @@
 # coding=utf-8
 
 from collections import namedtuple, defaultdict
-from lxml import etree
-#Could be used "import xml.etree.ElementTree as etree" for python2.7
+import xml.etree.ElementTree as etree
+#from lxml import etree - if lxml support enabled
 
 Release = namedtuple('Release', ['name', 'arch', 'type', 'state'])
 
@@ -32,10 +32,10 @@ class ReleasesXml(object):
         """
         self._architectures = defaultdict(list)
         self._releases = {}
-        arch_elements = self._root.findall("architecture[@name]")
+        arch_elements = self._root.findall("architecture") #architecture[@name] - for python2.7 or lxml lib
         for arch_element in arch_elements:
             architecture_name = arch_element.attrib.get("name")
-            release_elements = arch_element.findall("project[@label]")
+            release_elements = arch_element.findall("project") #project[@label] - for python2.7 or lxml lib
             for release_element in release_elements:
                 release_name = release_element.attrib.get("label")
                 release_type = release_element.attrib.get("type")
