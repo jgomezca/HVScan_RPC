@@ -14,6 +14,7 @@ import json
 import database
 
 import config
+import Constants
 
 
 connection = database.Connection(config.connectionDictionary)
@@ -96,9 +97,32 @@ def updateFileLogLog(fileHash, log, runLogCreationTimestamp, runLogBackend):
         where fileHash = :s
     ''', (database.BLOB(log), runLogCreationTimestamp, runLogBackend, fileHash))
 
+@database.transaction
+def _insertOrUpdateRunLog(connection, cursor, creationTimestamp, backend, statusCode):
+    # Keep only the latest heartbeat: If for this backend we are going
+    # to update to NOTHING_TO_DO and the latest run also finished with
+    # NOTHING_TO_DO, then delete the previous run row.
+    if int(statusCode) == Constants.NOTHING_TO_DO:
+        (previousCreationTimestamp, previousStatusCode) = connection._fetch(cursor, '''
+            select *
+            from (
+                select creationTimestamp, statusCode
+                from runLog
+                where creationTimestamp <> to_timestamp(:s, 'YYYY-MM-DD HH24:MI:SS,FF3')
+                    and backend = :s
+                order by creationTimestamp desc
+            )
+            where rownum = 1
+        ''', (creationTimestamp, backend))[0]
 
-def insertOrUpdateRunLog(creationTimestamp, backend, statusCode):
-    connection.commit('''
+        if int(previousStatusCode) == Constants.NOTHING_TO_DO:
+            connection.execute(cursor, '''
+                delete from runLog
+                where creationTimestamp = to_timestamp(:s, 'YYYY-MM-DD HH24:MI:SS,FF3')
+                    and backend = :s
+            ''', (previousCreationTimestamp.strftime("%Y-%m-%d %H:%M:%S,%f")[:-3], backend))
+
+    connection.execute(cursor, '''
         merge into runLog
         using dual
         on (creationTimestamp = to_timestamp(:s, 'YYYY-MM-DD HH24:MI:SS,FF3')
@@ -114,6 +138,12 @@ def insertOrUpdateRunLog(creationTimestamp, backend, statusCode):
             (creationTimestamp, backend, statusCode)
             values (to_timestamp(:s, 'YYYY-MM-DD HH24:MI:SS,FF3'), :s, :s)
     ''', (creationTimestamp, backend, statusCode, creationTimestamp, backend, creationTimestamp, backend, statusCode))
+
+    connection.commit()
+
+
+def insertOrUpdateRunLog(creationTimestamp, backend, statusCode):
+    _insertOrUpdateRunLog(connection, creationTimestamp, backend, statusCode)
 
 
 def updateRunLogRuns(creationTimestamp, backend, firstConditionSafeRun, hltRun):
