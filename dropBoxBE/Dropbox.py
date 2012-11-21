@@ -182,12 +182,18 @@ class Dropbox(object) :
 
 
     def updateRunStatus(self, status) :
-        self.logger.info( 'updating run status to %s ' % (status,) )
+        # If we didn't upload the logs yet, use the runLog; else, use the service log
+        try:
+            logger = self.logger
+        except AttributeError:
+            logger = logging
+
+        logger.info( 'updating run status to %s ' % (status,) )
         try:
             self.statUpdater.updateRunStatus( status )
         except Exception, e:
             self.updateErrors += 1
-            self.logger.debug('Error from update run status : %s' % (str(e),))
+            logger.debug('Error from update run status : %s' % (str(e),))
             pass
 
 
@@ -370,6 +376,8 @@ class Dropbox(object) :
         fileLogger.info( msg )
 
         del tagHandler # delete this one before the logger ...
+
+        fileLogger.removeHandlers()
         del fileLogger
 
         self.uploadLogs( fileHash, fileLoggerName )
@@ -452,6 +460,7 @@ class Dropbox(object) :
             self.logger.error('Failed to update run info values into frontend database: %s' %(exc,) )
         dwnldr.downloadAll()
         ( self.donwloadProc, self.downloadOK ) = dwnldr.getSummary()
+        dwnldr.logger.removeHandlers()
         del dwnldr
 
         self.logger.info('starting to extract metadata from files')
@@ -477,6 +486,15 @@ class Dropbox(object) :
                 errors = True
 
         self.logger.info('uploading the logs')
+
+        # At this point, what is written in self.logger will not appear
+        # in the logs since it is already sent. Therefore, the lines would
+        # only appear in the service logs (a copy is sent there from
+        # all loggers). Thus we can can use logging directly instead.
+        # This allows us to remove the handlers here.
+        self.logger.removeHandlers()
+        del self.logger
+
         try:
             self.statUpdater.uploadRunLog(
                 self.getLogFileContent( 'Downloader.log' ),
@@ -484,17 +502,17 @@ class Dropbox(object) :
             )
         except Exception as exc:
             self.updateErrors += 1
-            self.logger.error('Failed to uploading the logs into frontend database: %s' %(exc,) )
+            logging.error('Failed to uploading the logs into frontend database: %s' %(exc,) )
 
         if errors:
-            self.logger.info('finished, with errors')
+            logging.info('finished, with errors')
             self.updateRunStatus(Constants.DONE_WITH_ERRORS)
         else:
-            self.logger.info('finished, all OK')
+            logging.info('finished, all OK')
             self.updateRunStatus(Constants.DONE_ALL_OK)
 
-        self.logger.info('Files processed (incremental):%d' % (self.processedFiles,) )
-        self.logger.info('Errors in contacting server for updates: %d' % (self.updateErrors,) )
+        logging.info('Files processed (incremental):%d' % (self.processedFiles,) )
+        logging.info('Errors in contacting server for updates: %d' % (self.updateErrors,) )
         return True
 
     def reprocess( self, timestamp, hltRun, fcsRun ):

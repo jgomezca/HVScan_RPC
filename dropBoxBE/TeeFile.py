@@ -55,14 +55,13 @@ class TeeFile( object ) :
                     'error' : self.logger.error,
         }
 
-    def __del__(self):
-        self.removeHandlers()
-        del self.logger
-
     def removeHandlers(self):
+        logging.info('TeeFile(): %s: Removing handlers %s...', self.logger, self.logger.handlers)
+
         # FileHandler does not close the files when deleted?
         for handler in self.logger.handlers:
             if isinstance(handler, logging.FileHandler):
+                logging.info('TeeFile(): %s: Closing handler %s...', self.logger, handler)
                 handler.close()
 
         self.logger.handlers = []
