@@ -37,6 +37,10 @@ with open('upload.py', 'rb') as f:
     uploadScript = f.read()
 
 
+# Ensure the sessions folder exist
+service.makePath(os.path.join(service.getFilesPath(), 'sessions'))
+
+
 def getUsername():
     '''Returns the username of the current CherryPy session.
     If it fails, returns None (i.e. the user is not signed in).
