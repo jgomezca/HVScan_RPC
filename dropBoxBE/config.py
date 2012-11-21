@@ -75,7 +75,7 @@ class offline( BaseConfig ) :
 
         self.backend = 'offline'
 
-        self.maindir = os.path.abspath( os.path.join( os.getcwd(), '..', 'NewOfflineDropBoxBaseDir') )
+        self.maindir = '/data/files/'
         self.detector = 'Test'
         self.label = 'DropBox'
 
@@ -116,7 +116,7 @@ class test( BaseConfig ) :
 
         super(test, self).__init__()
 
-        self.maindir = os.path.abspath( os.path.join( os.getcwd(), '..', 'NewOfflineDropBoxBaseDir') )
+        self.maindir = '/data/files/'
 
         # For development, we use the prep dropBox database
         if service.settings['productionLevel'] in set(['dev']):
