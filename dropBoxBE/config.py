@@ -41,7 +41,7 @@ class online( BaseConfig ) :
 
         self.backend = 'online'
 
-        self.maindir = '/nfshome0/popcondev/'
+        self.maindir = '/nfshome0/popconpro/'
         self.detector = 'Test' # was PopCon
         self.label = 'DropBox'
 
