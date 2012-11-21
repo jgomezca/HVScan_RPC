@@ -192,6 +192,14 @@ def getURL():
 
 # Utility functions
 
+def getFilesPath():
+    '''Returns the path to the files folder where a service can store
+    permanent files (but local to the backend machine).
+    '''
+
+    return os.path.join('/data/files', settings['name'])
+
+
 def onlyPrivate(f):
     '''Decorator that only defines a function if the productionLevel
     is private.

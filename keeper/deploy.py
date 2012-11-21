@@ -442,7 +442,7 @@ def deploy(options):
 	logging.info('Working directory: ' + options['dataDirectory'])
 	os.chdir(options['dataDirectory'])
 
-	# Create the logs and jobs folders if they do not exist and their subdirectories
+	# Create the logs, jobs and files folders if they do not exist and their subdirectories
 	execute('mkdir -p logs/keeper jobs')
 	for service in config.servicesConfiguration:
 		# logs' subdirectories
@@ -454,6 +454,9 @@ def deploy(options):
 		(head, tail) = os.path.split(service)
 		if head != '':
 			execute('mkdir -p %s' % os.path.join('jobs', head))
+
+		# files
+		execute('mkdir -p %s' % os.path.join('files', service))
 
 	# Create symlink if /data is not the dataDirectory
 	if options['dataDirectory'] != defaultDataDirectory:
