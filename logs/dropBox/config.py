@@ -14,10 +14,8 @@ import service
 
 if service.settings['productionLevel'] in set(['int', 'pro']):
     connections = {
-        # For integration and production, we use the production dropBox database
-        # FIXME: For the moment, until we finish the tier0 tests and we get
-        #        the new CMSR account, we will use the prep one as well.
-        'dropBox': service.secrets['dropBoxConnections']['dev'],
+        # For integration and production, we use the (reader) production dropBox database
+        'dropBox': service.secrets['dropBoxConnections']['pro'],
     }
 
 elif service.settings['productionLevel'] in set(['dev']):
