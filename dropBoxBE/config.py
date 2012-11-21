@@ -75,7 +75,7 @@ class offline( BaseConfig ) :
 
         self.backend = 'offline'
 
-        self.maindir = '/data/files/'
+        self.maindir = '/data/files/dropBoxBE/'
         self.detector = 'Test'
         self.label = 'DropBox'
 
@@ -116,7 +116,7 @@ class test( BaseConfig ) :
 
         super(test, self).__init__()
 
-        self.maindir = '/data/files/'
+        self.maindir = '/data/files/dropBoxBE/'
 
         # For development, we use the prep dropBox database
         if service.settings['productionLevel'] in set(['dev']):
