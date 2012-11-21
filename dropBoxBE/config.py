@@ -19,7 +19,7 @@ class BaseConfig( object ) :
 
         # get info on next run which will be processed for prompt:
         self.src = "https://cmsweb.cern.ch/tier0"
-        self.timeout     = 5
+        self.timeout     = 30
         self.retries     = 3
         self.retriesPyCurler = [30, 30, 30] # FIXME: Move to self.retries when we change tier0.py to use http.py
         self.retryPeriod = 30
