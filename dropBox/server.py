@@ -32,6 +32,11 @@ import service
 winServicesUrl = service.getWinServicesSoapBaseUrl(service.secrets['winservices'])
 
 
+# Cache the upload script
+with open('upload.py', 'rb') as f:
+    uploadScript = f.read()
+
+
 def getUsername():
     '''Returns the username of the current CherryPy session.
     If it fails, returns None (i.e. the user is not signed in).
@@ -158,7 +163,7 @@ class DropBox(object):
 
         logging.debug('server::getUploadScript()')
 
-        return cherrypy.lib.static.serve_file('/data/services/dropBox/upload.py', 'application/x-download', 'attachment')
+        return uploadScript
 
 
     @checkSignedIn
