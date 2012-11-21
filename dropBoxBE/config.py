@@ -61,7 +61,7 @@ class online( BaseConfig ) :
         self.proxy = "http://cmsproxy.cms:3128"
 
         # this will later go into the main DB:
-        self.logdb = 'sqlite_file:/tmp/PopConDevJobLog.db'
+        self.logdb = 'oracle://cms_orcon_prod/CMS_COND_31X_POPCONLOG'
 
         self.gtDbName = "oracle://cms_orcon_prod/CMS_COND_31X_GLOBALTAG"
         self.gtTags = {'hlt' : 'GR10_H_V5', 'express' : 'GR10_E_V5',
