@@ -192,6 +192,20 @@ def getURL():
 
 # Utility functions
 
+def makePath(path):
+    '''Makes directories in the path if they do not exist yet.
+
+    Like os.makedirs() but without failing if the exist.
+
+    Note that this function has a race condition, so do not use it
+    from multiple callers at the same time.
+    '''
+
+    if not os.path.exists(path):
+        logging.debug('%s: Creating path...', path)
+        os.makedirs(path)
+
+
 def getFilesPath():
     '''Returns the path to the files folder where a service can store
     permanent files (but local to the backend machine).
