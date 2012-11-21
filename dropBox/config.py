@@ -19,9 +19,7 @@ group = 'cms-cond-dropbox'
 
 # For integration and production, we use the production dropBox database
 if service.settings['productionLevel'] in set(['int', 'pro']):
-    # FIXME: For the moment, until we finish the tier0 tests and we get
-    #        the new CMSR account, we will use the prep one as well.
-    connectionDictionary = service.secrets['connections']['dev']
+    connectionDictionary = service.secrets['connections']['pro']
 
 # For development, we use the prep dropBox database
 elif service.settings['productionLevel'] in set(['dev']):
