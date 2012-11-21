@@ -250,6 +250,10 @@ class Dropbox(object) :
                 return None
             fileLogger.info( 'Synchronizing since value:%d to "%s" with run=%d' % (firstSince, syncTarget, syncValue ) )
             if firstSince < syncValue:
+                if syncTarget == 'pcl':
+                    # Skip the exportation/duplication
+                    fileLogger.info( 'Cannot synchronize to PCL since firstSince < syncValue' )
+                    return -1
                 syncSince = syncValue
         else:
             fileLogger.info( 'Keeping since value:%d for "%s" synchronization' % (firstSince, syncTarget) )
@@ -309,6 +313,9 @@ class Dropbox(object) :
         for dTag, tagSpec in destTags.items():
             syncTarget = tagSpec[ 'synchronizeTo' ]
             destSince = self.getDestSince( fileHash, syncTarget, fileLogger )  # check and validate, return correct value
+            if destSince == -1:
+                self.logger.warning( 'Skipping exportation of tag %s to %s' % (dTag, syncTarget))
+                continue
             if destSince == None:
                 self.logger.error( 'Could not resolve the destination since' )
                 self.updateFileStatus( fileHash, Constants.PROCESSING_FAILURE )
@@ -340,6 +347,9 @@ class Dropbox(object) :
                 depTags = tagSpec[ 'dependencies' ]
                 for depTag, depSynch in depTags.items():
                     depSince = self.getDestSince( fileHash, depSynch, fileLogger )
+                    if depSince == -1:
+                        self.logger.warning( 'Skipping duplication of tag %s to %s' % (depTag, depSynch))
+                        continue
                     if depSince == None:
                         self.logger.error( 'Could not resolve the dependency since' )
                         self.updateFileStatus( fileHash, Constants.PROCESSING_FAILURE )
