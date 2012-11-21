@@ -103,7 +103,7 @@ def _insertOrUpdateRunLog(connection, cursor, creationTimestamp, backend, status
     # to update to NOTHING_TO_DO and the latest run also finished with
     # NOTHING_TO_DO, then delete the previous run row.
     if int(statusCode) == Constants.NOTHING_TO_DO:
-        (previousCreationTimestamp, previousStatusCode) = connection._fetch(cursor, '''
+        result = connection._fetch(cursor, '''
             select *
             from (
                 select creationTimestamp, statusCode
@@ -113,14 +113,17 @@ def _insertOrUpdateRunLog(connection, cursor, creationTimestamp, backend, status
                 order by creationTimestamp desc
             )
             where rownum = 1
-        ''', (creationTimestamp, backend))[0]
+        ''', (creationTimestamp, backend))
 
-        if int(previousStatusCode) == Constants.NOTHING_TO_DO:
-            connection.execute(cursor, '''
-                delete from runLog
-                where creationTimestamp = to_timestamp(:s, 'YYYY-MM-DD HH24:MI:SS,FF3')
-                    and backend = :s
-            ''', (previousCreationTimestamp.strftime("%Y-%m-%d %H:%M:%S,%f")[:-3], backend))
+        if len(result) != 0:
+            (previousCreationTimestamp, previousStatusCode) = result[0]
+
+            if int(previousStatusCode) == Constants.NOTHING_TO_DO:
+                connection.execute(cursor, '''
+                    delete from runLog
+                    where creationTimestamp = to_timestamp(:s, 'YYYY-MM-DD HH24:MI:SS,FF3')
+                        and backend = :s
+                ''', (previousCreationTimestamp.strftime("%Y-%m-%d %H:%M:%S,%f")[:-3], backend))
 
     connection.execute(cursor, '''
         merge into runLog
