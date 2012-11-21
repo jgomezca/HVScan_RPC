@@ -113,9 +113,6 @@ class CMSSWRelease(object):
             raise CMSSWReleaseCreationException(error_msg)
         finally:
             os.chdir(starting_working_directory)
-#
-    def execute_cmd(self, cmd):
-        pass
 
     def delete(self):
         if not self._created:
