@@ -376,6 +376,7 @@ class Dropbox(object) :
             self.moveToDir( fileHash, 'processError')
         else:
             self.moveToDir( fileHash, 'exported' )
+            self.updateFileStatus( fileHash, Constants.PROCESSING_OK )
 
         # -----------------------------------------------------------------
         # the following needs to be done even if exportation failed:
