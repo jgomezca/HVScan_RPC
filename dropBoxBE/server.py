@@ -71,9 +71,8 @@ def main():
         logging.info('Using online configuration.')
         dropBoxConfig = config.online()
     elif fqdn == 'vocms226.cern.ch':
-        # FIXME: This will be in the online soon.
-        logging.info('Using tier0Test configuration.')
-        dropBoxConfig = config.tier0Test()
+        logging.info('Using offline configuration.')
+        dropBoxConfig = config.offline()
     elif fqdn.endswith('.cern.ch'):
         logging.info('Using test configuration.')
         dropBoxConfig = config.test()
