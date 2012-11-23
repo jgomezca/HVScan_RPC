@@ -6,17 +6,17 @@ import sys
 import unittest
 
 CURRENT_DIR = os.path.abspath(os.path.dirname(__file__))
-TEST_DIR = os.path.abspath(os.path.join(CURRENT_DIR, "..", "src"))
+TEST_DIR = os.path.abspath(os.path.join(CURRENT_DIR, "..",))
 sys.path.append(TEST_DIR)
 
-from releases import ReleasesXml, Release
+from releases_xml import ReleasesXml, Release
 
 class TestReleasesXml(unittest.TestCase):
 
     def setUp(self):
         #URLReleasesXML = "https://cmstags.cern.ch/tc/ReleasesXML"#r = requests.get(URLReleasesXML, verify=False)#r.text
         curr_dir = os.path.dirname(os.path.abspath(__file__))
-        test_file = os.path.join(curr_dir, "releases.test.xml")
+        test_file = os.path.join(curr_dir, "test_releases_xml.xml")
         data = open(test_file,"rb").read()
         self.rx = ReleasesXml(data)
 
