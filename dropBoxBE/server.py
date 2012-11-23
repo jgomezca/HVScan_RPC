@@ -12,6 +12,7 @@ __email__ = 'mojedasa@cern.ch'
 import logging
 import socket
 import time
+import signal
 
 # Initialize logging
 import service
@@ -56,6 +57,14 @@ def secUntilNext10Min() :
     # 1 or 2 seconds should be enough).
     return ( next - timestamp ).seconds + 3
 
+
+stop = False
+def handleTERM(signal, frame):
+    global stop
+    stop = True
+    logging.info('Received SIGTERM')
+
+
 def main():
     '''Runs the dropBox forever.
     '''
@@ -80,14 +89,19 @@ def main():
         raise Exception('Not running at CERN.')
 
     logging.info('Configuring object...')
-
     dropBox = Dropbox.Dropbox(dropBoxConfig)
 
-    logging.info('Running forever...')
+    logging.info('Configuring TERM handler...')
+    signal.signal(signal.SIGTERM, handleTERM)
 
-    while True:
+    logging.info('Running loop...')
+    while not stop:
         logging.info('Processing all files...')
         dropBox.processAllFiles()
+
+        # Avoid the delay if we just finished processing
+        if stop:
+            break
 
         if dropBoxConfig.delay:
             logging.info('Processing all files done; waiting %s seconds for the next run.', dropBoxConfig.delay)
@@ -96,6 +110,8 @@ def main():
             sleepTime = secUntilNext10Min()
             logging.info('Processing all files done; waiting %s seconds for the next run.', sleepTime)
             time.sleep( sleepTime )
+
+    logging.info('Stopping...')
 
 
 if __name__ == '__main__':
