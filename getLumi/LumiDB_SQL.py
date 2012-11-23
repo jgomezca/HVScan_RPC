@@ -74,7 +74,9 @@ class NewLumiDB(object):
         self.setupConnection()
         lumisummaryOut = []
         for runNr in self.normalizeRunNumbers(runNumbers):
-            lumisummaryOut.append( { "Run" : runNr, "RecordedLumi" : recordedLumiForRun( self.session, self.params, runNr) } )
+            recLumi = recordedLumiForRun( self.session, self.params, runNr)
+            if recLumi == 'N/A': continue   # ignore these ...
+            lumisummaryOut.append( { "Run" : runNr, "RecordedLumi" : recLumi } )
 
         return lumisummaryOut
 
@@ -82,7 +84,9 @@ class NewLumiDB(object):
         self.setupConnection( )
         lumisummaryOut = []
         for runNr in self.normalizeRunNumbers(runNumbers):
-            lumisummaryOut.append( { "Run" : runNr, "DeliveredLumi" : deliveredLumiForRun( self.session, self.params, runNr)[2] } )
+            delLumi = deliveredLumiForRun( self.session, self.params, runNr )[2]
+            if delLumi == 'N/A' : continue   # ignore these ...
+            lumisummaryOut.append( { "Run" : runNr, "DeliveredLumi" : delLumi } )
 
         return lumisummaryOut
 

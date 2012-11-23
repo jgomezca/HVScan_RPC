@@ -183,7 +183,7 @@ class LumiDB:
             return LumiDB_SQL.NewLumiDB().getDeliveredLumiSummaryByRun(runNumbers=runListOK)
         else:
             # return LumiDB_SQL.NewLumiDB( ).getRecordedLumiSummaryByRun( runNumbers=runListOK )
-            raise cherrypy.HTTPError('recorded lumis not (yet?) supported ... ')
+            raise cherrypy.HTTPError(405, 'recorded lumis not (yet?) supported ... ')
 
 def main():
     logging.basicConfig(
