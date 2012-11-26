@@ -19,6 +19,7 @@ import hashlib
 import cStringIO
 import tarfile
 import netrc
+import getpass
 import json
 import tempfile
 
@@ -243,6 +244,17 @@ class DropBox(object):
         os.unlink(fileHash)
 
 
+def getInput(default, prompt = ''):
+    '''Like raw_input() but with a default and automatic strip().
+    '''
+
+    answer = raw_input(prompt)
+    if answer:
+        return answer.strip()
+
+    return default.strip()
+
+
 def main():
     '''Entry point.
     '''
@@ -287,8 +299,22 @@ def main():
         parser.print_help()
         return -2
 
-    (username, account, password) = netrc.netrc().authenticators(options.netrcHost)
 
+    # Retrieve username and password
+    try:
+        (username, account, password) = netrc.netrc().authenticators(options.netrcHost)
+    except Exception:
+        logging.info('netrc entry %s not found: if you wish not to have to retype your password, you can add an entry in your .netrc file. However, beware of the risks of having your password stored as plaintext.', options.netrcHost)
+
+        defaultUsername = getpass.getuser()
+        if defaultUsername is None:
+            defaultUsername = '(not found)'
+
+        username = getInput(defaultUsername, 'Username [%s]: ' % defaultUsername)
+        password = getpass.getpass('Password: ')
+
+
+    # Upload files
     try:
         dropBox = DropBox(options.hostname, options.urlTemplate)
         dropBox.signIn(username, password)
