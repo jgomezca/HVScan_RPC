@@ -20,6 +20,8 @@ import cStringIO
 import tarfile
 import netrc
 import getpass
+import errno
+import sqlite3
 import json
 import tempfile
 
@@ -255,6 +257,18 @@ def getInput(default, prompt = ''):
     return default.strip()
 
 
+def getInputRepeat(prompt = ''):
+    '''Like raw_input() but repeats if nothing is provided and automatic strip().
+    '''
+
+    while True:
+        answer = raw_input(prompt)
+        if answer:
+            return answer.strip()
+
+        logging.error('You need to provide a value.')
+
+
 def main():
     '''Entry point.
     '''
@@ -313,6 +327,122 @@ def main():
         username = getInput(defaultUsername, 'Username [%s]: ' % defaultUsername)
         password = getpass.getpass('Password: ')
 
+
+    # Check that we can read the data and metadata files
+    # If the metadata file does not exist, start the wizard
+    for filename in arguments:
+        basepath = filename.rsplit('.db', 1)[0].rsplit('.txt', 1)[0]
+        basename = os.path.basename(basepath)
+        dataFilename = '%s.db' % basepath
+        metadataFilename = '%s.txt' % basepath
+
+        logging.info('Checking %s...', basename)
+
+        # Data file
+        try:
+            with open(dataFilename, 'rb') as dataFile:
+                pass
+        except IOError as e:
+            logging.error('Impossible to open SQLite data file %s', dataFilename)
+            return -3
+
+        # Metadata file
+        try:
+            with open(metadataFilename, 'rb') as metadataFile:
+                pass
+        except IOError as e:
+            if e.errno != errno.ENOENT:
+                logging.error('Impossible to open file %s (for other reason than not existing)', metadataFilename)
+                return -4
+
+            if getInput('y', '\nIt looks like the metadata file %s does not exist. Do you want me to create it and help you fill it?\nAnswer [y]: ' % metadataFilename).strip().lower() != 'y':
+                logging.error('Metadata file %s does not exist', metadataFilename)
+                return -5
+
+            # Wizard
+            print '''Wizard for metadata file %s
+
+I will ask you some questions to fill the metadata file. For some of the questions there are defaults between square brackets (i.e. []), leave empty (i.e. hit Enter) to use them.'''
+
+            dataConnection = sqlite3.connect(dataFilename)
+            dataCursor = dataConnection.cursor()
+            dataCursor.execute('select OBJECT_NAME from ORA_NAMING_SERVICE')
+            inputTags = dataCursor.fetchall()
+            if len(inputTags) == 0:
+                defaultInputTag = '(no input tags found)'
+            elif len(inputTags) == 1:
+                defaultInputTag = inputTags[0][0]
+            else:
+                defaultInputTag = '(more than one input tag found)'
+
+            inputTag = getInput(defaultInputTag, '\nWhich is the input tag (i.e. the tag to be read from the SQLite data file)?\ne.g. BeamSpotObject_ByRun\ninputTag [%s]: ' % defaultInputTag)
+
+            destinationDatabase = getInputRepeat('\nWhich is the destination database where the tags should be exported and/or duplicated?\ne.g. oracle://cms_orcoff_prep/CMS_COND_BEAMSPOT\ndestinationDatabase: ')
+
+            since = getInput('', '\nWhich is the given since (if not specified, the one from the SQLite data file will be taken)?\ne.g. 1234\nsince []: ')
+            if not since:
+                since = None
+
+            userText = getInput('', '\nWrite any comments/text you may want to describe your request\ne.g. Muon alignment scenario for...\nuserText []: ')
+
+            # TODO: Check this is correct.
+            print '''
+Finally, we are going to add the destination tags. There must be at least one.
+The tags (and its dependencies) can be synchronized to several workflows. You can synchronize to the following workflows:
+   * "offline" means no checks/synchronization will be done.
+   * "hlt" and "express" means that the IOV will be synchronized to the last online run plus one (as seen by RunInfo).
+   * "prompt" means that the IOV will be synchronized to the smallest run waiting for Prompt Reconstruction plus one (as seen by the Tier0 monitoring).
+   * "pcl" is like "prompt", but only if the begin time of the first IOV is larger than the number obtained from Tier0.'''
+
+            defaultWorkflow = 'offline'
+            destinationTags = {}
+            while True:
+                destinationTag = getInput('', '\nWhich is the next destination tag to be added (leave empty to stop)?\ne.g. BeamSpotObjects_PCL_byRun_v0_offline\ndestinationTag []: ')
+                if not destinationTag:
+                    if len(destinationTags) == 0:
+                        logging.error('There must be at least one destination tag.')
+                        continue
+                    break
+
+                if destinationTag in destinationTags:
+                    logging.warning('You already added this destination tag. Overwriting the previous one with this new one.')
+
+                synchronizeTo = getInput(defaultWorkflow, '\n  * To which workflow (see above) this tag %s has to be synchronized to?\n    e.g. offline\n    synchronizeTo [%s]: ' % (destinationTag, defaultWorkflow))
+
+                print '''
+    If you need to add dependencies to this tag (i.e. tags that will be duplicated from this tag to another workflow), you can specify them now. There may be none.'''
+
+                dependencies = {}
+                while True:
+                    dependency = getInput('', '\n  * Which is the next dependency for %s to be added (leave empty to stop)?\n    e.g. BeamSpotObjects_PCL_byRun_v0_hlt\n    dependency []: ' % destinationTag)
+                    if not dependency:
+                        break
+
+                    if dependency in dependencies:
+                        logging.warning('You already added this dependency. Overwriting the previous one with this new one.')
+
+                    workflow = getInput(defaultWorkflow, '\n     + To which workflow (see above) this dependency %s has to be synchronized to?\n       e.g. offline\n       synchronizeTo [%s]: ' % (dependency, defaultWorkflow))
+
+                    dependencies[dependency] = workflow
+
+                destinationTags[destinationTag] = {
+                    'synchronizeTo': synchronizeTo,
+                    'dependencies': dependencies,
+                }
+
+            metadata = {
+                'destinationDatabase': destinationDatabase,
+                'destinationTags': destinationTags,
+                'inputTag': inputTag,
+                'since': since,
+                'userText': userText,
+            }
+
+            metadata = json.dumps(metadata, sort_keys = True, indent = 4)
+            logging.info('This is the generated metadata:\n\n%s\n', metadata)
+            logging.info('Saving generated metadata in %s...', metadataFilename)
+            with open(metadataFilename, 'wb') as metadataFile:
+                metadataFile.write(metadata)
 
     # Upload files
     try:
