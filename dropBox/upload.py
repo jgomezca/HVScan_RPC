@@ -360,33 +360,34 @@ def main():
                 return -5
 
             # Wizard
-            print '''Wizard for metadata file %s
+            while True:
+                print '''Wizard for metadata for %s
 
-I will ask you some questions to fill the metadata file. For some of the questions there are defaults between square brackets (i.e. []), leave empty (i.e. hit Enter) to use them.'''
+I will ask you some questions to fill the metadata file. For some of the questions there are defaults between square brackets (i.e. []), leave empty (i.e. hit Enter) to use them.''' % basename
 
-            dataConnection = sqlite3.connect(dataFilename)
-            dataCursor = dataConnection.cursor()
-            dataCursor.execute('select OBJECT_NAME from ORA_NAMING_SERVICE')
-            inputTags = dataCursor.fetchall()
-            if len(inputTags) == 0:
-                defaultInputTag = '(no input tags found)'
-            elif len(inputTags) == 1:
-                defaultInputTag = inputTags[0][0]
-            else:
-                defaultInputTag = '(more than one input tag found)'
+                dataConnection = sqlite3.connect(dataFilename)
+                dataCursor = dataConnection.cursor()
+                dataCursor.execute('select OBJECT_NAME from ORA_NAMING_SERVICE')
+                inputTags = dataCursor.fetchall()
+                if len(inputTags) == 0:
+                    defaultInputTag = '(no input tags found)'
+                elif len(inputTags) == 1:
+                    defaultInputTag = inputTags[0][0]
+                else:
+                    defaultInputTag = '(more than one input tag found)'
 
-            inputTag = getInput(defaultInputTag, '\nWhich is the input tag (i.e. the tag to be read from the SQLite data file)?\ne.g. BeamSpotObject_ByRun\ninputTag [%s]: ' % defaultInputTag)
+                inputTag = getInput(defaultInputTag, '\nWhich is the input tag (i.e. the tag to be read from the SQLite data file)?\ne.g. BeamSpotObject_ByRun\ninputTag [%s]: ' % defaultInputTag)
 
-            destinationDatabase = getInputRepeat('\nWhich is the destination database where the tags should be exported and/or duplicated?\ne.g. oracle://cms_orcoff_prep/CMS_COND_BEAMSPOT\ndestinationDatabase: ')
+                destinationDatabase = getInputRepeat('\nWhich is the destination database where the tags should be exported and/or duplicated?\ne.g. oracle://cms_orcoff_prep/CMS_COND_BEAMSPOT\ndestinationDatabase: ')
 
-            since = getInput('', '\nWhich is the given since (if not specified, the one from the SQLite data file will be taken)?\ne.g. 1234\nsince []: ')
-            if not since:
-                since = None
+                since = getInput('', '\nWhich is the given since (if not specified, the one from the SQLite data file will be taken)?\ne.g. 1234\nsince []: ')
+                if not since:
+                    since = None
 
-            userText = getInput('', '\nWrite any comments/text you may want to describe your request\ne.g. Muon alignment scenario for...\nuserText []: ')
+                userText = getInput('', '\nWrite any comments/text you may want to describe your request\ne.g. Muon alignment scenario for...\nuserText []: ')
 
-            # TODO: Check this is correct.
-            print '''
+                # TODO: Check this is correct.
+                print '''
 Finally, we are going to add the destination tags. There must be at least one.
 The tags (and its dependencies) can be synchronized to several workflows. You can synchronize to the following workflows:
    * "offline" means no checks/synchronization will be done.
@@ -394,52 +395,56 @@ The tags (and its dependencies) can be synchronized to several workflows. You ca
    * "prompt" means that the IOV will be synchronized to the smallest run waiting for Prompt Reconstruction plus one (as seen by the Tier0 monitoring).
    * "pcl" is like "prompt", but only if the begin time of the first IOV is larger than the number obtained from Tier0.'''
 
-            defaultWorkflow = 'offline'
-            destinationTags = {}
-            while True:
-                destinationTag = getInput('', '\nWhich is the next destination tag to be added (leave empty to stop)?\ne.g. BeamSpotObjects_PCL_byRun_v0_offline\ndestinationTag []: ')
-                if not destinationTag:
-                    if len(destinationTags) == 0:
-                        logging.error('There must be at least one destination tag.')
-                        continue
-                    break
-
-                if destinationTag in destinationTags:
-                    logging.warning('You already added this destination tag. Overwriting the previous one with this new one.')
-
-                synchronizeTo = getInput(defaultWorkflow, '\n  * To which workflow (see above) this tag %s has to be synchronized to?\n    e.g. offline\n    synchronizeTo [%s]: ' % (destinationTag, defaultWorkflow))
-
-                print '''
-    If you need to add dependencies to this tag (i.e. tags that will be duplicated from this tag to another workflow), you can specify them now. There may be none.'''
-
-                dependencies = {}
+                defaultWorkflow = 'offline'
+                destinationTags = {}
                 while True:
-                    dependency = getInput('', '\n  * Which is the next dependency for %s to be added (leave empty to stop)?\n    e.g. BeamSpotObjects_PCL_byRun_v0_hlt\n    dependency []: ' % destinationTag)
-                    if not dependency:
+                    destinationTag = getInput('', '\nWhich is the next destination tag to be added (leave empty to stop)?\ne.g. BeamSpotObjects_PCL_byRun_v0_offline\ndestinationTag []: ')
+                    if not destinationTag:
+                        if len(destinationTags) == 0:
+                            logging.error('There must be at least one destination tag.')
+                            continue
                         break
 
-                    if dependency in dependencies:
-                        logging.warning('You already added this dependency. Overwriting the previous one with this new one.')
+                    if destinationTag in destinationTags:
+                        logging.warning('You already added this destination tag. Overwriting the previous one with this new one.')
 
-                    workflow = getInput(defaultWorkflow, '\n     + To which workflow (see above) this dependency %s has to be synchronized to?\n       e.g. offline\n       synchronizeTo [%s]: ' % (dependency, defaultWorkflow))
+                    synchronizeTo = getInput(defaultWorkflow, '\n  * To which workflow (see above) this tag %s has to be synchronized to?\n    e.g. offline\n    synchronizeTo [%s]: ' % (destinationTag, defaultWorkflow))
 
-                    dependencies[dependency] = workflow
+                    print '''
+    If you need to add dependencies to this tag (i.e. tags that will be duplicated from this tag to another workflow), you can specify them now. There may be none.'''
 
-                destinationTags[destinationTag] = {
-                    'synchronizeTo': synchronizeTo,
-                    'dependencies': dependencies,
+                    dependencies = {}
+                    while True:
+                        dependency = getInput('', '\n  * Which is the next dependency for %s to be added (leave empty to stop)?\n    e.g. BeamSpotObjects_PCL_byRun_v0_hlt\n    dependency []: ' % destinationTag)
+                        if not dependency:
+                            break
+
+                        if dependency in dependencies:
+                            logging.warning('You already added this dependency. Overwriting the previous one with this new one.')
+
+                        workflow = getInput(defaultWorkflow, '\n     + To which workflow (see above) this dependency %s has to be synchronized to?\n       e.g. offline\n       synchronizeTo [%s]: ' % (dependency, defaultWorkflow))
+
+                        dependencies[dependency] = workflow
+
+                    destinationTags[destinationTag] = {
+                        'synchronizeTo': synchronizeTo,
+                        'dependencies': dependencies,
+                    }
+
+                metadata = {
+                    'destinationDatabase': destinationDatabase,
+                    'destinationTags': destinationTags,
+                    'inputTag': inputTag,
+                    'since': since,
+                    'userText': userText,
                 }
 
-            metadata = {
-                'destinationDatabase': destinationDatabase,
-                'destinationTags': destinationTags,
-                'inputTag': inputTag,
-                'since': since,
-                'userText': userText,
-            }
+                metadata = json.dumps(metadata, sort_keys = True, indent = 4)
+                logging.info('This is the generated metadata:\n\n%s', metadata)
 
-            metadata = json.dumps(metadata, sort_keys = True, indent = 4)
-            logging.info('This is the generated metadata:\n\n%s\n', metadata)
+                if getInput('n', '\nIs it fine (i.e. save in %s and continue)?\nAnswer [n]: ' % metadataFilename).strip().lower() == 'y':
+                    break
+
             logging.info('Saving generated metadata in %s...', metadataFilename)
             with open(metadataFilename, 'wb') as metadataFile:
                 metadataFile.write(metadata)
