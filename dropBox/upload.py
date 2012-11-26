@@ -31,7 +31,7 @@ defaultBackend = 'online'
 defaultHostname = 'cms-conddb-int.cern.ch'
 defaultUrlTemplate = 'https://%s/dropBox/'
 defaultTemporaryFile = 'upload.tar.bz2'
-defaultNetrcHost = 'newOffDb'
+defaultNetrcHost = 'DropBox'
 
 
 class HTTPError(Exception):
