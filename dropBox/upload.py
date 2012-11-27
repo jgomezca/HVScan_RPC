@@ -422,7 +422,7 @@ I will ask you some questions to fill the metadata file. For some of the questio
                 destinationDatabase = getInputRepeat('\nWhich is the destination database where the tags should be exported and/or duplicated?\ne.g. oracle://cms_orcoff_prep/CMS_COND_BEAMSPOT\ndestinationDatabase: ')
 
                 while True:
-                    since = getInput('', '\nWhich is the given since (if not specified, the one from the SQLite data file will be taken)?\ne.g. 1234\nsince []: ')
+                    since = getInput('', '\nWhich is the given since? (if not specified, the one from the SQLite data file will be taken -- note that even if specified, still this may not be the final since, depending on the synchronization options you select later: if the synchronization target is not offline, and the since you give is smaller than the next possible one (i.e. you give a run number earlier than the one which will be started/processed next in prompt/hlt/express), the DropBox will move the since ahead to go to the first safe run instead of the value you gave)\ne.g. 1234\nsince []: ')
                     if not since:
                         since = None
                         break
