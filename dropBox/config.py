@@ -17,6 +17,12 @@ import service
 group = 'cms-cond-dropbox'
 
 
+# For alarms
+fromAddress = 'mojedasa@cern.ch'
+toAddresses = ['cms-cond-dev@cern.ch']
+ccAddresses = []
+
+
 # For integration and production, we use the production dropBox database
 if service.settings['productionLevel'] in set(['int', 'pro']):
     connectionDictionary = service.secrets['connections']['pro']
