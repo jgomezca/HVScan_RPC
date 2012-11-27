@@ -64,6 +64,7 @@ class DropBoxTest(service.TestCase):
             'uploadFile', {
                 'uploadedFile': 'asd',
                 'backend': 'private',
+                'fileName': 'test',
             }
         )
         self.signOut()
@@ -78,6 +79,7 @@ class DropBoxTest(service.TestCase):
                 "The given backend private2 is not in the allowed ones for this server: set(['private']).",
                 'uploadFile', {
                     'backend': 'private2',
+                    'fileName': 'test',
                 }, files = {
                     'uploadedFile': f.name,
                 }
@@ -143,6 +145,7 @@ class DropBoxTest(service.TestCase):
                     # These files are sent directly, skipping upload.py
                     error = self.assertRaisesHTTPError(400, 'uploadFile', {
                         'backend': 'private',
+                        'fileName': 'securityTest',
                     }, files = {
                         'uploadedFile': test,
                     })
