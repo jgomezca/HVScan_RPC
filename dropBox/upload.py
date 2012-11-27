@@ -257,6 +257,21 @@ def getInput(default, prompt = ''):
     return default.strip()
 
 
+def getInputChoose(optionsList, default, prompt = ''):
+    '''Makes the user choose from a list of options.
+    '''
+
+    while True:
+        index = getInput(default, prompt)
+
+        try:
+            return optionsList[int(index)]
+        except ValueError:
+            logging.error('Please specify an index of the list (i.e. integer).')
+        except IndexError:
+            logging.error('The index you provided is not in the given list.')
+
+
 def getInputRepeat(prompt = ''):
     '''Like raw_input() but repeats if nothing is provided and automatic strip().
     '''
@@ -361,22 +376,48 @@ def main():
 
             # Wizard
             while True:
-                print '''Wizard for metadata for %s
+                print '''\nWizard for metadata for %s
 
 I will ask you some questions to fill the metadata file. For some of the questions there are defaults between square brackets (i.e. []), leave empty (i.e. hit Enter) to use them.''' % basename
 
-                dataConnection = sqlite3.connect(dataFilename)
-                dataCursor = dataConnection.cursor()
-                dataCursor.execute('select OBJECT_NAME from ORA_NAMING_SERVICE')
-                inputTags = dataCursor.fetchall()
-                if len(inputTags) == 0:
-                    defaultInputTag = '(no input tags found)'
-                elif len(inputTags) == 1:
-                    defaultInputTag = inputTags[0][0]
-                else:
-                    defaultInputTag = '(more than one input tag found)'
+                # Try to get the available inputTags
+                try:
+                    dataConnection = sqlite3.connect(dataFilename)
+                    dataCursor = dataConnection.cursor()
+                    dataCursor.execute('select name from sqlite_master where type == "table"')
+                    tables = set(zip(*dataCursor.fetchall())[0])
 
-                inputTag = getInput(defaultInputTag, '\nWhich is the input tag (i.e. the tag to be read from the SQLite data file)?\ne.g. BeamSpotObject_ByRun\ninputTag [%s]: ' % defaultInputTag)
+                    # Old POOL format
+                    if 'POOL_RSS_DB' in tables:
+                        dataCursor.execute('select NAME from METADATA')
+
+                    # Good ORA DB (i.e. skip the intermediate unsupported format)
+                    elif 'ORA_DB' in tables and 'METADATA' not in tables:
+                        dataCursor.execute('select OBJECT_NAME from ORA_NAMING_SERVICE')
+
+                    # In any other case, do not try to get the inputTags
+                    else:
+                        raise Exception()
+
+                    inputTags = dataCursor.fetchall()
+                    if len(inputTags) == 0:
+                        raise Exception()
+                    inputTags = zip(*inputTags)[0]
+
+                except Exception:
+                    inputTags = []
+
+                if len(inputTags) == 0:
+                    print '\nI could not find any input tag in your data file, but you can still specify one manually.'
+
+                    inputTag = getInputRepeat('\nWhich is the input tag (i.e. the tag to be read from the SQLite data file)?\ne.g. BeamSpotObject_ByRun\ninputTag: ')
+
+                else:
+                    print '\nI found the following input tags in your SQLite data file:'
+                    for (index, inputTag) in enumerate(inputTags):
+                        print '   %s) %s' % (index, inputTag)
+
+                    inputTag = getInputChoose(inputTags, '0', '\nWhich is the input tag (i.e. the tag to be read from the SQLite data file)?\ne.g. 0 (you select the first in the list)\ninputTag [0]: ')
 
                 destinationDatabase = getInputRepeat('\nWhich is the destination database where the tags should be exported and/or duplicated?\ne.g. oracle://cms_orcoff_prep/CMS_COND_BEAMSPOT\ndestinationDatabase: ')
 
