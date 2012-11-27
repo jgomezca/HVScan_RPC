@@ -22,6 +22,7 @@ import json
 
 import cx_Oracle
 
+import alarm
 import config
 import dataAccess
 
@@ -127,6 +128,11 @@ def uploadFile(fileHash, fileContent, username, backend, fileName):
     except DropBoxError as e:
         failUpload(fileHash)
         raise e
+    except Exception as e:
+        # Other kind of exception: this is a bug :(
+        alarm.alarm('Non-DropBoxError exception raised in check.py: %s' % e)
+        failUpload(fileHash)
+        raise DropBoxError('Oops, something went wrong while checking your file. This is most likely a bug in the DropBox. %s' % config.notifiedErrorMessage)
 
     # Divide the metadata in the userText and the real metadata
     userText = metadata['userText']

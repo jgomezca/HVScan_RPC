@@ -17,6 +17,10 @@ import service
 group = 'cms-cond-dropbox'
 
 
+# Messages
+notifiedErrorMessage = 'This has been notified and we will try to fix it. However, if you urgently need assistance, please write an email to cms-offlinedb-exp@cern.ch and cms-cond-dev@cern.ch. If you need immediate assistance, you can call the Offline DB expert on call (+41 22 76 70817, or 70817 from CERN; check https://twiki.cern.ch/twiki/bin/viewauth/CMS/DBShifterHelpPage if it does not work).'
+
+
 # For alarms
 fromAddress = 'mojedasa@cern.ch'
 toAddresses = ['cms-cond-dev@cern.ch']
