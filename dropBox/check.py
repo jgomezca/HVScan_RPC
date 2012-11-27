@@ -158,7 +158,7 @@ def checkContents(fileHash, dataPath, metadata, backend):
         for tag, synchronizationDict in metadata['destinationTags'].items():
             checkSynchronization(synchronizationDict['synchronizeTo'], destinationDatabase, tag, gtHandle, productionGTsDict)
 
-            for dependentTag, synchronizeTo in synchronizationDict['dependencies'].items():
+            for dependentTag, synchronizeTo in synchronizationDict.get('dependencies', {}).items():
                 checkSynchronization(synchronizeTo, destinationDatabase, dependentTag, gtHandle, productionGTsDict)
 
     finally:
