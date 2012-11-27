@@ -117,15 +117,16 @@ def checkContents(fileHash, dataPath, metadata, backend):
             raise dropBox.DropBoxError('Oracle is the only supported service.')
 
         # Invalid connection string
+        connectionDictionary = service.getProtocolServiceAndAccountFromConnectionString(destinationDatabase)
+        if connectionDictionary is None:
+            raise dropBox.DropBoxError('The connection string is not correct.')
+
+        # Destination database not supported
         allowedServices = config.allowedServices[backend]
         if allowedServices is not None:
-            serviceName = service.getProtocolServiceAndAccountFromConnectionString(destinationDatabase)['service']
-            if serviceName is None:
-                raise dropBox.DropBoxError('The connection string is not correct.')
-
             ok = False
             for allowedService in allowedServices:
-                if serviceName in databaseServices.services[allowedService]['oracle']:
+                if connectionDictionary['service'] in databaseServices.services[allowedService]['oracle']:
                     ok = True
 
             if not ok:
