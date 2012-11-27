@@ -370,7 +370,7 @@ def main():
                 logging.error('Impossible to open file %s (for other reason than not existing)', metadataFilename)
                 return -4
 
-            if getInput('y', '\nIt looks like the metadata file %s does not exist. Do you want me to create it and help you fill it?\nAnswer [y]: ' % metadataFilename).strip().lower() != 'y':
+            if getInput('y', '\nIt looks like the metadata file %s does not exist. Do you want me to create it and help you fill it?\nAnswer [y]: ' % metadataFilename).lower() != 'y':
                 logging.error('Metadata file %s does not exist', metadataFilename)
                 return -5
 
@@ -490,7 +490,7 @@ The tags (and its dependencies) can be synchronized to several workflows. You ca
                 metadata = json.dumps(metadata, sort_keys = True, indent = 4)
                 logging.info('This is the generated metadata:\n\n%s', metadata)
 
-                if getInput('n', '\nIs it fine (i.e. save in %s and continue)?\nAnswer [n]: ' % metadataFilename).strip().lower() == 'y':
+                if getInput('n', '\nIs it fine (i.e. save in %s and continue)?\nAnswer [n]: ' % metadataFilename).lower() == 'y':
                     break
 
             logging.info('Saving generated metadata in %s...', metadataFilename)
