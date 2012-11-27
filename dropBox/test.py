@@ -27,7 +27,7 @@ import config
 class DropBoxTest(service.TestCase):
 
     def signIn(self):
-        (username, account, password) = netrc.netrc().authenticators('newOffDb')
+        (username, account, password) = netrc.netrc().authenticators('DropBox')
         self.query('signIn', {
             'username': username,
             'password': password,
