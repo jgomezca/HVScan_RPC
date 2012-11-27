@@ -63,6 +63,8 @@ def checkContents(fileHash, dataPath, metadata, backend):
 
     data is the filename of the sqlite file.
     metadata is a string with the metadata file itself.
+
+    Note: Update the wizard on the upload.py script if the structure changes.
     '''
 
     logging.debug('check::checkContents(%s, %s, %s)', fileHash, dataPath, repr(metadata))
