@@ -380,9 +380,17 @@ I will ask you some questions to fill the metadata file. For some of the questio
 
                 destinationDatabase = getInputRepeat('\nWhich is the destination database where the tags should be exported and/or duplicated?\ne.g. oracle://cms_orcoff_prep/CMS_COND_BEAMSPOT\ndestinationDatabase: ')
 
-                since = getInput('', '\nWhich is the given since (if not specified, the one from the SQLite data file will be taken)?\ne.g. 1234\nsince []: ')
-                if not since:
-                    since = None
+                while True:
+                    since = getInput('', '\nWhich is the given since (if not specified, the one from the SQLite data file will be taken)?\ne.g. 1234\nsince []: ')
+                    if not since:
+                        since = None
+                        break
+                    else:
+                        try:
+                            since = int(since)
+                            break
+                        except ValueError:
+                            logging.error('The since value has to be an integer or empty (null).')
 
                 userText = getInput('', '\nWrite any comments/text you may want to describe your request\ne.g. Muon alignment scenario for...\nuserText []: ')
 
