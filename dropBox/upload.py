@@ -394,14 +394,13 @@ I will ask you some questions to fill the metadata file. For some of the questio
 
                 userText = getInput('', '\nWrite any comments/text you may want to describe your request\ne.g. Muon alignment scenario for...\nuserText []: ')
 
-                # TODO: Check this is correct.
                 print '''
 Finally, we are going to add the destination tags. There must be at least one.
 The tags (and its dependencies) can be synchronized to several workflows. You can synchronize to the following workflows:
    * "offline" means no checks/synchronization will be done.
-   * "hlt" and "express" means that the IOV will be synchronized to the last online run plus one (as seen by RunInfo).
-   * "prompt" means that the IOV will be synchronized to the smallest run waiting for Prompt Reconstruction plus one (as seen by the Tier0 monitoring).
-   * "pcl" is like "prompt", but only if the begin time of the first IOV is larger than the number obtained from Tier0.'''
+   * "hlt" and "express" means that the IOV will be synchronized to the last online run number plus one (as seen by RunInfo).
+   * "prompt" means that the IOV will be synchronized to the smallest run number waiting for Prompt Reconstruction not having larger run numbers already released (as seen by the Tier0 monitoring).
+   * "pcl" is like "prompt", but the exportation will occur if and only if the begin time of the first IOV (as stored in the SQLite file or established by the since field in the metadata file) is larger than the first condition safe run number obtained from Tier0.'''
 
                 defaultWorkflow = 'offline'
                 destinationTags = {}
