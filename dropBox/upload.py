@@ -34,6 +34,7 @@ defaultHostname = 'cms-conddb-int.cern.ch'
 defaultUrlTemplate = 'https://%s/dropBox/'
 defaultTemporaryFile = 'upload.tar.bz2'
 defaultNetrcHost = 'DropBox'
+defaultWorkflow = 'offline'
 
 
 class HTTPError(Exception):
@@ -257,6 +258,19 @@ def getInput(default, prompt = ''):
     return default.strip()
 
 
+def getInputWorkflow(prompt = ''):
+    '''Like getInput() but tailored to get target workflows (synchronization options).
+    '''
+
+    while True:
+        workflow = getInput(defaultWorkflow, prompt)
+
+        if workflow in frozenset(['offline', 'hlt', 'express', 'prompt', 'pcl']):
+            return workflow
+
+        logging.error('Please specify one of the allowed workflows. See above for the explanation on each of them.')
+
+
 def getInputChoose(optionsList, default, prompt = ''):
     '''Makes the user choose from a list of options.
     '''
@@ -443,7 +457,6 @@ The tags (and its dependencies) can be synchronized to several workflows. You ca
    * "prompt" means that the IOV will be synchronized to the smallest run number waiting for Prompt Reconstruction not having larger run numbers already released (as seen by the Tier0 monitoring).
    * "pcl" is like "prompt", but the exportation will occur if and only if the begin time of the first IOV (as stored in the SQLite file or established by the since field in the metadata file) is larger than the first condition safe run number obtained from Tier0.'''
 
-                defaultWorkflow = 'offline'
                 destinationTags = {}
                 while True:
                     destinationTag = getInput('', '\nWhich is the next destination tag to be added (leave empty to stop)?\ne.g. BeamSpotObjects_PCL_byRun_v0_offline\ndestinationTag []: ')
@@ -456,7 +469,7 @@ The tags (and its dependencies) can be synchronized to several workflows. You ca
                     if destinationTag in destinationTags:
                         logging.warning('You already added this destination tag. Overwriting the previous one with this new one.')
 
-                    synchronizeTo = getInput(defaultWorkflow, '\n  * To which workflow (see above) this tag %s has to be synchronized to?\n    e.g. offline\n    synchronizeTo [%s]: ' % (destinationTag, defaultWorkflow))
+                    synchronizeTo = getInputWorkflow('\n  * To which workflow (see above) this tag %s has to be synchronized to?\n    e.g. offline\n    synchronizeTo [%s]: ' % (destinationTag, defaultWorkflow))
 
                     print '''
     If you need to add dependencies to this tag (i.e. tags that will be duplicated from this tag to another workflow), you can specify them now. There may be none.'''
@@ -470,7 +483,7 @@ The tags (and its dependencies) can be synchronized to several workflows. You ca
                         if dependency in dependencies:
                             logging.warning('You already added this dependency. Overwriting the previous one with this new one.')
 
-                        workflow = getInput(defaultWorkflow, '\n     + To which workflow (see above) this dependency %s has to be synchronized to?\n       e.g. offline\n       synchronizeTo [%s]: ' % (dependency, defaultWorkflow))
+                        workflow = getInputWorkflow('\n     + To which workflow (see above) this dependency %s has to be synchronized to?\n       e.g. offline\n       synchronizeTo [%s]: ' % (dependency, defaultWorkflow))
 
                         dependencies[dependency] = workflow
 
