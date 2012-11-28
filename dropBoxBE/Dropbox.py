@@ -344,7 +344,7 @@ class Dropbox(object) :
                 fileLogger.info( msg )
 
                 # check what to duplicate and take action
-                depTags = tagSpec[ 'dependencies' ]
+                depTags = tagSpec.get('dependencies', {})
                 for depTag, depSynch in depTags.items():
                     depSince = self.getDestSince( fileHash, depSynch, fileLogger )
                     if depSince == -1:
