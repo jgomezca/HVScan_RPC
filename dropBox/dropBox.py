@@ -25,6 +25,8 @@ import cx_Oracle
 import alarm
 import config
 import dataAccess
+import Constants
+import logPack
 
 
 # Global variables used only for tuning behaviour while testing
@@ -241,6 +243,22 @@ def updateFileLog(fileHash, log, runLogCreationTimestamp, runLogBackend):
     logging.debug('dropBox::updateFileLog(%s, %s [len], %s, %s)', fileHash, len(log), runLogCreationTimestamp, runLogBackend)
 
     dataAccess.updateFileLogLog(fileHash, log, runLogCreationTimestamp, runLogBackend)
+
+    # Send email to user
+    (fileName, statusCode, username, uploadTimestamp, finishTimestamp) = dataAccess.getFileInformation(fileHash)
+
+    fileInformation = {
+        'fileName': fileName,
+        'fileHash': fileHash,
+        'statusCode': statusCode,
+        'statusString': Constants.inverseMapping[statusCode],
+        'uploadTimestamp': uploadTimestamp,
+        'finishTimestamp': finishTimestamp,
+        'username': username,
+        'log': logPack.unpack(log),
+    }
+
+    dataAccess.insertEmail(config.subjectTemplate.render(fileInformation), config.bodyTemplate.render(fileInformation), username, [username])
 
 
 def updateRunStatus(creationTimestamp, backend, statusCode):

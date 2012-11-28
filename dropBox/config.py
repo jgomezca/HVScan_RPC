@@ -11,6 +11,8 @@ __email__ = 'mojedasa@cern.ch'
 
 import os
 
+import jinja2
+
 import service
 
 
@@ -25,6 +27,26 @@ notifiedErrorMessage = 'This has been notified and we will try to fix it. Howeve
 fromAddress = 'mojedasa@cern.ch'
 toAddresses = ['cms-cond-dev@cern.ch']
 ccAddresses = []
+
+
+# Email template
+subjectTemplate = jinja2.Template('[DropBox] {{fileName}}: {{statusCode}} ({{statusString}})')
+bodyTemplate = jinja2.Template('''[DropBox] {{fileName}}: {{statusCode}} ({{statusString}})
+
+         fileName: {{fileName}}
+         fileHash: {{fileHash}}
+
+           status: {{statusCode}} ({{statusString}})
+
+  uploadTimestamp: {{uploadTimestamp}}
+  finishTimestamp: {{finishTimestamp}}
+
+         username: {{username}}
+
+              log:
+
+{{log}}
+''')
 
 
 # For integration and production, we use the production dropBox database

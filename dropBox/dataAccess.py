@@ -167,7 +167,15 @@ def updateRunLogInfo(creationTimestamp, backend, downloadLog, globalLog):
     ''', (database.BLOB(downloadLog), database.BLOB(globalLog), creationTimestamp, backend))
 
 
-def insertEmail(subject, body, fromAddress, toAddresses, ccAddresses):
+def getFileInformation(fileHash):
+    return connection.fetch('''
+        select files.fileName, fileLog.statusCode, files.username, files.creationTimestamp, fileLog.modificationTimestamp
+        from fileLog join files using (fileHash)
+        where fileHash = :s
+    ''', (fileHash, ))[0]
+
+
+def insertEmail(subject, body, fromAddress, toAddresses, ccAddresses = ()):
     connection.commit('''
         insert into emails
         (subject, body, fromAddress, toAddresses, ccAddresses)
