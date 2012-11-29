@@ -11,6 +11,7 @@ __email__ = 'mojedasa@cern.ch'
 
 
 import sys
+import time
 import logging
 
 import service
@@ -18,6 +19,9 @@ import smtp
 import cernldap
 
 import dataAccess
+
+
+sleepTime = 10 # seconds
 
 
 def getAddress(address):
@@ -37,6 +41,7 @@ def getAddress(address):
 
 
 def processEmail(emailID, subject, body, fromAddress, toAddresses, ccAddresses):
+    logging.info('Processing email %s from %s with subject %s...', emailID, fromAddress, repr(subject))
     fromAddress = getAddress(fromAddress)
     toAddresses = [getAddress(x) for x in toAddresses]
     ccAddresses = [getAddress(x) for x in ccAddresses]
@@ -49,7 +54,15 @@ def main():
     '''Entry point.
     '''
 
-    dataAccess.processEmails(processEmail)
+    logging.info('Sending emails forever...')
+    while True:
+        try:
+            dataAccess.processEmails(processEmail)
+        except Exception as e:
+            logging.error('Error processing emails: %s', e)
+
+        logging.info('Sleeping %s seconds...', sleepTime)
+        time.sleep(sleepTime)
 
 
 if __name__ == '__main__':
