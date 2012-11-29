@@ -563,7 +563,7 @@ def getPythonPath():
 	find the dependencies.
 	'''
 
-	return '%s:%s:%s' % (getPath('common'), config.secretsDirectory, os.path.join(config.utilitiesDirectory, 'lib', 'python2.6', 'site-packages'))
+	return '%s:%s:%s:%s' % (getPath('common'), config.secretsDirectory, os.path.join(config.utilitiesDirectory, 'lib', 'python2.6', 'site-packages'), os.path.join(config.utilitiesDirectory, 'lib64', 'python2.6', 'site-packages'))
 
 
 def pylint(*files):
