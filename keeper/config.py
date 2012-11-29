@@ -169,6 +169,12 @@ servicesConfiguration = {
 	#	'hidden':         True,
 	#},
 
+	#'emails': {
+	#	'filename':       'emails.py',
+	#	'listeningPort':  8097,
+	#	'hidden':         True,
+	#},
+
 	'getLumi': {
 		'filename':       'lumidb_server.py',
 		'listeningPort':  8086,
