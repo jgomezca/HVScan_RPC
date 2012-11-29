@@ -25,6 +25,46 @@ import keeper
 import config
 
 
+logsTemplate = jinja2.Template('''
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>{{service}}'s logs list</title>
+
+	</head>
+	<body>
+		<h1>{{service}}'s logs list</h1>
+		<ul>
+			{% for log in logs %}
+				<li>{{log['humanTimestamp']}} - <a href="./log?service={{service}}&amp;timestamp={{log['timestamp']}}">{{log['filename']}}</a></li>
+			{% endfor %}
+		</ul>
+	</body>
+</html>
+''')
+
+joblogsTemplate = jinja2.Template('''
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>{{service}}'s jobs' logs list</title>
+
+	</head>
+	<body>
+		<h1>{{service}}'s jobs' logs list</h1>
+		{% for job in jobs %}
+			<h2>{{job}}</h2>
+			<ul>
+				{% for log in logs[job] %}
+					<li>{{log['humanTimestamp']}} - <a href="./joblog?service={{service}}&amp;job={{job}}&amp;timestamp={{log['timestamp']}}">{{log['filename']}}</a></li>
+				{% endfor %}
+			</ul>
+		{% endfor %}
+	</body>
+</html>
+''')
+
+
 def check_output(*popenargs, **kwargs):
 	'''Mimics subprocess.check_output() in Python 2.6
 	'''
@@ -209,24 +249,6 @@ class Admin(object):
 		'''Lists the logs of a service.
 		'''
 
-		template = '''
-			<!DOCTYPE html>
-			<html>
-				<head>
-					<title>{{service}}'s logs list</title>
-
-				</head>
-				<body>
-					<h1>{{service}}'s logs list</h1>
-					<ul>
-						{% for log in logs %}
-							<li>{{log['humanTimestamp']}} - <a href="./log?service={{service}}&amp;timestamp={{log['timestamp']}}">{{log['filename']}}</a></li>
-						{% endfor %}
-					</ul>
-				</body>
-			</html>
-		'''
-
 		logs = []
 		for filename in reversed(keeper.getLogsList(service)):
 			log = {}
@@ -235,7 +257,7 @@ class Admin(object):
 			log['humanTimestamp'] = datetime.datetime.fromtimestamp(log['timestamp']).strftime('%Y-%m-%d %H:%M:%S')
 			logs.append(log)
 
-		return jinja2.Template(template).render(service = service, logs = logs)
+		return logsTemplate.render(service = service, logs = logs)
 
 
 	@cherrypy.expose
@@ -249,27 +271,6 @@ class Admin(object):
 	@cherrypy.expose
 	def joblogs(self, service):
 		'''Lists the logs of all service jobs.
-		'''
-
-		template = '''
-			<!DOCTYPE html>
-			<html>
-				<head>
-					<title>{{service}}'s jobs' logs list</title>
-
-				</head>
-				<body>
-					<h1>{{service}}'s jobs' logs list</h1>
-					{% for job in jobs %}
-						<h2>{{job}}</h2>
-						<ul>
-							{% for log in logs[job] %}
-								<li>{{log['humanTimestamp']}} - <a href="./joblog?service={{service}}&amp;job={{job}}&amp;timestamp={{log['timestamp']}}">{{log['filename']}}</a></li>
-							{% endfor %}
-						</ul>
-					{% endfor %}
-				</body>
-			</html>
 		'''
 
 		jobs = []
@@ -288,7 +289,7 @@ class Admin(object):
 
 			logs[job] = joblogs
 
-		return jinja2.Template(template).render(service = service, jobs = jobs, logs = logs)
+		return joblogsTemplate.render(service = service, jobs = jobs, logs = logs)
 
 
 	@cherrypy.expose
