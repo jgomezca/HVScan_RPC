@@ -93,9 +93,7 @@ class Admin(object):
 			# FIXME: Add the ability to restart/stop/kill the admin service via a proxy process
 			#        and returning a proper message to the user.
 			actions = ''
-			for action in ['tail']:
-				actions += makeAction(service, action)
-			for action in ['logs']:
+			for action in ['tail', 'logs', 'joblogs']:
 				actions += makeAction(service, action)
 			for action in ['lsof', 'env']:
 				actions += makeAction(service, action, not running)
@@ -215,11 +213,11 @@ class Admin(object):
 			<!DOCTYPE html>
 			<html>
 				<head>
-					<title>{{service}}'s log list</title>
+					<title>{{service}}'s logs list</title>
 
 				</head>
 				<body>
-					<h1>{{service}}'s log list</h1>
+					<h1>{{service}}'s logs list</h1>
 					<ul>
 						{% for log in logs %}
 							<li>{{log['humanTimestamp']}} - <a href="./log?service={{service}}&amp;timestamp={{log['timestamp']}}">{{log['filename']}}</a></li>
@@ -238,6 +236,59 @@ class Admin(object):
 			logs.append(log)
 
 		return jinja2.Template(template).render(service = service, logs = logs)
+
+
+	@cherrypy.expose
+	def joblog(self, service, job, timestamp):
+		'''Returns a log of a service's job.
+		'''
+
+		return setResponsePlainText(keeper.getJobLog(service, job, timestamp))
+
+
+	@cherrypy.expose
+	def joblogs(self, service):
+		'''Lists the logs of all service jobs.
+		'''
+
+		template = '''
+			<!DOCTYPE html>
+			<html>
+				<head>
+					<title>{{service}}'s jobs' logs list</title>
+
+				</head>
+				<body>
+					<h1>{{service}}'s jobs' logs list</h1>
+					{% for job in jobs %}
+						<h2>{{job}}</h2>
+						<ul>
+							{% for log in logs[job] %}
+								<li>{{log['humanTimestamp']}} - <a href="./joblog?service={{service}}&amp;job={{job}}&amp;timestamp={{log['timestamp']}}">{{log['filename']}}</a></li>
+							{% endfor %}
+						</ul>
+					{% endfor %}
+				</body>
+			</html>
+		'''
+
+		jobs = []
+		for (jobTime, jobName) in keeper.config.servicesConfiguration[service].get('jobs', []):
+			jobs.append(jobName)
+
+		logs = {}
+		for job in jobs:
+			joblogs = []
+			for filename in reversed(keeper.getJobLogsList(service, job)):
+				log = {}
+				log['filename'] = filename
+				log['timestamp'] = int(filename.split('log.')[-1])
+				log['humanTimestamp'] = datetime.datetime.fromtimestamp(log['timestamp']).strftime('%Y-%m-%d %H:%M:%S')
+				joblogs.append(log)
+
+			logs[job] = joblogs
+
+		return jinja2.Template(template).render(service = service, jobs = jobs, logs = logs)
 
 
 	@cherrypy.expose

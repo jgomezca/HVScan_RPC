@@ -121,6 +121,18 @@ def getLogsList(service):
 	return sorted(glob.glob(getLogPath(service) + '.*'))
 
 
+def getJobLogsList(service, job):
+	'''Returns the list of available logs of a service's job (without including
+	the 'log' hardlink, i.e. the latest log).
+	'''
+
+	# Make sure the arguments are valid before listing folders
+	# (this is used by the admin service)
+	checkJobRegistered(service, job)
+
+	return sorted(glob.glob(getJobLogPath(service, job) + '.*'))
+
+
 def getLog(service, timestamp):
 	'''Returns a log of a service.
 	'''
@@ -132,6 +144,21 @@ def getLog(service, timestamp):
 	timestamp = int(timestamp)
 
 	with open('%s.%s' % (getLogPath(service), timestamp), 'r') as f:
+		log = f.read()
+
+	return log
+
+
+def getJobLog(service, job, timestamp):
+	'''Returns a log of a service's job.
+	'''
+
+	# Make sure the arguments are valid before opening the file
+	# (this is used by the admin service)
+	checkJobRegistered(service, job)
+	timestamp = int(timestamp)
+
+	with open('%s.%s' % (getJobLogPath(service, job), timestamp), 'r') as f:
 		log = f.read()
 
 	return log
@@ -159,6 +186,17 @@ def getLogPath(service):
 	return os.path.abspath(config.logsFileTemplate % service)
 
 
+def getJobLogPath(service, job):
+	'''Returns the absolute path to a service's job's latest log.
+	'''
+
+	# Make sure the arguments are valid
+	# (this is used by the admin service)
+	checkJobRegistered(service, job)
+
+	return os.path.abspath(config.logsJobFileTemplate % (service, job))
+
+
 def isRegistered(service):
 	'''Returns whether a service is registered in the keeper or not.
 	'''
@@ -172,6 +210,28 @@ def checkRegistered(service):
 
 	if not isRegistered(service):
 		raise Exception('Service "%s" is not registered in the keeper.' % service)
+
+
+def isJobRegistered(service, job):
+	'''Returns whether a service's job is registered in the keeper or not.
+	'''
+
+	if service != 'keeper':
+		checkRegistered(service)
+
+	for (jobTime, jobName) in config.servicesConfiguration[service].get('jobs', []):
+		if job == jobName:
+			return True
+
+	return False
+
+
+def checkJobRegistered(service, job):
+	'''Checks whether a service's job is registered in the keeper or not.
+	'''
+
+	if not isJobRegistered(service, job):
+		raise Exception('Job "%s" of service "%s" is not registered in the keeper.' % (job, service))
 
 
 def isRunning(service):
