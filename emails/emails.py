@@ -12,6 +12,7 @@ __email__ = 'mojedasa@cern.ch'
 
 import sys
 import time
+import signal
 import logging
 import json
 
@@ -134,12 +135,22 @@ def processEmail(emailID, subject, body, fromAddress, toAddresses, ccAddresses):
     smtp.SMTP().sendEmail(subject, body, fromAddress, toAddresses, ccAddresses)
 
 
+stop = False
+def handleTERM(signal, frame):
+    global stop
+    stop = True
+    logging.info('Received SIGTERM')
+
+
 def main():
     '''Entry point.
     '''
 
+    logging.info('Configuring TERM handler...')
+    signal.signal(signal.SIGTERM, handleTERM)
+
     logging.info('Sending emails forever...')
-    while True:
+    while not stop:
         for serviceName in connections:
             try:
                 logging.info('%s: Sending emails...', serviceName)
@@ -148,8 +159,14 @@ def main():
             except Exception as e:
                 logging.error('%s: Error processing emails: %s', serviceName, e)
 
+        # Avoid the delay if we just finished processing
+        if stop:
+            break
+
         logging.info('Sleeping %s seconds...', config.sleepTime)
         time.sleep(config.sleepTime)
+
+    logging.info('Stopping...')
 
 
 if __name__ == '__main__':
