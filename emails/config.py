@@ -9,6 +9,8 @@ __maintainer__ = 'Miguel Ojeda'
 __email__ = 'mojedasa@cern.ch'
 
 
+import socket
+
 import service
 
 
@@ -18,19 +20,13 @@ services = [
 
 sleepTime = 10 # seconds
 
+fqdn = socket.getfqdn()
 
-if service.settings['productionLevel'] in set(['int', 'pro']):
+if fqdn == 'vocms226.cern.ch':
     connections = {
         # For integration and production, we use the (reader) production dropBox database
         'dropBox': service.secrets['dropBoxConnections']['pro'],
     }
-
-elif service.settings['productionLevel'] in set(['dev']):
-    connections = {
-        # For development, we use the prep dropBox database
-        'dropBox': service.secrets['dropBoxConnections']['dev'],
-    }
-
 
 elif service.settings['productionLevel'] in set(['private']):
     connections = {
@@ -39,5 +35,5 @@ elif service.settings['productionLevel'] in set(['private']):
     }
 
 else:
-    raise Exception('Unknown production level.')
+    raise Exception('Unknown fqdn / production level.')
 
