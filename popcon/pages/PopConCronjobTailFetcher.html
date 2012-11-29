@@ -112,6 +112,11 @@
                     $.unblockUI();
                   }
                   fix_data_size();
+                  $('#tabs li > a').click(function() {
+                    $('#tabs div td:nth-child(2) div').each(function(index) {
+                        $(this).scrollTop(this.scrollHeight);
+                    });
+                  });
                 },
               error: function() { alert("Error in data send"); }
             });
