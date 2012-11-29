@@ -39,7 +39,7 @@ class CERNLDAP(object):
 
         result = self.ldap.search_st('ou=users,ou=organic units,dc=cern,dc=ch', ldap.SCOPE_SUBTREE, '(cn=%s)' % username, attributes, timeout = timeout)
         if len(result) == 0:
-            raise CERNLDAPError('Username not found.')
+            raise CERNLDAPError('%s: Username "%s" not found.' % (self, username))
 
         return result[0][1]
 
