@@ -32,6 +32,9 @@ class TagHandler( object ):
         (stdoutdata, stderrdata) =  process.communicate()
         retcode = process.returncode
 
+        if( verbose ):
+            self.fileLogger.debug('Command retcode: %s' % retcode)
+
         if ( retcode != 0 ) : # we got an error, report it
             if(stdoutdata != None ):
                self.fileLogger.error(stdoutdata)
