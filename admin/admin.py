@@ -25,6 +25,28 @@ import keeper
 import config
 
 
+indexTemplate = jinja2.Template('''
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>CMS DB Web Services Status</title>
+		<style type="text/css">
+			form {
+				display: inline;
+			}
+		</style>
+
+	</head>
+	<body>
+		<h1>CMS DB Web Services Status</h1>
+		<p>
+			<form action="start" method="post"><input name="service" type="hidden" value="all" /><input value="Start all" type="submit" /></form>
+		</p>
+		<table>{{table}}</table>
+	</body>
+</html>
+''')
+
 logsTemplate = jinja2.Template('''
 <!DOCTYPE html>
 <html>
@@ -88,8 +110,6 @@ class Admin(object):
 	def index(self):
 		'''Status page.
 		'''
-
-		title = 'CMS DB Web Services Status'
 
 		table = '''
 			<tr>
@@ -156,28 +176,7 @@ class Admin(object):
 				</tr>
 			''' % (service, jobs, status, url, actions)
 
-		template = '''
-			<html>
-				<head>
-					<title>%s</title>
-					<style type="text/css">
-						form {
-							display: inline;
-						}
-					</style>
-
-				</head>
-				<body>
-					<h1>%s</h1>
-					<p>
-						<form action="start" method="post"><input name="service" type="hidden" value="all" /><input value="Start all" type="submit" /></form>
-					</p>
-					<table>%s</table>
-				</body>
-			</html>
-		'''
-
-		return template % (title, title, table)
+		return indexTemplate.render(table = table)
 
 
 	@cherrypy.expose
