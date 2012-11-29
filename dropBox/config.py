@@ -43,6 +43,12 @@ bodyTemplate = jinja2.Template('''[DropBox] {{fileName}}: {{statusCode}} ({{stat
 
          username: {{username}}
 
+         userText: {{userText}}
+
+         metadata:
+
+{{metadata}}
+
               log:
 
 {{log}}

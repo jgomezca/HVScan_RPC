@@ -169,7 +169,7 @@ def updateRunLogInfo(creationTimestamp, backend, downloadLog, globalLog):
 
 def getFileInformation(fileHash):
     return connection.fetch('''
-        select files.fileName, fileLog.statusCode, files.username, files.creationTimestamp, fileLog.modificationTimestamp
+        select files.fileName, fileLog.statusCode, files.creationTimestamp, fileLog.modificationTimestamp, files.username, fileLog.userText, fileLog.metadata
         from fileLog join files using (fileHash)
         where fileHash = :s
     ''', (fileHash, ))[0]

@@ -22,6 +22,8 @@ import json
 
 import cx_Oracle
 
+import service
+
 import alarm
 import config
 import dataAccess
@@ -77,6 +79,17 @@ def failUpload(fileHash):
     dataAccess.updateFileState(fileHash, 'Bad')
 
     logging.info('uploadFile(): %s: The upload failed.', fileHash)
+
+
+def loadJson(data):
+    '''Loads an object from its JSON representation of the data unless
+    it is None (i.e. a NULL in the database).
+    '''
+
+    if data is None:
+        return None
+
+    return json.loads(data)
 
 
 def dumpJson(data, maxSize = 4000):
@@ -245,7 +258,17 @@ def updateFileLog(fileHash, log, runLogCreationTimestamp, runLogBackend):
     dataAccess.updateFileLogLog(fileHash, log, runLogCreationTimestamp, runLogBackend)
 
     # Send email to user
-    (fileName, statusCode, username, uploadTimestamp, finishTimestamp) = dataAccess.getFileInformation(fileHash)
+    (fileName, statusCode, uploadTimestamp, finishTimestamp, username, userText, metadata) = dataAccess.getFileInformation(fileHash)
+
+    userText = loadJson(userText)
+    if userText is None:
+        userText = '(userText too big to be displayed)'
+
+    metadata = loadJson(metadata)
+    if metadata is None:
+        metadata = '(metadata too big to be displayed)'
+    else:
+        metadata = service.getPrettifiedJSON(metadata)
 
     fileInformation = {
         'fileName': fileName,
@@ -255,6 +278,8 @@ def updateFileLog(fileHash, log, runLogCreationTimestamp, runLogBackend):
         'uploadTimestamp': uploadTimestamp,
         'finishTimestamp': finishTimestamp,
         'username': username,
+        'userText': userText,
+        'metadata': metadata,
         'log': logPack.unpack(log),
     }
 
