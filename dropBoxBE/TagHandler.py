@@ -32,10 +32,9 @@ class TagHandler( object ):
         (stdoutdata, stderrdata) =  process.communicate()
         retcode = process.returncode
 
-        if ( retcode != 0 and stderrdata != None) : # we got an error, report it
+        if ( retcode != 0 ) : # we got an error, report it
             if(stdoutdata != None ):
                self.fileLogger.error(stdoutdata)
-            # is it required ?
             if(stderrdata != None ):
                self.fileLogger.error(stderrdata) # if there is error-output, we need to log as error ...
             return False
