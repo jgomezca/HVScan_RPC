@@ -56,6 +56,11 @@
               displayData(true, hashName);
             }
           });
+          function scrollToBottom() {
+            $('#tabs div td:nth-child(2) div').each(function(index) {
+              $(this).scrollTop(this.scrollHeight);
+            });
+          }
           function displayData(one, hashName) {
             $.ajax({
               type: 'POST',
@@ -113,10 +118,9 @@
                   }
                   fix_data_size();
                   $('#tabs li > a').click(function() {
-                    $('#tabs div td:nth-child(2) div').each(function(index) {
-                        $(this).scrollTop(this.scrollHeight);
-                    });
+                    scrollToBottom();
                   });
+                  scrollToBottom();
                 },
               error: function() { alert("Error in data send"); }
             });
