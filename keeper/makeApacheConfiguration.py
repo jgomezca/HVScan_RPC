@@ -270,6 +270,7 @@ services['docs']['redirectRoot'] = True
 # Set the allowed groups for services behind Shibboleth
 services['admin']['shibbolethGroups'] = ['cms-cond-dev']
 services['gtc']['shibbolethGroups'] = ['zh']
+services['logs']['shibbolethGroups'] = ['zh']
 services['PdmV/valdb']['shibbolethGroups'] = ['cms-web-access']
 services['shibbolethTest']['shibbolethGroups'] = ['zh']
 
