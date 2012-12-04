@@ -56,6 +56,25 @@ mainTemplate = jinja2.Template('''
                     margin: 0px;
                     padding: 0px;
                 }
+                .clickable {
+                    cursor: pointer;
+                }
+                .expandCellButton {
+                    float: right;
+                    vertical-align: middle;
+                }
+                .hidden {
+                    display: none;
+                }
+                .statusInProgress {
+                    background-color: #99FFFF;
+                }
+                .statusFinishedFailed {
+                    background-color: #FF9999;
+                }
+                .statusFinishedOK {
+                    background-color: #99FF99;
+                }
             </style>
             <script src="/libs/jquery-1.7.2.min.js"></script>
             <script src="/libs/jquery-ui/1.8.20/js/jquery-ui-1.8.20.custom.min.js"></script>

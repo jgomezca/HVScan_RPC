@@ -79,6 +79,13 @@ def getRunGlobalLog(creationTimestamp, backend):
     ''', (creationTimestamp, backend))[0][0])
 
 
+def getUserLogs():
+    return connection.fetch('''
+        select fileHash, fileLog.modificationTimestamp, username, fileName, statusCode, metadata, userText, backend, nvl2(log, 1, 0)
+        from files join fileLog using (fileHash)
+    ''')
+
+
 mainTemplate = jinja2.Template('''
 <div id="dropBoxTabs">
     <ul>
@@ -109,102 +116,191 @@ tableTemplate = jinja2.Template('''
     <tbody>
     {% for row in table %}
         <tr>
-            {% for value in row[0] %}
-                <td>{{value}}</td>
-            {% endfor %}
-            {% for link in row[1] %}
-                {% if link %}
-                    <td><a target="_blank" href="{{link[0]}}">{{link[1]}}</a></td>
-                {% else %}
-                    <td>-</td>
-                {% endif %}
+            {% for (attributes, value) in row %}
+                <td {{attributes}}>{{value}}</td>
             {% endfor %}
         </tr>
     {% endfor %}
     </tbody>
 </table>
 <script>
+    function escapeHTML(text) {
+        return $('<i></i>').text(text).html();
+    }
+
+    // Before the dataTable is created, for expand-able cells, put the full text
+    // inside the <td> (but hidden) to allow searches on it, add the expand
+    // "plus" button and some style
+    $('#{{name}}Table td.expandableCell').each(function() {
+        var t = $(this);
+        t.html(t.html() + '... <img class="expandCellButton" height="15" width="15" src="/libs/datatables/1.9.4/examples/examples_support/details_open.png" /><span class="hidden">' + escapeHTML(t.attr('data-expandedcell')) + '</span>');
+        t.addClass('clickable');
+    });
+
+    // Create the dataTable
     $('#{{name}}Table').dataTable({
         "bJQueryUI": true,
         "sPaginationType": "full_numbers",
-        "aaSorting": [{{sortOn}}]
+        "iDisplayLength": 25,
+        {{dataTablesInit}}
+    });
+
+    // After the dataTable is created, add the click() handlers
+    $('#{{name}}Table td.expandableCell').click(function() {
+        var t = $(this);
+        if (typeof t.attr('data-expandedcell') !== 'undefined') {
+            t.text(t.attr('data-expandedcell'));
+            t.removeAttr('data-expandedcell');
+            t.removeClass('clickable');
+        }
     });
 </script>
 ''')
 
 
-def transformData(table, headers, transformFunctions):
-    newTable = []
-
-    for row in table:
-        newRow = []
-        for (index, value) in enumerate(row):
-            if headers[index] in transformFunctions:
-                value = transformFunctions[headers[index]](value)
-            elif isinstance(value, datetime.datetime):
-                value = value.strftime('%Y-%m-%d %H:%M:%S,%f')[:-3]
-            elif value is None:
-                value = '-'
-            newRow.append(html.escape(value))
-        newTable.append(newRow)
-
-    return newTable
-
-
 def renderTable(name, table):
-    table['table'] = transformData(table['table'], table['headers'], table['transform'])
+    table.setdefault('transform', {})
+    table.setdefault('dataTablesInit', '''
+        "aaSorting": [[0, 'desc']]
+    ''')
 
     newTable = []
     for row in table['table']:
-        links = []
-        for (index, link) in enumerate(table['links']):
-            if row[-len(table['links'])+index]:
-                links.append((link[0] % tuple(row[:link[0].count('%s')]), link[1]))
-            else:
-                links.append(None)
-        if len(links) == 0:
-            newTable.append([row, []])
-        else:
-            newTable.append([row[:-len(table['links'])], links])
+        newRow = []
+        for (index, value) in enumerate(row):
+            # If there is a transformation function, use it
+            # The function is responsible for escaping properly
+            if table['headers'][index] in table['transform']:
+                value = table['transform'][table['headers'][index]](value, row)
 
-    if table['sortOn'] is None:
-        table['sortOn'] = "[0, 'desc']"
+            # If it is a datetime, render it up to seconds
+            elif isinstance(value, datetime.datetime):
+                value = value.strftime('%Y-%m-%d %H:%M:%S')
+
+            # If it is None, use '-' as a placeholder
+            elif value is None:
+                value = '-'
+
+            # If it is anything else, stringify it and escape it
+            else:
+                value = html.escape(str(value))
+
+            # If the result is not already the (attributes, value) tuple
+            # for the <td> element, wrap it
+            if type(value) is not tuple:
+                value = ('', value)
+
+            newRow.append(value)
+        newTable.append(newRow)
 
     return tableTemplate.render(
         name = name,
         title = table['title'],
         headers = table['headers'],
-        sortOn = table['sortOn'],
+        dataTablesInit = table['dataTablesInit'],
         table = newTable,
     )
 
 
-def getStatusCodeHumanString(statusCode):
+def getStatusCodeColor(statusCode):
+    statusCodeEnding = int(statusCode) % 100
+
+    # Finished: Failed -> Red
+    if statusCodeEnding == 10:
+        return 'class="statusFinishedFailed"'
+
+    # Finished: OK -> Green
+    elif statusCodeEnding == 99:
+        return 'class="statusFinishedOK"'
+
+    # Any other is probably "In progress" -> No color
+    return 'class="statusInProgress"'
+
+
+def getStatusCodeHumanString(statusCode, row):
     try:
-        return '%s (%s)' % (statusCode, Constants.inverseMapping[int(statusCode)])
+        return (getStatusCodeColor(statusCode), '%s (%s)' % (statusCode, Constants.inverseMapping[int(statusCode)]))
     except KeyError:
         return statusCode
 
 
+def getStatusCodeHumanStringUser(statusCode, row):
+    try:
+        return (getStatusCodeColor(statusCode), Constants.inverseMapping[int(statusCode)].replace('_', ' '))
+    except KeyError:
+        return statusCode
+
+
+def getShortHash(fileHash, row):
+    return getShortText(fileHash, row, 8)
+
+
+def getShortText(text, row, lengthLimit = 40):
+    if len(text) <= lengthLimit:
+        return text
+
+    return ("class='expandableCell' data-expandedcell='%s'" % html.escape(text), html.escape(text[:lengthLimit]))
+
+
+def buildLink(target, title):
+    return '<a target="_blank" href="%s">%s</a>' % (target, html.escape(title))
+
+
+def getFileLogLink(isThereLog, row):
+    if not isThereLog:
+        return '-'
+
+    return buildLink('getFileLog?fileHash=%s' % row[0], 'Read')
+
+
+def getRunDownloadLogLink(isThereLog, row):
+    if not isThereLog:
+        return '-'
+
+    return buildLink('getRunDownloadLog?creationTimestamp=%s&backend=%s' % (row[0].strftime('%Y-%m-%d %H:%M:%S,%f')[:-3], row[1]), 'Read')
+
+
+def getRunGlobalLogLink(isThereLog, row):
+    if not isThereLog:
+        return '-'
+
+    return buildLink('getRunGlobalLog?creationTimestamp=%s&backend=%s' % (row[0].strftime('%Y-%m-%d %H:%M:%S,%f')[:-3], row[1]), 'Read')
+
+
 def renderLogs():
-    sortedTabs = ['runLog', 'fileLog', 'files', 'emails']
+    sortedTabs = ['userLog', 'runLog', 'fileLog', 'files', 'emails']
 
     tabs = {
+        'userLog': {
+            'title': 'Log with the most useful information for users',
+            'headers': [
+                'Hash', 'Last update', 'User', 'File', 'Status', 'Metadata', 'User Text', 'Backend', 'Log',
+            ],
+            'dataTablesInit': '''
+                "aaSorting": [[1, 'desc']]
+            ''',
+            'transform': {
+                'Hash': getShortHash,
+                'Status': getStatusCodeHumanStringUser,
+                'Metadata': getShortText,
+                'User Text': getShortText,
+                'Log': getFileLogLink,
+            },
+            'table': getUserLogs(),
+        },
+
         'runLog': {
             'title': 'Logs of each run of the dropBox',
             'headers': [
                 'creationTimestamp', 'backend', 'statusCode', 'fcsRun', 'hltRun',
                 'modificationTimestamp', 'downloadLog', 'globalLog',
             ],
-            'sortOn': None,
             'transform': {
-                'statusCode': getStatusCodeHumanString
+                'statusCode': getStatusCodeHumanString,
+                'downloadLog': getRunDownloadLogLink,
+                'globalLog': getRunGlobalLogLink,
             },
             'table': getRunLogs(),
-            'links': [
-                ('getRunDownloadLog?creationTimestamp=%s&backend=%s', 'Read log'),
-                ('getRunGlobalLog?creationTimestamp=%s&backend=%s', 'Read log'),
-            ],
         },
 
         'fileLog': {
@@ -213,14 +309,14 @@ def renderLogs():
                 'fileHash', 'statusCode', 'metadata', 'userText', 'runLogCreationTimestamp',
                 'creationTimestamp', 'modificationTimestamp', 'log',
             ],
-            'sortOn': "[5, 'desc']",
+            'dataTablesInit': '''
+                "aaSorting": [[5, 'desc']]
+            ''',
             'transform': {
-                'statusCode': getStatusCodeHumanString
+                'statusCode': getStatusCodeHumanString,
+                'log': getFileLogLink,
             },
             'table': getFileLogs(),
-            'links': [
-                ('getFileLog?fileHash=%s', 'Read log'),
-            ],
         },
 
         'files': {
@@ -229,11 +325,10 @@ def renderLogs():
                 'fileHash', 'state', 'backend', 'username', 'fileName',
                 'creationTimestamp', 'modificationTimestamp'
             ],
-            'sortOn': "[5, 'desc']",
-            'transform': {},
+            'dataTablesInit': '''
+                "aaSorting": [[5, 'desc']]
+            ''',
             'table': getFiles(),
-            'links': [
-            ],
         },
 
         'emails': {
@@ -241,11 +336,7 @@ def renderLogs():
             'headers': [
                 'id', 'subject', 'fromAddress', 'toAddresses', 'ccAddresses', 'creationTimestamp', 'modificationTimestamp'
             ],
-            'sortOn': None,
-            'transform': {},
             'table': getEmails(),
-            'links': [
-            ],
         },
     }
 
