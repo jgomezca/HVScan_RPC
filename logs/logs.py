@@ -67,6 +67,9 @@ mainTemplate = jinja2.Template('''
                 .hidden {
                     display: none;
                 }
+                .statusFlag {
+                    padding: 5px;
+                }
                 .statusInProgress {
                     background-color: #99FFFF;
                 }

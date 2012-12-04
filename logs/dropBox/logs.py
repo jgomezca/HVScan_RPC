@@ -86,7 +86,50 @@ def getUserLogs():
     ''')
 
 
+def getBackendsLatestRun():
+    result = connection.fetch('''
+        select backend, creationTimestamp, statusCode
+        from runLog natural join (
+            select backend, max(creationTimestamp) as creationTimestamp
+            from runLog
+            group by backend
+        )
+    ''')
+
+    if len(result) == 0:
+        return []
+
+    return result
+
+
+def getBackendsLatestNotEmptyRun():
+    result = connection.fetch('''
+        select backend, creationTimestamp, statusCode
+        from runLog natural join (
+            select backend, max(creationTimestamp) as creationTimestamp
+            from runLog
+            where statusCode <> 1999
+            group by backend
+        )
+    ''')
+
+    if len(result) == 0:
+        return []
+
+    return result
+
+
 mainTemplate = jinja2.Template('''
+<h2>Backends' latest runs status: 
+    {% for backend in backendsLatestRun %}
+        <span class="statusFlag {{backendsLatestRun[backend][1]}}">{{backend}} {{backendsLatestRun[backend][0]}}</span>
+    {% endfor %}
+</h2>
+<h2>Backends' latest non-empty runs status: 
+    {% for backend in backendsLatestNotEmptyRun %}
+        <span class="statusFlag {{backendsLatestNotEmptyRun[backend][1]}}">{{backend}} {{backendsLatestNotEmptyRun[backend][0]}}</span>
+    {% endfor %}
+</h2>
 <div id="dropBoxTabs">
     <ul>
         {% for tabName in sortedTabs %}
@@ -211,26 +254,26 @@ def getStatusCodeColor(statusCode):
 
     # Finished: Failed -> Red
     if statusCodeEnding == 10:
-        return 'class="statusFinishedFailed"'
+        return 'statusFinishedFailed'
 
     # Finished: OK -> Green
     elif statusCodeEnding == 99:
-        return 'class="statusFinishedOK"'
+        return 'statusFinishedOK'
 
     # Any other is probably "In progress" -> No color
-    return 'class="statusInProgress"'
+    return 'statusInProgress'
 
 
 def getStatusCodeHumanString(statusCode, row):
     try:
-        return (getStatusCodeColor(statusCode), '%s (%s)' % (statusCode, Constants.inverseMapping[int(statusCode)]))
+        return ('class="%s"' % getStatusCodeColor(statusCode), '%s (%s)' % (statusCode, Constants.inverseMapping[int(statusCode)]))
     except KeyError:
         return statusCode
 
 
 def getStatusCodeHumanStringUser(statusCode, row):
     try:
-        return (getStatusCodeColor(statusCode), Constants.inverseMapping[int(statusCode)].replace('_', ' '))
+        return ('class="%s"' % getStatusCodeColor(statusCode), Constants.inverseMapping[int(statusCode)].replace('_', ' '))
     except KeyError:
         return statusCode
 
@@ -277,6 +320,16 @@ def getRunGlobalLogLink(isThereLog, row):
 
 def renderLogs():
     sortedTabs = ['userLog', 'runLog', 'fileLog', 'files', 'emails']
+
+    _backendsLatestRun = getBackendsLatestRun()
+    backendsLatestRun = {}
+    for backend, creationTimestamp, statusCode in _backendsLatestRun:
+        backendsLatestRun[backend] = (creationTimestamp.strftime('%Y-%m-%d %H:%M:%S'), getStatusCodeColor(statusCode))
+
+    _backendsLatestNotEmptyRun = getBackendsLatestNotEmptyRun()
+    backendsLatestNotEmptyRun = {}
+    for backend, creationTimestamp, statusCode in _backendsLatestNotEmptyRun:
+        backendsLatestNotEmptyRun[backend] = (creationTimestamp.strftime('%Y-%m-%d %H:%M:%S'), getStatusCodeColor(statusCode))
 
     tabs = {
         'userLog': {
@@ -353,5 +406,5 @@ def renderLogs():
     for tab in tabs:
         renderedTabs[tab] = renderTable(tab, tabs[tab])
 
-    return mainTemplate.render(sortedTabs = sortedTabs, tabs = renderedTabs)
+    return mainTemplate.render(sortedTabs = sortedTabs, tabs = renderedTabs, backendsLatestRun = backendsLatestRun, backendsLatestNotEmptyRun = backendsLatestNotEmptyRun)
 
