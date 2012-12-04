@@ -128,13 +128,27 @@ tableTemplate = jinja2.Template('''
         return $('<i></i>').text(text).html();
     }
 
+    function expandableCell_expand(cell) {
+        cell.html(escapeHTML(cell.attr('data-expanded')) + '<img class="expandCellButton unexpandCell clickable" height="15" width="15" src="/libs/datatables/1.9.4/examples/examples_support/details_close.png" />');
+    }
+
+    function expandableCell_unexpand(cell) {
+        cell.html(escapeHTML(cell.attr('data-unexpanded')) + '...<img class="expandCellButton expandCell clickable" height="15" width="15" src="/libs/datatables/1.9.4/examples/examples_support/details_open.png" /><span class="hidden">' + escapeHTML(cell.attr('data-expanded')) + '</span>');
+    }
+
+    $('#{{name}}Table .expandCell').live('click', function() {
+        expandableCell_expand($(this).parent());
+    });
+
+    $('#{{name}}Table .unexpandCell').live('click', function() {
+        expandableCell_unexpand($(this).parent());
+    });
+
     // Before the dataTable is created, for expand-able cells, put the full text
     // inside the <td> (but hidden) to allow searches on it, add the expand
     // "plus" button and some style
     $('#{{name}}Table td.expandableCell').each(function() {
-        var t = $(this);
-        t.html(t.html() + '... <img class="expandCellButton" height="15" width="15" src="/libs/datatables/1.9.4/examples/examples_support/details_open.png" /><span class="hidden">' + escapeHTML(t.attr('data-expandedcell')) + '</span>');
-        t.addClass('clickable');
+        expandableCell_unexpand($(this));
     });
 
     // Create the dataTable
@@ -143,16 +157,6 @@ tableTemplate = jinja2.Template('''
         "sPaginationType": "full_numbers",
         "iDisplayLength": 25,
         {{dataTablesInit}}
-    });
-
-    // After the dataTable is created, add the click() handlers
-    $('#{{name}}Table td.expandableCell').click(function() {
-        var t = $(this);
-        if (typeof t.attr('data-expandedcell') !== 'undefined') {
-            t.text(t.attr('data-expandedcell'));
-            t.removeAttr('data-expandedcell');
-            t.removeClass('clickable');
-        }
     });
 </script>
 ''')
@@ -237,9 +241,9 @@ def getShortHash(fileHash, row):
 
 def getShortText(text, row, lengthLimit = 40):
     if len(text) <= lengthLimit:
-        return text
+        return html.escape(text)
 
-    return ("class='expandableCell' data-expandedcell='%s'" % html.escape(text), html.escape(text[:lengthLimit]))
+    return ("class='expandableCell' data-expanded='%s' data-unexpanded='%s'" % (html.escape(text), html.escape(text[:lengthLimit])), '')
 
 
 def buildLink(target, title):
