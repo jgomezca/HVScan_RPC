@@ -239,6 +239,10 @@ def getShortHash(fileHash, row):
     return getShortText(fileHash, row, 8)
 
 
+def getShortFile(fileName, row):
+    return getShortText(fileName, row, 20)
+
+
 def getShortText(text, row, lengthLimit = 40):
     if len(text) <= lengthLimit:
         return html.escape(text)
@@ -285,6 +289,7 @@ def renderLogs():
             ''',
             'transform': {
                 'Hash': getShortHash,
+                'File': getShortFile,
                 'Status': getStatusCodeHumanStringUser,
                 'Metadata': getShortText,
                 'User Text': getShortText,
