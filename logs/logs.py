@@ -22,6 +22,7 @@ mainTemplate = jinja2.Template('''
 <html>
     <head>
             <title>CMS DB Web Services' Logs</title>
+            <meta http-equiv='refresh' content='600'>
             <link rel="stylesheet" type="text/css" href="/libs/jquery-ui/1.8.20/css/smoothness/jquery-ui-1.8.20.custom.css" />
             <link rel="stylesheet" type="text/css" href="/libs/datatables/1.9.4/media/css/jquery.dataTables_themeroller.css" />
             <link rel="stylesheet" type="text/css" href="/libs/bootstrap/2.2.1/css/bootstrap.min.css" />
