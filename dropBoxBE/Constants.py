@@ -15,6 +15,7 @@ DEFAULT_GT_VALUES = {'hlt' : 'GR_H_V29',
 # convention: offset + step*100 + { base: 01, fail: 10, OK; 00 }
 
 # overall:
+WAITING_FOR_START = 100
 STARTING      = 1000
 NOTHING_TO_DO = 1999
 DOWNLOADING   = 2000

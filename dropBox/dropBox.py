@@ -155,7 +155,7 @@ def uploadFile(fileHash, fileContent, username, backend, fileName):
 
     logging.info('uploadFile(): %s: Inserting entry in the fileLog...', fileHash)
     try:
-        dataAccess.insertFileLog(fileHash, 100, dumpJson(metadata), dumpJson(userText))
+        dataAccess.insertFileLog(fileHash, Constants.WAITING_FOR_START, dumpJson(metadata), dumpJson(userText))
     except cx_Oracle.IntegrityError:
         failUpload(fileHash)
         raise DropBoxError('The uploaded file %s was already requested in the database.' % fileHash)
