@@ -754,6 +754,9 @@ function showModal(subcategory, obj){
 	var reiksm = $(obj).parent().parent()[0];
 	var tmpval = $(reiksm).children()[0];
 	var statvalue = $(tmpval).children()[column].textContent;
+	if (statvalue.toUpperCase() == "TRACKER"){
+        statvalue = "TK"
+    }
 	var category;
 	var releaseDetails = ["VALIDATION_STATUS","USER_NAME","LINKS","COMMENTS","META_DATE", "RELEASE_NAME"];
 	switch (subcategory[0]){
