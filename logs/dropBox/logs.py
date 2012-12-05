@@ -16,6 +16,7 @@ import jinja2
 
 import html
 import database
+import shibboleth
 
 import logPack
 import Constants
@@ -331,6 +332,13 @@ def renderLogs():
     for backend, creationTimestamp, statusCode in _backendsLatestNotEmptyRun:
         backendsLatestNotEmptyRun[backend] = (creationTimestamp.strftime('%Y-%m-%d %H:%M:%S'), getStatusCodeColor(statusCode))
 
+    # In the userLog:
+    #   If the user receives all the notifications, by default show all the entries.
+    #   If not, by default show only those for him.
+    defaultUserLogSearch = ''
+    if 'cms-cond-dropbox-notifications' not in shibboleth.getGroups():
+        defaultUserLogSearch = shibboleth.getUsername()
+
     tabs = {
         'userLog': {
             'title': 'Log with the most useful information for users',
@@ -338,8 +346,11 @@ def renderLogs():
                 'Hash', 'Last update', 'User', 'File', 'Status', 'Metadata', 'User Text', 'Backend', 'Log',
             ],
             'dataTablesInit': '''
-                "aaSorting": [[1, 'desc']]
-            ''',
+                "aaSorting": [[1, 'desc']],
+                "oSearch": {
+                    "sSearch": "%s"
+                }
+            ''' % defaultUserLogSearch,
             'transform': {
                 'Hash': getShortHash,
                 'File': getShortFile,
