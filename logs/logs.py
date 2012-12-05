@@ -71,13 +71,13 @@ mainTemplate = jinja2.Template('''
                     padding: 5px;
                 }
                 .statusInProgress {
-                    background-color: #99FFFF;
+                    background-color: #99FFFF !important;
                 }
                 .statusFinishedFailed {
-                    background-color: #FF9999;
+                    background-color: #FF9999 !important;
                 }
                 .statusFinishedOK {
-                    background-color: #99FF99;
+                    background-color: #99FF99 !important;
                 }
             </style>
             <script src="/libs/jquery-1.7.2.min.js"></script>
