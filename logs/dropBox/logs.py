@@ -196,12 +196,18 @@ tableTemplate = jinja2.Template('''
     });
 
     // Create the dataTable
-    $('#{{name}}Table').dataTable({
+    var table = $('#{{name}}Table').dataTable({
         "bJQueryUI": true,
         "sPaginationType": "full_numbers",
         "iDisplayLength": 25,
         {{dataTablesInit}}
     });
+
+    // If there is no records to display, remove the search field
+    if (table.fnSettings().fnRecordsDisplay() == 0) {
+        $("#{{name}}Table_filter input").val('');
+        table.fnFilter('');
+    }
 </script>
 ''')
 
