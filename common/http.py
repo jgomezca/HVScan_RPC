@@ -326,3 +326,33 @@ class HTTP(object):
         for cookie in _getCERNSSOCookies(url, secure):
             self.curl.setopt(self.curl.COOKIELIST, cookie)
 
+
+def test():
+    # This test suite works out of the box in lxplus6, where the CERN-CA-certs
+    # are installed (so we can test secure connections) and libcurl was built
+    # with GSS/Kerberos5 support.
+
+    import unittest
+    import getpass
+
+    class HTTPTest(unittest.TestCase):
+
+        def testCERNSSOCookies(self):
+            http = HTTP()
+
+            # Trying to access URL without signing in CERN SSO first must raise
+            self.assertRaises(HTTPError, http.query, 'https://cms-conddb-dev.cern.ch/shibbolethTest/')
+
+            # Sign in CERN SSO
+            http.addCERNSSOCookies('https://cms-conddb-dev.cern.ch/shibbolethTest/')
+
+            # Try again and check that the got signed in with the current username
+            # (shibbolethTest returns all headers that the backend server got)
+            self.assertTrue(('Adfs-Login: %s' % getpass.getuser()) in http.query('https://cms-conddb-dev.cern.ch/shibbolethTest/'))
+
+    return unittest.TextTestRunner().run(unittest.defaultTestLoader.loadTestsFromTestCase(HTTPTest)).wasSuccessful()
+
+
+if __name__ == '__main__':
+    test()
+
