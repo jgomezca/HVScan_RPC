@@ -169,6 +169,13 @@ class HTTP(object):
         self.curl.setopt(self.curl.SSL_VERIFYHOST, 0)
 
 
+    def getCookies(self):
+        '''Returns the list of cookies.
+        '''
+
+        return self.curl.getinfo(self.curl.INFO_COOKIELIST)
+
+
     def discardCookies(self):
         '''Discards cookies.
         '''
