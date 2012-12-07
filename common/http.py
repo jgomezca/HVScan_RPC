@@ -25,10 +25,14 @@ class CERNSSOError(Exception):
     '''
 
 
-def _getCERNSSOCookies(url):
+def _getCERNSSOCookies(url, secure = True):
     '''Returns the required CERN SSO cookies for a URL using Kerberos.
 
     They can be used with any HTTP client (libcurl, wget, urllib...).
+
+    If you wish to make secure SSL connections (i.e. verify peers/hosts),
+    you need to install the CERN-CA-certs package. Use secure == False
+    to skip this (i.e. this is the same as curl -k/--insecure).
 
     Note that this method *does* a query to the given URL if successful.
 
@@ -75,9 +79,13 @@ def _getCERNSSOCookies(url):
     curl.setopt(curl.COOKIEFILE, '')
 
     # The CERN SSO servers have a valid certificate
-    curl.setopt(curl.SSL_VERIFYPEER, 1)
-    curl.setopt(curl.SSL_VERIFYHOST, 2)
-    curl.setopt(curl.CAPATH, CERN_SSO_CURL_CAPATH)
+    if secure:
+        curl.setopt(curl.SSL_VERIFYPEER, 1)
+        curl.setopt(curl.SSL_VERIFYHOST, 2)
+        curl.setopt(curl.CAPATH, CERN_SSO_CURL_CAPATH)
+    else:
+        curl.setopt(curl.SSL_VERIFYPEER, 0)
+        curl.setopt(curl.SSL_VERIFYHOST, 0)
 
     # This should not be needed, but sometimes requests hang 'forever'
     curl.setopt(curl.TIMEOUT, 10)
@@ -294,7 +302,7 @@ class HTTP(object):
                 logging.debug('Retrying since we got the %s pycurl exception...', str(e))
 
 
-    def addCERNSSOCookies(self, url):
+    def addCERNSSOCookies(self, url, secure = True):
         '''Adds the required CERN SSO cookies for a URL using Kerberos.
 
         After calling this, you can use query() for your SSO-protected URLs.
@@ -304,6 +312,10 @@ class HTTP(object):
 
         If you do not have a ticket yet, use kinit.
 
+        If you wish to make secure SSL connections (i.e. verify peers/hosts),
+        you need to install the CERN-CA-certs package. Use secure == False
+        to skip this (i.e. this is the same as curl -k/--insecure).
+
         Note that this method *does* a query to the given URL if successful.
 
         Note that you may need different cookies for different URLs/applications.
@@ -311,6 +323,6 @@ class HTTP(object):
         Note that this method may raise also CERNSSOError exceptions.
         '''
 
-        for cookie in _getCERNSSOCookies(url):
+        for cookie in _getCERNSSOCookies(url, secure):
             self.curl.setopt(self.curl.COOKIELIST, cookie)
 
