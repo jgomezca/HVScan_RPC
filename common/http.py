@@ -9,13 +9,134 @@ __maintainer__ = 'Miguel Ojeda'
 __email__ = 'mojedasa@cern.ch'
 
 
+import re
 import time
 import logging
 import cStringIO
+import HTMLParser
+import urllib
 
 import pycurl
 import copy
 
+
+class CERNSSOError(Exception):
+    '''A CERN SSO exception.
+    '''
+
+
+def _getCERNSSOCookies(url):
+    '''Returns the required CERN SSO cookies for a URL using Kerberos.
+
+    They can be used with any HTTP client (libcurl, wget, urllib...).
+
+    Note that this method *does* a query to the given URL if successful.
+
+    This was implemented outside the HTTP class for two main reasons:
+
+        * The only thing needed to use CERN SSO is the cookies, therefore
+          this function is useful alone as well (e.g. as a simple replacement
+          of the cern-get-sso-cookie script or as a Python port of
+          the WWW::CERNSSO::Auth Perl package -- this one does not write
+          any file and can be used in-memory, by the way).
+
+        * We do not need to use the curl handler of the HTTP class.
+          This way we do not overwrite any options in that one and we use
+          only a temporary one here for getting the cookie.
+
+    TODO: Support also Certificate/Key authentication.
+    TODO: Support also Username/Password authentication.
+    TODO: Review the error paths.
+    TODO: Why PERLSESSID was used in the original code?
+    TODO: Retry if timeouts are really common (?)
+    '''
+
+    def perform():
+        response = cStringIO.StringIO()
+        curl.setopt(curl.WRITEFUNCTION, response.write)
+        curl.perform()
+        code = curl.getinfo(curl.RESPONSE_CODE)
+        response = response.getvalue()
+        effectiveUrl = curl.getinfo(curl.EFFECTIVE_URL)
+        return (code, response, effectiveUrl)
+
+    # These constants and the original code came from the official CERN
+    # cern-get-sso-cookie script and WWW::CERNSSO::Auth Perl package.
+    VERSION = '0.4.2'
+    CERN_SSO_CURL_USER_AGENT_KRB = 'curl-sso-kerberos/%s' % VERSION
+    CERN_SSO_CURL_AUTHERR = 'HTTP Error 401.2 - Unauthorized'
+    CERN_SSO_CURL_ADFS_EP = '/adfs/ls/auth'
+    CERN_SSO_CURL_ADFS_SIGNIN = 'wa=wsignin1.0'
+    CERN_SSO_CURL_CAPATH = '/etc/pki/tls/certs'
+
+    curl = pycurl.Curl()
+
+    # Store the cookies in memory, which we will retreive later on
+    curl.setopt(curl.COOKIEFILE, '')
+
+    # The CERN SSO servers have a valid certificate
+    curl.setopt(curl.SSL_VERIFYPEER, 1)
+    curl.setopt(curl.SSL_VERIFYHOST, 2)
+    curl.setopt(curl.CAPATH, CERN_SSO_CURL_CAPATH)
+
+    # This should not be needed, but sometimes requests hang 'forever'
+    curl.setopt(curl.TIMEOUT, 10)
+    curl.setopt(curl.CONNECTTIMEOUT, 10)
+
+    # Ask curl to use Kerberos5 authentication
+    curl.setopt(curl.USERAGENT, CERN_SSO_CURL_USER_AGENT_KRB)
+    curl.setopt(curl.HTTPAUTH, curl.HTTPAUTH_GSSNEGOTIATE)
+    curl.setopt(curl.USERPWD, ':')
+
+    # Follow location (and send the password along to other hosts,
+    # although we do not really send any password)
+    curl.setopt(curl.FOLLOWLOCATION, 1)
+    curl.setopt(curl.UNRESTRICTED_AUTH, 1)
+
+    # We do not need the headers
+    curl.setopt(curl.HEADER, 0)
+
+    # Fetch the url
+    curl.setopt(curl.URL, url)
+    (code, response, effectiveUrl) = perform()
+
+    if CERN_SSO_CURL_ADFS_EP not in effectiveUrl:
+        raise CERNSSOError('Not behind SSO or we already have the cookie.')
+
+    # Do the manual redirection to the IDP
+    logging.debug('Redirected to IDP %s', effectiveUrl)
+    curl.setopt(curl.URL, effectiveUrl)
+    (code, response, effectiveUrl) = perform()
+
+    if CERN_SSO_CURL_AUTHERR in response:
+        raise CERNSSOError('Authentication error: Redirected to IDP Authentication error %s' % effectiveUrl)
+
+    match = re.search('form .+?action="([^"]+)"', response)
+    if not match:
+        raise CERNSSOError('Something went wrong: could not find the expected redirection form.')
+
+    # Do the JavaScript redirection via the form to the SP
+    spUrl = match.groups()[0]
+    logging.debug('Redirected (via form) to SP (%s)', spUrl)
+
+    formPairs = re.findall('input type="hidden" name="([^"]+)" value="([^"]+)"', response)
+
+    # Microsoft ADFS produces broken encoding in auth forms:
+    # '<' and '"' are encoded as '&lt;' and '&quot;' however
+    # '>' is *not* encoded. Does not matter here though, we just decode.
+    htmlParser = HTMLParser.HTMLParser()
+    formPairs = [(x[0], htmlParser.unescape(x[1])) for x in formPairs]
+
+    curl.setopt(curl.URL, spUrl)
+    curl.setopt(curl.POSTFIELDS, urllib.urlencode(formPairs))
+    curl.setopt(curl.POST, 1)
+    (code, response, effectiveUrl) = perform()
+
+    if CERN_SSO_CURL_ADFS_SIGNIN in effectiveUrl:
+        raise CERNSSOError('Something went wrong: still on the auth page.')
+
+    # Return the cookies
+    return curl.getinfo(curl.INFO_COOKIELIST)
 
 
 class HTTPError(Exception):
@@ -164,4 +285,25 @@ class HTTP(object):
                     raise e
 
                 logging.debug('Retrying since we got the %s pycurl exception...', str(e))
+
+
+    def addCERNSSOCookies(self, url):
+        '''Adds the required CERN SSO cookies for a URL using Kerberos.
+
+        After calling this, you can use query() for your SSO-protected URLs.
+
+        This method will use your Kerberos ticket to sign in automatically
+        in CERN SSO (i.e. no password required).
+
+        If you do not have a ticket yet, use kinit.
+
+        Note that this method *does* a query to the given URL if successful.
+
+        Note that you may need different cookies for different URLs/applications.
+
+        Note that this method may raise also CERNSSOError exceptions.
+        '''
+
+        for cookie in _getCERNSSOCookies(url):
+            self.curl.setopt(self.curl.COOKIELIST, cookie)
 
