@@ -16,7 +16,6 @@ import sys
 import logging
 import optparse
 import hashlib
-import cStringIO
 import tarfile
 import netrc
 import getpass
@@ -26,15 +25,151 @@ import json
 import tempfile
 
 
-import pycurl
-
-
 defaultBackend = 'online'
 defaultHostname = 'cms-conddb-int.cern.ch'
 defaultUrlTemplate = 'https://%s/dropBox/'
 defaultTemporaryFile = 'upload.tar.bz2'
 defaultNetrcHost = 'DropBox'
 defaultWorkflow = 'offline'
+
+
+# common/http.py start (plus the "# Try to extract..." section bit)
+import re
+import time
+import logging
+import cStringIO
+import HTMLParser
+import urllib
+
+import pycurl
+import copy
+
+
+class CERNSSOError(Exception):
+    '''A CERN SSO exception.
+    '''
+
+
+def _getCERNSSOCookies(url, secure = True):
+    '''Returns the required CERN SSO cookies for a URL using Kerberos.
+
+    They can be used with any HTTP client (libcurl, wget, urllib...).
+
+    If you wish to make secure SSL connections (i.e. verify peers/hosts),
+    you need to install the CERN-CA-certs package. Use secure == False
+    to skip this (i.e. this is the same as curl -k/--insecure).
+
+    Note that this method *does* a query to the given URL if successful.
+
+    This was implemented outside the HTTP class for two main reasons:
+
+        * The only thing needed to use CERN SSO is the cookies, therefore
+          this function is useful alone as well (e.g. as a simple replacement
+          of the cern-get-sso-cookie script or as a Python port of
+          the WWW::CERNSSO::Auth Perl package -- this one does not write
+          any file and can be used in-memory, by the way).
+
+        * We do not need to use the curl handler of the HTTP class.
+          This way we do not overwrite any options in that one and we use
+          only a temporary one here for getting the cookie.
+
+    TODO: Support also Certificate/Key authentication.
+    TODO: Support also Username/Password authentication.
+    TODO: Review the error paths.
+    TODO: Why PERLSESSID was used in the original code?
+    TODO: Retry if timeouts are really common (?)
+    '''
+
+    def perform():
+        response = cStringIO.StringIO()
+        curl.setopt(curl.WRITEFUNCTION, response.write)
+        curl.perform()
+        code = curl.getinfo(curl.RESPONSE_CODE)
+        response = response.getvalue()
+        effectiveUrl = curl.getinfo(curl.EFFECTIVE_URL)
+        return (code, response, effectiveUrl)
+
+    # These constants and the original code came from the official CERN
+    # cern-get-sso-cookie script and WWW::CERNSSO::Auth Perl package.
+    VERSION = '0.4.2'
+    CERN_SSO_CURL_USER_AGENT_KRB = 'curl-sso-kerberos/%s' % VERSION
+    CERN_SSO_CURL_AUTHERR = 'HTTP Error 401.2 - Unauthorized'
+    CERN_SSO_CURL_ADFS_EP = '/adfs/ls/auth'
+    CERN_SSO_CURL_ADFS_SIGNIN = 'wa=wsignin1.0'
+    CERN_SSO_CURL_CAPATH = '/etc/pki/tls/certs'
+
+    curl = pycurl.Curl()
+
+    # Store the cookies in memory, which we will retreive later on
+    curl.setopt(curl.COOKIEFILE, '')
+
+    # The CERN SSO servers have a valid certificate
+    if secure:
+        curl.setopt(curl.SSL_VERIFYPEER, 1)
+        curl.setopt(curl.SSL_VERIFYHOST, 2)
+        curl.setopt(curl.CAPATH, CERN_SSO_CURL_CAPATH)
+    else:
+        curl.setopt(curl.SSL_VERIFYPEER, 0)
+        curl.setopt(curl.SSL_VERIFYHOST, 0)
+
+    # This should not be needed, but sometimes requests hang 'forever'
+    curl.setopt(curl.TIMEOUT, 10)
+    curl.setopt(curl.CONNECTTIMEOUT, 10)
+
+    # Ask curl to use Kerberos5 authentication
+    curl.setopt(curl.USERAGENT, CERN_SSO_CURL_USER_AGENT_KRB)
+    curl.setopt(curl.HTTPAUTH, curl.HTTPAUTH_GSSNEGOTIATE)
+    curl.setopt(curl.USERPWD, ':')
+
+    # Follow location (and send the password along to other hosts,
+    # although we do not really send any password)
+    curl.setopt(curl.FOLLOWLOCATION, 1)
+    curl.setopt(curl.UNRESTRICTED_AUTH, 1)
+
+    # We do not need the headers
+    curl.setopt(curl.HEADER, 0)
+
+    # Fetch the url
+    curl.setopt(curl.URL, url)
+    (code, response, effectiveUrl) = perform()
+
+    if CERN_SSO_CURL_ADFS_EP not in effectiveUrl:
+        raise CERNSSOError('Not behind SSO or we already have the cookie.')
+
+    # Do the manual redirection to the IDP
+    logging.debug('Redirected to IDP %s', effectiveUrl)
+    curl.setopt(curl.URL, effectiveUrl)
+    (code, response, effectiveUrl) = perform()
+
+    if CERN_SSO_CURL_AUTHERR in response:
+        raise CERNSSOError('Authentication error: Redirected to IDP Authentication error %s' % effectiveUrl)
+
+    match = re.search('form .+?action="([^"]+)"', response)
+    if not match:
+        raise CERNSSOError('Something went wrong: could not find the expected redirection form (do you have a valid Kerberos ticket? -- see klist and kinit).')
+
+    # Do the JavaScript redirection via the form to the SP
+    spUrl = match.groups()[0]
+    logging.debug('Redirected (via form) to SP (%s)', spUrl)
+
+    formPairs = re.findall('input type="hidden" name="([^"]+)" value="([^"]+)"', response)
+
+    # Microsoft ADFS produces broken encoding in auth forms:
+    # '<' and '"' are encoded as '&lt;' and '&quot;' however
+    # '>' is *not* encoded. Does not matter here though, we just decode.
+    htmlParser = HTMLParser.HTMLParser()
+    formPairs = [(x[0], htmlParser.unescape(x[1])) for x in formPairs]
+
+    curl.setopt(curl.URL, spUrl)
+    curl.setopt(curl.POSTFIELDS, urllib.urlencode(formPairs))
+    curl.setopt(curl.POST, 1)
+    (code, response, effectiveUrl) = perform()
+
+    if CERN_SSO_CURL_ADFS_SIGNIN in effectiveUrl:
+        raise CERNSSOError('Something went wrong: still on the auth page.')
+
+    # Return the cookies
+    return curl.getinfo(curl.INFO_COOKIELIST)
 
 
 class HTTPError(Exception):
@@ -59,19 +194,31 @@ class HTTP(object):
     '''Class used for querying URLs using the HTTP protocol.
     '''
 
+    retryCodes = frozenset([502, 503])
+
+
     def __init__(self):
         self.setBaseUrl()
-        self.discardCookies()
+        self.setRetries()
+
+        self.curl = pycurl.Curl()
+        self.curl.setopt(self.curl.COOKIEFILE, '')
+        self.curl.setopt(self.curl.SSL_VERIFYPEER, 0)
+        self.curl.setopt(self.curl.SSL_VERIFYHOST, 0)
+
+
+    def getCookies(self):
+        '''Returns the list of cookies.
+        '''
+
+        return self.curl.getinfo(self.curl.INFO_COOKIELIST)
 
 
     def discardCookies(self):
         '''Discards cookies.
         '''
 
-        self.curl = pycurl.Curl()
-        self.curl.setopt(self.curl.COOKIEFILE, '')
-        self.curl.setopt(self.curl.SSL_VERIFYPEER, 0)
-        self.curl.setopt(self.curl.SSL_VERIFYHOST, 0)
+        self.curl.setopt(self.curl.COOKIELIST, 'ALL')
 
 
     def setBaseUrl(self, baseUrl = ''):
@@ -80,6 +227,37 @@ class HTTP(object):
         '''
 
         self.baseUrl = baseUrl
+
+
+    def setProxy(self, proxy = ''):
+        '''Allows to set a proxy.
+        '''
+
+        self.curl.setopt(self.curl.PROXY, proxy)
+
+
+    def setTimeout(self, timeout = 0):
+        '''Allows to set a timeout.
+        '''
+
+        self.curl.setopt(self.curl.TIMEOUT, timeout)
+
+
+    def setRetries(self, retries = ()):
+        '''Allows to set retries.
+
+        The retries are a sequence of the seconds to wait per retry.
+
+        The retries are done on:
+            * PyCurl errors (includes network problems, e.g. not being able
+              to connect to the host).
+            * 502 Bad Gateway (for the moment, to avoid temporary
+              Apache-CherryPy issues).
+            * 503 Service Temporarily Unavailable (for when we update
+              the frontends).
+        '''
+
+        self.retries = retries
 
 
     def query(self, url, data = None, files = None, keepCookies = True):
@@ -99,36 +277,86 @@ class HTTP(object):
         if not keepCookies:
             self.discardCookies()
 
-        response = cStringIO.StringIO()
-
         url = self.baseUrl + url
 
-        self.curl.setopt(self.curl.URL, url)
-        self.curl.setopt(self.curl.HTTPGET, 1)
+        # make sure the logs are safe ... at least somewhat :)
+        data4log = copy.copy(data)
+        if data4log:
+            if 'password' in data4log.keys():
+                data4log['password'] = '*'
 
-        if data is not None or files is not None:
-            # If there is data or files to send, use a POST request
+        retries = [0] + list(self.retries)
 
-            finalData = {}
+        while True:
+            logging.debug('Querying %s with data %s and files %s (retries left: %s, current sleep: %s)...', url, data4log, files, len(retries), retries[0])
 
-            if data is not None:
-                finalData.update(data)
+            time.sleep(retries.pop(0))
 
-            if files is not None:
-                for (key, fileName) in files.items():
-                    finalData[key] = (self.curl.FORM_FILE, fileName)
+            try:
+                self.curl.setopt(self.curl.URL, url)
+                self.curl.setopt(self.curl.HTTPGET, 1)
 
-            self.curl.setopt(self.curl.HTTPPOST, finalData.items())
+                if data is not None or files is not None:
+                    # If there is data or files to send, use a POST request
 
-        self.curl.setopt(self.curl.WRITEFUNCTION, response.write)
-        self.curl.perform()
+                    finalData = {}
 
-        code = self.curl.getinfo(self.curl.RESPONSE_CODE)
+                    if data is not None:
+                        finalData.update(data)
 
-        if code != 200:
-            raise HTTPError(code, response.getvalue())
+                    if files is not None:
+                        for (key, fileName) in files.items():
+                            finalData[key] = (self.curl.FORM_FILE, fileName)
 
-        return response.getvalue()
+                    self.curl.setopt(self.curl.HTTPPOST, finalData.items())
+
+                response = cStringIO.StringIO()
+                self.curl.setopt(self.curl.WRITEFUNCTION, response.write)
+                self.curl.perform()
+
+                code = self.curl.getinfo(self.curl.RESPONSE_CODE)
+
+                if code in self.retryCodes and len(retries) > 0:
+                    logging.debug('Retrying since we got the %s error code...', code)
+                    continue
+
+                if code != 200:
+                    raise HTTPError(code, response.getvalue())
+
+                return response.getvalue()
+
+            except pycurl.error as e:
+                if len(retries) == 0:
+                    raise e
+
+                logging.debug('Retrying since we got the %s pycurl exception...', str(e))
+
+
+    def addCERNSSOCookies(self, url, secure = True):
+        '''Adds the required CERN SSO cookies for a URL using Kerberos.
+
+        After calling this, you can use query() for your SSO-protected URLs.
+
+        This method will use your Kerberos ticket to sign in automatically
+        in CERN SSO (i.e. no password required).
+
+        If you do not have a ticket yet, use kinit.
+
+        If you wish to make secure SSL connections (i.e. verify peers/hosts),
+        you need to install the CERN-CA-certs package. Use secure == False
+        to skip this (i.e. this is the same as curl -k/--insecure).
+
+        Note that this method *does* a query to the given URL if successful.
+
+        Note that you may need different cookies for different URLs/applications.
+
+        Note that this method may raise also CERNSSOError exceptions.
+        '''
+
+        for cookie in _getCERNSSOCookies(self.baseUrl + url, secure):
+            self.curl.setopt(self.curl.COOKIELIST, cookie)
+
+# common/http.py end
 
 
 def addToTarFile(tarFile, fileobj, arcname):
@@ -147,6 +375,18 @@ class DropBox(object):
         self.hostname = hostname
         self.http = HTTP()
         self.http.setBaseUrl(urlTemplate % hostname)
+
+
+    def signInSSO(self, secure = True):
+        '''Signs in the server via CERN SSO.
+        '''
+
+        if secure:
+            logging.info('%s: Signing in via CERN SSO...', self.hostname)
+        else:
+            logging.info('%s: Signing in via CERN SSO (insecure)...', self.hostname)
+
+        self.http.addCERNSSOCookies('signInSSO', secure)
 
 
     def signIn(self, username, password):
@@ -342,21 +582,6 @@ def main():
         parser.print_help()
         return -2
 
-
-    # Retrieve username and password
-    try:
-        (username, account, password) = netrc.netrc().authenticators(options.netrcHost)
-    except Exception:
-        logging.info('netrc entry %s not found: if you wish not to have to retype your password, you can add an entry in your .netrc file. However, beware of the risks of having your password stored as plaintext.', options.netrcHost)
-
-        defaultUsername = getpass.getuser()
-        if defaultUsername is None:
-            defaultUsername = '(not found)'
-
-        username = getInput(defaultUsername, 'Username [%s]: ' % defaultUsername)
-        password = getpass.getpass('Password: ')
-
-
     # Check that we can read the data and metadata files
     # If the metadata file does not exist, start the wizard
     for filename in arguments:
@@ -513,7 +738,49 @@ The tags (and its dependencies) can be synchronized to several workflows. You ca
     # Upload files
     try:
         dropBox = DropBox(options.hostname, options.urlTemplate)
-        dropBox.signIn(username, password)
+
+        # Authentication
+        try:
+            try:
+                # Try to authenticate via secure CERN SSO
+                dropBox.signInSSO()
+            except pycurl.error as e:
+                # If we get and error which is not 60, raise to fall back
+                # to the other alternatives
+                if e[0] != 60:
+                    raise
+
+                # pycurl error 60: Peer certificate cannot be authenticated with known CA certificates
+                logging.warning("Cannot verify the CERN SSO's certificate. Please install the CERN-CA-certs package (it is not installed by default in SLC6) or upload from a place which has it, like lxplus6. Otherwise, you can fallback to an insecure SSL connection.")
+                if getInput('y', '\nFallback to insecure SSL connection to CERN SSO? [y]: ').lower() != 'y':
+                    raise Exception('Insecure SSL connection to CERN SSO aborted by the user.')
+
+                # Try again via insecure CERN SSO
+                dropBox.signInSSO(secure = False)
+
+        except Exception as e:
+                # Authentication via CERN SSO failed (for whatever reason)
+                logging.info('CERN SSO authentication failed. Falling back to username/password authentication. Reason: %s', str(e))
+
+                try:
+                    # Try to find the netrc entry
+                    (username, account, password) = netrc.netrc().authenticators(options.netrcHost)
+                except Exception:
+                    # netrc entry not found, ask for the username and password
+                    logging.info('netrc entry "%s" not found: if you cannot use CERN SSO for some reason *and* wish not to have to retype your password, you can add an entry in your .netrc file. However, beware of the risks of having your password stored as plaintext. Instead, we advise you to try to always use the CERN SSO authentication (if you cannot, please tell us, we can help you!).', options.netrcHost)
+
+                    # Try to get a default username
+                    defaultUsername = getpass.getuser()
+                    if defaultUsername is None:
+                        defaultUsername = '(not found)'
+
+                    username = getInput(defaultUsername, '\nUsername [%s]: ' % defaultUsername)
+                    password = getpass.getpass('Password: ')
+
+                # Now we have a username and password, authenticate with them
+                dropBox.signIn(username, password)
+
+        # At this point we must be authenticated
         dropBox._checkForUpdates()
 
         for filename in arguments:
