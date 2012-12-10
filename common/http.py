@@ -121,7 +121,7 @@ def _getCERNSSOCookies(url, secure = True):
 
     match = re.search('form .+?action="([^"]+)"', response)
     if not match:
-        raise CERNSSOError('Something went wrong: could not find the expected redirection form.')
+        raise CERNSSOError('Something went wrong: could not find the expected redirection form (do you have a valid Kerberos ticket? -- see klist and kinit).')
 
     # Do the JavaScript redirection via the form to the SP
     spUrl = match.groups()[0]
