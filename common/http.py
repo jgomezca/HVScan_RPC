@@ -323,7 +323,7 @@ class HTTP(object):
         Note that this method may raise also CERNSSOError exceptions.
         '''
 
-        for cookie in _getCERNSSOCookies(url, secure):
+        for cookie in _getCERNSSOCookies(self.baseUrl + url, secure):
             self.curl.setopt(self.curl.COOKIELIST, cookie)
 
 
