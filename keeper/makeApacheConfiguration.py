@@ -199,9 +199,16 @@ virtualHosts['cms-pop-prod2'] = dict(virtualHosts['cms-pop-prod'])
 #   you must not set redirectRoot.
 #
 # If 'shibbolethGroups' is found, the service will get a Shibboleth Location.
-# The value is a list of the allowed groups. Moreover, if 'shibbolethMatch'
+# The value is a list of the allowed groups. Moreover, if 'shibbolethUrl' is
+# found, it will overwrite the default '/{url}'. However, if 'shibbolethMatch'
 # is found, the service will get a Shibboleth LocationMatch. The value is
 # the pattern to match. 'shibbolethGroups' is also used in this case.
+# Consider to use shibbolethMatch if you only have some URLs to *exclude* from
+# your service (i.e. you enumerate the ones outside Shibboleth). However,
+# if you only have a Location/URL to *include*, please use shibbolethUrl
+# since is easier and avoids security risks if your matching regexp does not
+# match all possible cases (e.g. multiple slashes), which can be easily used to
+# bypass Shibboleth and then pass your application custom headers.
 #
 # If 'redirectRoot' is found, the root of the frontend will be redirected
 # to this service.
@@ -270,7 +277,7 @@ services['docs']['redirectRoot'] = True
 # Set the allowed groups for services behind Shibboleth
 services['admin']['shibbolethGroups'] = ['cms-cond-dev']
 services['dropBox']['shibbolethGroups'] = ['cms-cond-dropbox']
-services['dropBox']['shibbolethMatch'] = '^/dropBox/signInSSO$'
+services['dropBox']['shibbolethUrl'] = '/dropBox/signInSSO'
 services['gtc']['shibbolethGroups'] = ['zh']
 services['logs']['shibbolethGroups'] = ['zh']
 services['PdmV/valdb']['shibbolethGroups'] = ['cms-web-access']
@@ -581,6 +588,11 @@ shibbolethTemplate = '''
 shibboleth = shibbolethTemplate.format(
     location = 'Location',
     parameter = '/{url}',
+)
+
+shibbolethUrl = shibbolethTemplate.format(
+    location = 'Location',
+    parameter = '{shibbolethUrl}',
 )
 
 shibbolethMatch = shibbolethTemplate.format(
@@ -981,7 +993,9 @@ def makeApacheConfiguration(frontend, virtualHost):
         if 'shibbolethGroups' in services[service] and virtualHost != 'private':
             services[service]['shibbolethGroupsText'] = ' '.join(['"%s"' % x for x in services[service]['shibbolethGroups']])
 
-            if 'shibbolethMatch' in services[service]:
+            if 'shibbolethUrl' in services[service]:
+                infoMap['shibboleth'] += shibbolethUrl.format(**services[service])
+            elif 'shibbolethMatch' in services[service]:
                 infoMap['shibboleth'] += shibbolethMatch.format(**services[service])
             else:
                 infoMap['shibboleth'] += shibboleth.format(**services[service])
