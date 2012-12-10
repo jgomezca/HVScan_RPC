@@ -132,6 +132,8 @@ class DropBox(object):
 
         cherrypy.session['username'] = username
 
+        logging.info('signIn(): User %s signed in.', username)
+
 
     @cherrypy.expose
     def signOut(self):
@@ -140,8 +142,12 @@ class DropBox(object):
         Called from both offline and online.
         '''
 
-        if getUsername() is not None:
+        logging.debug('server::signOut()')
+
+        username = getUsername()
+        if username is not None:
             del cherrypy.session['username']
+            logging.info('signOut(): User %s signed out.', username)
 
         cherrypy.lib.sessions.expire()
 
