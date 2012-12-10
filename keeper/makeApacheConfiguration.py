@@ -269,6 +269,8 @@ services['docs']['redirectRoot'] = True
 
 # Set the allowed groups for services behind Shibboleth
 services['admin']['shibbolethGroups'] = ['cms-cond-dev']
+services['dropBox']['shibbolethGroups'] = ['cms-cond-dropbox']
+services['dropBox']['shibbolethMatch'] = '^/dropBox/signInSSO$'
 services['gtc']['shibbolethGroups'] = ['zh']
 services['logs']['shibbolethGroups'] = ['zh']
 services['PdmV/valdb']['shibbolethGroups'] = ['cms-web-access']

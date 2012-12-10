@@ -27,6 +27,7 @@ import config
 import upload
 
 import service
+import shibboleth
 
 
 winServicesUrl = service.getWinServicesSoapBaseUrl(service.secrets['winservices'])
@@ -109,6 +110,23 @@ def checkSignedInOnline(f):
 class DropBox(object):
     '''dropBox frontend's web server.
     '''
+
+    @cherrypy.expose
+    def signInSSO(self):
+        '''Signs in a user via the CERN SSO: this URL *must* be behind it.
+
+        Called from offline by the upload script, as the first authentication
+        method. If SSO fails, the script fallbacks to the winservices SOAP one.
+        '''
+
+        logging.debug('server::signInSSO()')
+
+        username = shibboleth.getUsername()
+
+        cherrypy.session['username'] = username
+
+        logging.info('signInSSO(): User %s signed in.', username)
+
 
     @cherrypy.expose
     def signIn(self, username, password):
