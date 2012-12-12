@@ -71,7 +71,7 @@ frontends['cms-conddb-prod2'] = frontends['cmsdbfe2'] = frontends['vocms151']
 virtualHosts = {
     'cms-conddb-dev': {
         'backendHostnames': ['vocms145'],
-        'services': [],
+        'services': ['monitoring', 'prod'],
     },
 
     # From the old cmstags.conf
@@ -216,6 +216,23 @@ virtualHosts['cms-pop-prod2'] = dict(virtualHosts['cms-pop-prod'])
 # If 'customHttp' is found, its value will be appended in the HTTP section.
 # If 'customHttps' is found, its value will be appended in the HTTPS section.
 services = {
+    # Monitoring (the 'entry-point' for users)
+    'monitoring': {
+        'protocol': 'http',
+        'backendHostnames': ['vocms226'],
+        'backendUrl': '/prod/check_mk',
+        'backendPort': 80,
+        'shibbolethGroups': ['zh'],
+    },
+
+    # FIXME: This one is for all the links that are hardcoded to /prod/...
+    'prod': {
+        'protocol': 'http',
+        'backendHostnames': ['vocms226'],
+        'backendPort': 80,
+        'shibbolethGroups': ['zh'],
+    },
+
     # From the old cmstags.conf
     'tc': {
         'backendPort': 4443,
