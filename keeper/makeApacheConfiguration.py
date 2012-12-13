@@ -494,6 +494,9 @@ mainTemplate = '''
     # add slashes at the end of the URL if not present already
     {addingSlashes}
 
+    # redirects
+    {redirects}
+
     # ProxyPass
     {proxyPass}
 
@@ -534,6 +537,10 @@ security = '''
 
 redirectRoot = '''
     RewriteRule ^/+$ /{url}  [NE,L,R]
+'''
+
+redirect = '''
+    RewriteRule ^/{url}/$ {target}  [NE,L,R]
 '''
 
 addingSlashes = '''
@@ -951,6 +958,7 @@ def makeApacheConfiguration(frontend, virtualHost):
     infoMap.update(virtualHosts[virtualHost])
     infoMap['virtualHost'] = getVirtualHost(virtualHost)
     infoMap['redirectRoot'] = ''
+    infoMap['redirects'] = ''
     infoMap['addingSlashes'] = ''
     infoMap['redirectToHttps'] = ''
     infoMap['proxyPass'] = ''
@@ -978,6 +986,10 @@ def makeApacheConfiguration(frontend, virtualHost):
                 raise Exception('Tried to redirectRoot to more than one service.')
 
             infoMap['redirectRoot'] += redirectRoot.format(**services[service])
+
+        if 'redirects' in services[service]:
+            for target in services[service]['redirects']:
+                infoMap['redirects'] += redirect.format(target = target, **services[service])
 
         if 'backendPort' in services[service]:
             if services[service]['url'] != '':
