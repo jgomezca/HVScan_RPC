@@ -220,12 +220,16 @@ services = {
     'monitoring': {
         'protocol': 'http',
         'backendHostnames': ['vocms226'],
-        'backendUrl': '/prod/check_mk',
+        'backendUrl': '/prod',
         'backendPort': 80,
+        'redirects': ['/monitoring/check_mk/'],
         'shibbolethGroups': ['zh'],
     },
 
-    # FIXME: This one is for all the links that are hardcoded to /prod/...
+    # FIXME: This one allow all the links that are hardcoded to /prod/
+    #        OMD should allow to easily change all of them and regenerate
+    #        all the configuration... (how? "omd mv" to move to another name
+    #        does not completely work at the moment...)
     'prod': {
         'protocol': 'http',
         'backendHostnames': ['vocms226'],
