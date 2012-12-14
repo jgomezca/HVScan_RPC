@@ -29,6 +29,10 @@ for serviceName in config.services:
     connections[serviceName] = database.Connection(config.connections['dropBox'])
 
 
+# To allow to access the connections
+import alarm
+
+
 @database.transaction
 def _processEmail(connection, cursor, processFunction):
     '''Returns True if an email was processed (i.e. if there may be
@@ -122,7 +126,29 @@ def getAddress(address):
     if '@' in address:
         return address
 
-    return cernldap.CERNLDAP().getUserEmail(address)
+    try:
+        return cernldap.CERNLDAP().getUserEmail(address)
+
+    except cernldap.NotFoundError as e:
+        # If there is no user for that account, still send the email
+        # but replace the address with a default one and alarm about the issue,
+        # since it should not happen.
+        #
+        # This makes sense, since this way we do have the original email
+        # to resend it if needed plus the alarm and it does not stop an email
+        # being sent just because one user was not in CERN LDAP.
+        # Unless, of course, the problem was with just the fromAddress
+        # -- in this case we just receive the alarm but the original email
+        # is sent anyway to the users, so should not be a problem either.
+        alarm.alarm('User %s not found in CERN LDAP: %s' % (address, str(e)))
+        return config.defaultAddress
+
+    except Exception as e:
+        # In other cases, alarm and raise our own exception since we want
+        # to retry to send the email (e.g. we couldn't reach CERN LDAP) later
+        message = 'Impossible to get email from user %s: %s' % (address, str(e))
+        alarm.alarm(message)
+        raise Exception(message)
 
 
 def processEmail(emailID, subject, body, fromAddress, toAddresses, ccAddresses):

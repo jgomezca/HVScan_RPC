@@ -20,6 +20,8 @@ services = [
 
 sleepTime = 10 # seconds
 
+defaultAddress = 'cms-cond-dev@cern.ch'
+
 fqdn = socket.getfqdn()
 
 if fqdn == 'vocms226.cern.ch':
