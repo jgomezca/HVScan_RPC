@@ -15,6 +15,7 @@ import time
 import signal
 import logging
 import json
+import getpass
 
 import service
 import smtp
@@ -153,9 +154,19 @@ def getAddress(address):
 
 def processEmail(emailID, subject, body, fromAddress, toAddresses, ccAddresses):
     logging.info('Processing email %s from %s with subject %s...', emailID, fromAddress, repr(subject))
-    fromAddress = getAddress(fromAddress)
-    toAddresses = [getAddress(x) for x in toAddresses]
-    ccAddresses = [getAddress(x) for x in ccAddresses]
+
+    if service.settings['productionLevel'] == 'private':
+        # When on a private machine, send emails only to the current user
+        # Do not use getAddress() for this, since it can return the default
+        # address (config.defaultAddress).
+        privateAddress = cernldap.CERNLDAP().getUserEmail(getpass.getuser())
+        fromAddress = privateAddress
+        toAddresses = (privateAddress, )
+        ccAddresses = ()
+    else:
+        fromAddress = getAddress(fromAddress)
+        toAddresses = [getAddress(x) for x in toAddresses]
+        ccAddresses = [getAddress(x) for x in ccAddresses]
 
     logging.info('Sending email %s from %s with subject %s...', emailID, fromAddress, repr(subject))
     smtp.SMTP().sendEmail(subject, body, fromAddress, toAddresses, ccAddresses)
