@@ -20,6 +20,11 @@ class CERNLDAPError(Exception):
     '''
 
 
+class NotFoundError(CERNLDAPError):
+    '''Not found error (e.g. username not found).
+    '''
+
+
 class CERNLDAP(object):
     '''Class used for searching in the CERN LDAP server.
     '''
@@ -39,7 +44,7 @@ class CERNLDAP(object):
 
         result = self.ldap.search_st('ou=users,ou=organic units,dc=cern,dc=ch', ldap.SCOPE_SUBTREE, '(cn=%s)' % username, attributes, timeout = timeout)
         if len(result) == 0:
-            raise CERNLDAPError('%s: Username "%s" not found.' % (self, username))
+            raise NotFoundError('%s: Username "%s" not found.' % (self, username))
 
         return result[0][1]
 
