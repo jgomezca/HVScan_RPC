@@ -72,13 +72,15 @@ def handleDropBoxExceptions(f):
 
 
 def checkSignedIn(f):
-    '''Decorator that checks if the user is signed in before
-    running the decorated function, raising 404 Not Found otherwise with
-    cherrypy.NotFound to hide the fact that the method exists.
+    '''Decorator that checks if the user is signed in and that user is not
+    the online dropBox before running the decorated function, raising
+    404 Not Found otherwise with cherrypy.NotFound to hide the fact
+    that the method exists.
     '''
 
     def newf(*args, **kwargs):
-        if getUsername() is None:
+        username = getUsername()
+        if username is None or username == service.secrets['onlineUser']['user']:
             # 404 Not Found
             raise cherrypy.NotFound()
 
