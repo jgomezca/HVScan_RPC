@@ -283,7 +283,11 @@ def updateFileLog(fileHash, log, runLogCreationTimestamp, runLogBackend):
         'log': logPack.unpack(log),
     }
 
-    dataAccess.insertEmail(config.subjectTemplate.render(fileInformation), config.bodyTemplate.render(fileInformation), username, [username])
+    ccAddresses = [username]
+    if service.settings['productionLevel'] in set(['int', 'pro']):
+        ccAddresses.append(config.notificationsEgroup)
+
+    dataAccess.insertEmail(config.subjectTemplate.render(fileInformation), config.bodyTemplate.render(fileInformation), username, ccAddresses)
 
 
 def updateRunStatus(creationTimestamp, backend, statusCode):
