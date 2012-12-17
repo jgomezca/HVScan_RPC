@@ -82,6 +82,9 @@ mainTemplate = jinja2.Template('''
                 .statusFinishedOK {
                     background-color: #99FF99 !important;
                 }
+                .statusOld {
+                    background-color: #DD99FF !important;
+                }
             </style>
             <script src="/libs/jquery-1.7.2.min.js"></script>
             <script src="/libs/jquery-ui/1.8.20/js/jquery-ui-1.8.20.custom.min.js"></script>

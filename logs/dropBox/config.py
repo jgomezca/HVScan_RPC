@@ -34,3 +34,23 @@ elif service.settings['productionLevel'] in set(['private']):
 else:
     raise Exception('Unknown production level.')
 
+
+def getBackendOldThreshold(backend):
+
+    backendsOldThreshold = {
+        # Online and offline backends run every 30 seconds, so 60 seconds should note a problem
+        'online': 60,
+        'offline': 60,
+
+        # Tier0 backend runs at 10-min boundaries, so 20 minutes should note a problem
+        'tier0': 20 * 60,
+
+        # Private instances run every 10 seconds, so 20 seconds should note a problem
+        'private': 20,
+    }
+
+    if backend in backendsOldThreshold:
+        return backendsOldThreshold[backend]
+
+    return backendsOldThreshold['private']
+

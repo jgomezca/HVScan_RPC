@@ -343,18 +343,29 @@ def getRunGlobalLogLink(isThereLog, row):
     return buildLink('getRunGlobalLog?creationTimestamp=%s&backend=%s' % (row[0].strftime('%Y-%m-%d %H:%M:%S,%f')[:-3], row[1]), 'Read')
 
 
+def getRunStatus(backend, creationTimestamp, statusCode, checkTooOld):
+    timeString = creationTimestamp.strftime('%Y-%m-%d %H:%M:%S')
+    timeDelta = datetime.datetime.now() - creationTimestamp
+    timeDelta = timeDelta.days * 24 * 60 * 60 + timeDelta.seconds
+
+    if checkTooOld and timeDelta > config.getBackendOldThreshold(backend):
+        return ('%s (%s seconds too old!)' % (timeString, timeDelta - config.getBackendOldThreshold(backend)), 'statusOld')
+
+    return (timeString, getStatusCodeColor(statusCode))
+
+
 def renderLogs():
     sortedTabs = ['userLog', 'runLog', 'fileLog', 'files', 'emails']
 
     _backendsLatestRun = getBackendsLatestRun()
     backendsLatestRun = {}
     for backend, creationTimestamp, statusCode in _backendsLatestRun:
-        backendsLatestRun[backend] = (creationTimestamp.strftime('%Y-%m-%d %H:%M:%S'), getStatusCodeColor(statusCode))
+        backendsLatestRun[backend] = getRunStatus(backend, creationTimestamp, statusCode, True)
 
     _backendsLatestNotEmptyRun = getBackendsLatestNotEmptyRun()
     backendsLatestNotEmptyRun = {}
     for backend, creationTimestamp, statusCode in _backendsLatestNotEmptyRun:
-        backendsLatestNotEmptyRun[backend] = (creationTimestamp.strftime('%Y-%m-%d %H:%M:%S'), getStatusCodeColor(statusCode))
+        backendsLatestNotEmptyRun[backend] = getRunStatus(backend, creationTimestamp, statusCode, False)
 
     backends = sorted(set(backendsLatestRun) | set(backendsLatestNotEmptyRun))
 
