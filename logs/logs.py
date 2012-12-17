@@ -67,7 +67,10 @@ mainTemplate = jinja2.Template('''
                 .hidden {
                     display: none;
                 }
-                .statusFlag {
+                .status {
+                    margin-bottom: 10px;
+                }
+                .status td, .status th {
                     padding: 5px;
                 }
                 .statusInProgress {

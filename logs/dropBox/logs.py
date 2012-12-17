@@ -121,16 +121,34 @@ def getBackendsLatestNotEmptyRun():
 
 
 mainTemplate = jinja2.Template('''
-<h2>Backends' latest runs status: 
-    {% for backend in backendsLatestRun %}
-        <span class="statusFlag {{backendsLatestRun[backend][1]}}">{{backend}} {{backendsLatestRun[backend][0]}}</span>
-    {% endfor %}
-</h2>
-<h2>Backends' latest non-empty runs status: 
-    {% for backend in backendsLatestNotEmptyRun %}
-        <span class="statusFlag {{backendsLatestNotEmptyRun[backend][1]}}">{{backend}} {{backendsLatestNotEmptyRun[backend][0]}}</span>
-    {% endfor %}
-</h2>
+<table class="status">
+    <tr>
+        <th></th>
+        {% for backend in backends %}
+            <th>{{backend}}</th>
+        {% endfor %}
+    </tr>
+    <tr>
+        <td>Backends' latest runs</td>
+        {% for backend in backends %}
+            {% if backend in backendsLatestRun %}
+                <td class="{{backendsLatestRun[backend][1]}}">{{backendsLatestRun[backend][0]}}</td>
+            {% else %}
+                <td>-</td>
+            {% endif %}
+        {% endfor %}
+    </tr>
+    <tr>
+        <td>Backends' latest non-empty runs</td>
+        {% for backend in backends %}
+            {% if backend in backendsLatestNotEmptyRun %}
+                <td class="{{backendsLatestNotEmptyRun[backend][1]}}">{{backendsLatestNotEmptyRun[backend][0]}}</td>
+            {% else %}
+                <td>-</td>
+            {% endif %}
+        {% endfor %}
+    </tr>
+</table>
 <div id="dropBoxTabs">
     <ul>
         {% for tabName in sortedTabs %}
@@ -338,6 +356,8 @@ def renderLogs():
     for backend, creationTimestamp, statusCode in _backendsLatestNotEmptyRun:
         backendsLatestNotEmptyRun[backend] = (creationTimestamp.strftime('%Y-%m-%d %H:%M:%S'), getStatusCodeColor(statusCode))
 
+    backends = sorted(set(backendsLatestRun) | set(backendsLatestNotEmptyRun))
+
     # In the userLog:
     #   If the user receives all the notifications, by default show all the entries.
     #   If not, by default show only those for him.
@@ -423,5 +443,5 @@ def renderLogs():
     for tab in tabs:
         renderedTabs[tab] = renderTable(tab, tabs[tab])
 
-    return mainTemplate.render(sortedTabs = sortedTabs, tabs = renderedTabs, backendsLatestRun = backendsLatestRun, backendsLatestNotEmptyRun = backendsLatestNotEmptyRun)
+    return mainTemplate.render(sortedTabs = sortedTabs, tabs = renderedTabs, backendsLatestRun = backendsLatestRun, backendsLatestNotEmptyRun = backendsLatestNotEmptyRun, backends = backends)
 
