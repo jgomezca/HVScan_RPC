@@ -1,4 +1,4 @@
-'''Logs service configuration.
+'''DropBox's logs configuration.
 '''
 
 __author__ = 'Miguel Ojeda'
@@ -12,24 +12,17 @@ __email__ = 'mojedasa@cern.ch'
 import service
 
 
+# For integration and production, we use the (reader) production dropBox database
 if service.settings['productionLevel'] in set(['int', 'pro']):
-    connections = {
-        # For integration and production, we use the (reader) production dropBox database
-        'dropBox': service.secrets['dropBoxConnections']['pro'],
-    }
+    connectionDictionary = service.secrets['dropBoxConnections']['pro']
 
+# For development, we use the prep dropBox database
 elif service.settings['productionLevel'] in set(['dev']):
-    connections = {
-        # For development, we use the prep dropBox database
-        'dropBox': service.secrets['dropBoxConnections']['dev'],
-    }
+    connectionDictionary = service.secrets['dropBoxConnections']['dev']
 
-
+# In private instances, we take connections from netrc
 elif service.settings['productionLevel'] in set(['private']):
-    connections = {
-        # In private instances, we take connections from netrc
-        'dropBox': service.getConnectionDictionaryFromNetrc('dropBoxDatabase'),
-    }
+    connectionDictionary = service.getConnectionDictionaryFromNetrc('dropBoxDatabase')
 
 else:
     raise Exception('Unknown production level.')

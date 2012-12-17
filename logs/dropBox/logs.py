@@ -23,7 +23,7 @@ import Constants
 import config
 
 
-connection = database.Connection(config.connections['dropBox'])
+connection = database.Connection(config.connectionDictionary)
 
 
 def getFiles():
