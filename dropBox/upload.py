@@ -26,7 +26,7 @@ import tempfile
 
 
 defaultBackend = 'online'
-defaultHostname = 'cms-conddb-int.cern.ch'
+defaultHostname = 'cms-conddb-prod.cern.ch'
 defaultUrlTemplate = 'https://%s/dropBox/'
 defaultTemporaryFile = 'upload.tar.bz2'
 defaultNetrcHost = 'DropBox'
