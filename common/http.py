@@ -25,14 +25,23 @@ class CERNSSOError(Exception):
     '''
 
 
-def _getCERNSSOCookies(url, secure = True):
+def _getCERNSSOCookies(url, secureTarget = True, secure = True):
     '''Returns the required CERN SSO cookies for a URL using Kerberos.
 
     They can be used with any HTTP client (libcurl, wget, urllib...).
 
-    If you wish to make secure SSL connections (i.e. verify peers/hosts),
-    you need to install the CERN-CA-certs package. Use secure == False
-    to skip this (i.e. this is the same as curl -k/--insecure).
+    If you wish to make secure SSL connections to the CERN SSO
+    (i.e. verify peers/hosts), you may need to install the CERN-CA-certs package.
+    Use secure == False to skip this (i.e. this is the same as curl
+    -k/--insecure). Not recommended: tell users to install them or use lxplus6.
+
+    The same way, if you have a self-signed certificate in your target URL
+    you can use secureTarget == False as well. Note that this option
+    is provided in order to be able to use a secure SSL connection to CERN SSO,
+    even if the connection to your target URL is not secure. Note that
+    you will probably need the CERN-CA-certs package after you get a certificate
+    signed by the CERN CA (https://cern.ch/ca), even if you did not need it
+    for the CERN SSO.
 
     Note that this method *does* a query to the given URL if successful.
 
@@ -73,19 +82,13 @@ def _getCERNSSOCookies(url, secure = True):
     CERN_SSO_CURL_ADFS_SIGNIN = 'wa=wsignin1.0'
     CERN_SSO_CURL_CAPATH = '/etc/pki/tls/certs'
 
+    logging.debug('secureTarget = %s', secureTarget)
+    logging.debug('secure = %s', secure)
+
     curl = pycurl.Curl()
 
     # Store the cookies in memory, which we will retreive later on
     curl.setopt(curl.COOKIEFILE, '')
-
-    # The CERN SSO servers have a valid certificate
-    if secure:
-        curl.setopt(curl.SSL_VERIFYPEER, 1)
-        curl.setopt(curl.SSL_VERIFYHOST, 2)
-        curl.setopt(curl.CAPATH, CERN_SSO_CURL_CAPATH)
-    else:
-        curl.setopt(curl.SSL_VERIFYPEER, 0)
-        curl.setopt(curl.SSL_VERIFYHOST, 0)
 
     # This should not be needed, but sometimes requests hang 'forever'
     curl.setopt(curl.TIMEOUT, 10)
@@ -104,7 +107,17 @@ def _getCERNSSOCookies(url, secure = True):
     # We do not need the headers
     curl.setopt(curl.HEADER, 0)
 
+    # The target server has a valid certificate
+    if secureTarget:
+        curl.setopt(curl.SSL_VERIFYPEER, 1)
+        curl.setopt(curl.SSL_VERIFYHOST, 2)
+        curl.setopt(curl.CAPATH, CERN_SSO_CURL_CAPATH)
+    else:
+        curl.setopt(curl.SSL_VERIFYPEER, 0)
+        curl.setopt(curl.SSL_VERIFYHOST, 0)
+
     # Fetch the url
+    logging.debug('Connecting to %s', url)
     curl.setopt(curl.URL, url)
     (code, response, effectiveUrl) = perform()
 
@@ -113,6 +126,16 @@ def _getCERNSSOCookies(url, secure = True):
 
     # Do the manual redirection to the IDP
     logging.debug('Redirected to IDP %s', effectiveUrl)
+
+    # The CERN SSO servers have a valid certificate
+    if secure:
+        curl.setopt(curl.SSL_VERIFYPEER, 1)
+        curl.setopt(curl.SSL_VERIFYHOST, 2)
+        curl.setopt(curl.CAPATH, CERN_SSO_CURL_CAPATH)
+    else:
+        curl.setopt(curl.SSL_VERIFYPEER, 0)
+        curl.setopt(curl.SSL_VERIFYHOST, 0)
+
     curl.setopt(curl.URL, effectiveUrl)
     (code, response, effectiveUrl) = perform()
 
@@ -125,7 +148,7 @@ def _getCERNSSOCookies(url, secure = True):
 
     # Do the JavaScript redirection via the form to the SP
     spUrl = match.groups()[0]
-    logging.debug('Redirected (via form) to SP (%s)', spUrl)
+    logging.debug('Redirected (via form) to SP %s', spUrl)
 
     formPairs = re.findall('input type="hidden" name="([^"]+)" value="([^"]+)"', response)
 
@@ -134,6 +157,15 @@ def _getCERNSSOCookies(url, secure = True):
     # '>' is *not* encoded. Does not matter here though, we just decode.
     htmlParser = HTMLParser.HTMLParser()
     formPairs = [(x[0], htmlParser.unescape(x[1])) for x in formPairs]
+
+    # The target server has a valid certificate
+    if secureTarget:
+        curl.setopt(curl.SSL_VERIFYPEER, 1)
+        curl.setopt(curl.SSL_VERIFYHOST, 2)
+        curl.setopt(curl.CAPATH, CERN_SSO_CURL_CAPATH)
+    else:
+        curl.setopt(curl.SSL_VERIFYPEER, 0)
+        curl.setopt(curl.SSL_VERIFYHOST, 0)
 
     curl.setopt(curl.URL, spUrl)
     curl.setopt(curl.POSTFIELDS, urllib.urlencode(formPairs))
@@ -302,7 +334,7 @@ class HTTP(object):
                 logging.debug('Retrying since we got the %s pycurl exception...', str(e))
 
 
-    def addCERNSSOCookies(self, url, secure = True):
+    def addCERNSSOCookies(self, url, secureTarget = True, secure = True):
         '''Adds the required CERN SSO cookies for a URL using Kerberos.
 
         After calling this, you can use query() for your SSO-protected URLs.
@@ -312,9 +344,18 @@ class HTTP(object):
 
         If you do not have a ticket yet, use kinit.
 
-        If you wish to make secure SSL connections (i.e. verify peers/hosts),
-        you need to install the CERN-CA-certs package. Use secure == False
-        to skip this (i.e. this is the same as curl -k/--insecure).
+        If you wish to make secure SSL connections to the CERN SSO
+        (i.e. verify peers/hosts), you may need to install the CERN-CA-certs package.
+        Use secure == False to skip this (i.e. this is the same as curl
+        -k/--insecure). Not recommended: tell users to install them or use lxplus6.
+
+        The same way, if you have a self-signed certificate in your target URL
+        you can use secureTarget == False as well. Note that this option
+        is provided in order to be able to use a secure SSL connection to CERN SSO,
+        even if the connection to your target URL is not secure. Note that
+        you will probably need the CERN-CA-certs package after you get a certificate
+        signed by the CERN CA (https://cern.ch/ca), even if you did not need it
+        for the CERN SSO.
 
         Note that this method *does* a query to the given URL if successful.
 
@@ -323,7 +364,7 @@ class HTTP(object):
         Note that this method may raise also CERNSSOError exceptions.
         '''
 
-        for cookie in _getCERNSSOCookies(self.baseUrl + url, secure):
+        for cookie in _getCERNSSOCookies(self.baseUrl + url, secureTarget, secure):
             self.curl.setopt(self.curl.COOKIELIST, cookie)
 
 
