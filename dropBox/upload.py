@@ -788,7 +788,7 @@ The tags (and its dependencies) can be synchronized to several workflows. You ca
                 metadata = json.dumps(metadata, sort_keys = True, indent = 4)
                 print '\nThis is the generated metadata:\n%s' % metadata
 
-                if getInput('n', '\nIs it fine (i.e. save in %s and continue)?\nAnswer [n]: ' % metadataFilename).lower() == 'y':
+                if getInput('n', '\nIs it fine (i.e. save in %s and *upload* the conditions if this is the latest file)?\nAnswer [n]: ' % metadataFilename).lower() == 'y':
                     break
 
             logging.info('Saving generated metadata in %s...', metadataFilename)
