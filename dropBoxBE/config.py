@@ -51,7 +51,7 @@ class online( BaseConfig ) :
         self.authpath = '/data/secrets'
 
         # this is the URL for the dropBox frontend service:
-        self.baseUrl = 'https://cms-conddb-int.cern.ch/dropBox/'
+        self.baseUrl = 'https://cms-conddb-prod.cern.ch/dropBox/'
 
         #  used for sync to express and hlt
         self.runInfoDbName = "oracle://cms_orcon_prod/CMS_COND_31X_RUN_INFO"  # ... in online (and cms_orcon_adg in offline)
@@ -85,7 +85,7 @@ class offline( BaseConfig ) :
         self.authpath = '/data/secrets'
 
         # this is the URL for the dropBox frontend service:
-        self.baseUrl = 'https://cms-conddb-int.cern.ch/dropBox/'
+        self.baseUrl = 'https://cms-conddb-prod.cern.ch/dropBox/'
 
         #  used for sync to express and hlt
         self.runInfoDbName = "oracle://cms_orcon_adg/CMS_COND_31X_RUN_INFO"  # ... in online (and cms_orcon_adg in offline)
