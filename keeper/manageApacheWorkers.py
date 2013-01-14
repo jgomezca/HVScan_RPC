@@ -1,5 +1,30 @@
 #!/usr/bin/env python2.6
 '''Script to manage Apache workers.
+
+To debug in case the URLs/parameters change:
+
+  1) ssh to a frontend (the Apache configuration only allows to access to
+     the balancer-manage from the machine's IP itself).
+
+  2) Go to the main page for a given virtual host:
+       wget -O - --header 'Host: cms-conddb-prod2.cern.ch' https://vocms151.cern.ch/balancer-manager > ~/balancer-manager.html
+
+  3) From there, one can go to the admin page for one of the balancers
+     (get the nonce first from the main page):
+
+       wget -O - --header 'Host: cms-conddb-prod2.cern.ch' https://vocms151.cern.ch/balancer-manager?b=admin&w=https://cmsdbbe2.cern.ch:8092/admin&nonce=645e0649-4546-41e1-a405-93e5369b6e02 > ~/balancer-manager-admin.html
+
+  4) In the bottom, there is the form that needs to be read to know which
+     parameters/value to use. e.g. last time it changed from "status_D" with
+     values 0 and 1 to "dw" with values "Enable" and "Disable".
+
+Looks like SLC6.3's version of curl/libcurl does not change SNI according to
+the custom Host header, and therefore Apache answers with a 400 Bad Request.
+In its error_log we can read:
+
+  [Mon Jan 14 12:11:04 2013] [error] Hostname vocms151.cern.ch provided via SNI and hostname cms-conddb-prod2.cern.ch provided via HTTP are different.
+
+wget and urllib2 work fine, though.
 '''
 
 __author__ = 'Miguel Ojeda'
