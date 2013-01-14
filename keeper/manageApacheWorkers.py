@@ -144,7 +144,13 @@ def manageBackend(backendHostname, enable, virtualHost):
         listeningPort = config.servicesConfiguration[service]['listeningPort']
 
         balancer = getBalancer(service)
-        workerUrl = 'https://%s.cern.ch:%s/%s' % (backendHostname, listeningPort, service)
+
+        # FIXME: We could get the list of URLs from the main page directly
+        protocol = 'https'
+        if service == 'gtc':
+            protocol = 'http'
+
+        workerUrl = '%s://%s.cern.ch:%s/%s' % (protocol, backendHostname, listeningPort, service)
 
         manageWorker(balancerManagerUrl, balancer, workerUrl, nonce, enable, virtualHost = virtualHost)
 
