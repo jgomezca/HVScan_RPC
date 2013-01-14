@@ -56,14 +56,14 @@ def manageWorker(balancerManagerUrl, balancer, workerUrl, nonce, enable, virtual
     '''
 
     if enable:
-        status = 0
+        status = 'Enable'
     else:
-        status = 1
+        status = 'Disable'
 
     # Do *not* send the other parameters (lf, ls, wr, rr, status_I, status_H)
     # because they would overwrite the current settings.
     data = {
-        'status_D': status,
+        'dw': status,
         'w': workerUrl,
         'b': balancer,
         'nonce': nonce,
