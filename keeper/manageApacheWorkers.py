@@ -158,7 +158,7 @@ def manageBackend(backendHostname, enable, virtualHost):
     for balancer in status:
         for backend in status[balancer]:
             if backendHostname in backend and status[balancer][backend]['statusBool'] != enable:
-                logging.warn('The %s backend\'s state is still %s', backendHostname, enable)
+                logging.warn('The %s backend\'s state is still %s', backendHostname, status[balancer][backend]['statusBool'])
 
 
 def main():
