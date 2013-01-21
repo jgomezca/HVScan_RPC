@@ -9,6 +9,7 @@ __maintainer__ = 'Miguel Ojeda'
 __email__ = 'mojedasa@cern.ch'
 
 
+import re
 import os
 import sys
 import optparse
@@ -446,10 +447,12 @@ def winServicesSoapSignIn(winServicesUrl, username, password):
 
     return False
 
+
 def winServicesSoapIsUserInGroup(winServicesUrl, username, group):
     try:
-        data = urllib.urlopen('%sGetGroupsForUser?UserName=%s' % (winServicesUrl, username)).read()
-        return '<string>%s</string>' % group in data
+        # GetGroupsForUser does not return groups that are included in user's groups
+        data = urllib.urlopen('%sUserIsMemberOfGroup?UserName=%s&GroupName=%s' % (winServicesUrl, username, group)).read()
+        return re.search('<boolean.*>true</boolean>', data) is not None
     except Exception as e:
         logging.error('isUserInGroup(): %s', e)
 
