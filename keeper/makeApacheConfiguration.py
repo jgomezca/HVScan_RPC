@@ -504,14 +504,14 @@ mainTemplate = '''
     # ProxyPass
     {proxyPass}
 
-    # Shibboleth
-    {shibboleth}
-
     # Allow this URL for Shibboleth
     <Location /Shibboleth.sso/ADFS>
         Order Allow,Deny
         Allow from all
     </Location>
+
+    # Shibboleth
+    {shibboleth}
 
     {balancerManager}
 
