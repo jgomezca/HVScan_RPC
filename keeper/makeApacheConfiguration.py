@@ -36,12 +36,14 @@ frontends = {
     # vocms147 = cms-conddb-dev = cms-conddb-int
     'vocms147': [
         'cms-conddb-dev', 'cms-conddb-int',
+        'cms-pdmv-dev', 'cms-pdmv-int',
         'cmstags-dev', 'cmstags-int',
     ],
 
     # vocms{150,151} = cmsdbfe{1,2}
     'vocms150': [
         'cms-conddb-prod', 'cms-conddb-prod1',
+        'cms-pdmv',
         'cmstags-prod', 'cmstags-prod1',
         'cmssdt-prod', 'cmssdt-prod1',
         'cmscov-prod', 'cmscov-prod1',
@@ -49,6 +51,7 @@ frontends = {
     ],
     'vocms151': [
         'cms-conddb-prod', 'cms-conddb-prod2',
+        'cms-pdmv',
         'cmstags-prod', 'cmstags-prod2',
         'cmssdt-prod', 'cmssdt-prod2',
         'cmscov-prod', 'cmscov-prod2',
@@ -72,6 +75,12 @@ virtualHosts = {
     'cms-conddb-dev': {
         'backendHostnames': ['vocms145'],
         'services': ['monitoring', 'prod'],
+    },
+
+    'cms-pdmv-dev': {
+        'backendHostnames': ['vocms145'],
+        'services': ['golem', 'stats', 'pdmvprod', 'libs', 'valdb', 'theplan', 'speed', 'queue', 'ReleaseMonitoring', 'cms-service-reldqm/style', 'relmon', 'pdmvindex'],
+        # libs is used by valdb
     },
 
     # From the old cmstags.conf
@@ -120,6 +129,15 @@ virtualHosts['cms-conddb-prod'] = dict(virtualHosts['cms-conddb-int'])
 virtualHosts['cms-conddb-prod']['backendHostnames'] = ['cmsdbbe1', 'cmsdbbe2']
 virtualHosts['cms-conddb-prod1'] = dict(virtualHosts['cms-conddb-prod'])
 virtualHosts['cms-conddb-prod2'] = dict(virtualHosts['cms-conddb-prod'])
+
+# cms-pdmv-int and cms-pdmb must be exactly the same as -dev but with different
+# 'backendHostnames' (this is only for PdmV's keeper services, i.e. only valdb
+# at the moment)
+virtualHosts['cms-pdmv-int'] = dict(virtualHosts['cms-pdmv-dev'])
+virtualHosts['cms-pdmv-int']['backendHostnames'] = ['vocms146']
+
+virtualHosts['cms-pdmv'] = dict(virtualHosts['cms-pdmv-dev'])
+virtualHosts['cms-pdmv']['backendHostnames'] = ['cmsdbbe1', 'cmsdbbe2']
 
 # cmstags-prod has also its -prod{1,2} counterparts, as well as -dev and -int
 virtualHosts['cmstags-prod1'] = dict(virtualHosts['cmstags-prod'])
@@ -235,6 +253,95 @@ services = {
         'backendHostnames': ['vocms226'],
         'backendPort': 80,
         'shibbolethGroups': ['zh'],
+    },
+
+    # PdmV group
+    'pdmvindex': {
+        'url': '',
+        'backendHostnames': ['cms-pdmv.web'],
+        'backendPort': 443,
+        'backendUrl': '/cms-pdmv/',
+        'shibbolethGroups': ['cms-web-access'],
+    },
+
+    'golem': {
+        'protocol': 'http',
+        'backendHostnames': ['cms-pdmv-golem'],
+        'backendPort': 80,
+        'backendUrl': '',
+        'shibbolethGroups': ['cms-web-access'],
+    },
+
+    'stats': {
+        'protocol': 'http',
+        'backendHostnames': ['cms-pdmv-stats'],
+        'backendPort': 80,
+        'backendUrl': '',
+        'shibbolethGroups': ['cms-web-access'],
+    },
+
+    'pdmvprod': {
+        'url': 'prod',
+        'backendHostnames': ['cms-pdmv-prod.web'],
+        'backendPort': 443,
+        'backendUrl': '/cms-pdmv-prod',
+        'shibbolethGroups': ['cms-web-access'],
+    },
+
+    'valdb': {
+        'backendPort': config.servicesConfiguration['PdmV/valdb']['listeningPort'],
+        'backendUrl': '/PdmV/valdb',
+        'shibbolethGroups': ['cms-web-access'],
+    },
+
+    'theplan': {
+        'backendHostnames': ['mccm-theplan'],
+        'backendPort': 443,
+        'backendUrl': '',
+        'shibbolethGroups': ['cms-web-access'],
+    },
+
+    'speed': {
+        'backendHostnames': ['cms-pdmv-speed.web'],
+        'backendPort': 443,
+        'backendUrl': '/cms-pdmv-speed',
+        'shibbolethGroups': ['cms-web-access'],
+    },
+
+    'queue': {
+        'backendHostnames': ['cms-pdmv-queue.web'],
+        'backendPort': 443,
+        'backendUrl': '/cms-pdmv-queue',
+        'shibbolethGroups': ['cms-web-access'],
+    },
+
+    'relmon': {
+        'backendHostnames': ['cms-service-reldqm.web'],
+        'backendPort': 443,
+        'backendUrl': '/cms-service-reldqm/cgi-bin/RelMon.py',
+        'shibbolethGroups': ['cms-web-access'],
+    },
+
+    'ReleaseMonitoring': {
+        'backendHostnames': ['cms-service-reldqm.web'],
+        'backendPort': 443,
+        'backendUrl': '/cms-service-reldqm/ReleaseMonitoring',
+        'shibbolethGroups': ['cms-web-access'],
+        # Fixes the links to folders without slash (without it, the CERN Apache
+        # server tries to do it itself but redirects us to a wrong page)
+        'customHttp': '''
+            RewriteRule ^/ReleaseMonitoring([^.]+[^/])$ /ReleaseMonitoring$1/ [NE,L,R]
+        ''',
+        'customHttps': '''
+            RewriteRule ^/ReleaseMonitoring([^.]+[^/])$ /ReleaseMonitoring$1/ [NE,L,R]
+        '''
+    },
+
+    'cms-service-reldqm/style': {
+        'backendHostnames': ['cms-service-reldqm.web'],
+        'backendPort': 443,
+        'backendUrl': '/cms-service-reldqm/style',
+        'shibbolethGroups': ['cms-web-access'],
     },
 
     # From the old cmstags.conf
