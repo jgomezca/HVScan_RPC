@@ -12,7 +12,7 @@ DEFAULT_GT_VALUES = {'hlt' : 'GR_H_V29',
 
 # --- File processing status ---------------------
 
-# convention: offset + step*100 + { base: 01, fail: 10, OK; 00 }
+# convention: offset + step*100 + { base: 01, fail: 10, warning: 11, OK; 00 }
 
 # overall:
 WAITING_FOR_START = 100
@@ -43,6 +43,7 @@ EXPORTING_FAILURE  = 4210
 EXPORTING_OK       = 4299
 DUPLICATING        = 4301
 EXPORTING_OK_BUT_DUPLICATION_FAILURE = 4310
+PCL_EXPORTING_OK_BUT_DUPLICATION_TO_HLTEXPRESS_FAILURE = 4311
 DUPLICATING_OK     = 4399
 PROCESSING_FAILURE = 4910
 PROCESSING_OK      = 4999

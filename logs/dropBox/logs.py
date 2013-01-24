@@ -281,6 +281,10 @@ def getStatusCodeColor(statusCode):
     if statusCodeEnding == 10:
         return 'statusFinishedFailed'
 
+    # Finished: Warning -> Orange
+    elif statusCodeEnding == 11:
+        return 'statusFinishedWarning'
+
     # Finished: OK -> Green
     elif statusCodeEnding == 99:
         return 'statusFinishedOK'
@@ -298,7 +302,11 @@ def getStatusCodeHumanString(statusCode, row):
 
 def getStatusCodeHumanStringUser(statusCode, row):
     try:
-        return ('class="%s"' % getStatusCodeColor(statusCode), Constants.inverseMapping[int(statusCode)].replace('_', ' '))
+        if statusCode == Constants.PCL_EXPORTING_OK_BUT_DUPLICATION_TO_HLTEXPRESS_FAILURE:
+            humanString = 'PCL EXPORTING OK BUT DUPLICATION TO HLT/EXPRESS FAILURE'
+        else:
+            humanString = Constants.inverseMapping[int(statusCode)].replace('_', ' ')
+        return ('class="%s"' % getStatusCodeColor(statusCode), humanString)
     except KeyError:
         return statusCode
 

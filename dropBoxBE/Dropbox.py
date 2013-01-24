@@ -17,6 +17,50 @@ import database
 import service
 
 
+def isWarningPCL(failedDuplicatedTags, dependencies):
+    '''If there are failed duplicated tags and all of them are in the PCL and
+    their synchronization is to htl/express, it is a warning.
+    '''
+
+    if len(failedDuplicatedTags) == 0:
+        return False
+
+    for tag in failedDuplicatedTags:
+        if '_PCL_' in tag and dependencies[tag] in set(['hlt', 'express']):
+            continue
+        return False
+    else:
+        return True
+
+
+def isWarningPCLTest():
+    '''Test for isWarningPCL().
+    '''
+
+    dependencies = {
+        '_PCL_hlt': 'hlt',
+        '_PCL_express': 'express',
+        '_PCL_prompt': 'prompt',
+        'noPCL_hlt': 'hlt',
+        'noPCL_express': 'express',
+        'noPCL_prompt': 'prompt'
+    }
+
+    assert(isWarningPCL(['_PCL_hlt'], dependencies)) # OK PCL and hlt
+    assert(isWarningPCL(['_PCL_express'], dependencies)) # OK PCL and express
+    assert(isWarningPCL(['_PCL_hlt', '_PCL_express'], dependencies)) # OK, two
+
+    assert(not isWarningPCL([], dependencies)) # No warning, since no failed duplicated tags
+    assert(not isWarningPCL(['_PCL_prompt'], dependencies)) # Error: non-htl/express tag (OK PCL)
+    assert(not isWarningPCL(['noPCL_hlt'], dependencies)) # Error: non-PCL tag (OK hlt/express)
+    assert(not isWarningPCL(['noPCL_express'], dependencies)) # Error: non-PCL tag (OK hlt/express)
+    assert(not isWarningPCL(['noPCL_prompt'], dependencies)) # Error: non-PCL tag, non-hlt/express tag
+    assert(not isWarningPCL(['_PCL_hlt', 'noPCL_hlt'], dependencies)) # Error: non-PCL tag (OK the other one)
+    assert(not isWarningPCL(['_PCL_hlt', '_PCL_prompt'], dependencies)) # Error: non-htl/express tag (OK the other one)
+
+isWarningPCLTest()
+
+
 # main handler for the new Dropbox
 
 class Dropbox(object) :
@@ -344,6 +388,7 @@ class Dropbox(object) :
                 fileLogger.info( msg )
 
                 # check what to duplicate and take action
+                failedDuplicatedTags = set([])
                 depTags = tagSpec.get('dependencies', {})
                 for depTag, depSynch in depTags.items():
                     depSince = self.getDestSince( fileHash, depSynch, fileLogger )
@@ -367,10 +412,17 @@ class Dropbox(object) :
                         fileLogger.error( msg )
                         self.updateFileStatus( fileHash, Constants.EXPORTING_OK_BUT_DUPLICATION_FAILURE )
                         errorInExporting = True
+                        failedDuplicatedTags.add(depTag)
                     else :
                         msg = 'duplication to %s done.' % (depTag,)
                         self.logger.info( msg )
                         fileLogger.info( msg )
+
+                if isWarningPCL(failedDuplicatedTags, depTags):
+                    msg = 'since there were failed duplicated tags and all of them were in the PCL and their synchronization was either htl or express; we relax the final status to warning'
+                    self.logger.warning( msg )
+                    fileLogger.warning( msg )
+                    self.updateFileStatus( fileHash, Constants.PCL_EXPORTING_OK_BUT_DUPLICATION_TO_HLTEXPRESS_FAILURE )
 
         if errorInExporting:
             self.moveToDir( fileHash, 'processError')

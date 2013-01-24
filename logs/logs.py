@@ -79,6 +79,9 @@ mainTemplate = jinja2.Template('''
                 .statusFinishedFailed {
                     background-color: #FF9999 !important;
                 }
+                .statusFinishedWarning {
+                    background-color: #FFCC80 !important;
+                }
                 .statusFinishedOK {
                     background-color: #99FF99 !important;
                 }
