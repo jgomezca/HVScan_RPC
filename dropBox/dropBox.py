@@ -289,6 +289,10 @@ def updateFileLog(fileHash, log, runLogCreationTimestamp, runLogBackend):
 
     dataAccess.insertEmail(config.subjectTemplate.render(fileInformation), config.bodyTemplate.render(fileInformation), username, toAddresses)
 
+    # If it failed for any reason, send an SMS to the shifter phone via email
+    if service.settings['productionLevel'] in set(['int', 'pro']) and int(statusCode) != Constants.PROCESSING_OK:
+        dataAccess.insertEmail(config.smsTemplate.render(fileInformation), '.', username, [config.shifterPhoneSMSAddress])
+
 
 def updateRunStatus(creationTimestamp, backend, statusCode):
     '''Updates the status code of a run.

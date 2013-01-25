@@ -18,6 +18,8 @@ import service
 
 group = 'cms-cond-dropbox'
 
+shifterPhoneSMSAddress = '0041764875576@mail2sms.cern.ch'
+
 
 # Messages
 notifiedErrorMessage = 'This has been notified and we will try to fix it. However, if you urgently need assistance, please write an email to cms-offlinedb-exp@cern.ch and cms-cond-dev@cern.ch. If you need immediate assistance, you can call the Offline DB expert on call (+41 22 76 70817, or 70817 from CERN; check https://twiki.cern.ch/twiki/bin/viewauth/CMS/DBShifterHelpPage if it does not work).'
@@ -28,8 +30,10 @@ notificationsEgroup = 'cms-cond-dropbox-notifications@cern.ch'
 
 
 # Email template
-subjectTemplate = jinja2.Template('[DropBox] {{statusCode}} - {{fileName}} - {{statusString}}')
-bodyTemplate = jinja2.Template('''[DropBox] {{statusCode}} - {{fileName}} - {{statusString}}
+subjectLine = '{{statusCode}} - {{fileName}} - {{statusString}}'
+smsTemplate = jinja2.Template(subjectLine)
+subjectTemplate = jinja2.Template('[DropBox] %s' % subjectLine)
+bodyTemplate = jinja2.Template('''[DropBox] %s
 
          fileName: {{fileName}}
          fileHash: {{fileHash}}
@@ -50,7 +54,7 @@ bodyTemplate = jinja2.Template('''[DropBox] {{statusCode}} - {{fileName}} - {{st
               log:
 
 {{log}}
-''')
+''' % subjectLine)
 
 
 # For integration and production, we use the production dropBox database
