@@ -95,7 +95,7 @@ class Tier0Handler( object ):
         cHandle.setopt( cHandle.URL, url )
         cHandle.setopt( cHandle.HTTPHEADER, [ "User-Agent: ConditionWebServices/1.0 python/%d.%d.%d PycURL/%s" %
                                               ( sys.version_info[ :3 ] + ( pycurl.version_info()[ 1 ], ) )
-                                            , "Accept: application/json" ] )
+                                            , ] )
         cHandle.setopt( cHandle.TIMEOUT, self._timeOut )
         if self._proxy:
             cHandle.setopt( cHandle.PROXY, self._proxy )
@@ -109,8 +109,7 @@ class Tier0Handler( object ):
                 cHandle.perform()
                 if cHandle.getinfo( cHandle.RESPONSE_CODE ) != 200:
                     _raise_http_error( cHandle, jsonCall.getvalue(), self._proxy )
-                data = json.loads( jsonCall.getvalue() )
-                return data
+                return json.loads( jsonCall.getvalue().replace("'", '"') )
             except pycurl.error as pyCURLerror:
                 errorCode, errorMessage = pyCURLerror
                 if self._debug:
@@ -144,7 +143,7 @@ class Tier0Handler( object ):
         Raises if connection error, bad response, timeout after retries occur, or if the run number is not available.
         """
         firstConditionSafeRunAPI = "firstconditionsaferun"
-        safeRun = self._queryTier0DataSvc( os.path.join( self._uri, firstConditionSafeRunAPI ) )[ 0 ][ 'run_id' ]
+        safeRun = self._queryTier0DataSvc( os.path.join( self._uri, firstConditionSafeRunAPI ) )
         if safeRun is None:
             errStr = """First condition safe run is not available in Tier0DataSvc from URL \"%s\"""" %( os.path.join( self._uri, firstConditionSafeRunAPI ), )
             if self._proxy:
@@ -174,7 +173,7 @@ class Tier0Handler( object ):
 
 
 def test():
-    t0 = Tier0Handler('https://cmsweb.cern.ch/tier0', 1, 1, 1, None, False)
+    t0 = Tier0Handler('https://samir-wmcore.cern.ch/t0wmadatasvc/replay', 1, 1, 1, None, False)
     print '          fcsr = %s' % t0.getFirstSafeRun()
     print '   reco_config = %s' % t0.getGlobalTag('reco_config')
     print 'express_config = %s' % t0.getGlobalTag('express_config')

@@ -149,7 +149,7 @@ def checkContents(fileHash, dataPath, metadata, backend):
             'runinfo_start_31X_hlt',
             'runinfo_31X_hlt',
             '',
-            'https://cmsweb.cern.ch/tier0',
+            'https://samir-wmcore.cern.ch/t0wmadatasvc/replay',
             30,
             3,
             90,

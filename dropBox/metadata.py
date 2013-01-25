@@ -78,7 +78,7 @@ def port(metadata, fileName):
             runInfoStartTag = "runinfo_start_31X_hlt"
             runInfoStopTag = "runinfo_31X_hlt"
             authPath = ""
-            tier0DataSvcURI = "https://cmsweb.cern.ch/tier0"
+            tier0DataSvcURI = 'https://samir-wmcore.cern.ch/t0wmadatasvc/replay'
             timeOut = 30
             retries = 3
             retryPeriod = 90
