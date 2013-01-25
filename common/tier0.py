@@ -171,3 +171,15 @@ class Tier0Handler( object ):
             if self._proxy:
                 errStr += """ using proxy \"%s\".""" %( str( self._proxy ), )
         raise Tier0Error( errStr )
+
+
+def test():
+    t0 = Tier0Handler('https://cmsweb.cern.ch/tier0', 1, 1, 1, None, False)
+    print '          fcsr = %s' % t0.getFirstSafeRun()
+    print '   reco_config = %s' % t0.getGlobalTag('reco_config')
+    print 'express_config = %s' % t0.getGlobalTag('express_config')
+
+
+if __name__ == '__main__':
+    test()
+
