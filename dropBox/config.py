@@ -28,8 +28,8 @@ notificationsEgroup = 'cms-cond-dropbox-notifications@cern.ch'
 
 
 # Email template
-subjectTemplate = jinja2.Template('[DropBox] {{statusCode}} {{fileName}}: {{statusString}}')
-bodyTemplate = jinja2.Template('''[DropBox] {{statusCode}} {{fileName}}: {{statusString}}
+subjectTemplate = jinja2.Template('[DropBox] {{statusCode}} - {{fileName}} - {{statusString}}')
+bodyTemplate = jinja2.Template('''[DropBox] {{statusCode}} - {{fileName}} - {{statusString}}
 
          fileName: {{fileName}}
          fileHash: {{fileHash}}
