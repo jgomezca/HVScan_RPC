@@ -14,6 +14,7 @@ import json
 
 import jinja2
 
+import service
 import html
 import database
 import shibboleth
@@ -62,6 +63,13 @@ def getFileLog(fileHash):
     ''', (fileHash, ))[0][0])
 
 
+def getFileAcks():
+    return connection.fetch('''
+        select fileHash, username, rationale, creationTimestamp, modificationTimestamp
+        from fileAcks
+    ''')
+
+
 def getRunDownloadLog(creationTimestamp, backend):
     return logPack.unpack(connection.fetch('''
         select downloadLog
@@ -81,10 +89,43 @@ def getRunGlobalLog(creationTimestamp, backend):
 
 
 def getUserLogs():
-    return connection.fetch('''
-        select fileHash, fileLog.modificationTimestamp, username, fileName, statusCode, metadata, userText, backend, nvl2(log, 1, 0)
+    # The NULL gives us space for the acknowledge treatment below
+    data = connection.fetch('''
+        select fileHash, fileLog.modificationTimestamp, username, fileName, statusCode, NULL, metadata, userText, backend, nvl2(log, 1, 0)
         from files join fileLog using (fileHash)
     ''')
+
+    # Give the correct value to the acknowledge column
+    fileHashIndex = 0
+    statusIndex = 4
+    ackIndex = 5
+    for row in data:
+        if row[statusIndex] == Constants.PROCESSING_OK or row[statusIndex] == Constants.PCL_EXPORTING_OK_BUT_DUPLICATION_TO_HLTEXPRESS_FAILURE:
+            # The file was correctly processed or it was a warning, so acknowledges do not apply
+            row[ackIndex] = None
+        else:
+            ack = connection.fetch('''
+                select username
+                from fileAcks
+                where fileHash = :s
+            ''', (row[fileHashIndex], ))
+
+            if len(ack) == 0:
+                # The issue is not acknowledged
+                row[ackIndex] = False
+            else:
+                # The issue was acknowledged, pass the username to the transform function
+                row[ackIndex] = ack[0][0]
+
+    return data
+
+
+def getAcknowledgeRationale(fileHash):
+    return connection.fetch('''
+        select rationale
+        from fileAcks
+        where fileHash = :s
+    ''', (fileHash, ))[0][0]
 
 
 def getBackendsLatestRun():
@@ -118,6 +159,50 @@ def getBackendsLatestNotEmptyRun():
         return []
 
     return result
+
+
+acknowledgeFileIssuePage = jinja2.Template('''
+<!DOCTYPE HTML>
+<html>
+    <head>
+            <title>Acknowledge file {{fileHash}}</title>
+            <script src="/libs/jquery-1.7.2.min.js"></script>
+            <script src="/libs/jquery-ui/1.8.20/js/jquery-ui-1.8.20.custom.min.js"></script>
+            <script src="/libs/datatables/1.9.4/media/js/jquery.dataTables.min.js"></script>
+    </head>
+    <body>
+        <h1>Acknowledge file {{fileHash}}</h1>
+        <form name="input" action="/dropBox/acknowledgeFileIssue" method="post">
+            <input type="hidden" name="fileHash" value="{{fileHash}}">
+            <p><textarea onKeyPress="return this.value.length < 4000;" name="rationale" rows="10" cols="80">Rationale: write here why it was acknowledged (4000 characters max).</textarea></p>
+            <p><input type="submit" value="Acknowledge"></p>
+        </form>
+    </body>
+</html>
+''')
+
+def getAcknowledgeFileIssuePage(fileHash):
+    return acknowledgeFileIssuePage.render(fileHash = fileHash)
+
+
+def getStatus():
+    '''Returns a the list of failed processed files in the latest hour.
+
+    For check_mk agent dropBox.check_mk.py.
+    '''
+
+    return service.getPrettifiedJSON(connection.fetch('''
+        select fileHash, statusCode, creationTimestamp
+        from fileLog
+        where statusCode <> 4999
+            and creationTimestamp > sysdate - (1/24)
+            and not exists (
+                select fileHash
+                from fileAcks
+                where fileAcks.fileHash = fileLog.fileHash
+            )
+        order by creationTimestamp
+    '''))
 
 
 mainTemplate = jinja2.Template('''
@@ -311,6 +396,27 @@ def getStatusCodeHumanStringUser(statusCode, row):
         return statusCode
 
 
+def getAcknowledged(acknowledged, row):
+    '''Three possibilities:
+
+      * acknowledge is None: Means there was no error for this file.
+                             A dash is displayed.
+
+      * acknowledge is str:  Means there was an error and it was acknowledged.
+                             'Yes' is displayed, with a link to display the rationale.
+
+      * otherwise:           Means there was an error but it was not acknowledged.
+                             A link to acknowledge is displayed.
+    '''
+
+    if acknowledged is None:
+        return '-'
+    elif isinstance(acknowledged, str):
+        return buildLink('getAcknowledgeRationale?fileHash=%s' % row[0], 'Yes, by %s, read why' % acknowledged)
+    else:
+        return buildLink('getAcknowledgeFileIssuePage?fileHash=%s' % row[0], 'No, acknowledge it')
+
+
 def getShortHash(fileHash, row):
     return getShortText(fileHash, row, 8)
 
@@ -363,7 +469,7 @@ def getRunStatus(backend, creationTimestamp, statusCode, checkTooOld):
 
 
 def renderLogs():
-    sortedTabs = ['userLog', 'runLog', 'fileLog', 'files', 'emails']
+    sortedTabs = ['userLog', 'runLog', 'fileLog', 'fileAcks', 'files', 'emails']
 
     _backendsLatestRun = getBackendsLatestRun()
     backendsLatestRun = {}
@@ -388,7 +494,7 @@ def renderLogs():
         'userLog': {
             'title': 'Log with the most useful information for users',
             'headers': [
-                'Hash', 'Last update', 'User', 'File', 'Status', 'Metadata', 'User Text', 'Backend', 'Log',
+                'Hash', 'Last update', 'User', 'File', 'Status', 'Acknowledged', 'Metadata', 'User Text', 'Backend', 'Log',
             ],
             'dataTablesInit': '''
                 "aaSorting": [[1, 'desc']],
@@ -400,6 +506,7 @@ def renderLogs():
                 'Hash': getShortHash,
                 'File': getShortFile,
                 'Status': getStatusCodeHumanStringUser,
+                'Acknowledged': getAcknowledged,
                 'Metadata': getShortText,
                 'User Text': getShortText,
                 'Log': getFileLogLink,
@@ -435,6 +542,17 @@ def renderLogs():
                 'log': getFileLogLink,
             },
             'table': getFileLogs(),
+        },
+
+        'fileAcks': {
+            'title': 'Logs of acknowledges for issues in files (requests) processed by the dropBox',
+            'headers': [
+                'fileHash', 'username', 'rationale', 'creationTimestamp', 'modificationTimestamp'
+            ],
+            'dataTablesInit': '''
+                "aaSorting": [[3, 'desc']]
+            ''',
+            'table': getFileAcks(),
         },
 
         'files': {

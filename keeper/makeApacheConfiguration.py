@@ -233,6 +233,9 @@ virtualHosts['cms-pop-prod2'] = dict(virtualHosts['cms-pop-prod'])
 # match all possible cases (e.g. multiple slashes), which can be easily used to
 # bypass Shibboleth and then pass your application custom headers.
 #
+# If 'shibbolethGroups' is a dictionary, it will create an entry for each key,
+# which is the url, and the allowed groups for each one are the values.
+#
 # If 'redirectRoot' is found, the root of the frontend will be redirected
 # to this service.
 #
@@ -409,8 +412,10 @@ services['docs']['redirectRoot'] = True
 
 # Set the allowed groups for services behind Shibboleth
 services['admin']['shibbolethGroups'] = ['cms-cond-dev']
-services['dropBox']['shibbolethGroups'] = ['cms-cond-dropbox']
-services['dropBox']['shibbolethUrl'] = '/dropBox/signInSSO'
+services['dropBox']['shibbolethGroups'] = {
+    '/dropBox/signInSSO': ['cms-cond-dropbox'],
+    '/dropBox/acknowledgeFileIssue': ['cms-cond-dropbox-admin'],
+}
 services['gtc']['shibbolethGroups'] = ['zh']
 services['logs']['shibbolethGroups'] = ['zh']
 services['PdmV/valdb']['shibbolethGroups'] = ['cms-web-access']
@@ -1136,14 +1141,20 @@ def makeApacheConfiguration(frontend, virtualHost):
                 )
 
         if 'shibbolethGroups' in services[service] and virtualHost != 'private':
-            services[service]['shibbolethGroupsText'] = ' '.join(['"%s"' % x for x in services[service]['shibbolethGroups']])
-
-            if 'shibbolethUrl' in services[service]:
-                infoMap['shibboleth'] += shibbolethUrl.format(**services[service])
-            elif 'shibbolethMatch' in services[service]:
-                infoMap['shibboleth'] += shibbolethMatch.format(**services[service])
+            if isinstance(services[service]['shibbolethGroups'], dict):
+                for url in services[service]['shibbolethGroups']:
+                    services[service]['shibbolethUrl'] = url
+                    services[service]['shibbolethGroupsText'] = ' '.join(['"%s"' % x for x in services[service]['shibbolethGroups'][url]])
+                    infoMap['shibboleth'] += shibbolethUrl.format(**services[service])
             else:
-                infoMap['shibboleth'] += shibboleth.format(**services[service])
+                services[service]['shibbolethGroupsText'] = ' '.join(['"%s"' % x for x in services[service]['shibbolethGroups']])
+
+                if 'shibbolethUrl' in services[service]:
+                    infoMap['shibboleth'] += shibbolethUrl.format(**services[service])
+                elif 'shibbolethMatch' in services[service]:
+                    infoMap['shibboleth'] += shibbolethMatch.format(**services[service])
+                else:
+                    infoMap['shibboleth'] += shibboleth.format(**services[service])
 
         if 'customHttp' in services[service]:
             infoMap['customHttp'] += services[service]['customHttp']

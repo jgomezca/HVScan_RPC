@@ -152,6 +152,21 @@ class DropBoxLogs(object):
         return service.setResponsePlainText(dropBox.logs.getFileLog(fileHash))
 
 
+    @cherrypy.expose
+    def getAcknowledgeRationale(self, fileHash):
+        return service.setResponsePlainText(dropBox.logs.getAcknowledgeRationale(fileHash))
+
+
+    @cherrypy.expose
+    def getAcknowledgeFileIssuePage(self, fileHash):
+        return dropBox.logs.getAcknowledgeFileIssuePage(fileHash)
+
+
+    @cherrypy.expose
+    def getStatus(self):
+        return service.setResponsePlainText(dropBox.logs.getStatus())
+
+
 class Logs(object):
     '''Logs server.
     '''

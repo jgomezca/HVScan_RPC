@@ -4,6 +4,7 @@
 
 drop table emails;
 drop sequence seqEmailsId;
+drop table fileAcks;
 drop table fileLog;
 drop table runLog;
 drop table files;
@@ -81,6 +82,26 @@ create index idxFileLogRunLogCrets on fileLog (runLogCreationTimestamp);
 
 create or replace trigger tumFileLog
 before update on fileLog
+for each row
+begin
+        :new.modificationTimestamp := CURRENT_TIMESTAMP;
+end;
+/
+
+CREATE TABLE fileAcks (
+    fileHash VARCHAR2(40 BYTE) NOT NULL,
+    username VARCHAR2(100 BYTE) NOT NULL,
+    rationale VARCHAR2(4000 BYTE),
+    creationTimestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL CONSTRAINT ckFileAcksCrets CHECK (creationTimestamp > to_date('2012-01-01', 'YYYY-MM-DD')),
+    modificationTimestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    PRIMARY KEY (fileHash),
+    CONSTRAINT ckFileAcksModGtCre CHECK (modificationTimestamp >= creationTimestamp),
+    CONSTRAINT fkFileAcksFileLogFileHash FOREIGN KEY (fileHash) REFERENCES fileLog (fileHash)
+)
+;
+
+create or replace trigger tumFileAcks
+before update on fileAcks
 for each row
 begin
         :new.modificationTimestamp := CURRENT_TIMESTAMP;

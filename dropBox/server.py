@@ -172,6 +172,20 @@ class DropBox(object):
         cherrypy.lib.sessions.expire()
 
 
+    @cherrypy.expose
+    def acknowledgeFileIssue(self, fileHash, rationale):
+        '''Acknowledges an issue of a file.
+
+        This URL *must* be behind SSO and only in the admin group can call this.
+
+        Called from offline, by the shifter normally.
+        '''
+
+        logging.debug('server::acknowledgeFileIssue(%s, %s)', fileHash, rationale)
+
+        dropBox.acknowledgeFileIssue(fileHash, shibboleth.getUsername(), rationale)
+
+
     @checkSignedIn
     def getUploadScriptVersion(self):
         '''Returns the version of the upload script (of this server).

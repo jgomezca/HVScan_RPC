@@ -97,6 +97,15 @@ def updateFileLogLog(fileHash, log, runLogCreationTimestamp, runLogBackend):
         where fileHash = :s
     ''', (database.BLOB(log), runLogCreationTimestamp, runLogBackend, fileHash))
 
+
+def acknowledgeFileIssue(fileHash, username, rationale):
+    connection.commit('''
+        insert into fileAcks
+        (fileHash, username, rationale)
+        values (:s, :s, :s)
+    ''', (fileHash, username, rationale))
+
+
 @database.transaction
 def _insertOrUpdateRunLog(connection, cursor, creationTimestamp, backend, statusCode):
     # Keep only the latest heartbeat: If for this backend we are going

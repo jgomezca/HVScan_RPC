@@ -294,6 +294,19 @@ def updateFileLog(fileHash, log, runLogCreationTimestamp, runLogBackend):
         dataAccess.insertEmail(config.smsTemplate.render(fileInformation), '.', username, [config.shifterPhoneSMSAddress])
 
 
+def acknowledgeFileIssue(fileHash, username, rationale):
+    '''Acknowledges an issue of a file.
+
+    Only people in the admin group can call this.
+
+    Called from offline, by the shifter normally.
+    '''
+
+    logging.debug('dropBox::acknowledgeFileIssue(%s, %s, %s)', fileHash, username, rationale)
+
+    dataAccess.acknowledgeFileIssue(fileHash, username, rationale)
+
+
 def updateRunStatus(creationTimestamp, backend, statusCode):
     '''Updates the status code of a run.
 
