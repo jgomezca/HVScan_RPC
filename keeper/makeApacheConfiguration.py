@@ -38,6 +38,7 @@ frontends = {
         'cms-conddb-dev', 'cms-conddb-int',
         'cms-pdmv-dev', 'cms-pdmv-int',
         'cmstags-dev', 'cmstags-int',
+        'cmssdt-dev', 'cmssdt-int',
     ],
 
     # vocms{150,151} = cmsdbfe{1,2}
@@ -144,10 +145,14 @@ virtualHosts['cmstags-prod1'] = dict(virtualHosts['cmstags-prod'])
 virtualHosts['cmstags-prod2'] = dict(virtualHosts['cmstags-prod'])
 
 virtualHosts['cmstags-dev'] = dict(virtualHosts['cmstags-prod'])
-virtualHosts['cmstags-dev']['backendHostnames'] = ['vocms130']
+virtualHosts['cmstags-dev']['backendHostnames'] = ['vocms129']
 
 virtualHosts['cmstags-int'] = dict(virtualHosts['cmstags-prod'])
-virtualHosts['cmstags-int']['backendHostnames'] = ['vocms129']
+virtualHosts['cmstags-int']['backendHostnames'] = ['vocms130']
+
+# cmssdt-prod has also -dev and -int
+virtualHosts['cmssdt-dev'] = dict(virtualHosts['cmssdt-prod'])
+virtualHosts['cmssdt-int'] = dict(virtualHosts['cmssdt-prod'])
 
 # cmssdt-prod, cmscov-prod and cms-pop-prod have also
 # their -prod{1,2} counterparts
@@ -349,7 +354,7 @@ services = {
         'backendPort': 4443,
         'backendUrl': '',
         'redirectRoot': True,
-        'shibbolethMatch': '^/tc/(?!ReleasesXML$|getCustomIBRequests$|ReleaseExternalsXML$|CategoriesPackagesJSON$|CategoriesManagersJSON$|CreateExternalList$|ReleaseTagsXML$|CreateTagList$|getReleasesInformation$|py_get)',
+        'shibbolethMatch': '^/tc/(?!ReleasesXML$|public/)',
         'shibbolethGroups': ['zh'],
     },
 
