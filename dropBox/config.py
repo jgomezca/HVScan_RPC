@@ -97,11 +97,12 @@ allowedServices = {
 }
 
 
+#TODO: -sdg Retrieve HLT GT from online DQM: see AlCaDB main Twiki for links.
 # Default dictionary for production Global Tags
 productionGlobalTags = {
-    'hlt': 'GR_H_V29',
-    'express': 'GR_E_V31',
-    'prompt': 'GR_P_V42',
+    'hlt': 'GR_H_V32',
+    'express': 'GR_E_V33',
+    'prompt': 'GR_P_V43D',
 }
 
 # Base path for test files
