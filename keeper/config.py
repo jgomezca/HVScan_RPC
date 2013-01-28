@@ -207,6 +207,7 @@ servicesConfiguration = {
 		'filename':       'logs.py',
 		'listeningPort':  8097,
 		'hidden':         False,
+		'caches':         ['logs'],
 	},
 
 	'payloadInspector': {

@@ -18,6 +18,7 @@ import service
 import html
 import database
 import shibboleth
+import cache
 
 import logPack
 import Constants
@@ -182,10 +183,13 @@ def getAcknowledgeFileIssuePage(fileHash):
     return acknowledgeFileIssuePage.render(fileHash = fileHash)
 
 
+@cache.logs.cacheCall('dropBox_getStatus', 60)
 def getStatus():
     '''Returns a the list of failed processed files in the latest hour.
 
     For check_mk agent dropBox.check_mk.py.
+
+    Cached to prevent abuse/bugs loading the database.
     '''
 
     return service.getPrettifiedJSON(connection.fetch('''
