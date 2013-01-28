@@ -194,7 +194,7 @@ def getStatus():
     return service.getPrettifiedJSON(connection.fetch('''
         select fileHash, statusCode, creationTimestamp
         from fileLog
-        where statusCode <> 4999
+        where mod(statusCode, 100) in (10, 20)
             and creationTimestamp > sysdate - (1/24)
             and not exists (
                 select fileHash
