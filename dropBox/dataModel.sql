@@ -79,6 +79,7 @@ CREATE TABLE fileLog (
 
 create index idxFileLogRunLogBackendCrets on fileLog (runLogBackend, runLogCreationTimestamp);
 create index idxFileLogRunLogCrets on fileLog (runLogCreationTimestamp);
+create index idxFileLogCrets on fileLog (creationTimestamp);
 
 create or replace trigger tumFileLog
 before update on fileLog
