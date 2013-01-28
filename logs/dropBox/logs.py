@@ -166,9 +166,6 @@ acknowledgeFileIssuePage = jinja2.Template('''
 <html>
     <head>
             <title>Acknowledge file {{fileHash}}</title>
-            <script src="/libs/jquery-1.7.2.min.js"></script>
-            <script src="/libs/jquery-ui/1.8.20/js/jquery-ui-1.8.20.custom.min.js"></script>
-            <script src="/libs/datatables/1.9.4/media/js/jquery.dataTables.min.js"></script>
     </head>
     <body>
         <h1>Acknowledge file {{fileHash}}</h1>
