@@ -42,7 +42,7 @@ mapping = {
 }
 
 if len(json.loads(urllib2.urlopen('https://%s/logs/dropBox/getStatus' % mapping[getHostname()]).read())) == 0:
-    print '0 dropBox - OK - There are not non-acknowledged errors in the latest hour.'
+    print '0 dropBox - OK - There are no non-acknowledged errors in the latest hour.'
 else:
     print '2 dropBox - CRITICAL - There are non-acknowledged errors in the latest hour.'
 
