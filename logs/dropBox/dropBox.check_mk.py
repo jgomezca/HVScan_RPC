@@ -23,7 +23,25 @@ import urllib2
 import json
 
 
-if len(json.loads(urllib2.urlopen('https://%s/logs/dropBox/getStatus' % socket.gethostname()).read())) == 0:
+def getHostname():
+    '''Returns the current hostname without '.cern.ch'
+    '''
+
+    hostname = socket.gethostname()
+
+    if hostname.endswith('.cern.ch'):
+        return hostname[:-len('.cern.ch')]
+
+    return hostname
+
+
+mapping = {
+    'vocms146': 'cms-conddb-int',
+    'vocms148': 'cms-conddb-prod',
+    'vocms149': 'cms-conddb-prod',
+}
+
+if len(json.loads(urllib2.urlopen('https://%s/logs/dropBox/getStatus' % mapping[getHostname()]).read())) == 0:
     print '0 dropBox - OK - There are not non-acknowledged errors in the latest hour.'
 else:
     print '2 dropBox - CRITICAL - There are non-acknowledged errors in the latest hour.'
