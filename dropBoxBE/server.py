@@ -55,7 +55,10 @@ def secUntilNext10Min() :
     # be asking for trouble, so just add 3 full seconds since
     # we do not need precise runs at :10 minute marks (even
     # 1 or 2 seconds should be enough).
-    return ( next - timestamp ).seconds + 3
+    # FIXME: Add 1 minute more as well to avoid races with
+    # the old dropBox (temporary solution, remove after the
+    # old dropBox is not running anymore).
+    return ( next - timestamp ).seconds + 3 + 60
 
 
 stop = False
