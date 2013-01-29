@@ -418,6 +418,7 @@ services['dropBox']['shibbolethGroups'] = {
 }
 services['gtc']['shibbolethGroups'] = ['zh']
 services['logs']['shibbolethGroups'] = ['zh']
+services['logs']['shibbolethMatch'] = '^/logs/(?!dropBox/getStatus$)'
 services['PdmV/valdb']['shibbolethGroups'] = ['cms-web-access']
 services['shibbolethTest']['shibbolethGroups'] = ['zh']
 
