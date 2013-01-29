@@ -99,6 +99,30 @@ class Cache(object):
         return ttl
 
 
+    def cacheCall(self, key, seconds):
+        '''Decorator that caches a function call in a key for some seconds.
+
+        This is one of the most common usage patterns for a cache.
+
+        Note: it does not cache separate results for different arguments.
+        '''
+
+        def decorator(function):
+
+            def newFunction(*args, **kwargs):
+                data = self.get(key)
+                if data is not None:
+                    return data
+
+                data = function(*args, **kwargs)
+                self.put(key, data, seconds)
+                return data
+
+            return newFunction
+
+        return decorator
+
+
 # Instance the caches of the service
 for (cache, cacheID) in service.settings['caches'].items():
     globals()[cache] = Cache(cacheID)
