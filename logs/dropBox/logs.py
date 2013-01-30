@@ -12,6 +12,7 @@ __email__ = 'mojedasa@cern.ch'
 import datetime
 import json
 
+import cherrypy
 import jinja2
 
 import service
@@ -32,6 +33,7 @@ def getFiles():
     return connection.fetch('''
         select fileHash, state, backend, username, fileName, creationTimestamp, modificationTimestamp
         from files
+        where creationTimestamp > sysdate - 7
     ''')
 
 
@@ -39,6 +41,7 @@ def getRunLogs():
     return connection.fetch('''
         select creationTimestamp, backend, statusCode, firstConditionSafeRun, hltRun, modificationTimestamp, nvl2(downloadLog, 1, 0), nvl2(globalLog, 1, 0)
         from runLog
+        where creationTimestamp > sysdate - 7
     ''')
 
 
@@ -46,6 +49,7 @@ def getFileLogs():
     return connection.fetch('''
         select fileHash, statusCode, metadata, userText, runLogCreationTimestamp, creationTimestamp, modificationTimestamp, nvl2(log, 1, 0)
         from fileLog
+        where creationTimestamp > sysdate - 7
     ''')
 
 
@@ -53,6 +57,7 @@ def getEmails():
     return connection.fetch('''
         select id, subject, fromAddress, toAddresses, ccAddresses, creationTimestamp, modificationTimestamp
         from emails
+        where creationTimestamp > sysdate - 7
     ''')
 
 
@@ -68,6 +73,7 @@ def getFileAcks():
     return connection.fetch('''
         select fileHash, username, rationale, creationTimestamp, modificationTimestamp
         from fileAcks
+        where creationTimestamp > sysdate - 7
     ''')
 
 
@@ -89,13 +95,7 @@ def getRunGlobalLog(creationTimestamp, backend):
     ''', (creationTimestamp, backend))[0][0])
 
 
-def getUserLogs():
-    # The NULL gives us space for the acknowledge treatment below
-    data = connection.fetch('''
-        select fileHash, fileLog.modificationTimestamp, username, fileName, statusCode, NULL, metadata, userText, backend, nvl2(log, 1, 0)
-        from files join fileLog using (fileHash)
-    ''')
-
+def _fillAcknowledgeColumn(data):
     # Give the correct value to the acknowledge column
     fileHashIndex = 0
     statusIndex = 4
@@ -119,6 +119,62 @@ def getUserLogs():
                 row[ackIndex] = ack[0][0]
 
     return data
+
+
+def getUserLogs():
+    # The NULL gives us space for the acknowledge treatment below
+    data = connection.fetch('''
+        select fileHash, fileLog.modificationTimestamp, username, fileName, statusCode, NULL, metadata, userText, backend, nvl2(log, 1, 0)
+        from files join fileLog using (fileHash)
+        where files.creationTimestamp > sysdate - 7
+    ''')
+
+    return _fillAcknowledgeColumn(data)
+
+
+def searchUserLog(beginDate, endDate, fileHash, username, fileName, statusCode, metadata, userText, backend):
+    '''Returns a custom search of the userLog.
+
+    Limited to a maximum of 100 rows in all cases.
+    '''
+
+    parameters = [beginDate, endDate]
+    searchTerms = []
+
+    for arg in ['fileHash', 'username', 'fileName', 'metadata', 'userText', 'backend']:
+        value = locals()[arg]
+        if value is not None:
+            value = str(value).strip()
+            if len(value) > 0:
+                parameters.append(str(value).strip())
+                searchTerms.append(arg)
+
+    if statusCode == 'Success':
+        searchStatusCode = 'and mod(statusCode, 100) = 99'
+    elif statusCode == 'Warning':
+        searchStatusCode = 'and mod(statusCode, 100) = 11'
+    elif statusCode == 'Failure':
+        searchStatusCode = 'and mod(statusCode, 100) in (10, 20)'
+    else:
+        searchStatusCode = ''
+
+    # The NULL gives us space for the acknowledge treatment below
+    data = connection.fetch('''
+        select *
+        from (
+            select fileHash, fileLog.modificationTimestamp, username, fileName, statusCode, NULL, metadata, userText, backend, nvl2(log, 1, 0)
+            from files join fileLog using (fileHash)
+            where files.creationTimestamp >= to_timestamp(:s, 'YYYY-MM-DD')
+                and files.creationTimestamp < to_timestamp(:s, 'YYYY-MM-DD') + 1
+                %s
+                %s
+        ) where rownum <= 100
+    ''' % (
+        ' '.join(["and lower(%s) like lower('%%' || :s || '%%') escape '\\'" % x for x in searchTerms]),
+        searchStatusCode,
+    ), parameters)
+
+    return _fillAcknowledgeColumn(data)
 
 
 def getAcknowledgeRationale(fileHash):
@@ -207,32 +263,80 @@ def getStatus():
 
 
 mainTemplate = jinja2.Template('''
-<table class="status">
+<table>
     <tr>
-        <th></th>
-        {% for backend in backends %}
-            <th>{{backend}}</th>
-        {% endfor %}
-    </tr>
-    <tr>
-        <td>Backends' latest runs</td>
-        {% for backend in backends %}
-            {% if backend in backendsLatestRun %}
-                <td class="{{backendsLatestRun[backend][1]}}">{{backendsLatestRun[backend][0]}}</td>
-            {% else %}
-                <td>-</td>
-            {% endif %}
-        {% endfor %}
-    </tr>
-    <tr>
-        <td>Backends' latest non-empty runs</td>
-        {% for backend in backends %}
-            {% if backend in backendsLatestNotEmptyRun %}
-                <td class="{{backendsLatestNotEmptyRun[backend][1]}}">{{backendsLatestNotEmptyRun[backend][0]}}</td>
-            {% else %}
-                <td>-</td>
-            {% endif %}
-        {% endfor %}
+    <td>
+    <table class="status">
+        <tr>
+            <th></th>
+            {% for backend in backends %}
+                <th>{{backend}}</th>
+            {% endfor %}
+        </tr>
+        <tr>
+            <td>Backends' latest runs</td>
+            {% for backend in backends %}
+                {% if backend in backendsLatestRun %}
+                    <td class="{{backendsLatestRun[backend][1]}}">{{backendsLatestRun[backend][0]}}</td>
+                {% else %}
+                    <td>-</td>
+                {% endif %}
+            {% endfor %}
+        </tr>
+        <tr>
+            <td>Backends' latest non-empty runs</td>
+            {% for backend in backends %}
+                {% if backend in backendsLatestNotEmptyRun %}
+                    <td class="{{backendsLatestNotEmptyRun[backend][1]}}">{{backendsLatestNotEmptyRun[backend][0]}}</td>
+                {% else %}
+                    <td>-</td>
+                {% endif %}
+            {% endfor %}
+        </tr>
+    </table>
+    </td>
+    <td>
+    <form id="userLogSearch" name="userLogSearch" action="searchUserLog" method="get">
+    <table class="status">
+        <tr>
+            <td><label for="beginDate">Time range (start)</label></td>
+            <td><input type="text" name="beginDate" id="beginDate" placeholder="e.g. 2013-01-01" value="{{searchFields['beginDate']}}" required></td>
+            <td><label for="fileName">File</label></td>
+            <td><input type="text" name="fileName" id="fileName" value="{{searchFields['fileName']}}"></td>
+        </tr>
+        <tr>
+            <td><label for="endDate">Time range (end)</label></td>
+            <td><input type="search" name="endDate" id="endDate" placeholder="e.g. 2013-01-01" value="{{searchFields['endDate']}}" required></td>
+            <td><label for="metadata">Metadata</label></td>
+            <td><input type="search" name="metadata" id="metadata" value="{{searchFields['metadata']}}"></td>
+        </tr>
+        <tr>
+            <td><label for="fileHash">Hash</td>
+            <td><input type="search" name="fileHash" id="fileHash" value="{{searchFields['fileHash']}}"></td>
+            <td><label for="userText">User Text</label></td>
+            <td><input type="search" name="userText" id="userText" value="{{searchFields['userText']}}"></td>
+        </tr>
+        <tr>
+            <td><label for="username">User</label></td>
+            <td><input type="search" name="username" id="username" value="{{searchFields['username']}}"></td>
+            <td><label for="backend">Backend</label></td>
+            <td><input type="search" name="backend" id="backend" value="{{searchFields['backend']}}"></td>
+        </tr>
+        <tr>
+            <td><label for="statusCode">Status</label></td>
+            <td>
+                <select name="statusCode">
+                    {% for option in ['Any', 'Success', 'Warning', 'Failure'] %}
+                        <option {{'selected' if searchFields['statusCode'] == option else ''}} value="{{option}}">{{option}}</option>
+                    {% endfor %}
+                </select>
+            </td>
+            <td></td>
+            <td><input type="submit" value="Search userLog"></td>
+        </tr>
+    </table>
+    </form>
+    </td>
     </tr>
 </table>
 <div id="dropBoxTabs">
@@ -247,6 +351,28 @@ mainTemplate = jinja2.Template('''
 </div>
 <script>
     $('#dropBoxTabs').tabs();
+
+    var dates = $("#beginDate, #endDate").datepicker({
+	    changeMonth: true,
+	    changeYear: true,
+	    numberOfMonths: 1,
+	    minDate: new Date(2012, 11, 20), // the first rows in the DB were inserted on 2012-11-21
+	    maxDate: new Date(), // can't be later than today
+	    dateFormat: "yy-mm-dd",
+	    onSelect: function(selectedDate) {
+		    var option = this.id == "beginDate" ? "minDate" : "maxDate";
+		    var instance = jQuery(this).data("datepicker");
+		    var date = jQuery.datepicker.parseDate(instance.settings.dateFormat || jQuery.datepicker._defaults.dateFormat, selectedDate, instance.settings);
+		    dates.not(this).datepicker("option", option, date);
+	    }
+    });
+
+    // Only set if there is no default value yet
+    if ($("#beginDate")[0].value == '')
+        $("#beginDate").datepicker("setDate", new Date());
+    if ($("#endDate")[0].value == '')
+        $("#endDate").datepicker("setDate", new Date());
+
 </script>
 ''')
 
@@ -469,21 +595,34 @@ def getRunStatus(backend, creationTimestamp, statusCode, checkTooOld):
     return (timeString, getStatusCodeColor(statusCode))
 
 
-def renderLogs():
-    sortedTabs = ['userLog', 'runLog', 'fileLog', 'fileAcks', 'files', 'emails']
+def getSearchUserLogTabs(beginDate, endDate, fileHash, username, fileName, statusCode, metadata, userText, backend):
+    sortedTabs = ['userLogSearchResult']
+    tabs = {
+        'userLogSearchResult': {
+            'title': 'Result of the search in the userLog',
+            'headers': [
+                'Hash', 'Last update', 'User', 'File', 'Status', 'Acknowledged', 'Metadata', 'User Text', 'Backend', 'Log',
+            ],
+            'dataTablesInit': '''
+                "aaSorting": [[1, 'desc']]
+            ''',
+            'transform': {
+                'Hash': getShortHash,
+                'File': getShortFile,
+                'Status': getStatusCodeHumanStringUser,
+                'Acknowledged': getAcknowledged,
+                'Metadata': getShortText,
+                'User Text': getShortText,
+                'Log': getFileLogLink,
+            },
+            'table': searchUserLog(beginDate, endDate, fileHash, username, fileName, statusCode, metadata, userText, backend),
+        },
+    }
 
-    _backendsLatestRun = getBackendsLatestRun()
-    backendsLatestRun = {}
-    for backend, creationTimestamp, statusCode in _backendsLatestRun:
-        backendsLatestRun[backend] = getRunStatus(backend, creationTimestamp, statusCode, True)
+    return (sortedTabs, tabs)
 
-    _backendsLatestNotEmptyRun = getBackendsLatestNotEmptyRun()
-    backendsLatestNotEmptyRun = {}
-    for backend, creationTimestamp, statusCode in _backendsLatestNotEmptyRun:
-        backendsLatestNotEmptyRun[backend] = getRunStatus(backend, creationTimestamp, statusCode, False)
 
-    backends = sorted(set(backendsLatestRun) | set(backendsLatestNotEmptyRun))
-
+def getDefaultTabs():
     # In the userLog:
     #   If the user receives all the notifications, by default show all the entries.
     #   If not, by default show only those for him.
@@ -491,9 +630,10 @@ def renderLogs():
     if 'cms-cond-dropbox-notifications' not in shibboleth.getGroups():
         defaultUserLogSearch = shibboleth.getUsername()
 
+    sortedTabs = ['userLog', 'runLog', 'fileLog', 'fileAcks', 'files', 'emails']
     tabs = {
         'userLog': {
-            'title': 'Log with the most useful information for users',
+            'title': 'Log with the most useful information for users (last week)',
             'headers': [
                 'Hash', 'Last update', 'User', 'File', 'Status', 'Acknowledged', 'Metadata', 'User Text', 'Backend', 'Log',
             ],
@@ -516,7 +656,7 @@ def renderLogs():
         },
 
         'runLog': {
-            'title': 'Logs of each run of the dropBox',
+            'title': 'Logs of each run of the dropBox (last week)',
             'headers': [
                 'creationTimestamp', 'backend', 'statusCode', 'fcsRun', 'hltRun',
                 'modificationTimestamp', 'downloadLog', 'globalLog',
@@ -530,7 +670,7 @@ def renderLogs():
         },
 
         'fileLog': {
-            'title': 'Logs of each file (request) processed by the dropBox',
+            'title': 'Logs of each file (request) processed by the dropBox (last week)',
             'headers': [
                 'fileHash', 'statusCode', 'metadata', 'userText', 'runLogCreationTimestamp',
                 'creationTimestamp', 'modificationTimestamp', 'log',
@@ -546,7 +686,7 @@ def renderLogs():
         },
 
         'fileAcks': {
-            'title': 'Logs of acknowledges for issues in files (requests) processed by the dropBox',
+            'title': 'Logs of acknowledges for issues in files (requests) processed by the dropBox (last week)',
             'headers': [
                 'fileHash', 'username', 'rationale', 'creationTimestamp', 'modificationTimestamp'
             ],
@@ -557,7 +697,7 @@ def renderLogs():
         },
 
         'files': {
-            'title': 'All files (requests) of the dropBox',
+            'title': 'All files (requests) of the dropBox (last week)',
             'headers': [
                 'fileHash', 'state', 'backend', 'username', 'fileName',
                 'creationTimestamp', 'modificationTimestamp'
@@ -569,7 +709,7 @@ def renderLogs():
         },
 
         'emails': {
-            'title': 'Queue of emails to be sent by the dropBox',
+            'title': 'Queue of emails to be sent by the dropBox (last week)',
             'headers': [
                 'id', 'subject', 'fromAddress', 'toAddresses', 'ccAddresses', 'creationTimestamp', 'modificationTimestamp'
             ],
@@ -577,9 +717,88 @@ def renderLogs():
         },
     }
 
+    return (sortedTabs, tabs)
+
+
+def renderTabs(sortedTabs, tabs, searchFields = {}):
+    _backendsLatestRun = getBackendsLatestRun()
+    backendsLatestRun = {}
+    for backend, creationTimestamp, statusCode in _backendsLatestRun:
+        backendsLatestRun[backend] = getRunStatus(backend, creationTimestamp, statusCode, True)
+
+    _backendsLatestNotEmptyRun = getBackendsLatestNotEmptyRun()
+    backendsLatestNotEmptyRun = {}
+    for backend, creationTimestamp, statusCode in _backendsLatestNotEmptyRun:
+        backendsLatestNotEmptyRun[backend] = getRunStatus(backend, creationTimestamp, statusCode, False)
+
+    backends = sorted(set(backendsLatestRun) | set(backendsLatestNotEmptyRun))
+
     renderedTabs = {}
     for tab in tabs:
         renderedTabs[tab] = renderTable(tab, tabs[tab])
 
-    return mainTemplate.render(sortedTabs = sortedTabs, tabs = renderedTabs, backendsLatestRun = backendsLatestRun, backendsLatestNotEmptyRun = backendsLatestNotEmptyRun, backends = backends)
+    for key in ['beginDate', 'endDate', 'fileHash', 'username', 'fileName', 'metadata', 'userText', 'backend']:
+        searchFields[key] = searchFields.setdefault(key, '')
+
+    return mainTemplate.render(sortedTabs = sortedTabs, tabs = renderedTabs, backendsLatestRun = backendsLatestRun, backendsLatestNotEmptyRun = backendsLatestNotEmptyRun, backends = backends, searchFields = searchFields)
+
+
+class DropBoxLogs(object):
+    '''dropBox logs.
+    '''
+
+    def __init__(self, renderPage):
+        self.renderPage = renderPage
+
+
+    @cherrypy.expose
+    def index(self):
+        tabs = getDefaultTabs()
+        return self.renderPage(renderTabs(*tabs))
+
+
+    @cherrypy.expose
+    def searchUserLog(self, beginDate, endDate, fileHash, username, fileName, statusCode, metadata, userText, backend):
+        tabs = getSearchUserLogTabs(beginDate, endDate, fileHash, username, fileName, statusCode, metadata, userText, backend)
+        return self.renderPage(renderTabs(*tabs, searchFields = {
+            'beginDate': beginDate,
+            'endDate': endDate,
+            'fileHash': fileHash,
+            'username': username,
+            'fileName': fileName,
+            'statusCode': statusCode,
+            'metadata': metadata,
+            'userText': userText,
+            'backend': backend,
+        }))
+
+
+    @cherrypy.expose
+    def getRunDownloadLog(self, creationTimestamp, backend):
+        return service.setResponsePlainText(getRunDownloadLog(creationTimestamp, backend))
+
+
+    @cherrypy.expose
+    def getRunGlobalLog(self, creationTimestamp, backend):
+        return service.setResponsePlainText(getRunGlobalLog(creationTimestamp, backend))
+
+
+    @cherrypy.expose
+    def getFileLog(self, fileHash):
+        return service.setResponsePlainText(getFileLog(fileHash))
+
+
+    @cherrypy.expose
+    def getAcknowledgeRationale(self, fileHash):
+        return service.setResponsePlainText(getAcknowledgeRationale(fileHash))
+
+
+    @cherrypy.expose
+    def getAcknowledgeFileIssuePage(self, fileHash):
+        return getAcknowledgeFileIssuePage(fileHash)
+
+
+    @cherrypy.expose
+    def getStatus(self):
+        return service.setResponsePlainText(getStatus())
 

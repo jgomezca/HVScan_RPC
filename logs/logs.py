@@ -50,6 +50,13 @@ mainTemplate = jinja2.Template('''
                     font-size: 15px;
                     margin-bottom: 10px;
                 }
+                input, select {
+                    margin-bottom: 0px !important;
+                    padding: 2px 6px !important;
+                    height: 20px !important;
+                    line-height: normal !important;
+                    font-size: 12px !important;
+                }
                 .page {
                     padding: 10px;
                 }
@@ -87,6 +94,18 @@ mainTemplate = jinja2.Template('''
                 }
                 .statusOld {
                     background-color: #DD99FF !important;
+                }
+                #userLogSearch tr :nth-child(1), #userLogSearch tr :nth-child(3) {
+                    padding-left: 12px;
+                }
+                #userLogSearch input {
+                    width: 160px;
+                }
+                #userLogSearch select {
+                    width: 180px;
+                }
+                #userLogSearch label {
+                    text-align: right;
                 }
             </style>
             <script src="/libs/jquery-1.7.2.min.js"></script>
@@ -128,50 +147,11 @@ def renderPage(body):
     })
 
 
-class DropBoxLogs(object):
-    '''dropBox logs.
-    '''
-
-    @cherrypy.expose
-    def index(self):
-        return renderPage(dropBox.logs.renderLogs())
-
-
-    @cherrypy.expose
-    def getRunDownloadLog(self, creationTimestamp, backend):
-        return service.setResponsePlainText(dropBox.logs.getRunDownloadLog(creationTimestamp, backend))
-
-
-    @cherrypy.expose
-    def getRunGlobalLog(self, creationTimestamp, backend):
-        return service.setResponsePlainText(dropBox.logs.getRunGlobalLog(creationTimestamp, backend))
-
-
-    @cherrypy.expose
-    def getFileLog(self, fileHash):
-        return service.setResponsePlainText(dropBox.logs.getFileLog(fileHash))
-
-
-    @cherrypy.expose
-    def getAcknowledgeRationale(self, fileHash):
-        return service.setResponsePlainText(dropBox.logs.getAcknowledgeRationale(fileHash))
-
-
-    @cherrypy.expose
-    def getAcknowledgeFileIssuePage(self, fileHash):
-        return dropBox.logs.getAcknowledgeFileIssuePage(fileHash)
-
-
-    @cherrypy.expose
-    def getStatus(self):
-        return service.setResponsePlainText(dropBox.logs.getStatus())
-
-
 class Logs(object):
     '''Logs server.
     '''
 
-    dropBox = DropBoxLogs()
+    dropBox = dropBox.logs.DropBoxLogs(renderPage)
 
     @cherrypy.expose
     def index(self):
