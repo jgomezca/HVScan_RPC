@@ -2,3 +2,4 @@
 *.pyc
 .__afs*
 .idea
+.DS_Store
