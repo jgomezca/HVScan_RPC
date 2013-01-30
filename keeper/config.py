@@ -175,6 +175,12 @@ servicesConfiguration = {
 	#	'hidden':         True,
 	#},
 
+    'easymon' : {
+        'filename' : 'easymon.py',
+        'listeningPort' : 8096,
+        'hidden' : False,
+    },
+
 	'getLumi': {
 		'filename':       'lumidb_server.py',
 		'listeningPort':  8086,

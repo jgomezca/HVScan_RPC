@@ -1,0 +1,99 @@
+        .healthy100{
+            width:100%;
+            -webkit-animation-name:bar-one;
+        }
+        .healthy90{
+            width:90%;
+            -webkit-animation-name:bar-one;
+        }
+        .healthy75{
+            width:75%;
+            -webkit-animation-name:bar-one;
+        }
+        .healthy50{
+            width:50%;
+            -webkit-animation-name:bar-one;
+        }
+        .healthy25{
+            width:25%;
+            -webkit-animation-name:bar-one;
+        }
+        .healthy0{
+            width:100%;
+            -webkit-animation-name:bar-one;
+        }
+
+        .data-one{
+            width:75%;
+        }
+        .data-two{
+            width:50%;
+        }
+        #data-three{
+            width:25%;
+        }
+        .data-one{
+            -webkit-animation-name:bar-one;
+        }
+        #data-two{
+            -webkit-animation-name:bar-two;
+        }
+        #data-three{
+            -webkit-animation-name:bar-three;
+        }
+        .data-one,#data-two,#data-three{
+            -webkit-animation-duration:0.5s;
+            -webkit-animation-iteration-count:1;
+            -webkit-animation-timing-function:ease-out;
+        }
+        @-webkit-keyframes bar-one{
+            0%{
+                width:0%;
+            }
+            100%{
+                width:75%;
+            }
+        }
+        @-webkit-keyframes bar-two{
+            0%{
+                width:0%;
+            }
+            100%{
+                width:50%;
+            }
+        }
+        @-webkit-keyframes bar-three{
+            0%{
+                width:0%;
+            }
+            100%{
+                width:25%;
+            }
+        }
+
+.status_ok{
+background-color:#00FF33;
+padding:8px;
+/*border:2px solid black;*/
+border-radius:10px;
+}
+.status_wa{
+background-color:#FFCC33;
+padding:8px;
+/*border:2px solid black;*/
+border-radius:10px;
+}
+.status_ko{
+background-color:#FF3333;
+padding:8px;
+/*border:2px solid black;*/
+border-radius:10px;
+}
+
+.chart .bar {
+color:white !important;
+/*
+text-shadow: black 0.1em 0.1em 0.2em !important;*/
+/*background:#00FF66 !important;
+background:-webkit-gradient(linear, left top, left bottom, from(#00FF66), to(#00FF33)) !important;*/
+}
