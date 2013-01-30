@@ -107,6 +107,9 @@ mainTemplate = jinja2.Template('''
                 #userLogSearch label {
                     text-align: right;
                 }
+                #showUserLogSearch {
+                    margin-left: 10px;
+                }
             </style>
             <script src="/libs/jquery-1.7.2.min.js"></script>
             <script src="/libs/jquery-ui/1.8.20/js/jquery-ui-1.8.20.custom.min.js"></script>

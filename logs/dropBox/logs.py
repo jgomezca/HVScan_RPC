@@ -297,7 +297,8 @@ mainTemplate = jinja2.Template('''
     </table>
     </td>
     <td>
-    <form id="userLogSearch" name="userLogSearch" action="searchUserLog" method="get">
+    <button type="button" id="showUserLogSearch">Show advanced search...</button>
+    <form id="userLogSearch" name="userLogSearch" action="searchUserLog" method="get" style="display: none;">
     <table class="status">
         <tr>
             <td><label for="beginDate">Time range (start)</label></td>
@@ -376,7 +377,15 @@ mainTemplate = jinja2.Template('''
     }
     if ($("#endDate")[0].value == '')
         $("#endDate").datepicker("setDate", new Date()); // end today
+    
+    $("#showUserLogSearch").click(function () {
+        $("#showUserLogSearch").hide();
+        $("#userLogSearch").show();
+    });
 
+    {% if searchFields['enabled'] %}
+        $("#showUserLogSearch").click();
+    {% endif %}
 </script>
 ''')
 
@@ -724,7 +733,7 @@ def getDefaultTabs():
     return (sortedTabs, tabs)
 
 
-def renderTabs(sortedTabs, tabs, searchFields = {}):
+def renderTabs(sortedTabs, tabs, searchFields = None):
     _backendsLatestRun = getBackendsLatestRun()
     backendsLatestRun = {}
     for backend, creationTimestamp, statusCode in _backendsLatestRun:
@@ -741,10 +750,21 @@ def renderTabs(sortedTabs, tabs, searchFields = {}):
     for tab in tabs:
         renderedTabs[tab] = renderTable(tab, tabs[tab])
 
-    for key in ['beginDate', 'endDate', 'fileHash', 'username', 'fileName', 'metadata', 'userText', 'backend']:
-        searchFields[key] = searchFields.setdefault(key, '')
+    keys = ['beginDate', 'endDate', 'fileHash', 'username', 'fileName', 'statusCode', 'metadata', 'userText', 'backend']
+    if searchFields is None:
+        finalSearchFields = {
+            'enabled': False,
+        }
+        for key in keys:
+            finalSearchFields[key] = ''
+    else:
+        finalSearchFields = {
+            'enabled': True,
+        }
+        for key in keys:
+            finalSearchFields[key] = searchFields[key]
 
-    return mainTemplate.render(sortedTabs = sortedTabs, tabs = renderedTabs, backendsLatestRun = backendsLatestRun, backendsLatestNotEmptyRun = backendsLatestNotEmptyRun, backends = backends, searchFields = searchFields)
+    return mainTemplate.render(sortedTabs = sortedTabs, tabs = renderedTabs, backendsLatestRun = backendsLatestRun, backendsLatestNotEmptyRun = backendsLatestNotEmptyRun, backends = backends, searchFields = finalSearchFields)
 
 
 class DropBoxLogs(object):
