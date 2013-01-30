@@ -369,10 +369,13 @@ mainTemplate = jinja2.Template('''
     });
 
     // Only set if there is no default value yet
-    if ($("#beginDate")[0].value == '')
-        $("#beginDate").datepicker("setDate", new Date());
+    if ($("#beginDate")[0].value == '') {
+        var lastWeek = new Date();
+        lastWeek.setDate(lastWeek.getDate() - 7);
+        $("#beginDate").datepicker("setDate", lastWeek); // start from the last week
+    }
     if ($("#endDate")[0].value == '')
-        $("#endDate").datepicker("setDate", new Date());
+        $("#endDate").datepicker("setDate", new Date()); // end today
 
 </script>
 ''')
