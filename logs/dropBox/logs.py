@@ -168,6 +168,7 @@ def searchUserLog(beginDate, endDate, fileHash, username, fileName, statusCode, 
                 and files.creationTimestamp < to_timestamp(:s, 'YYYY-MM-DD') + 1
                 %s
                 %s
+            order by files.creationTimestamp desc
         ) where rownum <= 100
     ''' % (
         ' '.join(["and lower(%s) like lower('%%' || :s || '%%') escape '\\'" % x for x in searchTerms]),
