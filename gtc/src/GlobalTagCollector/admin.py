@@ -281,13 +281,13 @@ class GTQueueEntryInline(admin.StackedInline):
 
         tb_name = models.GTQueueEntry()._meta.db_table
         query = '''
-        	SELECT COUNT(*)
-        	FROM {tb_name}  gtqe
-        	WHERE
-        	    ({tb_name}.queue_id = gtqe.queue_id AND
-        	     {tb_name}.record_id = gtqe.record_id AND
-        	     {tb_name}.tag_id = gtqe.tag_id AND
-        	     {tb_name}.label = gtqe.label)
+            SELECT COUNT(*)
+            FROM {tb_name}  gtqe
+            WHERE
+                ({tb_name}.queue_id = gtqe.queue_id AND
+                 {tb_name}.record_id = gtqe.record_id AND
+                 {tb_name}.tag_id = gtqe.tag_id AND
+                 {tb_name}.label = gtqe.label)
         '''.format(tb_name=tb_name)
         qs = qs.extra(select={'tc':query})
 

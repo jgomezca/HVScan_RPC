@@ -15,21 +15,21 @@ import service
 
 
 class Docs:
-	'''Docs server.
-	'''
+    '''Docs server.
+    '''
 
-	@cherrypy.expose
-	def index(self):
-		'''Redirects to index.html.
-		'''
+    @cherrypy.expose
+    def index(self):
+        '''Redirects to index.html.
+        '''
 
-		raise cherrypy.HTTPRedirect("index.html")
+        raise cherrypy.HTTPRedirect("index.html")
 
 
 def main():
-	service.start(Docs())
+    service.start(Docs())
 
 
 if __name__ == '__main__':
-	main()
+    main()
 

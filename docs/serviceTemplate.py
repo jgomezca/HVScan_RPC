@@ -18,21 +18,21 @@ import service
 
 
 class ServiceTemplate:
-	'''My service description.
-	'''
+    '''My service description.
+    '''
 
-	@cherrypy.expose
-	def index(self):
-		'''My method description.
-		'''
+    @cherrypy.expose
+    def index(self):
+        '''My method description.
+        '''
 
-		return 'I am ' + service.settings['name'] + ', I am listening on ' + str(service.settings['listeningPort']) + ', with production level "' + service.settings['productionLevel'] + '", my root directory is ' + service.settings['rootDirectory'] + ' and I have ' + str(len(service.secrets)) + ' secrets hidden!'
+        return 'I am ' + service.settings['name'] + ', I am listening on ' + str(service.settings['listeningPort']) + ', with production level "' + service.settings['productionLevel'] + '", my root directory is ' + service.settings['rootDirectory'] + ' and I have ' + str(len(service.secrets)) + ' secrets hidden!'
 
 
 def main():
-	service.start(ServiceTemplate())
+    service.start(ServiceTemplate())
 
 
 if __name__ == '__main__':
-	main()
+    main()
 

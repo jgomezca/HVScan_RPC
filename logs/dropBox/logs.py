@@ -355,18 +355,18 @@ mainTemplate = jinja2.Template('''
     $('#dropBoxTabs').tabs();
 
     var dates = $("#beginDate, #endDate").datepicker({
-	    changeMonth: true,
-	    changeYear: true,
-	    numberOfMonths: 1,
-	    minDate: new Date(2012, 11, 20), // the first rows in the DB were inserted on 2012-11-21
-	    maxDate: new Date(), // can't be later than today
-	    dateFormat: "yy-mm-dd",
-	    onSelect: function(selectedDate) {
-		    var option = this.id == "beginDate" ? "minDate" : "maxDate";
-		    var instance = jQuery(this).data("datepicker");
-		    var date = jQuery.datepicker.parseDate(instance.settings.dateFormat || jQuery.datepicker._defaults.dateFormat, selectedDate, instance.settings);
-		    dates.not(this).datepicker("option", option, date);
-	    }
+        changeMonth: true,
+        changeYear: true,
+        numberOfMonths: 1,
+        minDate: new Date(2012, 11, 20), // the first rows in the DB were inserted on 2012-11-21
+        maxDate: new Date(), // can't be later than today
+        dateFormat: "yy-mm-dd",
+        onSelect: function(selectedDate) {
+            var option = this.id == "beginDate" ? "minDate" : "maxDate";
+            var instance = jQuery(this).data("datepicker");
+            var date = jQuery.datepicker.parseDate(instance.settings.dateFormat || jQuery.datepicker._defaults.dateFormat, selectedDate, instance.settings);
+            dates.not(this).datepicker("option", option, date);
+        }
     });
 
     // Only set if there is no default value yet

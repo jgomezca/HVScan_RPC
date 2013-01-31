@@ -435,10 +435,10 @@ def winServicesSoapSignIn(winServicesUrl, username, password):
         status = int(data[data.find('</auth>') - 1])
 
         # Status codes:
-        #	0 == Account disabled or activation pending or expired
-        #	1 == Invalid password
-        #	2 == Incorrect login or E-mail
-        #	3 == Success
+        #   0 == Account disabled or activation pending or expired
+        #   1 == Invalid password
+        #   2 == Incorrect login or E-mail
+        #   3 == Success
         success = 3
         if status == success:
             return True

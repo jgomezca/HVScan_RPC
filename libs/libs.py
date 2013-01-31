@@ -13,14 +13,14 @@ import service
 
 
 class Libs(object):
-	'''Libs server.
-	'''
+    '''Libs server.
+    '''
 
 
 def main():
-	service.start(Libs())
+    service.start(Libs())
 
 
 if __name__ == '__main__':
-	main()
+    main()
 
