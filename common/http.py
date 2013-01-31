@@ -208,6 +208,9 @@ class HTTP(object):
         self.curl.setopt(self.curl.SSL_VERIFYPEER, 0)
         self.curl.setopt(self.curl.SSL_VERIFYHOST, 0)
 
+        # pycurl is not thread-safe (segfaults if used within CherryPy threads)
+        self.curl.setopt(self.curl.NOSIGNAL, 1)
+
 
     def getCookies(self):
         '''Returns the list of cookies.
