@@ -181,6 +181,12 @@ servicesConfiguration = {
         'hidden' : False,
     },
 
+    'frontier': {
+        'filename':       'frontier.py',
+        'listeningPort':  8098,
+        'hidden':         False,
+    },
+
     'getLumi': {
         'filename':       'lumidb_server.py',
         'listeningPort':  8086,
