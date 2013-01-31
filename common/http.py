@@ -279,7 +279,8 @@ class HTTP(object):
         if not keepCookies:
             self.discardCookies()
 
-        url = self.baseUrl + url
+        # pycurl does not accept unicode URLs, so force conversion to str
+        url = str(self.baseUrl + url)
 
         # make sure the logs are safe ... at least somewhat :)
         data4log = copy.copy(data)
