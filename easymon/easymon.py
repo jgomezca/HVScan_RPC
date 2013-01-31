@@ -7,7 +7,7 @@ to the user's browser.
 '''
 
 #ToDo: sanitize input further, check also return value from nagios server
-#ToDo: fix css and update js packages (plus move the js to the weblibs)
+#ToDo: move the jquery-mobile library to the weblibs
 #ToDo: rewrite and move to icinga/check_mk and json format from there
 
 __author__ = 'Andreas Pfeiffer'
@@ -17,87 +17,54 @@ __license__ = 'Unknown'
 __maintainer__ = 'Andreas Pfeiffer'
 __email__ = 'andreas.pfeiffer@cern.ch'
 
-import cherrypy
-import logging
 
-import service
-import urllib2
 import re
 
-class easymon :
-    '''Docs server.
+import cherrypy
+import jinja2
+
+import http
+import service
+
+
+with open('index.tmpl', 'r') as f:
+    indexTemplate = jinja2.Template(f.read())
+
+
+class Easymon(object):
+    '''Easymon instance which fetches information from a given Nagios server.
     '''
 
-    def isValidFileName(self, fileName):
+    def __init__(self, urlTemplate):
+        self.urlTemplate = urlTemplate
 
-        fnRe = re.compile('^[a-zA-Z-_]*$')
-        res = False
-        if fnRe.match(fileName):
-            res = True
-        return res
 
     @cherrypy.expose
-    def index(self, *args, **kwargs) :
-        '''Redirects to index.html.
-        '''
-        req = {}
-        req[ 'fileName' ] = "main"
-        if "fileName" in kwargs.keys( ) :
-            req[ 'fileName' ] = kwargs[ 'fileName' ]
+    def index(self, fileName = 'main'):
+        if not re.match('^[a-zA-Z-_]*$', fileName):
+            raise cherrypy.NotFound()
 
-        logging.debug( "req is %s" % (str( req ),) )
+        return indexTemplate.render(body = http.HTTP().query(self.urlTemplate % fileName))
 
-        newPage = "getInfo"
-        if req.has_key('fileName'): newPage += '?fileName='+req['fileName']
 
-        raise cherrypy.HTTPRedirect( newPage )
+class EasymonServer(object):
+    '''Easymon parent server. This contains the real easymon servers, i.e.
+    /easymon/offline and /easymon/online, which map to the old /easymon
+    and /easymon_online. The index, by default, goes to the offline one.
+    '''
 
-    @cherrypy.expose
-    def getInfo(self, *args, **kwargs) :
+    offline = Easymon('http://cmsdbnagiosvm:8081/getFileMobile?fileName=%s')
+    online = Easymon('http://cmsdbnagiosvm:8091/getFileMobile?fileName=%s')
 
-        req = {}
-        req['fileName'] = "main"
-        if "fileName" in kwargs.keys( ) :
-            req[ 'fileName' ] = kwargs[ 'fileName' ]
-
-        logging.debug( "req is %s" % (str(req),) )
-
-        content = self.getNagiosInfo( **req )
-        indexPage = ''.join( open('index.tmpl','r').readlines() ).replace('{{main}}', content)
-
-        return indexPage
 
     @cherrypy.expose
-    def getNagiosInfo(self, *args, **kwargs):
+    def index(self):
+        raise cherrypy.HTTPRedirect('offline')
 
-        fileName="main"
-        if "fileName" in kwargs.keys():
-            fileName = kwargs['fileName']
-
-        if not self.isValidFileName( fileName ) :
-            logging.warning( 'illegal request for fileName: %s - reset to main' % (fileName,) )
-            fileName = 'main' # set default if illegal requests
-
-        url = 'http://cmsdbnagiosvm.cern.ch:8081/getFileMobile?fileName=%s' % (fileName,)
-        logging.debug( "url is %s" % (url,) )
-        try:
-            page =  urllib2.urlopen( url )
-            content = page.read()
-            # content = content.replace("index.html", "getNagiosInfo")
-            # print "got: ", content
-            return content
-        except Exception, e:
-            logging.error( "got %s when trying to retrieve %s" % (str(e), url) )
-            return str(e)
 
 def main() :
-
-    logging.basicConfig(
-        format='[%(asctime)s] %(levelname)s: %(message)s',
-        level=logging.DEBUG,
-    )
-    logging.info( 'starting service easymon' )
-    service.start( easymon( ) )
+    service.start( EasymonServer( ) )
 
 if __name__ == '__main__' :
     main( )
+

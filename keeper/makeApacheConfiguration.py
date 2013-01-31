@@ -75,7 +75,7 @@ frontends['cms-conddb-prod2'] = frontends['cmsdbfe2'] = frontends['vocms151']
 virtualHosts = {
     'cms-conddb-dev': {
         'backendHostnames': ['vocms145'],
-        'services': ['monitoring', 'prod'],
+        'services': ['monitoring', 'prod', 'easymon_online'],
     },
 
     'cms-pdmv-dev': {
@@ -261,6 +261,10 @@ services = {
         'backendHostnames': ['vocms226'],
         'backendPort': 80,
         'shibbolethGroups': ['zh'],
+    },
+
+    'easymon_online': {
+        'redirects': ['/easymon/online/'],
     },
 
     # PdmV group
