@@ -251,6 +251,7 @@ set terminal png
 set output "%s"
 set style fill solid 0.5
 set key left top
+set boxwidth 86400 absolute # maximum width: 86400 seconds = 1 day
 
 plot "%s" using 1:3 title 'Good files' with boxes lc rgb "green", \
      "%s" using 1:2 title 'Bad files' with boxes lc rgb "red"
