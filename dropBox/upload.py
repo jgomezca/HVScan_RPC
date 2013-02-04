@@ -8,7 +8,7 @@ __credits__ = ['Giacomo Govi', 'Salvatore Di Guida', 'Miguel Ojeda', 'Andreas Pf
 __license__ = 'Unknown'
 __maintainer__ = 'Miguel Ojeda'
 __email__ = 'mojedasa@cern.ch'
-__version__ = 5
+__version__ = 6
 
 
 import os
