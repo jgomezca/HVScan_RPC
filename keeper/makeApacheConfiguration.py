@@ -80,7 +80,7 @@ virtualHosts = {
 
     'cms-pdmv-dev': {
         'backendHostnames': ['vocms145'],
-        'services': ['golem', 'stats', 'pdmvprod', 'libs', 'valdb', 'theplan', 'speed', 'queue', 'ReleaseMonitoring', 'cms-service-reldqm/style', 'relmon', 'pdmvindex'],
+        'services': ['golem', 'stats', 'pdmvprod', 'libs', 'valdb', 'mcm', 'theplan', 'speed', 'queue', 'ReleaseMonitoring', 'cms-service-reldqm/style', 'relmon', 'pdmvindex'],
         # libs is used by valdb
     },
 
@@ -307,6 +307,13 @@ services = {
     'valdb': {
         'backendPort': config.servicesConfiguration['PdmV/valdb']['listeningPort'],
         'backendUrl': '/PdmV/valdb',
+        'shibbolethGroups': ['cms-web-access'],
+    },
+
+    'mcm': {
+        'backendHostnames': ['preptest'],
+        'backendPort': 443,
+        'backendUrl': '',
         'shibbolethGroups': ['cms-web-access'],
     },
 
