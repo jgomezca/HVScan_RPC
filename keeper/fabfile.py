@@ -1,6 +1,37 @@
 '''Fabfile used to automate deployment of frontends and backends.
 
-Usage example: $ fab deploy:level=pro,tag=v1.0
+Usage examples:
+
+  * Full deployment on production of v1.0:
+
+    $ fab deploy:level=pro,tag=v1.0
+
+    You must warn one day before running this, and avoid doing in on Fridays.
+
+
+  * Frontends-only deployment on production of v1.0:
+
+    $ deployFrontends:level=pro,tag=v1.0
+
+    This includes Shibboleth reconfiguration and restart, which implies
+    that users will see an automatic re-signIn. Even being automatic,
+    non-idempotent requests like POST could be lost as per CERN IT,
+    and therefore, this is non-transparent and the same rules as a full
+    deployment apply, read above.
+
+    Shibboleth requires reconfiguration if, for instance, a new domain
+    was added. If you only modify Apache's configuration, use the next one,
+    since it is much less invasive.
+
+
+  * Frontends-only deployment on production of v1.0,
+    without reconfiguring/restarting Shibboleth:
+
+    $ fab deployFrontends:level=pro,tag=v1.0,shib=no
+
+    This will only regenerate Apache's configuration and gracefully
+    restart it, which should be transparent for users. Use this when,
+    for instance, you just add a new proxy/service/rewrite rule in Apache.
 '''
 
 import os
@@ -44,10 +75,18 @@ def setup(tag):
 
 
 # Commands that actually deploy a frontend or a backend, independent of hostname
-def deployFrontend(tag):
+def deployFrontend(tag, shib = 'yes'):
     setup(tag)
-    sudo('%s all' % (os.path.join(keeperPath, 'makeApacheConfiguration.py')))
-    sudo('/etc/init.d/shibd restart')
+
+    if shib == 'yes':
+        sudo('%s shib' % (os.path.join(keeperPath, 'makeApacheConfiguration.py')))
+
+    sudo('%s httpd' % (os.path.join(keeperPath, 'makeApacheConfiguration.py')))
+    sudo('%s vhosts' % (os.path.join(keeperPath, 'makeApacheConfiguration.py')))
+
+    if shib == 'yes':
+        sudo('/etc/init.d/shibd restart')
+
     sudo('/etc/init.d/httpd graceful')
 
 def deployBackend(level, tag):
@@ -83,9 +122,9 @@ def disableBackend(level, tag, backendHostname):
 # Tasks that know where to deploy the frontends or backends for a given
 # production level
 @task
-def deployFrontends(level, tag):
+def deployFrontends(level, tag, shib = 'yes'):
     env.hosts = configuration[level]['frontends']
-    execute(deployFrontend, tag)
+    execute(deployFrontend, tag, shib)
 
 @task
 def deployBackends(level, tag):
@@ -95,7 +134,7 @@ def deployBackends(level, tag):
 
 # Task that deploy both frontends and backends for a given production level
 @task
-def deploy(level, tag):
+def deploy(level, tag, shib = 'yes'):
     deployBackends(level, tag)
-    deployFrontends(level, tag)
+    deployFrontends(level, tag, shib)
 
