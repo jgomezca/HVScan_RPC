@@ -404,15 +404,19 @@ Total [#total#]" } ], "title": { "text": "Stuff I'm thinking about, Tue May 18 2
                         index = index +1
                     # if we checked all lines and in all lines there were no errors
                     if found == index :
-                        if "".join(infoInLeftScreenPart).find("""<p class = "error">""") == -1:
-                            data[i][0][2]["error"] = 0
+                        # If there was already an error in the times/gaps (the error coming from isTimeConsistent)
+                        # we keep always the error. If not, and there is no error in the long tail, we keep the 0 (no error).
+                        # However, if there was an error in the long tail, we mark it as a warning.
+                        if data[i][0][2]["error"] != 1 and "".join(infoInLeftScreenPart).find("""<p class = "error">""") != -1:
+                            data[i][0][2]["error"] = 2
                         #leave information as it was 
                         data[i][0][0] = data[i][0][0]
                         data[i][0][1] = data[i][0][1]
                     #if we found error or few errors
                     else:
-                        if "".join(infoInLeftScreenPart).find("""<p class = "error">""") == -1:
-                            data[i][0][2]["error"] = 0
+                        # same as above
+                        if data[i][0][2]["error"] != 1 and "".join(infoInLeftScreenPart).find("""<p class = "error">""") != -1:
+                            data[i][0][2]["error"] = 2
                         #add new(marke-up) information
                         data[i][0][0] = "".join(infoInLeftScreenPart)
                         data[i][0][1] = "".join(temp)
