@@ -270,6 +270,8 @@ Total [#total#]" } ], "title": { "text": "Stuff I'm thinking about, Tue May 18 2
                     rememberTheDate = infoInRightScreenPart[index +1]
                 # if we found an error
                 if infoInRightScreenPart[index].find("ERROR:") != -1 :
+                    # if we find an error, always override any previous value
+                    data[0][2]["error"] = 1
                     item = '<a href="#error'+str(index)+'"><p class="error"> &nbsp; - &nbsp; '+rememberTheDate+" ("+str(index)+")</p></a>"
                     if rememberTheDate :
                         if rememberTheDate  in errLeft.keys():       # store only the first link for each timestamp
@@ -278,7 +280,6 @@ Total [#total#]" } ], "title": { "text": "Stuff I'm thinking about, Tue May 18 2
                             errLeft[rememberTheDate] = [item]
                     # update the shortList (left side of page)
                     foundErr, infoInLeftScreenPart = self._updateShortList(infoInLeftScreenPart, rememberTheDate, index, 'error')
-                    data[0][2]["error"] = foundErr
                     # mark-up right page part error line with adding html class 
                     tempR = '<a name="error'+str(index)+'"><p class = "error">' + infoInRightScreenPart[index] + "</p></a><br>"
                     # append that line to data
@@ -287,6 +288,10 @@ Total [#total#]" } ], "title": { "text": "Stuff I'm thinking about, Tue May 18 2
                 else:
                     # if there is warning in that line 
                     if infoInRightScreenPart[index].find("WARNING:") != -1 :
+                        # if we find a warning and the previous value was not error,
+                        # override with warning.
+                        if data[0][2]["error"] != 1:
+                            data[0][2]["error"] = 2
                         item = '<a href="#warning'+str(index)+'"><p class="warning"> &nbsp; - &nbsp; '+rememberTheDate+" ("+str(index)+")</p></a>"
                         if rememberTheDate :
                             if rememberTheDate  in warnLeft.keys():       # store only the first link for each timestamp
@@ -295,7 +300,6 @@ Total [#total#]" } ], "title": { "text": "Stuff I'm thinking about, Tue May 18 2
                                 warnLeft[rememberTheDate] = [item]
                         # update the shortList (left side of page)
                         foundErr, infoInLeftScreenPart = self._updateShortList(infoInLeftScreenPart, rememberTheDate, index, 'warning')
-                        data[0][2]["error"] = foundErr
                         # mark-up right page part warning line with adding html class
                         tempR = '<a name="warning'+str(index)+'"><p class = "warning">' + infoInRightScreenPart[index] + "</p></a><br>"
                         # append that line to data
@@ -305,8 +309,6 @@ Total [#total#]" } ], "title": { "text": "Stuff I'm thinking about, Tue May 18 2
                         # leave information the same but add line brakes 
                         temp.append("<p>" + infoInRightScreenPart[index] + "</p>")
             # update data with all made modifications to it
-            if "".join(infoInLeftScreenPart).find('<p class = "warning">') == -1 and "".join(infoInLeftScreenPart).find('<p class = "error">') == -1:
-                data[0][2]["error"] = 0
             for ind in range(len(infoInLeftScreenPart)):
                 if not infoInLeftScreenPart[ind].endswith("<br>")  and not infoInLeftScreenPart[ind].endswith("</p>"): 
                     infoInLeftScreenPart[ind] = infoInLeftScreenPart[ind] + "<br>"
