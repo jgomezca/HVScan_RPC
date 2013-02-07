@@ -218,7 +218,33 @@ class popconSQL:
         conn.close()
     pass
         
- def isTimeConsistent(self, logTail=None, tolerance=3.9, minInterval=60*60*8):
+ def isTimeConsistent(self, logTail=None, tolerance=0.5, minInterval=60*60*2):
+    '''The normal gap is the maximum latency between 2 consecutive jobs
+    in the latest 5. The delta time is the difference between the latest job
+    and the current time. If this delta is smaller than a 50% more than
+    the normal gap, we consider the time is consistent (not an error).
+    If, otherwise, is higher than the normal gap but still smaller than
+    the minInterval, we still consider the time is consistent. In other case,
+    return an error.
+
+    The minInterval is meant to not to raise false positives for run-based O2Os
+    which could be triggered at any time (and therefore there is no relation
+    between the latencies of the latest runs/jobs).
+
+    On the other hand, the tolerance is meant to allow for a safety margin
+    before marking time-based O2O as in error state. They run at 2 hour
+    interval, so if the next one does not finish within 3 hours, we raise.
+
+    Therefore the minInterval should be less than the minimum expected latency
+    including the tolerance margin. The minInterval should be larger than
+    the minimum of the expected latencies of all time-based jobs.
+
+    TODO: Check the run value in the header of the short tail for
+    run-based O2Os in order to avoid false positives by checking the start/stop
+    time of the run (e.g. if we have several short runs followed by
+    a very long run).
+    '''
+
     tStamps = self.__popconUtils.logToTimeStamps(logTail)
     tDelta = datetime.datetime.now() - tStamps[-1]
     #tNormalGap = tStamps[-1] - tStamps[-2]
