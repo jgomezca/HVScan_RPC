@@ -1,4 +1,4 @@
-import datetime
+import dateutil.parser
 
 class PopConUtils(object):
 
@@ -6,11 +6,11 @@ class PopConUtils(object):
         self.__weekDays = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']
         self.__months = ['dec', 'jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov']
    
-    def logToTimeStamps(self, logTail, timeFormat="%a %b %d %H:%M:%S %Z %Y"):
+    def logToTimeStamps(self, logTail):
         timeStamps = []
         logList = logTail.strip().split('\n')
         timeList = [logList[i] for i in range(len(logList)) if i % 2 != 0]
-        timeStamps = [datetime.datetime.strptime(tStamp, timeFormat) for tStamp in timeList]
+        timeStamps = [dateutil.parser.parse(tStamp) for tStamp in timeList]
         return timeStamps
         
 # for testing:

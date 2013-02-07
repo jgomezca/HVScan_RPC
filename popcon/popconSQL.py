@@ -4,6 +4,7 @@ import re
 import time
 import json
 import datetime
+import dateutil.tz
 
 import popconUtils
 try:
@@ -246,7 +247,12 @@ class popconSQL:
     '''
 
     tStamps = self.__popconUtils.logToTimeStamps(logTail)
-    tDelta = datetime.datetime.now() - tStamps[-1]
+
+    # Get the current time in UTC as an aware datetime
+    utcnow = datetime.datetime.utcnow()
+    utcnow = utcnow.replace(tzinfo = dateutil.tz.tzutc())
+
+    tDelta = utcnow - tStamps[-1]
     #tNormalGap = tStamps[-1] - tStamps[-2]
     tNormalGap = max([tStamps[-1] - tStamps[-2], tStamps[-2] - tStamps[-3],tStamps[-3] - tStamps[-4]])
     if tDelta.seconds < tNormalGap.seconds * tolerance + tNormalGap.seconds:
