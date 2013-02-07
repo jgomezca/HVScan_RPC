@@ -378,7 +378,6 @@ Total [#total#]" } ], "title": { "text": "Stuff I'm thinking about, Tue May 18 2
                                 if infoInLeftScreenPart[j].find(rememberTheDate) != -1:
                                     if infoInLeftScreenPart[j].find("""<p class = "error">""") == -1 and infoInLeftScreenPart[j].find("</p>") == -1 and rememberTheDate != "":
                                         tempL = """<p class = "error">""" + infoInLeftScreenPart[j] + "</p>"
-                                        data[0][2]["error"] = "1"
                                         infoInLeftScreenPart[j] = tempL
                                 # if we did not found it leave data as it was just add line brakes
                                 if infoInLeftScreenPart[j].find("<br>") == -1  and infoInLeftScreenPart[j].find("</p>") == -1:
