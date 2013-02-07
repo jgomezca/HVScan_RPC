@@ -1,26 +1,26 @@
 
 /*------------------------------------*\
-	CHART
+    CHART
 \*------------------------------------*/
 .chart {
-	width:100%;
-	border-right:1px solid #ddd;
-	float:left;
-	margin-bottom:5px;
-	display:inline;
-	background:#aaa;
+    width:100%;
+    border-right:1px solid #ddd;
+    float:left;
+    margin-bottom:5px;
+    display:inline;
+    background:#aaa;
 }
 .chart .bar {
-	color:#0ff;
-	background:#09f;
-	text-align:center;
-	padding:2px 0;
-	display:block;
+    color:#0ff;
+    background:#09f;
+    text-align:center;
+    padding:2px 0;
+    display:block;
 
-	text-shadow:1px 1px 1px rgba(0,0,0,0.2);
-	-mozilla-border-radius:2px;
-	-webkit-border-radius:2px;
-	border-radius:2px;
-	background: -webkit-gradient(linear, left top, left bottom, from(#09f), to(#0cf));
-	-webkit-box-reflect:below 0 -webkit-gradient(linear, left top, left bottom, from(rgba(0,0,0,0)), to(rgba(0,0,0,0.25)));
+    text-shadow:1px 1px 1px rgba(0,0,0,0.2);
+    -mozilla-border-radius:2px;
+    -webkit-border-radius:2px;
+    border-radius:2px;
+    background: -webkit-gradient(linear, left top, left bottom, from(#09f), to(#0cf));
+    -webkit-box-reflect:below 0 -webkit-gradient(linear, left top, left bottom, from(rgba(0,0,0,0)), to(rgba(0,0,0,0.25)));
 }
