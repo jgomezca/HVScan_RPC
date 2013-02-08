@@ -50,10 +50,6 @@ class Collection(object):
         return '<html>{items}</html>'.format(**vars())
 
 
-class Root(object):
-    pass
-
-
 def main():
     root = Collection()
     root.sidewinder = Resource({'color': 'red', 'weight': 176, 'type': 'stable'})
