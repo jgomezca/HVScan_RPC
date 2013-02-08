@@ -1,5 +1,9 @@
 #!/usr/bin/env python
-'''Example to access a webpage behind CERN SSO using pycurl and the get-cern-sso-package.
+'''Pycurl CERN SSO Client example.
+
+Requires the get-cern-sso-package.
+
+See: http://linux.web.cern.ch/linux/docs/cernssocookie.shtml
 '''
 
 __author__ = 'Miguel Ojeda'
@@ -8,7 +12,6 @@ __credits__ = ['Miguel Ojeda', 'Andreas Pfeiffer']
 __license__ = 'Unknown'
 __maintainer__ = 'Miguel Ojeda'
 __email__ = 'mojedasa@cern.ch'
-__version__ = 6
 
 
 import subprocess
