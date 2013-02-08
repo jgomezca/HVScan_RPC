@@ -27,3 +27,20 @@ Now you can open easily the code of the services in any computer and develop the
 
 This just works because a git repository is just a set of normal files in the filesystem.
 
+
+## More on git
+
+The best quick tutorial, in the sense that it is web-based interactive and you can even type commands is:
+
+  * <http://try.github.com/>
+
+The best book (which is also a long tutorial itself), which is also the official one and it is free:
+
+  * <http://git-scm.com/book>
+
+Direct download links for the various formats offered are:
+
+  * [pdf](https://github.s3.amazonaws.com/media/progit.en.pdf)
+  * [epub](https://github.s3.amazonaws.com/media/progit.epub)
+  * [mobi](https://github.s3.amazonaws.com/media/pro-git.en.mobi)
+
