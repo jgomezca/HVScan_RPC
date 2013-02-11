@@ -26,14 +26,14 @@ class Curler( object ) :
 def test() :
     from config import test
 
-    url = 'https://cern.ch'
+    url = 'https://user.web.cern.ch/user/Welcome.asp'
 
-    c = Curler()
+    c = Curler(test())
     print " url = ", url, ' returned ', len( c.get(url) ), ' bytes.'
 
-    url = 'https://cms-conddb-dev.cern.ch/getLumi'
+    url = 'https://cms-conddb-dev.cern.ch/getLumi/'
 
-    print " url = ", url, ' returned ', len( c.get( url ) ), ' bytes.'
+    print " url = ", url, ' returned ', len( c.get( url ) ), ' items in the JSON list.'
 
 if __name__ == '__main__' :
     test( )
