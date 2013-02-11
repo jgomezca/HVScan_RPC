@@ -32,7 +32,6 @@ def test() :
     print " url = ", url, ' returned ', len( c.get(url) ), ' bytes.'
 
     url = 'https://cms-conddb-dev.cern.ch/getLumi'
-    data = [ () ]
 
     print " url = ", url, ' returned ', len( c.get( url ) ), ' bytes.'
 
