@@ -1,5 +1,7 @@
 import http
+import service
 import json
+import logging
 
 class Curler( object ) :
     def __init__(self, config) :
@@ -13,7 +15,18 @@ class Curler( object ) :
         if data is not None:
             data = dict(data)
 
-        result = self.curl.query(url, data)
+        try:
+            result = self.curl.query(url, data)
+        except http.HTTPError as e:
+            if e.code == 404:
+                logging.warning('We got 404 Not Found when querying %s; therefore, we probably lost the session due to a timeout (something went really slow before this call -- e.g. queries to Oracle). We will retry to signIn and do the query again, once.', url)
+                baseUrl = url.rsplit('/', 1)[0]
+                logging.info('Calculated baseUrl = %s', baseUrl)
+                self.curl.query('%s/signIn' % baseUrl, {
+                    'username': service.secrets['onlineUser']['user'],
+                    'password': service.secrets['onlineUser']['password'],
+                })
+                result = self.curl.query(url, data)
 
         try :
             result = json.loads(result)
