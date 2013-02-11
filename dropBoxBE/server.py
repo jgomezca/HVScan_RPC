@@ -85,6 +85,9 @@ def main():
     elif fqdn == 'vocms226.cern.ch':
         logging.info('Using offline configuration.')
         dropBoxConfig = config.offline()
+    elif fqdn == 'vocms225.cern.ch':
+        logging.warning('Using offline configuration (this is the hot-spare! -- should not be started unless something happened with vocms226).')
+        dropBoxConfig = config.offline()
     elif fqdn.endswith('.cern.ch'):
         logging.info('Using test configuration.')
         dropBoxConfig = config.test()
