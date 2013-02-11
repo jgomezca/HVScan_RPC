@@ -27,6 +27,9 @@ class Curler( object ) :
                     'password': service.secrets['onlineUser']['password'],
                 })
                 result = self.curl.query(url, data)
+            else:
+                # In other cases, raise as usual
+                raise
 
         try :
             result = json.loads(result)
