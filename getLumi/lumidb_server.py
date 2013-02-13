@@ -44,7 +44,11 @@ class LumiDB:
     def showHelp(self) :
 
         # url = 'https://cms-conddb-dev.cern.ch'
-        url = 'https://apvm5be'
+        url = ''
+
+        # We could use relative links as well, to avoid relying on
+        # the service name; however, the links would be more confusing
+        # to the users (e.g. "./?Runs..."), and therefore it was left as it is.
 
         helpMsg = """
         <p>
