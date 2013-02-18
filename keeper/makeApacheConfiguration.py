@@ -175,8 +175,8 @@ virtualHosts['cms-pop-prod2'] = dict(virtualHosts['cms-pop-prod'])
 # and the old, production one in -int without Shibboleth; both in /gtc).
 #
 # If 'backendPort' is found, the service will be added in the addingSlashes,
-# proxyPass and redirectToHttps sections. The 'backendHostnames', 'backendPort'
-# and 'backendUrl' will be used in the proxyPass section.
+# proxyPass and redirectToHttps sections. The 'backendHostnames', 'backendPort',
+# 'backendUrl' and 'backendTimeout' will be used in the proxyPass section.
 #
 #   If the 'backendHostnames' is not found, the default is the one
 #   in the Virtual Hosts entry. How do you know whether to it here or
@@ -690,7 +690,7 @@ redirectToHttps = '''
 '''
 
 proxyPass = '''
-    ProxyPass        /{url} {protocol}://{backendHostname}.cern.ch:{backendPort}{backendUrl} retry=0
+    ProxyPass        /{url} {protocol}://{backendHostname}.cern.ch:{backendPort}{backendUrl} retry=0 {timeout}
     ProxyPassReverse /{url} {protocol}://{backendHostname}.cern.ch:{backendPort}{backendUrl}
 '''
 
@@ -707,7 +707,7 @@ proxyPassLoadBalanced = '''
 '''
 
 balancerMember = '''
-        BalancerMember {protocol}://{backendHostname}.cern.ch:{backendPort}{backendUrl} route={route} retry=0
+        BalancerMember {protocol}://{backendHostname}.cern.ch:{backendPort}{backendUrl} route={route} retry=0 {timeout}
 '''
 
 balancerManager = '''
@@ -1136,6 +1136,11 @@ def makeApacheConfiguration(frontend, virtualHost):
 
             if 'backendUrl' not in services[service]:
                 services[service]['backendUrl'] = '/' + services[service]['url']
+
+            if 'backendTimeout' in services[service]:
+                services[service]['timeout'] = 'timeout=%s' % services[service]['backendTimeout']
+            else:
+                services[service]['timeout'] = ''
 
             if len(backendHostnames) == 1:
                 infoMap['proxyPass'] += proxyPass.format(backendHostname = backendHostnames[0], **services[service])
