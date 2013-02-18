@@ -314,6 +314,10 @@ services = {
         'backendHostnames': ['preptest'],
         'backendPort': 443,
         'backendUrl': '',
+        # FIXME: Temporary fix until mcm moves the work out of the webserver
+        #        using a subprocess (next goal) or implementing a queue
+        #        (final goal). The longest request takes around 40 minutes now.
+        'backendTimeout': 60 * 50, # 50 minutes
         'shibbolethGroups': ['cms-web-access'],
     },
 
