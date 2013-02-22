@@ -12,9 +12,18 @@ import StatusUpdater
 from conditionDatabase import ConditionDBChecker
 import runData
 from tier0 import Tier0Handler
+from tier0 import Tier0Error
 
 import database
 import service
+
+
+# Do not use -1 (used by getDestSince() to flag other error).
+# Do not use None (the DB already uses NULL for not-uploaded fcsr -- and
+# in any case it would fail since we do not allow to update with NULL
+# in the frontend)
+INVALID_FCSR = -10
+UNREACHABLE_FCSR = -20
 
 
 def isWarningPCL(failedDuplicatedTags, dependencies):
@@ -289,6 +298,8 @@ class Dropbox(object) :
         syncSince = firstSince
         if syncTarget != 'offline':
             syncValue = self.runChk[syncTarget]
+            if syncValue in (INVALID_FCSR, UNREACHABLE_FCSR):
+                return syncValue
             if syncValue is None:
                 fileLogger.error('Synchronization to %s failed since syncValue is None.' % syncTarget)
                 return None
@@ -357,6 +368,16 @@ class Dropbox(object) :
         for dTag, tagSpec in destTags.items():
             syncTarget = tagSpec[ 'synchronizeTo' ]
             destSince = self.getDestSince( fileHash, syncTarget, fileLogger )  # check and validate, return correct value
+            if destSince == INVALID_FCSR:
+                self.logger.error('We needed the firstConditionSafeRun from Tier-0, but it is invalid (see above).')
+                self.updateFileStatus( fileHash, Constants.INVALID_FCSR_FROM_TIER0 )
+                errorInExporting = True
+                continue
+            if destSince == UNREACHABLE_FCSR:
+                self.logger.error('We needed the firstConditionSafeRun from Tier-0, but it was not available (see above).')
+                self.updateFileStatus( fileHash, Constants.UNREACHABLE_FCSR_FROM_TIER0 )
+                errorInExporting = True
+                continue
             if destSince == -1:
                 self.logger.warning( 'Skipping exportation of tag %s to %s' % (dTag, syncTarget))
                 continue
@@ -392,6 +413,16 @@ class Dropbox(object) :
                 depTags = tagSpec.get('dependencies', {})
                 for depTag, depSynch in depTags.items():
                     depSince = self.getDestSince( fileHash, depSynch, fileLogger )
+                    if depSince == INVALID_FCSR:
+                        self.logger.error('We needed the firstConditionSafeRun from Tier-0, but it is invalid (see above).')
+                        self.updateFileStatus( fileHash, Constants.INVALID_FCSR_FROM_TIER0 )
+                        errorInExporting = True
+                        continue
+                    if depSince == UNREACHABLE_FCSR:
+                        self.logger.error('We needed the firstConditionSafeRun from Tier-0, but it was not available (see above).')
+                        self.updateFileStatus( fileHash, Constants.UNREACHABLE_FCSR_FROM_TIER0 )
+                        errorInExporting = True
+                        continue
                     if depSince == -1:
                         self.logger.warning( 'Skipping duplication of tag %s to %s' % (depTag, depSynch))
                         continue
@@ -469,8 +500,19 @@ class Dropbox(object) :
             t0DataSvc = Tier0Handler( self.config.src,
                                       self.config.timeout, self.config.retries, self.config.retryPeriod,
                                       self.config.proxy, False )
-            fcsr = t0DataSvc.getFirstSafeRun()
-            self.logger.debug('found firstConditionSafeRun from Tier-0 to be %i ' % (fcsr,) )
+            try:
+                fcsr = t0DataSvc.getFirstSafeRun()
+                self.logger.debug('found firstConditionSafeRun from Tier-0 to be %i ' % (fcsr,) )
+            except ValueError:
+                # We got an answer but it is invalid. So far this usually means
+                # "None" which is not JSON, when the Tier0 is stopped.
+                fcsr = INVALID_FCSR
+                self.logger.warning('invalid firstConditionSafeRun from Tier-0')
+            except Tier0Error:
+                # Impossible to get anything from the server after retries,
+                # i.e. unreachable, so no data.
+                fcsr = UNREACHABLE_FCSR
+                self.logger.warning('Tier-0 is unreachable, i.e. no firstConditionSafeRun')
 
         # replay mode
         else:

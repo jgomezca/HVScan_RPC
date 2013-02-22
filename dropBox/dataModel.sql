@@ -40,7 +40,7 @@ CREATE TABLE runLog (
     creationTimestamp TIMESTAMP NOT NULL CONSTRAINT ckRunLogCrets CHECK (creationTimestamp > to_date('2012-01-01', 'YYYY-MM-DD')),
     backend VARCHAR2(20 BYTE) NOT NULL,
     statusCode NUMBER NOT NULL,
-    firstConditionSafeRun NUMBER CONSTRAINT ckFirstConditionSafeRun CHECK (firstConditionSafeRun >= 0),
+    firstConditionSafeRun NUMBER CONSTRAINT ckFirstConditionSafeRun CHECK (firstConditionSafeRun >= 0 or firstConditionSafeRun = -10 or firstConditionSafeRun = -20),
     hltRun NUMBER CONSTRAINT ckHltRun CHECK (hltRun >= 0),
     downloadLog BLOB,
     globalLog BLOB,
