@@ -23,6 +23,7 @@ import sqlite3
 
 import typeMatch
 import service
+import tier0
 
 import config
 import dropBox
@@ -162,6 +163,32 @@ def checkContents(fileHash, dataPath, metadata, backend):
 
             for dependentTag, synchronizeTo in synchronizationDict.get('dependencies', {}).items():
                 checkSynchronization(synchronizeTo, destinationDatabase, dependentTag, gtHandle, productionGTsDict)
+
+        # firstConditionSafeRun from Tier-0 not available -- only checked
+        # if it is going to be used, i.e. if there is any synchronization
+        # to prompt or pcl.
+        usingFcsr = False
+        for tag, synchronizationDict in metadata['destinationTags'].items():
+            if synchronizationDict['synchronizeTo'] in ('prompt', 'pcl'):
+                usingFcsr = True
+                break
+
+            for dependentTag, synchronizeTo in synchronizationDict.get('dependencies', {}).items():
+                if synchronizeTo in ('prompt', 'pcl'):
+                    usingFcsr = True
+                    break
+
+        if usingFcsr:
+            try:
+                tier0.Tier0Handler(config.tier0URL, 5, 2, 5, None, False).getFirstSafeRun()
+            except ValueError:
+                # We got an answer but it is invalid. So far this usually means
+                # "None" which is not JSON, when the Tier0 is stopped.
+                raise dropBox.DropBoxError('Impossible to upload to synchronize to prompt or pcl while Tier-0 is returning an invalid First Condition Safe Run. %s' % config.fcsrProblemMessage)
+            except tier0.Tier0Error:
+                # Impossible to get anything from the server after retries,
+                # i.e. unreachable, so no data.
+                raise dropBox.DropBoxError('Impossible to upload to synchronize to prompt or pcl while Tier-0 is unreachable. Try again after a bit. If this does not help: %s' % config.fcsrProblemMessage)
 
     finally:
         db.close()

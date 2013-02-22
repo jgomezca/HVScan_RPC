@@ -20,9 +20,13 @@ group = 'cms-cond-dropbox'
 
 shifterPhoneSMSAddress = '0041764875576@mail2sms.cern.ch'
 
+tier0URL = 'https://samir-wmcore.cern.ch/t0wmadatasvc/replay'
+
 
 # Messages
 notifiedErrorMessage = 'This has been notified and we will try to fix it. However, if you urgently need assistance, please write an email to cms-offlinedb-exp@cern.ch and cms-cond-dev@cern.ch. If you need immediate assistance, you can call the Offline DB expert on call (+41 22 76 70817, or 70817 from CERN; check https://twiki.cern.ch/twiki/bin/viewauth/CMS/DBShifterHelpPage if it does not work).'
+
+fcsrProblemMessage = 'Please contact the Tier-0 experts. If we are in data taking, please *also* contact the Offline DB experts as well at cms-offlinedb-exp@cern.ch (if you need immediate assistance, you can call the Offline DB expert on call: +41 22 76 70817, or 70817 from CERN; check https://twiki.cern.ch/twiki/bin/viewauth/CMS/DBShifterHelpPage if it does not work).'
 
 
 # Notifications
