@@ -41,7 +41,7 @@ class Easymon(object):
 
     @cherrypy.expose
     def index(self, fileName = 'main'):
-        if not re.match('^[a-zA-Z-_]*$', fileName):
+        if not re.match('^[0-9a-zA-Z-_]*$', fileName):
             raise cherrypy.NotFound()
 
         return indexTemplate.render(body = http.HTTP().query(self.urlTemplate % fileName))
