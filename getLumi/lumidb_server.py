@@ -9,7 +9,7 @@ import time
 import logging
 
 import cherrypy
-import LumiDB_SQL
+import LumiDBNew_SQL as LumiDB_SQL
 
 import service
 

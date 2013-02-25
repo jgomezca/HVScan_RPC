@@ -6,13 +6,9 @@ import logging
 import cx_Oracle
 
 import coral
-from RecoLuminosity.LumiDB import sessionManager,lumiTime,inputFilesetParser,csvSelectionParser,selectionParser,csvReporter,argparse,CommonUtil,lumiCalcAPI,lumiReport,lumiCorrections
+from RecoLuminosity.LumiDB import sessionManager,lumiTime,CommonUtil,lumiCalcAPI,lumiReport,lumiCorrections,revisionDML
 
 from RecoLuminosity.LumiDB.lumiQueryAPI import *
-
-import service
-
-conn_string = service.getCxOracleConnectionString(service.secrets['connections']['pro'])
 
 class NewLumiDB(object):
 
@@ -122,109 +118,66 @@ class NewLumiDB(object):
         driftcorrections = None
         correctionv3     = False
         rruns=irunlsdict.keys()
+
         schema=session.nominalSchema()
         session.transaction().start(True)
+
         if correctionv3:
             cterms=lumiCorrections.nonlinearV3()
         else: # default
             cterms=lumiCorrections.nonlinearV2()
         finecorrections=lumiCorrections.correctionsForRangeV2(schema,rruns,cterms) # constant+nonlinear corrections
         driftcorrections=lumiCorrections.driftcorrectionsForRange(schema,rruns,cterms)
+
+        (datatagid,datatagname)=revisionDML.currentDataTag(session.nominalSchema())
+        dataidmap=revisionDML.dataIdsByTagId(session.nominalSchema(),datatagid,runlist=rruns,withcomment=False)
+        GrunsummaryData=lumiCalcAPI.runsummaryMap(session.nominalSchema(),irunlsdict)
+
         session.transaction().commit()
 
-        result = ""
-        if action == 'delivered':
-            session.transaction().start(True)
-            #print irunlsdict
-            result=lumiCalcAPI.deliveredLumiForRange(session.nominalSchema(),irunlsdict,amodetag=amodetag,egev=beamenergy,beamstatus=pbeammode,norm=normfactor,finecorrections=finecorrections,driftcorrections=driftcorrections,usecorrectionv2=True)
-            session.transaction().commit()
+        # now get the data and sum up the delivered/recorded lumis:
+        session.transaction().start(True)
+        resultInfo=lumiCalcAPI.lumiForIds(session.nominalSchema(),irunlsdict,dataidmap,GrunsummaryData)
+        # result=lumiCalcAPI.beamForRange( session.nominalSchema(), irunlsdict )
+        session.transaction().commit()
 
-            result = formatDelivered(result,iresults,scalefactor)[0][2]
+        #    output:
+        # result {run:[[lumilsnum(0),cmslsnum(1),timestamp(2),beamstatus(3),beamenergy(4),
+        #               deliveredlumi(5),recordedlumi(6),calibratedlumierror(7),
+        #               (bxidx,bxvalues,bxerrs)(8),(bxidx,b1intensities,b2intensities)(9),
+        #               fillnum(10),ncollidingbunches(11)]...]}
+        # special meanings:
+        # {run:None}  None means no run in lumiDB,
+        # {run:[]} [] means no lumi for this run in lumiDB
+        # {run:[....deliveredlumi(5),recordedlumi(6)None]} means no trigger in lumiDB
+        # {run:cmslsnum(1)==0} means either not cmslsnum or is cms but not selected, therefore set recordedlumi=0,efflumi=0
+        # lumi unit: 1/ub
+
+        recLumi = 0
+        delLumi = 0
+        for ls in resultInfo[runNumber]:
+            if ls[5] is not None: delLumi += ls[5]
+            if ls[6] is not None: recLumi += ls[6]
+
+        result = 0
+        if action == 'delivered':
+            result = delLumi
 
         if action == 'overview':
-            session.transaction().start(True)
-            result=lumiCalcAPI.lumiForIds(session.nominalSchema(),irunlsdict)
-            # result=lumiCalcAPI.beamForRange( session.nominalSchema(), irunlsdict )
-            session.transaction().commit()
-
-            # [[Run:Fill,DeliveredLS,Delivered(/ub),SelectedLS,Recorded(/ub)]]
-            result = formatOverview(result,iresults,scalefactor)[0][2]
+            result = delLumi
 
         if action == 'recorded': # recorded actually means effective because it needs to show all the hltpaths...
-            hltpath = None
-            session.transaction().start(True)
-            hltname=hltpath
-            hltpat=None
-            if hltname is not None:
-                if hltname=='*' or hltname=='all':
-                    hltname=None
-                elif 1 in [c in hltname for c in '*?[]']: #is a fnmatch pattern
-                    hltpat=hltname
-                    hltname=None
-            result=lumiCalcAPI.effectiveLumiForIds(session.nominalSchema(),irunlsdict)
-            session.transaction().commit()
-
-            # that doesn't quite work, as it's one row for each HLT path ... :(
-            result = formatRecorded(result,iresults,scalefactor)[0][7]
+            result = recLumi
 
         del session
-        del svc
 
         # print  'got:', result, 'for ', runNumber, 'which is of type', type(runNumber)
 
         return result
 
-
-class LumiDB_SQL(object):
-
-    def __init__(self):
-        pass
-
-    def getRunNumbers(self, startTime, endTime):
-
-        authfile="./auth.xml"
-
-        conn = cx_Oracle.connect( conn_string )
-        startTime = startTime + ":00.000000"
-        endTime = endTime + ":00.000000"
-        jobList = [ ]
-        runNumb = [ ]
-
-        sqlstr = """
-SELECT TO_CHAR(runtable.runnumber)
-FROM CMS_RUNINFO.RUNNUMBERTBL runtable, CMS_WBM.RUNSUMMARY wbmrun
-WHERE (
-wbmrun.starttime BETWEEN
-TO_TIMESTAMP(:startTime, 'DD-Mon-RR HH24:MI:SS.FF') AND
-TO_TIMESTAMP(:stopTime, 'DD-Mon-RR HH24:MI:SS.FF'))
-AND (runtable.sequencename = 'GLOBAL-RUN-COSMIC' OR runtable.sequencename = 'GLOBAL-RUN')
-AND (wbmrun.key = '/GLOBAL_CONFIGURATION_MAP/CMS/COSMICS/GLOBAL_RUN'
-OR wbmrun.key = '/GLOBAL_CONFIGURATION_MAP/CMS/CENTRAL/GLOBAL_RUN')
-AND runtable.runnumber = wbmrun.runnumber
-"""
-        try :
-            curs = conn.cursor( )
-            params = {"startTime" : startTime, "stopTime" : endTime}
-            curs.prepare( sqlstr )
-            curs.execute( sqlstr, params )
-
-            for row in curs :
-                runNumb.append( row[ 0 ] )
-            jobList.append( {'runnumbers' : runNumb} )
-        except cx_Oracle.DatabaseError, e :
-            msg = "getRunNumber> Error from DB : " + str( e )
-            logging.error( msg )
-            logging.error( "query was: '" + sqlstr + "'" )
-            print "Unexpected error:", str( e ), sys.exc_info( )
-            raise
-        finally :
-            conn.close( )
-        return runNumb
-
 if __name__ == "__main__":
-    LumiDB_SQL	= NewLumiDB_SQL()
+    LumiDB_SQL	= NewLumiDB()
     #print LumiDB_SQL.getRunNumber()
     #runNumbersString    =   LumiDB_SQL.getRunNumberWhereClause(runNumbRance="160001-160010")
-    runNumbList         =   LumiDB_SQL.getRunNumber(startTime='22-Oct-12 00:00', endTime='23-Oct-12 10:00')
-    runNumbersString    =   LumiDB_SQL.getRunNumberString(runNumbList=runNumbList)
-    print LumiDB_SQL.getDeliveredLumiForRun(runNumbers=runNumbersString)
+    import pprint
+    pprint.pprint( LumiDB_SQL.getDeliveredLumiSummaryByRun(runNumbers=[190595]) )
