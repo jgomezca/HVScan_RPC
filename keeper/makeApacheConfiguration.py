@@ -88,8 +88,9 @@ virtualHosts = {
 
     'cms-pdmv-dev': {
         'backendHostnames': ['vocms145'],
-        'services': ['golem', 'stats', 'pdmvprod', 'libs', 'valdb', 'mcm', 'theplan', 'speed', 'queue', 'ReleaseMonitoring', 'cms-service-reldqm/style', 'relmon', 'pdmvindex'],
+        'services': ['golem', 'stats', 'pdmvprod', 'libs', 'valdb', 'mcm/admin', 'mcm', 'theplan', 'speed', 'queue', 'ReleaseMonitoring', 'cms-service-reldqm/style', 'relmon', 'pdmvindex'],
         # libs is used by valdb
+        # 'mcm/admin' must come before 'mcm'
     },
 
     # From the old cmstags.conf
@@ -318,6 +319,13 @@ services = {
         'backendPort': config.servicesConfiguration['PdmV/valdb']['listeningPort'],
         'backendUrl': '/PdmV/valdb',
         'shibbolethGroups': ['cms-web-access'],
+    },
+
+    'mcm/admin': {
+        'backendHostnames': ['preptest'],
+        'backendPort': 5984,
+        'backendUrl': '',
+        'shibbolethGroups': ['cms-pdmv-serv'],
     },
 
     'mcm': {
