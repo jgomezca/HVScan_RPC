@@ -16,6 +16,11 @@ import service
 import subprocess
 import csv
 
+
+import service
+
+conn_string = service.getCxOracleConnectionString(service.secrets['connections']['pro'])
+
 class LumiDB:
     errorMessage =" Error!!! Incorrect parameters! Possible arguments are:"\
                                   "    \n?Runs=xxx,xxx,xxx,....."\
@@ -235,6 +240,69 @@ class LumiDB:
         else:
             # return LumiDB_SQL.NewLumiDB( ).getRecordedLumiSummaryByRun( runNumbers=runListOK )
             raise cherrypy.HTTPError(405, 'recorded lumis not (yet?) supported ... ')
+
+    def normalizeRunNumbers(self, runNumbers):
+
+        allRuns = [ ]
+
+        # handle request with string for run numbers:
+        if type( runNumbers ) == type( "" ) or type( runNumbers ) == type( u"" ) :
+            for runNrIn in runNumbers.split( ',' ) :
+                if '-' in runNrIn :
+                    rStart, rEnd = runNrIn.split( '-' )
+                    allRuns += range( int( rStart ), int( rEnd ) + 1 )
+                else :
+                    allRuns.append( int( runNrIn ) )
+        # handle requests with lists of run numbers
+        elif type( runNumbers ) == type( [ ] ) :
+            allRuns = [ int( x ) for x in runNumbers ]
+        else :
+            logging.warning("++> Unknown type for runNumbers found: " + str(type(runNumbers)) )
+
+        return sorted(allRuns)
+
+    def getRunNumbers(self, startTime, endTime):
+
+        authfile="./auth.xml"
+
+        conn = cx_Oracle.connect( conn_string )
+        startTime = startTime + ":00.000000"
+        endTime = endTime + ":00.000000"
+        jobList = [ ]
+        runNumb = [ ]
+
+        sqlstr = """
+SELECT TO_CHAR(runtable.runnumber)
+FROM CMS_RUNINFO.RUNNUMBERTBL runtable, CMS_WBM.RUNSUMMARY wbmrun
+WHERE (
+wbmrun.starttime BETWEEN
+TO_TIMESTAMP(:startTime, 'DD-Mon-RR HH24:MI:SS.FF') AND
+TO_TIMESTAMP(:stopTime, 'DD-Mon-RR HH24:MI:SS.FF'))
+AND (runtable.sequencename = 'GLOBAL-RUN-COSMIC' OR runtable.sequencename = 'GLOBAL-RUN')
+AND (wbmrun.key = '/GLOBAL_CONFIGURATION_MAP/CMS/COSMICS/GLOBAL_RUN'
+OR wbmrun.key = '/GLOBAL_CONFIGURATION_MAP/CMS/CENTRAL/GLOBAL_RUN')
+AND runtable.runnumber = wbmrun.runnumber
+"""
+        try :
+            curs = conn.cursor( )
+            params = {"startTime" : startTime, "stopTime" : endTime}
+            curs.prepare( sqlstr )
+            curs.execute( sqlstr, params )
+
+            for row in curs :
+                runNumb.append( row[ 0 ] )
+            jobList.append( {'runnumbers' : runNumb} )
+        except cx_Oracle.DatabaseError, e :
+            msg = "getRunNumber> Error from DB : " + str( e )
+            logging.error( msg )
+            logging.error( "query was: '" + sqlstr + "'" )
+            # print "Unexpected error:", str( e ), sys.exc_info( )
+            raise
+        finally :
+            conn.close( )
+
+        return self.normalizeRunNumbers(runNumb)
+
 
 def main():
     logging.basicConfig(
