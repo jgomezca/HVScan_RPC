@@ -10,16 +10,12 @@ import time
 import logging
 
 import cherrypy
-import LumiDBNew_SQL as LumiDB_SQL
+import cx_Oracle
+import coral
 
 import service
 import subprocess
 import csv
-
-
-import service
-
-conn_string = service.getCxOracleConnectionString(service.secrets['connections']['pro'])
 
 class LumiDB:
     errorMessage =" Error!!! Incorrect parameters! Possible arguments are:"\
@@ -142,8 +138,7 @@ class LumiDB:
         if not self.checkTime( endTime ) :
             raise cherrypy.HTTPError( 405, "getRunList> Illegal end time given: %s " % (endTime,) )
 
-        LDB_SQL  = LumiDB_SQL.NewLumiDB()
-        runNumbers =   LDB_SQL.getRunNumbers(startTime= startTime, endTime=endTime)
+        runNumbers =   self.getRunNumbers(startTime= startTime, endTime=endTime)
         return runNumbers
 
     def checkTime(self, timeIn):
@@ -225,22 +220,6 @@ class LumiDB:
 
         return lumisummaryOut
 
-
-    def getLumiByRunNumbersOld(self, runList, lumiType) :
-
-        runListOK = self.checkRunList( runList )
-        if not  runListOK:
-            logging.error('Checking runlist failed. ')
-            return
-
-        logging.info('Got request to show %s lumi for runs %s' % (lumiType, ','.join([str(x) for x in runListOK])) )
-
-        if lumiType == 'delivered':
-            return LumiDB_SQL.NewLumiDB().getDeliveredLumiSummaryByRun(runNumbers=runListOK)
-        else:
-            # return LumiDB_SQL.NewLumiDB( ).getRecordedLumiSummaryByRun( runNumbers=runListOK )
-            raise cherrypy.HTTPError(405, 'recorded lumis not (yet?) supported ... ')
-
     def normalizeRunNumbers(self, runNumbers):
 
         allRuns = [ ]
@@ -264,6 +243,8 @@ class LumiDB:
     def getRunNumbers(self, startTime, endTime):
 
         authfile="./auth.xml"
+
+        conn_string = service.getCxOracleConnectionString(service.secrets['connections']['pro'])
 
         conn = cx_Oracle.connect( conn_string )
         startTime = startTime + ":00.000000"
