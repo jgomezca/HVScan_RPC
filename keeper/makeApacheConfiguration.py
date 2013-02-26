@@ -72,6 +72,14 @@ frontends['cms-conddb-prod2'] = frontends['cmsdbfe2'] = frontends['vocms151']
 #
 # The 'backendHostnames' is a default for all the services of a virtual host.
 # It can be overriden by the services if needed. See the description there.
+#
+# Note that the order of appearance of the services matters: services that
+# define some proxies or Shibboleth locations inside others should be listed
+# *before* the more generic ones. e.g. a service defining some rules for
+# /mcm/admin must appear before the /mcm one. This is because in Apache
+# the order also matters: ProxyPasses should appear *before* the more generic
+# ones; but Locations should appear *after* the more global ones (reversing
+# the order for Locations is done automatically).
 virtualHosts = {
     'cms-conddb-dev': {
         'backendHostnames': ['vocms145'],
@@ -235,6 +243,8 @@ virtualHosts['cms-pop-prod2'] = dict(virtualHosts['cms-pop-prod'])
 #
 # If 'shibbolethGroups' is a dictionary, it will create an entry for each key,
 # which is the url, and the allowed groups for each one are the values.
+# Note that you can't use this if you have overlapping URLs, since order
+# matters. See "virtual hosts" explanation above.
 #
 # If 'redirectRoot' is found, the root of the frontend will be redirected
 # to this service.
@@ -1171,21 +1181,24 @@ def makeApacheConfiguration(frontend, virtualHost):
                     services[service]['shibbolethUrl'] = url
                     services[service]['shibbolethGroupsText'] = ' '.join(['"%s"' % x for x in services[service]['shibbolethGroups'][url]])
                     infoMap['shibboleth'] += shibbolethUrl.format(**services[service])
-            else:
-                services[service]['shibbolethGroupsText'] = ' '.join(['"%s"' % x for x in services[service]['shibbolethGroups']])
-
-                if 'shibbolethUrl' in services[service]:
-                    infoMap['shibboleth'] += shibbolethUrl.format(**services[service])
-                elif 'shibbolethMatch' in services[service]:
-                    infoMap['shibboleth'] += shibbolethMatch.format(**services[service])
-                else:
-                    infoMap['shibboleth'] += shibboleth.format(**services[service])
 
         if 'customHttp' in services[service]:
             infoMap['customHttp'] += services[service]['customHttp']
 
         if 'customHttps' in services[service]:
             infoMap['customHttps'] += services[service]['customHttps']
+
+    # Reversed order, for Locations
+    for service in reversed(infoMap['services']):
+        if 'shibbolethGroups' in services[service] and virtualHost != 'private' and not isinstance(services[service]['shibbolethGroups'], dict):
+            services[service]['shibbolethGroupsText'] = ' '.join(['"%s"' % x for x in services[service]['shibbolethGroups']])
+
+            if 'shibbolethUrl' in services[service]:
+                infoMap['shibboleth'] += shibbolethUrl.format(**services[service])
+            elif 'shibbolethMatch' in services[service]:
+                infoMap['shibboleth'] += shibbolethMatch.format(**services[service])
+            else:
+                infoMap['shibboleth'] += shibboleth.format(**services[service])
 
     if useBalancerManager:
         infoMap['balancerManager'] = balancerManager.format(**infoMap)
