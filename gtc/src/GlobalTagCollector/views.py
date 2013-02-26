@@ -275,7 +275,11 @@ def login(request):
             django.contrib.auth.login(request, user)
         return HttpResponseRedirect(request.GET.get('next','/'))#TODO better path
 
-
+def admin2_logout(request):
+    from django.contrib.auth import logout
+    from django.http import HttpResponseRedirect
+    logout(request)
+    return HttpResponseRedirect('https://login.cern.ch/adfs/ls/?wa=wsignout1.0')
 
 class ShibbolethBackend(object):
 
