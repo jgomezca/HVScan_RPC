@@ -10,6 +10,10 @@ from RecoLuminosity.LumiDB import sessionManager,lumiTime,CommonUtil,lumiCalcAPI
 
 from RecoLuminosity.LumiDB.lumiQueryAPI import *
 
+import service
+
+conn_string = service.getCxOracleConnectionString(service.secrets['connections']['pro'])
+
 class NewLumiDB(object):
 
     def __init__(self):
@@ -42,8 +46,9 @@ class NewLumiDB(object):
         self.session = self.svc.openSession( isReadOnly=True, cpp2sqltype=[ ('unsigned int', 'NUMBER(10)'),
                                                                             ('unsigned long long', 'NUMBER(20)') ] )
 
-        self.params = ParametersObject()
+        self.schema=self.session.nominalSchema()
 
+        return
 
     def normalizeRunNumbers(self, runNumbers):
 
@@ -61,85 +66,58 @@ class NewLumiDB(object):
         elif type( runNumbers ) == type( [ ] ) :
             allRuns = [ int( x ) for x in runNumbers ]
         else :
-            print "++> Unknown type for runNumbers found:", type( runNumbers )
+            logging.warning("++> Unknown type for runNumbers found: " + str(type(runNumbers)) )
 
-        return allRuns
+        return sorted(allRuns)
 
     def getRecordedLumiSummaryByRun(self, runNumbers ):
-
-        self.setupConnection()
-        lumisummaryOut = []
-        for runNr in self.normalizeRunNumbers(runNumbers):
-            recLumi = recordedLumiForRun( self.session, self.params, runNr)
-            if recLumi == 'N/A': continue   # ignore these ...
-            lumisummaryOut.append( { "Run" : runNr, "RecordedLumi" : recLumi } )
-
-        return lumisummaryOut
+        return self.getLumiByRun(runNumbers, lumiType='recorded')
 
     def getDeliveredLumiSummaryByRun(self, runNumbers ) :
-        self.setupConnection( )
+        return self.getLumiByRun(runNumbers, lumiType='delivered')
+
+    def getLumiByRun(self, runNumbers, lumiType):
+
+        logging.debug('getLumiSummaryByRun> querying %s lumi for runs [%s]' % (lumiType, ','.join([str(x) for x in runNumbers]) ) )
+
+        self.setupConnection()
+
         lumisummaryOut = []
         for runNr in self.normalizeRunNumbers(runNumbers):
-            # delLumi = deliveredLumiForRun( self.session, self.params, runNr )[2]
-            delLumi = self.getDeliveredLumiForOneRun(self.session, runNr )
-            if delLumi == 'N/A' : continue   # ignore these ...
-            lumisummaryOut.append( { "Run" : runNr, "DeliveredLumi" : delLumi } )
+            recLumi = 'N/A'
+            try:
+                recLumi = self.getLumiForOneRun(runNr, lumiType)
+            except Exception, e:
+                logging.error('cannot get %s lumi for run %i : %s ' % (lumiType, runNr, str(e)) )
+            if recLumi == 'N/A': continue   # ignore these ...
+            lumisummaryOut.append( { "Run" : runNr, lumiType.capitalize()+"Lumi" : recLumi } )
+
+        self.session.transaction().commit()
 
         return lumisummaryOut
 
-    def getDeliveredLumiForOneRun(self, session, runNumber):
+    def getLumiForOneRun(self, runNumber, lumiTypeIn='delivered'):
 
         # set a few defaults (taken from lumiCalc2.py)
-        action  = 'overview' # 'delivered'  'overview' or 'recorded'
-        fillnum = None
-        begin   = None
-        end     = None
-        amodetag   = 'PROTPHYS'  # beamChoices=['PROTPHYS','IONPHYS','PAPHYS']
-        beamenergy = 3500.
-        beamfluctuation = 0.2
-        pbeammode   = 'STABLE BEAMS'
-        normfactor  = None
-        scalefactor = 1.0
-        finecorrections=None
-        driftcorrections=None
-
-        reqTrg = False
-        reqHlt = False
-        if action == 'recorded':
-            reqTrg = True
-            reqHlt = True
+        action  = lumiTypeIn    # 'delivered'  'overview' or 'recorded'
 
         irunlsdict={}
         iresults=[]
         if runNumber: # if runnumber specified, do not go through other run selection criteria
-            irunlsdict[runNumber]=None
+            irunlsdict[runNumber] = [None] # None
 
-        finecorrections  = None
-        driftcorrections = None
-        correctionv3     = False
-        rruns=irunlsdict.keys()
+        self.session.transaction().start(True)
 
-        schema=session.nominalSchema()
-        session.transaction().start(True)
-
-        if correctionv3:
-            cterms=lumiCorrections.nonlinearV3()
-        else: # default
-            cterms=lumiCorrections.nonlinearV2()
-        finecorrections=lumiCorrections.correctionsForRangeV2(schema,rruns,cterms) # constant+nonlinear corrections
-        driftcorrections=lumiCorrections.driftcorrectionsForRange(schema,rruns,cterms)
-
-        (datatagid,datatagname)=revisionDML.currentDataTag(session.nominalSchema())
-        dataidmap=revisionDML.dataIdsByTagId(session.nominalSchema(),datatagid,runlist=rruns,withcomment=False)
-        GrunsummaryData=lumiCalcAPI.runsummaryMap(session.nominalSchema(),irunlsdict)
-
-        session.transaction().commit()
+        (datatagid,datatagname)=revisionDML.currentDataTag(self.schema)
+        dataidmap=lumiCalcAPI.runList(self.schema,datatagid)
+        GrunsummaryData=lumiCalcAPI.runsummaryMap(self.schema, irunlsdict, dataidmap)
 
         # now get the data and sum up the delivered/recorded lumis:
-        session.transaction().start(True)
-        resultInfo=lumiCalcAPI.lumiForIds(session.nominalSchema(),irunlsdict,dataidmap,GrunsummaryData)
-        # result=lumiCalcAPI.beamForRange( session.nominalSchema(), irunlsdict )
-        session.transaction().commit()
+        resultInfo=lumiCalcAPI.lumiForIds(self.schema, irunlsdict, dataidmap, GrunsummaryData)
+
+        self.session.transaction().commit()
+
+        logging.debug('got result for run %i, len(result) is %i' % (runNumber, len(resultInfo[runNumber])) )
 
         #    output:
         # result {run:[[lumilsnum(0),cmslsnum(1),timestamp(2),beamstatus(3),beamenergy(4),
@@ -169,11 +147,108 @@ class NewLumiDB(object):
         if action == 'recorded': # recorded actually means effective because it needs to show all the hltpaths...
             result = recLumi
 
-        del session
-
         # print  'got:', result, 'for ', runNumber, 'which is of type', type(runNumber)
-
         return result
+
+    def getRunNumbers(self, startTime, endTime):
+
+        authfile="./auth.xml"
+
+        conn = cx_Oracle.connect( conn_string )
+        startTime = startTime + ":00.000000"
+        endTime = endTime + ":00.000000"
+        jobList = [ ]
+        runNumb = [ ]
+
+        sqlstr = """
+SELECT TO_CHAR(runtable.runnumber)
+FROM CMS_RUNINFO.RUNNUMBERTBL runtable, CMS_WBM.RUNSUMMARY wbmrun
+WHERE (
+wbmrun.starttime BETWEEN
+TO_TIMESTAMP(:startTime, 'DD-Mon-RR HH24:MI:SS.FF') AND
+TO_TIMESTAMP(:stopTime, 'DD-Mon-RR HH24:MI:SS.FF'))
+AND (runtable.sequencename = 'GLOBAL-RUN-COSMIC' OR runtable.sequencename = 'GLOBAL-RUN')
+AND (wbmrun.key = '/GLOBAL_CONFIGURATION_MAP/CMS/COSMICS/GLOBAL_RUN'
+OR wbmrun.key = '/GLOBAL_CONFIGURATION_MAP/CMS/CENTRAL/GLOBAL_RUN')
+AND runtable.runnumber = wbmrun.runnumber
+"""
+        try :
+            curs = conn.cursor( )
+            params = {"startTime" : startTime, "stopTime" : endTime}
+            curs.prepare( sqlstr )
+            curs.execute( sqlstr, params )
+
+            for row in curs :
+                runNumb.append( row[ 0 ] )
+            jobList.append( {'runnumbers' : runNumb} )
+        except cx_Oracle.DatabaseError, e :
+            msg = "getRunNumber> Error from DB : " + str( e )
+            logging.error( msg )
+            logging.error( "query was: '" + sqlstr + "'" )
+            # print "Unexpected error:", str( e ), sys.exc_info( )
+            raise
+        finally :
+            conn.close( )
+
+        return self.normalizeRunNumbers(runNumb)
+
+    def getLumiForOneRunOld(self, runNumber, lumiType='delivered'):
+
+        # set a few defaults (taken from lumiCalc2.py)
+        action  = lumiType    # 'delivered'  'overview' or 'recorded'
+        fillnum = None
+        begin   = None
+        end     = None
+        amodetag   = 'PROTPHYS'  # beamChoices=['PROTPHYS','IONPHYS','PAPHYS']
+        beamenergy = 3500.
+        beamfluctuation = 0.2
+        pbeammode   = 'STABLE BEAMS'
+        normfactor  = None
+        scalefactor = 1.0
+        finecorrections=None
+        driftcorrections=None
+
+        reqTrg = False
+        reqHlt = False
+        if action == 'recorded':
+            reqTrg = True
+            reqHlt = True
+
+        irunlsdict={}
+        iresults=[]
+        if runNumber: # if runnumber specified, do not go through other run selection criteria
+            irunlsdict[runNumber] = [None] # None
+
+        finecorrections  = None
+        driftcorrections = None
+        correctionv3     = False
+        rruns=irunlsdict.keys()
+
+        schema=self.session.nominalSchema()
+        self.session.transaction().start(True)
+
+        if correctionv3:
+            cterms=lumiCorrections.nonlinearV3()
+        else: # default
+            cterms=lumiCorrections.nonlinearV2()
+        finecorrections=lumiCorrections.correctionsForRangeV2(schema,rruns,cterms) # constant+nonlinear corrections
+        driftcorrections=lumiCorrections.driftcorrectionsForRange(schema,rruns,cterms)
+        self.session.transaction().commit()
+
+        oldVers = False
+        if oldVers:
+            schema=self.session.nominalSchema()
+            self.session.transaction().start(True)
+            (datatagid,datatagname)=revisionDML.currentDataTag(session.nominalSchema())
+            dataidmap=revisionDML.dataIdsByTagId(session.nominalSchema(),datatagid,runlist=rruns,withcomment=False)
+            try:
+                GrunsummaryData=lumiCalcAPI.runsummaryMap(session.nominalSchema(),irunlsdict)
+            except:
+                logging.error("failed to get runsummaryMap for %s " % (','.join([str(x)+':'+str(y) for (x,y) in irunlsdict.items()])) )
+                self.session.transaction().commit()
+            raise
+        else:
+            return self.getLumiForOneRun(session, runNumber, lumiType)
 
 if __name__ == "__main__":
     LumiDB_SQL	= NewLumiDB()

@@ -3,6 +3,7 @@ Lumidb backend application
 Author: Antonio Pierro, antonio.pierro@cern.ch, Salvatore Di Guida, Aidas Tilmantas, Andreas Pfeiffer
 """
 
+import os
 import re
 import time
 
@@ -12,6 +13,8 @@ import cherrypy
 import LumiDBNew_SQL as LumiDB_SQL
 
 import service
+import subprocess
+import csv
 
 class LumiDB:
     errorMessage =" Error!!! Incorrect parameters! Possible arguments are:"\
@@ -33,11 +36,17 @@ class LumiDB:
     def help(self):
         return self.showHelp()
 
+    @cherrypy.expose
+    def up(self):
+        return service.setResponseJSON( [] )
+
     # root method
     @cherrypy.expose
     def index(self, **kwargs) :
         if 'help' in kwargs :
             return self.showHelp( )
+        if 'up' in kwargs :
+            return self.up( )
 
         return service.setResponseJSON( self.getLumi( **kwargs ) )
 
@@ -82,6 +91,7 @@ class LumiDB:
             # return info for last 24 hours
             startTime = time.strftime( "%d-%b-%y-%H:%M", time.localtime( time.time( ) - 86400 * 1 ) )
             endTime = time.strftime( "%d-%b-%y-%H:%M", time.localtime( ) )
+            logging.debug("no kwargs given, checking runs in last 24 hours")
             return self.getLumiByRunNumbers( runList=self.getRunList(startTime, endTime),lumiType='delivered')
         else:
             lumiType = "delivered" # set the default
@@ -94,21 +104,26 @@ class LumiDB:
             if "startTime" in kwargs:
                 if self.checkTime( kwargs['startTime'] ): startTime = kwargs['startTime']
                 else: raise cherrypy.HTTPError( 405, "getLumi> Illegal start time given: %s " % (kwargs['startTime'],) )
-
+                logging.debug("found startTime: "+startTime)
             endTime = None
             if "endTime" in kwargs:
                 if self.checkTime( kwargs['endTime'] ): endTime = kwargs['endTime']
                 else: raise cherrypy.HTTPError( 405, "getLumi> Illegal end time given: %s " % (endTime,) )
+                logging.debug("found endTime  : "+endTime)
 
             if not (runList or startTime or endTime) : # nothing given, use last 24 h
                 startTime = time.strftime( "%d-%b-%y-%H:%M", time.localtime( time.time( ) - 86400 * 1 ) )
                 endTime = time.strftime( "%d-%b-%y-%H:%M", time.localtime( ) )
+                logging.debug("no args given, checking runs in last 24 hours")
 
             if startTime and not endTime: # use end time of "now"
                 endTime = time.strftime( "%d-%b-%y-%H:%M", time.localtime( ) )
+                logging.debug("startTime but no endTime given, endTime set to: "+endTime)
 
             if startTime:
-                return self.getLumiByRunNumbers( self.getRunList(startTime, endTime), lumiType )
+                runs = self.getRunList(startTime, endTime)
+                logging.debug('found %i runs from %s to %s : [%s]' % (len(runs), startTime, endTime, ','.join([str(x) for x in runs])))
+                return self.getLumiByRunNumbers( runs, lumiType )
             elif runList:
                 return self.getLumiByRunNumbers( runList, lumiType )
             else:
@@ -122,7 +137,7 @@ class LumiDB:
         if not self.checkTime( endTime ) :
             raise cherrypy.HTTPError( 405, "getRunList> Illegal end time given: %s " % (endTime,) )
 
-        LDB_SQL  = LumiDB_SQL.LumiDB_SQL()
+        LDB_SQL  = LumiDB_SQL.NewLumiDB()
         runNumbers =   LDB_SQL.getRunNumbers(startTime= startTime, endTime=endTime)
         return runNumbers
 
@@ -175,6 +190,38 @@ class LumiDB:
         return allRuns
 
     def getLumiByRunNumbers(self, runList, lumiType) :
+
+        lumisummaryOut = []
+        for run in runList:
+            cmd = "export PYTHONPATH=/data/utilities/lib/python2.6/site-packages/:$PYTHONPATH;"
+            cmd += "cd /data/cmssw/lumi/CMSSW_6_2_0_pre1/src/ ; eval `scram run -sh` ; "
+            cmd += "lumiCalc2.py -r %i -o lc2-%i.csv overview ;" % (run, run)
+            logging.debug('using cmd '+cmd)
+            result = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE).communicate()[0]
+            if "[INFO] No qualified run found, do nothing" in ''.join(result):
+                logging.info("lumiCalc2 found no data for run %i " % (run,) )
+                continue
+
+            localLumiFile = "/data/cmssw/lumi/CMSSW_6_2_0_pre1/src/lc2-%i.csv" % (run,)
+            if not os.path.exists(localLumiFile):
+                logging.error("no CSV file from lumicalc for run %i " % (run,) )
+                continue
+
+            with open(localLumiFile,'r') as lumiFile:
+                lumiResRdr = csv.reader(lumiFile)
+                lumiResRdr.next()  # first line contains headers, ignore
+                runFill, delLS, delUb, selLS, recUb = lumiResRdr.next()  # Run:Fill,DeliveredLS,Delivered(/ub),SelectedLS,Recorded(/ub)
+
+            runNr, fillNr = [int(x) for x in runFill.split(':')]
+            if lumiType == 'delivered':
+                lumisummaryOut.append( { "Run" : runNr, lumiType.capitalize()+"Lumi" : float(delUb) } )
+            elif lumiType == 'recorded':
+                lumisummaryOut.append( { "Run" : runNr, lumiType.capitalize()+"Lumi" : float(recUb) } )
+
+        return lumisummaryOut
+
+
+    def getLumiByRunNumbersOld(self, runList, lumiType) :
 
         runListOK = self.checkRunList( runList )
         if not  runListOK:
