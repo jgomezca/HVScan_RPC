@@ -194,15 +194,15 @@ class LumiDB:
         lumisummaryOut = []
         for run in runList:
             cmd = "export PYTHONPATH=/data/utilities/lib/python2.6/site-packages/:$PYTHONPATH;"
-            cmd += "cd /data/cmssw/lumi/CMSSW_6_2_0_pre1/src/ ; eval `scram run -sh` ; "
-            cmd += "lumiCalc2.py -r %i -o lc2-%i.csv overview ;" % (run, run)
+            cmd += "cd /afs/cern.ch/cms/slc5_amd64_gcc472/cms/cmssw/CMSSW_6_2_0_pre1/src/ ; eval `scram run -sh` ; "
+            cmd += "lumiCalc2.py -r %i -o /data/files/getLumi/lc2-%i.csv overview ;" % (run, run)
             logging.debug('using cmd '+cmd)
             result = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE).communicate()[0]
             if "[INFO] No qualified run found, do nothing" in ''.join(result):
                 logging.info("lumiCalc2 found no data for run %i " % (run,) )
                 continue
 
-            localLumiFile = "/data/cmssw/lumi/CMSSW_6_2_0_pre1/src/lc2-%i.csv" % (run,)
+            localLumiFile = "/data/files/getLumi/lc2-%i.csv" % (run,)
             if not os.path.exists(localLumiFile):
                 logging.error("no CSV file from lumicalc for run %i " % (run,) )
                 continue
