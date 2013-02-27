@@ -6,7 +6,8 @@ Author: Antonio Pierro, antonio.pierro@cern.ch, Salvatore Di Guida, Aidas Tilman
 import os
 import re
 import time
-
+import subprocess
+import csv
 import logging
 
 import cherrypy
@@ -14,8 +15,7 @@ import cx_Oracle
 import coral
 
 import service
-import subprocess
-import csv
+
 
 class LumiDB:
     errorMessage =" Error!!! Incorrect parameters! Possible arguments are:"\
