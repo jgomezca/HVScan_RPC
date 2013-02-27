@@ -9,12 +9,40 @@ import time
 import subprocess
 import csv
 import logging
+import cStringIO
 
 import cherrypy
 import cx_Oracle
 import coral
 
 import service
+import cache
+
+
+cachedCSVFilesExpirationTime = 60 * 60 * 4 # 4 hours
+
+
+@cache.csvFiles.cacheCall(None, cachedCSVFilesExpirationTime)
+def getCSVFileForRun(run):
+    localLumiFile = "/data/files/getLumi/lc2-%i.csv" % (run,)
+
+    cmd = "export PYTHONPATH=/data/utilities/lib/python2.6/site-packages/:$PYTHONPATH;"
+    cmd += "cd /afs/cern.ch/cms/slc5_amd64_gcc472/cms/cmssw/CMSSW_6_2_0_pre1/src/ ; eval `scram run -sh` ; "
+    cmd += "lumiCalc2.py -r %i -o %s overview ;" % (run, localLumiFile)
+    logging.debug('using cmd '+cmd)
+    result = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE).communicate()[0]
+
+    if "[INFO] No qualified run found, do nothing" in ''.join(result):
+        logging.info("lumiCalc2 found no data for run %i " % (run,) )
+        return ''
+
+    elif not os.path.exists(localLumiFile):
+        logging.error("no CSV file from lumicalc for run %i " % (run,) )
+        return ''
+
+    else:
+        with open(localLumiFile,'r') as lumiFile:
+            return lumiFile.read()
 
 
 class LumiDB:
@@ -193,24 +221,15 @@ class LumiDB:
 
         lumisummaryOut = []
         for run in runList:
-            cmd = "export PYTHONPATH=/data/utilities/lib/python2.6/site-packages/:$PYTHONPATH;"
-            cmd += "cd /afs/cern.ch/cms/slc5_amd64_gcc472/cms/cmssw/CMSSW_6_2_0_pre1/src/ ; eval `scram run -sh` ; "
-            cmd += "lumiCalc2.py -r %i -o /data/files/getLumi/lc2-%i.csv overview ;" % (run, run)
-            logging.debug('using cmd '+cmd)
-            result = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE).communicate()[0]
-            if "[INFO] No qualified run found, do nothing" in ''.join(result):
-                logging.info("lumiCalc2 found no data for run %i " % (run,) )
+            csvFile = getCSVFileForRun(run)
+            if csvFile == '':
+                # No information for this run, continue
                 continue
 
-            localLumiFile = "/data/files/getLumi/lc2-%i.csv" % (run,)
-            if not os.path.exists(localLumiFile):
-                logging.error("no CSV file from lumicalc for run %i " % (run,) )
-                continue
-
-            with open(localLumiFile,'r') as lumiFile:
-                lumiResRdr = csv.reader(lumiFile)
-                lumiResRdr.next()  # first line contains headers, ignore
-                runFill, delLS, delUb, selLS, recUb = lumiResRdr.next()  # Run:Fill,DeliveredLS,Delivered(/ub),SelectedLS,Recorded(/ub)
+            # There is information for this run, read the CSV
+            lumiResRdr = csv.reader(cStringIO.StringIO(csvFile))
+            lumiResRdr.next()  # first line contains headers, ignore
+            runFill, delLS, delUb, selLS, recUb = lumiResRdr.next()  # Run:Fill,DeliveredLS,Delivered(/ub),SelectedLS,Recorded(/ub)
 
             runNr, fillNr = [int(x) for x in runFill.split(':')]
             if lumiType == 'delivered':
