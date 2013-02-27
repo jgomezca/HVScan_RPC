@@ -322,6 +322,9 @@ services = {
     },
 
     'mcm/admin': {
+        'protocol': 'http',
+        # FIXME: Temporary fix until Nik setups SSL in CouchDB's admin interface.
+        #        The SSL port will probably be 6984.
         'backendHostnames': ['preptest'],
         'backendPort': 5984,
         'backendUrl': '',
