@@ -30,9 +30,9 @@ def getCSVFileForRun(run):
     cmd += "cd /afs/cern.ch/cms/slc5_amd64_gcc472/cms/cmssw/CMSSW_6_2_0_pre1/src/ ; eval `scram run -sh` ; "
     cmd += "lumiCalc2.py -r %i -o %s overview ;" % (run, localLumiFile)
     logging.debug('using cmd '+cmd)
-    result = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE).communicate()[0]
+    result = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
 
-    if "[INFO] No qualified run found, do nothing" in ''.join(result):
+    if "[INFO] No qualified data found, do nothing" in ''.join(result):
         logging.info("lumiCalc2 found no data for run %i " % (run,) )
         return ''
 
