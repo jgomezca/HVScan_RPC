@@ -10,6 +10,7 @@ import subprocess
 import csv
 import logging
 import cStringIO
+import tempfile
 
 import cherrypy
 import cx_Oracle
@@ -24,25 +25,23 @@ cachedCSVFilesExpirationTime = 60 * 60 * 4 # 4 hours
 
 @cache.csvFiles.cacheCall(None, cachedCSVFilesExpirationTime)
 def getCSVFileForRun(run):
-    localLumiFile = "/data/files/getLumi/lc2-%i.csv" % (run,)
+    with tempfile.NamedTemporaryFile(dir = '/data/files/getLumi') as f:
+        cmd = "export PYTHONPATH=/data/utilities/lib/python2.6/site-packages/:$PYTHONPATH;"
+        cmd += "cd /afs/cern.ch/cms/slc5_amd64_gcc472/cms/cmssw/CMSSW_6_2_0_pre1/src/ ; eval `scram run -sh` ; "
+        cmd += "lumiCalc2.py -r %i -o %s overview ;" % (run, f.name)
+        logging.debug('using cmd '+cmd)
+        result = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
 
-    cmd = "export PYTHONPATH=/data/utilities/lib/python2.6/site-packages/:$PYTHONPATH;"
-    cmd += "cd /afs/cern.ch/cms/slc5_amd64_gcc472/cms/cmssw/CMSSW_6_2_0_pre1/src/ ; eval `scram run -sh` ; "
-    cmd += "lumiCalc2.py -r %i -o %s overview ;" % (run, localLumiFile)
-    logging.debug('using cmd '+cmd)
-    result = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+        if "[INFO] No qualified data found, do nothing" in ''.join(result):
+            logging.info("lumiCalc2 found no data for run %i " % (run,) )
+            return ''
 
-    if "[INFO] No qualified data found, do nothing" in ''.join(result):
-        logging.info("lumiCalc2 found no data for run %i " % (run,) )
-        return ''
+        elif not os.path.exists(f.name):
+            logging.error("no CSV file from lumicalc for run %i " % (run,) )
+            return ''
 
-    elif not os.path.exists(localLumiFile):
-        logging.error("no CSV file from lumicalc for run %i " % (run,) )
-        return ''
-
-    else:
-        with open(localLumiFile,'r') as lumiFile:
-            return lumiFile.read()
+        else:
+            return f.read()
 
 
 class LumiDB:
