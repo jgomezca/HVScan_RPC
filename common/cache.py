@@ -99,24 +99,53 @@ class Cache(object):
         return ttl
 
 
-    def cacheCall(self, key, seconds):
-        '''Decorator that caches a function call in a key for some seconds.
+    def getCall(self, key, seconds, function, *args, **kwargs):
+        '''Returns the key if available in the cache; if not, uses
+        the function call to retrieve and return the value, saving it
+        in the cache as well for next calls.
 
         This is one of the most common usage patterns for a cache.
 
-        Note: it does not cache separate results for different arguments.
+        Consider using the cacheCall() decorator if you just want to cache
+        all function calls, with automatic creation of different keys
+        for different arguments. Use getCall() when you do not have
+        a plain function (e.g. method call) or you need more control over
+        the key naming.
+        '''
+
+        data = self.get(key)
+        if data is not None:
+            return data
+
+        data = function(*args, **kwargs)
+        self.put(key, data, seconds)
+        return data
+
+
+    def cacheCall(self, key = None, seconds = None, separator = '\0'):
+        '''Decorator that caches a function call in a key for some seconds,
+        creating different keys for different arguments, joining them
+        as strings, e.g. a call to f(1, 2) with key 'myf' would be stored
+        as key 'myf\01\02'.
+
+        If key is None, only the arguments will be joined (this is different
+        than being ''; the former allows to have f(1) stored as just "1").
+
+        This is one of the most common usage patterns for a cache.
+
+        The default separator is \0 since it is probably the safest in case
+        the arguments are strings.
+
+        Note: kwargs are *not* joined in the key name.
         '''
 
         def decorator(function):
 
             def newFunction(*args, **kwargs):
-                data = self.get(key)
-                if data is not None:
-                    return data
-
-                data = function(*args, **kwargs)
-                self.put(key, data, seconds)
-                return data
+                argsList = list(args)
+                if key is not None:
+                    argsList = [key] + argsList
+                return self.getCall(separator.join(map(str, argsList)), seconds, function, *args, **kwargs)
 
             return newFunction
 
