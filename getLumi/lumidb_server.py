@@ -46,32 +46,11 @@ class LumiDB(object):
 
     @cherrypy.expose
     def help(self):
-        return self.showHelp()
-
-    @cherrypy.expose
-    def up(self):
-        return service.setResponseJSON( [] )
-
-    # root method
-    @cherrypy.expose
-    def index(self, **kwargs) :
-        if 'help' in kwargs :
-            return self.showHelp( )
-        if 'up' in kwargs :
-            return self.up( )
-
-        return service.setResponseJSON( self.getLumi( **kwargs ) )
-
-    def showHelp(self) :
-
-        # url = 'https://cms-conddb-dev.cern.ch'
-        url = ''
-
         # We could use relative links as well, to avoid relying on
         # the service name; however, the links would be more confusing
         # to the users (e.g. "./?Runs..."), and therefore it was left as it is.
 
-        helpMsg = """
+        return '''
         <p>
         <h3>Help for getting the right syntax:</h3>
         This web service is querying the <b>Lumi Service</b>,
@@ -84,9 +63,22 @@ class LumiDB(object):
         <li><a href="@URL@/getLumi/?Runs=161297-161320,161331">@URL@/getLumi/?Runs=161297-161320,161331</a> or:
         <li><a href="@URL@/getLumi/?Runs=[161297-161320,161331]">@URL@/getLumi/?Runs=[61297-161320,161331]</a> LumiInfo for the given runs
         </ul>
-""".replace('@URL@', url)
+'''.replace('@URL@', '')
 
-        return helpMsg
+    @cherrypy.expose
+    def up(self):
+        return service.setResponseJSON( [] )
+
+    # root method
+    @cherrypy.expose
+    def index(self, **kwargs) :
+        if 'help' in kwargs :
+            return self.help( )
+        if 'up' in kwargs :
+            return self.up( )
+
+        return service.setResponseJSON( self.getLumi( **kwargs ) )
+
 
     def getLumi(self, **kwargs):
         if len(kwargs) == 0:
