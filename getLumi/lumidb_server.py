@@ -1,7 +1,12 @@
-"""
-Lumidb backend application
-Author: Antonio Pierro, antonio.pierro@cern.ch, Salvatore Di Guida, Aidas Tilmantas, Andreas Pfeiffer
-"""
+'''CMS DB Web getLumi server.
+'''
+
+__author__ = 'Miguel Ojeda'
+__copyright__ = 'Copyright 2013, CERN CMS'
+__credits__ = ['Salvatore Di Guida', 'Miguel Ojeda', 'Andreas Pfeiffer', 'Antonio Pierro', 'Aidas Tilmantas']
+__license__ = 'Unknown'
+__maintainer__ = 'Andreas Pfeiffer'
+__email__ = 'andreas.pfeiffer@cern.ch'
 
 
 import datetime
