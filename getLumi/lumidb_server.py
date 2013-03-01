@@ -42,7 +42,7 @@ def getCSVFileForRun(run):
             return f.read()
 
 
-class LumiDB:
+class LumiDB(object):
 
     @cherrypy.expose
     def help(self):
