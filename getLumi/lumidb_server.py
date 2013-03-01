@@ -4,7 +4,6 @@ Author: Antonio Pierro, antonio.pierro@cern.ch, Salvatore Di Guida, Aidas Tilman
 """
 
 import os
-import re
 import time
 import subprocess
 import csv
@@ -14,7 +13,6 @@ import tempfile
 
 import cherrypy
 import cx_Oracle
-import coral
 
 import service
 import cache
@@ -45,20 +43,6 @@ def getCSVFileForRun(run):
 
 
 class LumiDB:
-    errorMessage =" Error!!! Incorrect parameters! Possible arguments are:"\
-                                  "    \n?Runs=xxx,xxx,xxx,....."\
-                                  "    \n?Runs=xxx,xxx-xxx,....."\
-                                  "    \n?Runs=xxx-xxx,..."\
-                                  "    \n?Runs=[xxx,xxx-xxx,....]"\
-                                  "    \nSame with the ?runList=....."\
-                                  "    \nAvoid any whitespace!!"\
-                                  "    \nxxx - ONLY NUMBERS!!!!"
-    dateErrorMessage =" Error!!! Incorrect date! Required format is:  day-month-year-hours:minutes Example 01-Oct-10-00:00"
-
-    def __init__(self):
-        self.recent_activity_result = ''
-
-        self.timeRe = re.compile('^\d{2}-[A-Za-z]{3}-\d{2}-\d{2}:\d{2}$')
 
     @cherrypy.expose
     def help(self):
@@ -102,20 +86,10 @@ class LumiDB:
         </ul>
 """.replace('@URL@', url)
 
-        ## <p>
-        ## Optionally, if you specify "&lumiType=recorded" as an additional parameter you will get the recorded instead of the delivered lumi. Examples:
-        ## </p>
-        ## <ul>
-        ## <li><a href="@URL@/getLumi/?Runs=160915&lumiType=recorded">@URL@/getLumi/?Runs=160915&lumiType=recorded</a>
-        ## <li><a href="@URL@/getLumi/?startTime=12-Mar-11-14:00&endTime=18-Mar-11-14:00&&lumiType=recorded">@URL@/getLumi/?startTime=12-Mar-11-14:00&endTime=18-Mar-11-14:00&&lumiType=recorded</a>
-        ## </ul>
-        ##
-
         return helpMsg
 
     def getLumi(self, **kwargs):
         if len(kwargs) == 0:
-            # return self.getLumiByRunNumbers( runList="160915,161224,167098",lumiType='delivered')
             # return info for last 24 hours
             startTime = time.strftime( "%d-%b-%y-%H:%M", time.localtime( time.time( ) - 86400 * 1 ) )
             endTime = time.strftime( "%d-%b-%y-%H:%M", time.localtime( ) )
@@ -260,14 +234,11 @@ class LumiDB:
 
     def getRunNumbers(self, startTime, endTime):
 
-        authfile="./auth.xml"
-
         conn_string = service.getCxOracleConnectionString(service.secrets['connections']['pro'])
 
         conn = cx_Oracle.connect( conn_string )
         startTime = startTime + ":00.000000"
         endTime = endTime + ":00.000000"
-        jobList = [ ]
         runNumb = [ ]
 
         sqlstr = """
@@ -290,7 +261,6 @@ AND runtable.runnumber = wbmrun.runnumber
 
             for row in curs :
                 runNumb.append( row[ 0 ] )
-            jobList.append( {'runnumbers' : runNumb} )
         except cx_Oracle.DatabaseError, e :
             msg = "getRunNumber> Error from DB : " + str( e )
             logging.error( msg )
