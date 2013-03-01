@@ -3,43 +3,45 @@ Lumidb backend application
 Author: Antonio Pierro, antonio.pierro@cern.ch, Salvatore Di Guida, Aidas Tilmantas, Andreas Pfeiffer
 """
 
-import os
-import time
-import subprocess
-import csv
-import logging
-import cStringIO
-import tempfile
 
+import datetime
+import logging
+
+import dateutil.parser
 import cherrypy
-import cx_Oracle
 
 import service
-import cache
+
+import lumi
 
 
-cachedCSVFilesExpirationTime = 60 * 60 * 4 # 4 hours
+# FIXME: If this is not enough, we will need to query before hand
+#        the list of runs to the database to know actually how many
+#        contain data.
+maxRuns = 3000
+maxDays = 30
 
 
-@cache.csvFiles.cacheCall(None, cachedCSVFilesExpirationTime)
-def getCSVFileForRun(run):
-    with tempfile.NamedTemporaryFile(dir = '/data/files/getLumi') as f:
-        cmd = "export PYTHONPATH=/data/utilities/lib/python2.6/site-packages/:$PYTHONPATH;"
-        cmd += "cd /afs/cern.ch/cms/slc5_amd64_gcc472/cms/cmssw/CMSSW_6_2_0_pre1/src/ ; eval `scram run -sh` ; "
-        cmd += "lumiCalc2.py -r %i -o %s overview ;" % (run, f.name)
-        logging.debug('using cmd '+cmd)
-        result = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+def merge(ranges):
+    '''Merges ranges, including contiguous ones.
+    '''
 
-        if "[INFO] No qualified data found, do nothing" in ''.join(result):
-            logging.info("lumiCalc2 found no data for run %i " % (run,) )
-            return ''
+    if len(ranges) == 0:
+        return []
 
-        elif not os.path.exists(f.name):
-            logging.error("no CSV file from lumicalc for run %i " % (run,) )
-            return ''
+    result = []
 
+    sortedRanges = sorted([sorted(x) for x in ranges])
+    begin, end = sortedRanges[0]
+    for nextBegin, nextEnd in sortedRanges:
+        if nextBegin - 1 <= end:
+            end = max(end, nextEnd)
         else:
-            return f.read()
+            result.append((begin, end))
+            begin, end = nextBegin, nextEnd
+    result.append((begin, end))
+
+    return result
 
 
 class LumiDB(object):
@@ -85,189 +87,117 @@ class LumiDB(object):
         return service.setResponseJSON( self.getLumi( **kwargs ) )
 
 
+    def format(self, lumiDictionary, lumiType):
+        '''Formats a dictionary from the lumi module into the expected
+        format by the users.
+        '''
+
+        lumiTypeKey = '%sLumi' % lumiType.capitalize()
+
+        output = []
+        for run in sorted(lumiDictionary):
+            output.append({
+                'Run': run,
+                lumiTypeKey: lumiDictionary[run],
+            })
+
+        return output
+
+
     def getLumi(self, **kwargs):
-        if len(kwargs) == 0:
-            # return info for last 24 hours
-            startTime = time.strftime( "%d-%b-%y-%H:%M", time.localtime( time.time( ) - 86400 * 1 ) )
-            endTime = time.strftime( "%d-%b-%y-%H:%M", time.localtime( ) )
-            logging.debug("no kwargs given, checking runs in last 24 hours")
-            return self.getLumiByRunNumbers( runList=self.getRunList(startTime, endTime),lumiType='delivered')
-        else:
-            lumiType = "delivered" # set the default
-            if "lumiType" in kwargs and kwargs['lumiType'].lower() == 'recorded': lumiType = 'recorded'
+        '''Parses the arguments and builds the corresponding queries
+        to the lumi module.
+        '''
 
-            runList = []
-            if "Runs"    in kwargs: runList = self.checkRunList( kwargs['Runs'] )
-
-            startTime = None
-            if "startTime" in kwargs:
-                if self.checkTime( kwargs['startTime'] ): startTime = kwargs['startTime']
-                else: raise cherrypy.HTTPError( 405, "getLumi> Illegal start time given: %s " % (kwargs['startTime'],) )
-                logging.debug("found startTime: "+startTime)
-            endTime = None
-            if "endTime" in kwargs:
-                if self.checkTime( kwargs['endTime'] ): endTime = kwargs['endTime']
-                else: raise cherrypy.HTTPError( 405, "getLumi> Illegal end time given: %s " % (endTime,) )
-                logging.debug("found endTime  : "+endTime)
-
-            if not (runList or startTime or endTime) : # nothing given, use last 24 h
-                startTime = time.strftime( "%d-%b-%y-%H:%M", time.localtime( time.time( ) - 86400 * 1 ) )
-                endTime = time.strftime( "%d-%b-%y-%H:%M", time.localtime( ) )
-                logging.debug("no args given, checking runs in last 24 hours")
-
-            if startTime and not endTime: # use end time of "now"
-                endTime = time.strftime( "%d-%b-%y-%H:%M", time.localtime( ) )
-                logging.debug("startTime but no endTime given, endTime set to: "+endTime)
-
-            if startTime:
-                runs = self.getRunList(startTime, endTime)
-                logging.debug('found %i runs from %s to %s : [%s]' % (len(runs), startTime, endTime, ','.join([str(x) for x in runs])))
-                return self.getLumiByRunNumbers( runs, lumiType )
-            elif runList:
-                return self.getLumiByRunNumbers( runList, lumiType )
+        # If lumiType was given, check and set it. Otherwise use default.
+        lumiType = 'delivered'
+        if 'lumiType' in kwargs:
+            if kwargs['lumiType'].lower() == 'recorded':
+                lumiType = 'recorded'
             else:
-                raise cherrypy.HTTPError( 405, "This should never have happened ... :( " )
+                raise cherrypy.HTTPError(405, 'Invalid lumiType.')
 
-    def getRunList(self, startTime, endTime):
+        # If Runs was given, this is a run-based query
+        if 'Runs' in kwargs:
+            if 'startTime' in kwargs or 'endTime' in kwargs:
+                raise cherrypy.HTTPError(405, 'Runs was specified, so startTime and endTime cannot be specified at the same time.')
 
-        if not self.checkTime(startTime):
-            raise cherrypy.HTTPError( 405, "getRunList> Illegal start time given: %s " % (startTime,) )
+            runsString = kwargs['Runs']
 
-        if not self.checkTime( endTime ) :
-            raise cherrypy.HTTPError( 405, "getRunList> Illegal end time given: %s " % (endTime,) )
+            if len(runsString) > 1000:
+                raise cherrypy.HTTPError(405, 'Query string too long.')
 
-        runNumbers =   self.getRunNumbers(startTime= startTime, endTime=endTime)
-        return runNumbers
+            # Remove optional [] characters
+            runsString = runsString.replace('[', '').replace(']', '')
 
-    def checkTime(self, timeIn):
+            # Parse the string into several queries
+            ranges = []
+            queries = runsString.split(',')
 
-        if not timeIn:
-            logging.info('checkTime> got None as input ...  ' )
-            return True # allow None ...
+            for query in queries:
+                try:
+                    # Individual run
+                    begin = end = int(query)
+                except ValueError:
+                    # If not, has to be a range
+                    begin, end = [int(x) for x in query.split('-')]
 
-        logging.info('checkTime> going to check %s ' % (timeIn,) )
+                if begin < 0 or end < 0:
+                    raise cherrypy.HTTPError(405, 'Negative run numbers.')
 
-        try:
-            time.strptime(timeIn, "%d-%b-%y-%H:%M")
-        except:
-            logging.error('checkTime> found illegal time: %s ' % (timeIn,) )
-            return False
+                if begin > end:
+                    raise cherrypy.HTTPError(405, 'The begin run number is greater than the end run number.')
 
-        return True
+                ranges.append((begin, end))
 
-    def checkRunList(self, runNumbers):
+            # Merge the ranges to reduce the number of queries
+            ranges = merge(ranges)
 
-        allRuns = [ ]
-        # handle request with string for run numbers:
-        if type( runNumbers ) == type( "" ) or type( runNumbers ) == type( u"" ) :
-            for runNrIn in runNumbers.replace('[','').replace(']','').split( ',' ) :
-                if '-' in runNrIn :
-                    rStart, rEnd = runNrIn.split( '-' )
-                    try:
-                        allRuns += range( int( rStart ), int( rEnd ) + 1 )
-                    except Exception, e:
-                        logging.error("  ...   got : %s " % str(e))
-                        logging.error("illegal run number found for %s or %s -- ignoring" % (str(rStart), str(rEnd)) )
-                else :
-                    try:
-                        allRuns.append( int( runNrIn ) )
-                    except Exception, e:
-                        logging.error("  ...   got : %s" % str(e))
-                        logging.error("illegal run number found for %s -- ignoring" % (str(runNrIn),) )
-        # handle requests with lists of run numbers
-        elif type( runNumbers ) == type( [ ] ) :
-            try:
-                allRuns = [ int( x ) for x in runNumbers ]
-            except Exception, e:
-                logging.error("  ...   got : %s" % str(e))
-                logging.error("illegal run number found for %s -- ignoring" % (str(x),) )
+            # See how many runs we are asking to check in total
+            total = 0
+            for (begin, end) in ranges:
+                total += end - begin + 1
+            if total > maxRuns:
+                raise cherrypy.HTTPError(405, 'The query requested too many (> %s) run numbers to check.' % maxRuns)
 
-        else :
-            raise cherrypy.HTTPError(405, "Unknown type for runNumbers found %s " % (type(runNumbers ),) )
+            # Now we have the final ranges, run a query for each
+            output = {}
+            for (begin, end) in ranges:
+                output.update(lumi.query(begin, end, lumiType))
 
-        return allRuns
+            return self.format(output, lumiType)
 
-    def getLumiByRunNumbers(self, runList, lumiType) :
+        # If startTime was given, this is a time-based query
+        if 'startTime' in kwargs:
+            begin = dateutil.parser.parse(kwargs['startTime'])
 
-        lumisummaryOut = []
-        for run in runList:
-            csvFile = getCSVFileForRun(run)
-            if csvFile == '':
-                # No information for this run, continue
-                continue
+            # If endTime is not specified, take now
+            if 'endTime' in kwargs:
+                end = dateutil.parser.parse(kwargs['endTime'])
+            else:
+                end = datetime.datetime.now()
 
-            # There is information for this run, read the CSV
-            lumiResRdr = csv.reader(cStringIO.StringIO(csvFile))
-            lumiResRdr.next()  # first line contains headers, ignore
-            runFill, delLS, delUb, selLS, recUb = lumiResRdr.next()  # Run:Fill,DeliveredLS,Delivered(/ub),SelectedLS,Recorded(/ub)
+            if begin > end:
+                raise cherrypy.HTTPError(405, 'The begin time is greater than the end time.')
 
-            runNr, fillNr = [int(x) for x in runFill.split(':')]
-            if lumiType == 'delivered':
-                lumisummaryOut.append( { "Run" : runNr, lumiType.capitalize()+"Lumi" : float(delUb) } )
-            elif lumiType == 'recorded':
-                lumisummaryOut.append( { "Run" : runNr, lumiType.capitalize()+"Lumi" : float(recUb) } )
+            if (end - begin).days > maxDays:
+                raise cherrypy.HTTPError(405, 'The query requested a too long time (> %s days) to check.' % maxDays)
 
-        return lumisummaryOut
+            return self.format(lumi.query(begin, end, lumiType), lumiType)
 
-    def normalizeRunNumbers(self, runNumbers):
+        # If endTime was given but startTime was not, complain
+        if 'endTime' in kwargs:
+            raise cherrypy.HTTPError(405, 'startTime is required for all time-based queries.')
 
-        allRuns = [ ]
+        # If nothing was specified, return the latest 24 hours
+        if len(kwargs) == 0:
+            begin = datetime.datetime.now()
+            end = begin - datetime.timedelta(days = 1)
 
-        # handle request with string for run numbers:
-        if type( runNumbers ) == type( "" ) or type( runNumbers ) == type( u"" ) :
-            for runNrIn in runNumbers.split( ',' ) :
-                if '-' in runNrIn :
-                    rStart, rEnd = runNrIn.split( '-' )
-                    allRuns += range( int( rStart ), int( rEnd ) + 1 )
-                else :
-                    allRuns.append( int( runNrIn ) )
-        # handle requests with lists of run numbers
-        elif type( runNumbers ) == type( [ ] ) :
-            allRuns = [ int( x ) for x in runNumbers ]
-        else :
-            logging.warning("++> Unknown type for runNumbers found: " + str(type(runNumbers)) )
+            return self.format(lumi.query(begin, end, lumiType), lumiType)
 
-        return sorted(allRuns)
-
-    def getRunNumbers(self, startTime, endTime):
-
-        conn_string = service.getCxOracleConnectionString(service.secrets['connections']['pro'])
-
-        conn = cx_Oracle.connect( conn_string )
-        startTime = startTime + ":00.000000"
-        endTime = endTime + ":00.000000"
-        runNumb = [ ]
-
-        sqlstr = """
-SELECT TO_CHAR(runtable.runnumber)
-FROM CMS_RUNINFO.RUNNUMBERTBL runtable, CMS_WBM.RUNSUMMARY wbmrun
-WHERE (
-wbmrun.starttime BETWEEN
-TO_TIMESTAMP(:startTime, 'DD-Mon-RR HH24:MI:SS.FF') AND
-TO_TIMESTAMP(:stopTime, 'DD-Mon-RR HH24:MI:SS.FF'))
-AND (runtable.sequencename = 'GLOBAL-RUN-COSMIC' OR runtable.sequencename = 'GLOBAL-RUN')
-AND (wbmrun.key = '/GLOBAL_CONFIGURATION_MAP/CMS/COSMICS/GLOBAL_RUN'
-OR wbmrun.key = '/GLOBAL_CONFIGURATION_MAP/CMS/CENTRAL/GLOBAL_RUN')
-AND runtable.runnumber = wbmrun.runnumber
-"""
-        try :
-            curs = conn.cursor( )
-            params = {"startTime" : startTime, "stopTime" : endTime}
-            curs.prepare( sqlstr )
-            curs.execute( sqlstr, params )
-
-            for row in curs :
-                runNumb.append( row[ 0 ] )
-        except cx_Oracle.DatabaseError, e :
-            msg = "getRunNumber> Error from DB : " + str( e )
-            logging.error( msg )
-            logging.error( "query was: '" + sqlstr + "'" )
-            # print "Unexpected error:", str( e ), sys.exc_info( )
-            raise
-        finally :
-            conn.close( )
-
-        return self.normalizeRunNumbers(runNumb)
+        # In any other case, complain
+        raise cherrypy.HTTPError(405, 'Invalid parameters. See /getLumi/help for syntax.')
 
 
 def main():
