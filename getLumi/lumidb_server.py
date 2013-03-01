@@ -51,19 +51,24 @@ class LumiDB(object):
         # to the users (e.g. "./?Runs..."), and therefore it was left as it is.
 
         return '''
-        <p>
-        <h3>Help for getting the right syntax:</h3>
-        This web service is querying the <b>Lumi Service</b>,
-        so it will find only runs in time interval which have a luminosity different from zero.
-        </p>
-        <ul class='main'>
-        <li><a href="@URL@/getLumi/help">@URL@/getLumi/help</a> This help message.
-        <li><a href="@URL@/getLumi/">@URL@/getLumi/</a> LumiInfo for the last 24 hours
-        <li><a href="@URL@/getLumi/?startTime=16-Mar-11-14:00&endTime=18-Mar-11-14:00">@URL@/getLumi/?startTime=16-Mar-11-14:00&endTime=18-Mar-11-14:00</a> LumiInfo between start date and end date (end date is optional, corresponds to "now" if not given)
-        <li><a href="@URL@/getLumi/?Runs=161297-161320,161331">@URL@/getLumi/?Runs=161297-161320,161331</a> or:
-        <li><a href="@URL@/getLumi/?Runs=[161297-161320,161331]">@URL@/getLumi/?Runs=[61297-161320,161331]</a> LumiInfo for the given runs
-        </ul>
-'''.replace('@URL@', '')
+            <!DOCTYPE html>
+            <html>
+                <head>
+                    <title>CMS ConditionDB GetLumi Help</title>
+                </head>
+                <body>
+                    <h3>Help for getting the right syntax:</h3>
+                    <p>This web service is querying the <b>Lumi Service</b>, so it will find only runs in time interval which have a luminosity different from zero.</p>
+                    <ul>
+                        <li><a href="/getLumi/help">/getLumi/help</a> This help message.</li>
+                        <li><a href="/getLumi/">/getLumi/</a> LumiInfo for the last 24 hours</li>
+                        <li><a href="/getLumi/?startTime=16-Mar-11-14:00&endTime=18-Mar-11-14:00">/getLumi/?startTime=16-Mar-11-14:00&endTime=18-Mar-11-14:00</a> LumiInfo between start date and end date (end date is optional, corresponds to "now" if not given)</li>
+                        <li><a href="/getLumi/?Runs=161297-161320,161331">/getLumi/?Runs=161297-161320,161331</a> or:</li>
+                        <li><a href="/getLumi/?Runs=[161297-161320,161331]">/getLumi/?Runs=[161297-161320,161331]</a> LumiInfo for the given runs</li>
+                    </ul>
+                </body>
+            </html>
+        '''
 
     @cherrypy.expose
     def up(self):
