@@ -79,7 +79,7 @@ class API(object):
             relmon_url = ""
         defaultKeys = []
         mailId = self.parent_obj.getMsgId()
-        print catSubCatList
+        #print catSubCatList
         for cat in catSubCatList: #in case user specified a comma separated list for releases CatSubCats
             if cat[0].upper() == 'R': #get subCategory collumn list
                 defaultKeys = ["CSC", "TAU", "TRACKING", "BTAG", "JET", "ECAL", "RPC", "PHOTON", "MUON", "MET", "ELECTRON", "TK", "HCAL", "DT", "SUMMARY"]
@@ -131,8 +131,8 @@ class AjaxApp(object):
         
         self.api = API(self)
 
-    MAILING_LIST = ["hn-cms-relval@cern.ch"]
-    #MAILING_LIST = ["anorkus@cern.ch"]#, "hn-cms-hnTest@cern.ch"] #testing mailing list
+    MAILING_LIST = ["hn-cms-relval@cern.ch","hn-cms-trigger-performance@cern.ch","hn-cms-muon-object-validation@cern.ch"]
+    #MAILING_LIST = ["anorkus@cern.ch","vlimant@cern.ch","franzoni @cern.ch"]#, "hn-cms-hnTest@cern.ch"] #testing mailing list
     VALIDATION_STATUS = "VALIDATION_STATUS"
     COMMENTS = "COMMENTS"
     LINKS = "LINKS"
@@ -164,6 +164,7 @@ class AjaxApp(object):
 
         if checkAdmin(username, Session):
             return self.loadPage('indexAdmin')
+#            return self.loadPage('indexAdmin_testAngular')
         elif checkValidator(username, Session):
             return self.loadPage('indexValidator')
         else:
@@ -206,9 +207,23 @@ class AjaxApp(object):
         return simplejson.dumps([checkValidatorRights(cat, subCategory,  statusKind, self.get_username(), Session)])
 
     @cherrypy.expose
-    def submit(self, releaseName, **kwargs):
+    def submit(self, releaseName):
+        #cl = cherrypy.request.headers['Content-Length']
+        #rawbody = cherrypy.request.body.read(int(cl))
+        #request = json.loads(rawbody)
+        #releaseName = request["releaseName"]
         cherrypy.response.headers['Content-Type'] = 'application/json'
         return search(releaseName, Session)
+        
+    @cherrypy.expose
+    def testSQL(self):
+        cl = cherrypy.request.headers['Content-Length']
+        rawbody = cherrypy.request.body.read(int(cl))
+        request = json.loads(rawbody)
+        releaseName = request["releaseName"]
+        cherrypy.response.headers['Content-Type'] = 'application/json'
+        #print testFullReleaseInfo(releaseName, Session)
+        return testFullReleaseInfo(releaseName, Session)
 
     @cherrypy.expose
     def getDetailInformation(self, catSubCat, relName, state, **kwargs):
@@ -236,7 +251,16 @@ class AjaxApp(object):
                 tmpDictionary[COMMENTS] = statComments[index]
                 tmpDictionary[LINKS] = statLinks[index]
                 tmpDictionary[USER_NAME] = statAuthors[index]
-                tmpDictionary[MESSAGE_ID] = mime_MSG_id
+                if categ == "Reconstruction":
+                    if statusNames[index].upper() == "MUON" :
+                        tmpDictionary[MESSAGE_ID] = mime_MSG_id #if colum in RECO/MUON -> make messages for 2 HyperNews
+                    else:
+                        tmpDictionary[MESSAGE_ID] = mime_MSG_id.split(',')[0] #else make the messageId only for RelVals
+                elif categ == "HLT":
+                    tmpDictionary[MESSAGE_ID] = mime_MSG_id # for HLT all messageIds are 2: RelVals and Trigger
+                else:
+                    tmpDictionary[MESSAGE_ID] = mime_MSG_id.split(',')[0] #by default make only 1 messageID for RelVal HyperNews
+                    
                 tmpDictionary['EMAIL_SUBJECT'] = msgSubject
                 tmpDictionary['RELMON_URL'] = relMonURL
                 dictionaryFull[statusNames[index]] = tmpDictionary
@@ -269,7 +293,10 @@ class AjaxApp(object):
         returnedStatusValueOld = getStatus(cat, subCat, relName, statusKind, Session)
         #returnedStatusValueOld - tuple: 0 is old status, 1 is old messageID, 2 is releaseName
         #make new messageID
-        new_message_ID = email.utils.make_msgid()
+        newIDs = []
+        for i in range(len(returnedStatusValueOld[1].split(","))):
+           newIDs.append(email.utils.make_msgid())  
+        #new_message_ID = email.utils.make_msgid()
         if cat == "Reconstruction":
             emailCat = "RECO"
         else:
@@ -280,7 +307,7 @@ class AjaxApp(object):
             msgSubject = ">"+statusKind + " " + emailCat + " " + subCat + "< " + returnedStatusValueOld[2]  ##make a message subject with statuskin/subcat mentioned in case of other subCats
         returnedInformation = changeStatus(cat, subCat, relName, statusKind,
                                           stateValue, newComment, comentAuthor, 
-                                          newLinks,Session, new_message_ID, returnedStatusValueOld[2])
+                                          newLinks,Session, ",".join(newIDs), returnedStatusValueOld[2])
         if returnedInformation == "True":
             msgText = """Release: %s
 In category: %s
@@ -297,8 +324,11 @@ Links: %s
                 hlt_msg_id = email.utils.make_msgid()
                 hn_address = 'hn-cms-trigger-performance@cern.ch'
                 #hn_address = 'hn-cms-hnTest@cern.ch'
-                #hn_address = 'antanas.norkus@cern.ch'  # Testing adresses
-                self.sendMailOnChanges(msgText, msgSubject, None, hlt_msg_id, userName, hn_address) #send message to other HN adress without threading
+                #hn_address = 'vlimant@cern.ch'  # Testing adresses
+                if len(returnedStatusValueOld[1].split(",")) == 1:
+                    self.sendMailOnChanges(msgText, msgSubject, None, hlt_msg_id, userName, hn_address) #send message to other HN adress without threading
+                else:
+                    self.sendMailOnChanges(msgText, msgSubject, returnedStatusValueOld[1].split(",")[1], newIDs[1], userName, hn_address) #send message to other HN adress with threading
                 newText = """Release: %s
 In category: %s
 In subcategory: %s 
@@ -308,14 +338,17 @@ Has Changed: From status: %s
 By: %s
 
 The full details was sent to %s find it there""" %(relName.upper(), cat.upper(), subCat.upper(), statusKind.upper(), returnedStatusValueOld[0].upper(), stateValue.upper(), comentAuthor.upper(),hn_address) #new text for RelVal HN
-                self.sendMailOnChanges(newText, msgSubject, returnedStatusValueOld[1], new_message_ID, userName) #send a threaded message to RelVal HN
+                self.sendMailOnChanges(newText, msgSubject, returnedStatusValueOld[1].split(",")[0], newIDs[0], userName) #send a threaded message to RelVal HN
                 
-            elif (cat.upper() == 'RECONSTRUCTION') and (statusKind.upper() == 'MUON'): #same for Reco Moun as for all HLT
+            elif (cat.upper() == 'RECONSTRUCTION') and (statusKind.upper() == 'MUON'): #same for Reco Muon as for all HLT
                 reco_msg_id = email.utils.make_msgid()
                 hn_address = 'hn-cms-muon-object-validation@cern.ch'
                 #hn_address = 'hn-cms-hnTest@cern.ch'  # Testing adresses
-                #hn_address = 'antanas.norkus@cern.ch'
-                self.sendMailOnChanges(msgText, msgSubject, None, reco_msg_id, userName, hn_address) #mail to Moun HN without threading
+                #hn_address = 'franzoni@cern.ch'
+                if len(returnedStatusValueOld[1].split(",")) == 1:
+                    self.sendMailOnChanges(msgText, msgSubject, None, reco_msg_id, userName, hn_address) #mail to Muon HN without threading
+                else:
+                    self.sendMailOnChanges(msgText, msgSubject, returnedStatusValueOld[1].split(",")[1], newIDs[1], userName, hn_address) #mail to Muon HN with threading
                 newText = """Release: %s
 In category: %s
 In subcategory: %s 
@@ -325,10 +358,10 @@ Has Changed: From status: %s
 By: %s
 
 The full details was sent to %s find it there""" %(relName.upper(), cat.upper(), subCat.upper(), statusKind.upper(), returnedStatusValueOld[0].upper(), stateValue.upper(), comentAuthor.upper(),hn_address) #new text for RelVal HN
-                self.sendMailOnChanges(newText, msgSubject, returnedStatusValueOld[1], new_message_ID, userName) #send a threaded message to RelVal HN
+                self.sendMailOnChanges(newText, msgSubject, returnedStatusValueOld[1].split(",")[0], newIDs[0], userName) #send a threaded message to RelVal HN
                 
             else:  #by default send to relval
-                self.sendMailOnChanges(msgText, msgSubject, returnedStatusValueOld[1], new_message_ID, userName) 
+                self.sendMailOnChanges(msgText, msgSubject, returnedStatusValueOld[1], newIDs[0], userName) 
             info = "Release information updated successfuly"
             cherrypy.response.headers['Content-Type'] = 'application/json'
             return simplejson.dumps([info])
@@ -441,7 +474,7 @@ The full details was sent to %s find it there""" %(relName.upper(), cat.upper(),
         send_from = getUserEmail(username, Session)
         msg['From'] = send_from
         if diff_HN_adress == None:
-            send_to += self.MAILING_LIST
+            send_to += [self.MAILING_LIST[0]]
         else:
             send_to += [diff_HN_adress]
         #if username != False:   #send email copy to the sender himself
@@ -470,8 +503,25 @@ The full details was sent to %s find it there""" %(relName.upper(), cat.upper(),
         cat = None
         subCat = None
         configuration = self.configuration
+        response = {}
+#        for release in relName:
+#            response[relName] = {}
+#            for elem in configuration:
+#                cat, subCat = configuration.get(elem, (None,None))
+#                tmp = getReleaseShortInfo(cat, subCat, relName, Session)
+#                print tmp
+#                #response[relName][elem] = {}
+#                response[relName][elem] = tmp
+#                print "@@@"
+#                print elem
+#                print "@@@"
+#                
+#        print "###"
+#        print response
+#        return json.dumps(response)
         cat, subCat = configuration.get(catSubCat, (None,None))
         return getReleaseShortInfo(cat, subCat, relName, Session)
+
     
     def check_admin(self):
         if checkAdmin(self.get_username(), Session) == False:
@@ -509,40 +559,50 @@ The full details was sent to %s find it there""" %(relName.upper(), cat.upper(),
         cherrypy.response.headers['Content-Type'] = 'application/json'
         messageID = email.utils.make_msgid()
         return json.dumps(messageID)
-        
+    @cherrypy.expose
+    def getMultipleMsgId(self, *args, **kwargs):
+        cherrypy.response.headers['Content-Type'] = 'application/json'
+        info = []
+        for i in range(3):
+            info.append(email.utils.make_msgid()) #3 msgIDs -> RelVal,HLT,MUON hypernews
+        #messageID = email.utils.make_msgid()
+        return json.dumps(info)
     ######
 
     @cherrypy.expose
     def sendMail(self, messageText, emailSubject, org_message_ID, new_message_ID, username=False, **kwargs):
         if not self.check_admin():
             raise cherrypy.InternalRedirect('/permissionErrorMessage')
-        msg = MIMEMultipart()
-        if org_message_ID != None:
-            msg['In-Reply-To'] = org_message_ID
-            msg['References'] = org_message_ID
+        for index,elem in enumerate(new_message_ID.split(',')):
+            msg = MIMEMultipart()
+            if org_message_ID != None:
+                msg['In-Reply-To'] = org_message_ID
+                msg['References'] = org_message_ID
 
-       # send_from = "PdmV.ValDb@cern.ch"
-        if username != False:
-            send_from = getUserEmail(username, Session)
-        else:
-            send_from = "anorkus@cern.ch"
-        msg['From'] = send_from
-        send_to = self.MAILING_LIST
-        if username != False:
-            send_to.append(send_from)  ##send a copy to user himself
-        msg['To'] = COMMASPACE.join(send_to)
-        msg['Date'] = formatdate(localtime=True)
-        msg['Subject'] = emailSubject
-        msg['Message-ID'] = new_message_ID
+            # send_from = "PdmV.ValDb@cern.ch"
+            if username != False:
+                send_from = getUserEmail(username, Session)
+            else:
+                send_from = "anorkus@cern.ch"
+            msg['From'] = send_from
+        
+            send_to = [self.MAILING_LIST[index]]
+            #send_to.append(self.MAILING_LIST[index])
+            #if username != False:
+             #   send_to.append(send_from)  ##send a copy to user himself
+            msg['To'] = COMMASPACE.join(send_to)
+            msg['Date'] = formatdate(localtime=True)
+            msg['Subject'] = emailSubject
+            msg['Message-ID'] = elem
 
-        try:
-            msg.attach(MIMEText(messageText))
-            smtpObj = smtplib.SMTP()
-            smtpObj.connect()
-            smtpObj.sendmail(send_from, send_to, msg.as_string())
-            smtpObj.close()         
-        except Exception as e:
-            print "Error: unable to send email", e.__class__
+            try:
+                msg.attach(MIMEText(messageText))
+                smtpObj = smtplib.SMTP()
+                smtpObj.connect()
+                smtpObj.sendmail(send_from, send_to, msg.as_string())
+                smtpObj.close()         
+            except Exception as e:
+                print "Error: unable to send email", e.__class__
         return json.dumps('New release added. Email was sent.')
 
 def main():

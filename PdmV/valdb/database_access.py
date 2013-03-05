@@ -196,7 +196,35 @@ def getReleaseShortInfo(cat, sub_cat, rel_name, Session):
     except Exception as e:
         session.close()
         print e
+        
+def testFullReleaseInfo(rel_name, Session):
+    session = Session()
+    info = {}
+    try:
+        info[rel_name] = {"Reconstruction": {
+                            "Data":{},
+                            "FullSim":{},
+                            "FastSim":{}},
+                          "HLT": {
+                            "Data":{},
+                            "FullSim":{},
+                            "FastSim":{}},
+                          "PAGs": {
+                            "Data":{},
+                            "FullSim":{},
+                            "FastSim":{}}
+                          }
+        for i in session.query(Releases_Table).filter(Releases_Table.release_name == rel_name):
+            info[rel_name][i.category][i.subcategory][i.status_kind] = {}
 
+            for j in session.query(Status_Table).filter(Status_Table.id == i.id):
+                info[rel_name][i.category][i.subcategory][i.status_kind]["status"] = j.validation_status
+                info[rel_name][i.category][i.subcategory][i.status_kind]["comments"] = j.comments
+                info[rel_name][i.category][i.subcategory]["RelMon"] = j.RELMON_URL
+        return json.dumps(info)
+    except Exception as e:
+        session.close()
+        print e
 # Returns validation status by column of release
 def getStatus(cat, sub_cat, rel_name, status_kind, Session):
     session = Session()
