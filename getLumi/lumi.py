@@ -20,9 +20,12 @@ import csv
 import tempfile
 import logging
 
+import cache
+
 
 dateFormat = '%m/%d/%y %H:%M:%S'
 maxProcesses = 2
+expirationTime = 4 * 60 * 60 # 4 hours
 
 
 class LumiError(Exception):
@@ -108,6 +111,22 @@ def parseCSV(csvFile, lumiType):
         elif lumiType == 'recorded':
             output[run] = float(recUb)
 
+        # Cache results, for both kinds of lumiType, since we have the data
+        # The repr() is required: we want to keep the float as-is
+        cache.delivered.put(run, repr(float(delUb)), expirationTime)
+        cache.recorded.put(run, repr(float(recUb)), expirationTime)
+
+    # Cache empty runs in-between the first and the last since
+    # we know they are empty
+    if len(output) > 0:
+        sortedRuns = sorted(output)
+        first = sortedRuns[0]
+        last = sortedRuns[-1]
+        runs = set(range(first, last + 1))
+        for run in runs - set(output):
+            cache.delivered.put(run, '', expirationTime)
+            cache.recorded.put(run, '', expirationTime)
+
     return output
 
 
@@ -136,6 +155,29 @@ def query(begin, end, lumiType):
     and waitProcess() separately instead.
     '''
 
+    # If it is a run-based only query, try to see if it is cached
+    if isinstance(begin, int) and isinstance(end, int):
+        result = {}
+        for run in range(begin, end + 1):
+            value = getattr(cache, lumiType).get(run)
+            if value is None:
+                break
+            if value == '':
+                continue
+            result[run] = float(value)
+        else:
+            return result
+
     with tempfile.NamedTemporaryFile(dir = '/data/files/getLumi') as f:
-        return waitProcess(runProcess(begin, end, f.name), f, lumiType)
+        result = waitProcess(runProcess(begin, end, f.name), f, lumiType)
+
+    # If it is a run-based only query, we can also cache empty runs in
+    # the extremes, since we know we have checked them
+    if isinstance(begin, int) and isinstance(end, int):
+        for run in range(begin, end + 1):
+            if run not in result:
+                cache.delivered.put(run, '', expirationTime)
+                cache.recorded.put(run, '', expirationTime)
+
+    return result
 

@@ -191,7 +191,7 @@ servicesConfiguration = {
         'filename':       'lumidb_server.py',
         'listeningPort':  8086,
         'hidden':         False,
-        'caches':         ['csvFiles'],
+        'caches':         ['delivered', 'recorded'],
     },
 
     'gtc': {
