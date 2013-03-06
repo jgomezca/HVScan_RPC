@@ -91,7 +91,11 @@ def parseCSV(csvFile, lumiType):
 
     # Ignore the headers in the first line:
     # Run:Fill,DeliveredLS,Delivered(/ub),SelectedLS,Recorded(/ub)
-    csvReader.next()
+    try:
+        csvReader.next()
+    except StopIteration:
+        # Empty CSV file
+        return {}
 
     # CSV fields look like:
     # 161210:1645,44,6.287026587401057,[1-38],5.189176823798077
