@@ -265,6 +265,14 @@ class HTTP(object):
         self.retries = retries
 
 
+    def setUsernamePassword(self, username = '', password = ''):
+        '''Sets the username and password for authentication.
+        '''
+
+        # No support for USERNAME/PASSWORD options in pycurl
+        self.curl.setopt(self.curl.USERPWD, '%s:%s' % (username, password))
+
+
     def query(self, url, data = None, files = None, keepCookies = True):
         '''Queries a URL, optionally with some data (dictionary).
 
