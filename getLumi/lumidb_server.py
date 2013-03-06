@@ -89,8 +89,10 @@ class LumiDB(object):
         if 'up' in kwargs :
             return self.up( )
 
-        return service.setResponseJSON( self.getLumi( **kwargs ) )
-
+        try:
+            return service.setResponseJSON( self.getLumi( **kwargs ) )
+        except lumi.BusyLumiError:
+            raise cherrypy.HTTPError(503, 'getLumi is busy processing other requests. Please try again later.')
 
     def format(self, lumiDictionary, lumiType):
         '''Formats a dictionary from the lumi module into the expected

@@ -22,6 +22,35 @@ import logging
 
 
 dateFormat = '%m/%d/%y %H:%M:%S'
+maxProcesses = 2
+
+
+class LumiError(Exception):
+    '''A Lumi exception.
+    '''
+
+class BusyLumiError(Exception):
+    '''Lumi is busy with other requests.
+
+    i.e. the number of processes have reached the limit.
+    '''
+
+
+def check_output(*popenargs, **kwargs):
+    '''Port from Python 2.7.
+    '''
+
+    if 'stdout' in kwargs:
+        raise ValueError('stdout argument not allowed, it will be overridden.')
+    process = subprocess.Popen(stdout=subprocess.PIPE, *popenargs, **kwargs)
+    output, unused_err = process.communicate()
+    retcode = process.poll()
+    if retcode:
+        cmd = kwargs.get("args")
+        if cmd is None:
+            cmd = popenargs[0]
+        raise subprocess.CalledProcessError(retcode, cmd)
+    return output
 
 
 def runProcess(begin, end, csvFilename):
@@ -34,6 +63,11 @@ def runProcess(begin, end, csvFilename):
 
     if isinstance(end, datetime.datetime):
         end = end.strftime(dateFormat)
+
+    # Check that there are not too many queries going on already
+    processes = int(check_output("pgrep -f '/lumiCalc2.py --begin' | wc -l", shell = True))
+    if processes > maxProcesses:
+        raise BusyLumiError
 
     cmd  = 'export PYTHONPATH=/data/utilities/lib/python2.6/site-packages/:$PYTHONPATH ; '
     cmd += 'cd /afs/cern.ch/cms/slc5_amd64_gcc472/cms/cmssw/CMSSW_6_2_0_pre1/src/ ; eval `scram run -sh` ; '
