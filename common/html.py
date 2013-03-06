@@ -9,12 +9,25 @@ __maintainer__ = 'Miguel Ojeda'
 __email__ = 'mojedasa@cern.ch'
 
 
+import re
 import xml.sax.saxutils
 
 
 class HTMLError(Exception):
     '''A common HTML exception.
     '''
+
+
+def urlize(text, target = r'<a href="\1">\1</a>'):
+    '''Replaces http://... and https://... URLs (without whitespace)
+    with HTML links.
+    '''
+
+    return re.sub(
+        r'\b(http(|s)://\S+)\b',
+        target,
+        text
+    )
 
 
 def escape(data):
