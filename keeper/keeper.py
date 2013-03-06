@@ -579,7 +579,7 @@ def pylint(*files):
     #-mo FIXME: The ruleset will need to be refined.
     subprocess.call(
         'export SCRAM_ARCH=slc5_amd64_gcc462 ; '
-        'pushd `scram l | grep -F 6_0_X | tail -1 | awk \'{print $2}\'` >/dev/null ; '
+        'pushd /afs/cern.ch/cms/$SCRAM_ARCH/cms/cmssw/CMSSW_6_0_1 >/dev/null ; '
         'eval `scramv1 runtime -sh` ; '
         'popd >/dev/null ; '
         'PYTHONPATH=$PYTHONPATH:%s pylint '
