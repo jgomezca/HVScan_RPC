@@ -93,7 +93,7 @@ mainTemplate = jinja2.Template('''
                     background-color: #99FF99 !important;
                 }
                 .statusOld {
-                    background-color: #DD99FF !important;
+                    background-color: #CCCCCC !important;
                 }
                 #userLogSearch tr :nth-child(1), #userLogSearch tr :nth-child(3) {
                     padding-left: 12px;
