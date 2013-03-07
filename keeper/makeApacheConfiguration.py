@@ -702,6 +702,7 @@ redirectRoot = '''
 '''
 
 redirect = '''
+    RewriteRule ^/{url}$ {target}  [NE,L,R]
     RewriteRule ^/{url}/$ {target}  [NE,L,R]
 '''
 
