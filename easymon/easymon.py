@@ -102,6 +102,22 @@ tree = (
     )),
 )
 
+onlineTree = (
+    ('Frontier', None, (
+        ('srv-C2C03-19 Load', None, 'OnlineFrontier_srv-C2C03-19_status'),
+        ('srv-C2C05-19 Load', None, 'OnlineFrontier_srv-C2C05-19_status'),
+    )),
+
+    ('DB', None, (
+        ('CMSONR SLS Availability', 40, 'OnlineDB_CMSONR_availability'),
+        ('CMSONR1 CPU Load', None, 'OnlineDB_CMSONR1_cpuLoad'),
+        ('CMSONR2 CPU Load', None, 'OnlineDB_CMSONR2_cpuLoad'),
+        ('CMSONR3 CPU Load', None, 'OnlineDB_CMSONR3_cpuLoad'),
+        ('CMSONR4 CPU Load', None, 'OnlineDB_CMSONR4_cpuLoad'),
+        ('CMSONRADG1 CPU Load', None, 'OnlineDB_CMSONRADG1_cpuLoad'),
+        ('CMSONRADG2 CPU Load', None, 'OnlineDB_CMSONRADG2_cpuLoad'),
+    )),
+)
 
 def getCheckMKStatus():
     '''Returns the status of CheckMK as a dictionary. The keys are
@@ -279,9 +295,13 @@ def build(obj, tree, title):
 
 
 def main():
-    # Create the root object and build the full tree on it
+    # Create the root object at /easymon/ and build the full tree on it
     easymon = Easymon()
     build(easymon, tree, 'CMS ConditionDB EasyMon')
+
+    # Also build the online tree independently at /easymon/online/
+    easymon.online = Easymon()
+    build(easymon.online, onlineTree, 'CMS ConditionDB Online EasyMon')
 
     service.start(easymon)
 
