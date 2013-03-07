@@ -335,13 +335,13 @@ def run(service, filename, extraCommandLine = '', replaceProcess = True):
         return subprocess.call(['bash', '-c', commandLine])
 
 
-def start(service, warnIfAlreadyStarted = True, sendEmail = True):
+def start(service, warnIfAlreadyStarted = True, sendEmail = True, maxWaitTime = 10):
     '''Starts a service or the keeper itself.
     '''
 
     if service == 'all':
         for service in services:
-            start(service, warnIfAlreadyStarted = warnIfAlreadyStarted, sendEmail = sendEmail)
+            start(service, warnIfAlreadyStarted = warnIfAlreadyStarted, sendEmail = sendEmail, maxWaitTime = maxWaitTime)
         return
 
     if service != 'keeper':
@@ -378,7 +378,7 @@ def start(service, warnIfAlreadyStarted = True, sendEmail = True):
             run(service, config.servicesConfiguration[service]['filename'], extraCommandLine = extraCommandLine)
 
     # Wait until the service has started
-    wait(service, maxWaitTime = 10, forStart = True)
+    wait(service, maxWaitTime = maxWaitTime, forStart = True)
 
     # Clean up the process table
     os.wait()
@@ -1066,8 +1066,8 @@ def runCommand(command, arguments, commandName = None):
                 default = default,
                 help = 'Default: %default'
             )
-        elif isinstance(default, str):
-            parser.add_option('--%s' % option, type = 'str',
+        elif isinstance(default, str) or isinstance(default, int):
+            parser.add_option('--%s' % option, type = type(default).__name__,
                 dest = option,
                 default = default,
                 help = 'Default: %default'

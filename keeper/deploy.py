@@ -506,9 +506,9 @@ def deploy(options):
 
     # Start all the services and then the keeper if updating
     if options['update']:
-        keeperStartOptions = ''
+        keeperStartOptions = '--maxWaitTime 20 '
         if not options['sendEmail']:
-            keeperStartOptions = '--nosendEmail'
+            keeperStartOptions += '--nosendEmail'
         execute('services/keeper/keeper.py start %s all' % keeperStartOptions)
         execute('services/keeper/keeper.py jobs enable all')
         execute('services/keeper/keeper.py start %s keeper' % keeperStartOptions)
