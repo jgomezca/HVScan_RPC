@@ -11,6 +11,12 @@ __email__ = 'mojedasa@cern.ch'
 
 import os
 import socket
+import platform
+import pwd
+import grp
+
+
+onOSX = platform.system() == 'Darwin'
 
 
 rootDirectory = '/data'
@@ -21,6 +27,22 @@ logsDirectory = os.path.join(rootDirectory, 'logs')
 jobsDirectory = os.path.join(rootDirectory, 'jobs')
 cmsswDirectory = os.path.join(rootDirectory, 'cmsswNew')
 cmsswSetupEnvScript = os.path.join(cmsswDirectory, 'setupEnv.sh')
+
+httpdServerRoot = '/etc/httpd'
+httpdDocumentRoot = '/var/www/html'
+httpdConfigFile = '/etc/httpd/conf/httpd.conf'
+httpdIncludeDirectory = '/etc/httpd/conf.d'
+httpdModulesDirectory = 'modules'
+httpdUser = 'apache'
+httpdGroup = 'apache'
+if onOSX:
+    httpdServerRoot = os.path.join(rootDirectory, 'httpd')
+    httpdDocumentRoot = os.path.join(httpdServerRoot, 'root')
+    httpdConfigFile = '/etc/apache2/httpd.conf'
+    httpdIncludeDirectory = os.path.join(httpdServerRoot, 'conf.d')
+    httpdModulesDirectory = 'libexec/apache2'
+    httpdUser = pwd.getpwuid(os.getuid())[0]
+    httpdGroup = grp.getgrgid(os.getgid())[0]
 
 logsFileTemplate = os.path.join(logsDirectory, '%s', 'log')
 logsSize = '10M' # rotatelogs' syntax
@@ -68,16 +90,22 @@ cacheSize = 2 * 1024 * 1024 * 1024
 
 
 hostCertificateFiles = {
-    'private': {
-        'crt': '/etc/pki/tls/certs/localhost.crt',
-        'key': '/etc/pki/tls/private/localhost.key',
-    },
-
     'devintpro': {
         'crt': '/etc/grid-security/hostcert.pem',
         'key': '/etc/grid-security/hostkey.pem',
     },
 }
+
+if onOSX:
+    hostCertificateFiles['private'] = {
+        'crt': '/etc/apache2/ssl/server.crt',
+        'key': '/etc/apache2/ssl/host-nopass.key',
+    }
+else:
+    hostCertificateFiles['private'] = {
+        'crt': '/etc/pki/tls/certs/localhost.crt',
+        'key': '/etc/pki/tls/private/localhost.key',
+    }
 
 
 productionLevels = {

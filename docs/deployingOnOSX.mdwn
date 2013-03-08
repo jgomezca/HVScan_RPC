@@ -1,0 +1,73 @@
+
+# Deploying on OS X
+
+
+## Introduction
+
+The deploy script knows how to deploy on OS X, although it is not officially
+supported i.e. contact us if it does not work for you and we will try to fix it,
+but we cannot promise it will be always working.
+
+For starters, it has been only tested in Mountain Lion and there are some
+previous steps you will need to do manually. This document describes them.
+
+
+## Install AFS
+
+You need to install AFS in OS X. Please follow the instructions at:
+
+  * <http://information-technology.web.cern.ch/services/fe/afs/howto/openafs-mac-os>
+
+and/or download your binary at:
+
+  * <http://www.openafs.org>
+
+The procedure should be easy to follow.
+
+Before running the deploy script, please make sure OpenAFS is started
+and that you have the Kerberos ticket and the AFS token:
+
+    $ kinit username@CERN.CH
+    $ aklog
+
+
+## Install redis
+
+You need to install redis as well. The one from MacPorts:
+
+  * <http://www.macports.org>
+
+seems to work fine:
+
+    $ sudo port install redis
+
+Please check that redis-cli and redis-server are in your $PATH.
+
+
+## Apache configuration
+
+The deploy script will use your builtin Apache server. You will get a warning
+and will be asked to confirm to continue, just in case you did not read
+this document, to prevent losing your configuration if you are using it
+for something else.
+
+Apache will be run under your user account.
+
+
+## Testing
+
+First, you can test whether you can start the docs service and open it directly
+without Apache.
+
+    $ /data/services/keeper/keeper.py start docs
+    $ /data/services/keeper/keeper.py status
+
+If that worked, then try to access the webpage through Apache. Remember,
+we use name-based virtual hosts and we do not allow any other requests.
+Therefore, you will need to access the webpage using not your IP nor localhost,
+but your hostname, e.g.:
+
+  * https://mymachine/
+
+Otherwise you will get a 403 Forbidden reply from Apache.
+

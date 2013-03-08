@@ -477,23 +477,23 @@ services['gtc']['protocol'] = 'http'
 # Templates
 httpdTemplate = '''
 # Required for SSL
-LoadModule ssl_module modules/mod_ssl.so
+LoadModule ssl_module {modulesDirectory}/mod_ssl.so
 
 # Required for Shibboleth
-LoadModule authz_host_module modules/mod_authz_host.so
+LoadModule authz_host_module {modulesDirectory}/mod_authz_host.so
 {loadShibboleth}
 
 # Required for logging
-LoadModule log_config_module modules/mod_log_config.so
+LoadModule log_config_module {modulesDirectory}/mod_log_config.so
 
 # Required for the rewrite rules
-LoadModule rewrite_module modules/mod_rewrite.so
+LoadModule rewrite_module {modulesDirectory}/mod_rewrite.so
 
 # Required for proxy, balancer and session stickyness
-LoadModule headers_module modules/mod_headers.so
-LoadModule proxy_module modules/mod_proxy.so
-LoadModule proxy_balancer_module modules/mod_proxy_balancer.so
-LoadModule proxy_http_module modules/mod_proxy_http.so
+LoadModule headers_module {modulesDirectory}/mod_headers.so
+LoadModule proxy_module {modulesDirectory}/mod_proxy.so
+LoadModule proxy_balancer_module {modulesDirectory}/mod_proxy_balancer.so
+LoadModule proxy_http_module {modulesDirectory}/mod_proxy_http.so
 
 # August29, patch
 # Reject request when more than 5 ranges in the Range: header.
@@ -503,7 +503,7 @@ RewriteCond %{{HTTP:range}} !(^bytes=[^,]+(,[^,]+){{0,4}}$|^$)
 RewriteRule .* - [F]
 
 ServerTokens ProductOnly
-ServerRoot "/etc/httpd"
+ServerRoot {serverRoot}
 PidFile run/httpd.pid
 Timeout 120
 KeepAlive Off
@@ -573,14 +573,14 @@ SSLRandomSeed startup file:/dev/urandom 256
 SSLRandomSeed connect builtin
 SSLCryptoDevice builtin
 
-Include conf.d/*.conf
+Include {includeDirectory}/*.conf
 
-User apache
-Group apache
+User {httpdUser}
+Group {httpdGroup}
 
 ServerAdmin root@localhost
 UseCanonicalName Off
-DocumentRoot /var/www/html
+DocumentRoot {httpdDocumentRoot}
 
 # For everywhere in the filesystem
 <Directory />
@@ -1110,7 +1110,7 @@ def makeHttpdConfiguration(frontend):
     if frontend == 'private':
         loadShibboleth = ''
 
-    return httpdTemplate.format(loadShibboleth = loadShibboleth, **getBasicInfoMap(frontend))
+    return httpdTemplate.format(loadShibboleth = loadShibboleth, serverRoot = config.httpdServerRoot, httpdDocumentRoot = config.httpdDocumentRoot, includeDirectory = config.httpdIncludeDirectory, modulesDirectory = config.httpdModulesDirectory, httpdUser = config.httpdUser, httpdGroup = config.httpdGroup, **getBasicInfoMap(frontend))
 
 
 def makeApacheConfiguration(frontend, virtualHost):
@@ -1262,7 +1262,7 @@ def httpd(arguments):
 
     parser.add_option('-o', '--outputFile',
         dest = 'outputFile',
-        default = '/etc/httpd/conf/httpd.conf',
+        default = config.httpdConfigFile,
         help = 'The output file. Default: %default'
     )
 
@@ -1290,7 +1290,7 @@ def vhosts(arguments):
 
     parser.add_option('-o', '--outputPath',
         dest = 'outputPath',
-        default = '/etc/httpd/conf.d/',
+        default = config.httpdIncludeDirectory,
         help = 'The output path. Default: %default'
     )
 
@@ -1298,7 +1298,7 @@ def vhosts(arguments):
 
     # Remove all other *.conf files in the folder (exception: zzz_omd.conf
     # for OMD which is not automated yet)
-    for filePath in glob.glob('/etc/httpd/conf.d/*.conf'):
+    for filePath in glob.glob(os.path.join(config.httpdIncludeDirectory, '*.conf')):
         if filePath.endswith('zzz_omd.conf'):
             continue
         backupPath = '%s.original' % filePath

@@ -18,10 +18,14 @@ import grp
 import subprocess
 import optparse
 import logging
+import platform
 
 
 import config
 defaultDataDirectory = config.rootDirectory
+
+
+onOSX = platform.system() == 'Darwin'
 
 
 def getOptions():
@@ -47,6 +51,12 @@ def getOptions():
         dest = 'update',
         default = False,
         help = 'Updates an existing deployment (i.e. with services running): after checking the requirements, but before deploying, stop the keeper and then all the services. Later, after deployment, start the services and then the keeper. Default: %default'
+    )
+
+    parser.add_option('--noApache', action = 'store_false',
+        dest = 'apache',
+        default = True,
+        help = 'Disables writing Apache configuration. Intended for OS X, to prevent overwriting your configuration -- but if you are not using the Apache for something else, go ahead and use it. Default: %default'
     )
 
     parser.add_option('-n', '--nosendEmail', action = 'store_false',
@@ -162,14 +172,24 @@ def configureApache():
         return
 
     # Generate Apache configuration
-    execute('sudo services/keeper/makeApacheConfiguration.py httpd -f private')
-    execute('sudo services/keeper/makeApacheConfiguration.py vhosts -f private')
+    if onOSX:
+        execute('chown %s:%s %s' % (config.httpdUser, config.httpdGroup, config.httpdConfigFile))
+        execute('mkdir -p %s %s %s %s %s' % (config.httpdServerRoot, config.httpdDocumentRoot, config.httpdIncludeDirectory, os.path.join(config.httpdServerRoot, 'run'), os.path.join(config.httpdServerRoot, 'logs')))
+        execute('services/keeper/makeApacheConfiguration.py httpd -f private')
+        execute('services/keeper/makeApacheConfiguration.py vhosts -f private')
+    else:
+        execute('sudo services/keeper/makeApacheConfiguration.py httpd -f private')
+        execute('sudo services/keeper/makeApacheConfiguration.py vhosts -f private')
 
     # Set required SELinux policies
-    execute('sudo /usr/sbin/setsebool -P httpd_can_network_connect on')
+    if not onOSX:
+        execute('sudo /usr/sbin/setsebool -P httpd_can_network_connect on')
 
     # Restart gracefully
-    execute('sudo /etc/init.d/httpd graceful')
+    if onOSX:
+        execute('sudo apachectl graceful')
+    else:
+        execute('sudo /etc/init.d/httpd graceful')
 
 
 def configureRedis():
@@ -182,10 +202,14 @@ def configureRedis():
         return
 
     # Generate Redis configuration
-    execute('sudo services/keeper/makeRedisConfiguration.py')
+    if not onOSX:
+        execute('sudo services/keeper/makeRedisConfiguration.py')
 
     # Restart
-    execute('sudo /etc/init.d/redis restart')
+    if onOSX:
+        execute('sudo services/keeper/manageRedis.py restart')
+    else:
+        execute('sudo /etc/init.d/redis restart')
 
 
 def openPort(port):
@@ -209,12 +233,17 @@ def openPort(port):
 def updateIptables():
     '''Updates iptables and saves the results.
     
-    Only meant for private machines.
+    Only meant for Linux private machines.
     '''
 
     # Only meant for private machines. We do not want to mess around with
     # the quattor / NCM rules in vocms*.
     if config.getProductionLevel() != 'private':
+        return
+
+    # No iptables in OS X, intended for local development
+    # (for the moment at least)
+    if onOSX:
         return
 
     ports = [80, 443]
@@ -233,6 +262,17 @@ def checkPackage(package, testCommand = None):
     '''
 
     logging.info('Checking package: %s', package)
+
+    # If we have a way to test the command, try it first
+    # This avoids running rpm -qi on other platforms like OS X
+    if testCommand is not None:
+        try:
+            execute(testCommand)
+            return
+        except:
+            if onOSX:
+                raise Exception('Package %s is not installed, but you are deploying on OS X; therefore, you will need to manually install it.' % package)
+            pass
 
     try:
         try:
@@ -287,7 +327,7 @@ def checkRequirements(options):
 
     # Test for sudo privileges
     try:
-        execute('sudo mkdir --version')
+        execute('sudo echo ""')
     except:
         raise Exception('This script requires sudo privileges for deployment.')
 
@@ -300,7 +340,8 @@ def checkRequirements(options):
     # (i.e. in order to set up the private frontend)
     if config.getProductionLevel() == 'private':
         checkPackage('httpd', '/usr/sbin/httpd -v')
-        checkPackage('mod_ssl')
+        if not onOSX:
+            checkPackage('mod_ssl')
 
     # Test for rotatelogs (httpd package)
     try:
@@ -319,8 +360,14 @@ def checkRequirements(options):
     if config.getProductionLevel() == 'private':
         level = 'private'
 
-    checkFile(config.hostCertificateFiles[level]['crt'])
-    checkFile(config.hostCertificateFiles[level]['key'])
+    if onOSX and options['apache']:
+        text = raw_input('You are deploying on OS X but you did not ask to disable overwriting the Apache configuration (which is the default). Since maybe you are using Apache for something else in your Mac, would you like to continue? [y/N] ')
+        if 'y' != text:
+            raise Exception('Stopped on request of the user.')
+
+    if options['apache']:
+        checkFile(config.hostCertificateFiles[level]['crt'])
+        checkFile(config.hostCertificateFiles[level]['key'])
 
     # Check whether there is an existing deployment
     if options['force']:
@@ -408,7 +455,12 @@ def deploy(options):
         execute('sudo rm -rf %s' % ' '.join(foldersToRemove))
 
     # Get the secrets, before switching user (i.e. we need AFS tokens)
-    execute('sudo rsync -az %s %s' % (config.secretsSource, os.path.join(options['dataDirectory'], '.')))
+    if onOSX:
+        execute('rsync -az %s %s' % (config.secretsSource, '/tmp/secrets'))
+        execute('sudo rsync -az %s %s' % ('/tmp/secrets/.', os.path.join(options['dataDirectory'], '.')))
+        execute('sudo rm -rf %s' % '/tmp/secrets')
+    else:
+        execute('sudo rsync -az %s %s' % (config.secretsSource, os.path.join(options['dataDirectory'], '.')))
 
     # In a private machine (e.g. VM), copy the certificates installed by the mod_ssl package.
     # In official deployments, copy the grid-security certificates.
@@ -419,8 +471,9 @@ def deploy(options):
         hostCertificateCrt = config.hostCertificateFiles['devintpro']['crt']
         hostCertificateKey = config.hostCertificateFiles['devintpro']['key']
 
-    execute('sudo rsync -a %s %s' % (hostCertificateCrt, os.path.join(options['dataDirectory'], 'secrets/hostcert.pem')))
-    execute('sudo rsync -a %s %s' % (hostCertificateKey, os.path.join(options['dataDirectory'], 'secrets/hostkey.pem')))
+    if options['apache']:
+        execute('sudo rsync -a %s %s' % (hostCertificateCrt, os.path.join(options['dataDirectory'], 'secrets/hostcert.pem')))
+        execute('sudo rsync -a %s %s' % (hostCertificateKey, os.path.join(options['dataDirectory'], 'secrets/hostkey.pem')))
 
     # Set the proper ownership for everything before switching to the new user and group
     # and restrict file mode bits for everything (this must include the secrets).
@@ -474,9 +527,16 @@ def deploy(options):
     execute('git clone -q ' + options['utilitiesRepository'] + ' utilities')
     execute('cd utilities && git checkout -q %s' % getDependencyTag('cmsDbWebUtilities'))
 
-    # Clone cmsswNew and checkout the tag
-    execute('git clone -q ' + options['cmsswRepository'] + ' cmssw')
-    execute('cd cmssw && git checkout -q %s' % getDependencyTag('cmssw'))
+    # Install the CMS Conditions CMSSW release
+    # FIXME: Only gtc crashes at the moment with cmsCondCMSSWInstaller.py
+    #        When we solve the problem, drop the CMSSW repository and use
+    #        the script in both platforms.
+    if onOSX:
+        execute('services/keeper/cmsCondCMSSWInstaller.py --topDir %s' % defaultDataDirectory)
+    else:
+        # Clone cmsswNew and checkout the tag
+        execute('git clone -q ' + options['cmsswRepository'] + ' cmssw')
+        execute('cd cmssw && git checkout -q %s' % getDependencyTag('cmssw'))
 
     # FIXME: Create symlink cmsswNew -> cmssw
     execute('ln -s cmssw cmsswNew')
@@ -485,7 +545,8 @@ def deploy(options):
     execute('cd services/docs && ./generate.py')
 
     # Configure Apache in private machines
-    configureApache()
+    if options['apache']:
+        configureApache()
 
     # Update iptables in private machines
     updateIptables()
