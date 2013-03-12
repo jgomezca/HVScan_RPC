@@ -1,7 +1,5 @@
 import subprocess
 
-import service
-
 
 class TagHandler( object ):
     def __init__(self, srcDB, destDB, inputTag, fileLogger, config ):
