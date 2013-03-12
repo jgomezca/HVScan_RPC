@@ -13,3 +13,7 @@ fi
 pushd $CMSSW_REL >/dev/null
 eval `scramv1 runtime -sh`
 popd >/dev/null
+
+# Enable the new key-based authentication
+export COND_AUTH_SYS=1
+
