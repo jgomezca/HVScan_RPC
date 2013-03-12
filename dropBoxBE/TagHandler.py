@@ -1,5 +1,7 @@
 import subprocess
 
+import shell
+
 
 class TagHandler( object ):
     def __init__(self, srcDB, destDB, inputTag, fileLogger, config ):
@@ -58,15 +60,19 @@ class TagHandler( object ):
     def export(self, destTag, destSince, userComment ):
         self.exportTag = destTag
         self.exportSince = str(destSince)
+
+        # We could use a list for Popen to avoid escaping and shell=True,
+        # but this way it is easier to read in the logs and we get a working
+        # command that could be copied and rerun easily
         command = "cmscond_export_iov" + \
-                  " -s " + self.srcDB + \
-                  " -i " + self.inputTag + \
-                  " -d " + self.exportDB + \
-                  " -t " + self.exportTag + \
-                  " -b " + self.exportSince + \
-                  " -l " + self.logDB +\
-                  " -x '"+ str(userComment) + "'" +\
-                  " -P " + self.authpath
+                  " -s " + shell.escape(self.srcDB) + \
+                  " -i " + shell.escape(self.inputTag) + \
+                  " -d " + shell.escape(self.exportDB) + \
+                  " -t " + shell.escape(self.exportTag) + \
+                  " -b " + shell.escape(self.exportSince) + \
+                  " -l " + shell.escape(self.logDB) +\
+                  " -x " + shell.escape(userComment) + \
+                  " -P " + shell.escape(self.authpath)
 
         return self.executeAndLog( command, True )
 
@@ -75,14 +81,16 @@ class TagHandler( object ):
         if( self.exportTag == None ):
            self.fileLogger.error('Tag Export has not been done.')
            return False
+
+        # Same note as for the export command (see above)
         command = "cmscond_duplicate_iov" + \
-                    " -c " + self.exportDB + \
-                    " -t " + self.exportTag + \
-                    " -f " + self.exportSince + \
-                    " -d " + destTag + \
-                    " -s " + duplicateSince + \
-                    " -l " + self.logDB +\
-                    " -P " + self.authpath
+                    " -c " + shell.escape(self.exportDB) + \
+                    " -t " + shell.escape(self.exportTag) + \
+                    " -f " + shell.escape(self.exportSince) + \
+                    " -d " + shell.escape(destTag) + \
+                    " -s " + shell.escape(duplicateSince) + \
+                    " -l " + shell.escape(self.logDB) +\
+                    " -P " + shell.escape(self.authpath)
 
         return self.executeAndLog( command, True )
 
