@@ -71,6 +71,11 @@ class BalancerManager(object):
     '''Class used for managing an Apache's balancer-manager.
     '''
 
+    lbsets = {
+        'in': '0',
+        'out': '1',
+    }
+
     def __init__(self, url, virtualHost = None):
         self.url = url
         self.virtualHost = virtualHost
@@ -121,7 +126,7 @@ class BalancerManager(object):
                     'route': matches[0],
                     'routeRedirection': matches[1],
                     'loadFactor': matches[2],
-                    'loadSet': matches[3],
+                    'lbset': matches[3],
                     'status': matches[4],
                     'statusBool': statusBool,
                     'elected': matches[5],
@@ -130,32 +135,75 @@ class BalancerManager(object):
                 })
 
 
+    def manageWorker(self, balancer, worker, parameters):
+        '''Manages a worker.
+        '''
+
+        parameters.update({
+            'b': balancer,
+            'w': worker,
+            'nonce': self.workers[balancer][worker]['nonce'],
+        })
+
+        # Do *not* send the other parameters (lf, ls, wr, rr, status_I, ...)
+        # because they would overwrite the current settings.
+        _query('%s?%s' % (self.url, urllib.urlencode(parameters)), self.virtualHost)
+
+
     def enableWorker(self, balancer, worker):
         '''Enables a worker.
         '''
 
-        manageWorker(True, balancer, worker)
+        self.manageWorker(balancer, worker, {
+            'dw': 'Enable',
+        })
 
 
     def disableWorker(self, balancer, worker):
         '''Disables a worker.
+
+        Ongoing requests will be still be handled by this worker but
+        *all* new requests will move to some other worker. Therefore,
+        this *breaks* sessions relying on session stickiness for this worker.
+        Use takeOutWorker() first to prevent this and wait a reasonable time
+        for sessions to timeout before calling disableWorker().
         '''
 
-        manageWorker(False, balancer, worker)
+        self.manageWorker(balancer, worker, {
+            'dw': 'Disable',
+        })
 
 
-    def manageWorker(self, enable, balancer, worker):
-        '''Enables or disables a worker.
+    def moveWorker(self, balancer, worker, lbset):
+        '''Moves a worker to another set.
         '''
 
-        # Do *not* send the other parameters (lf, ls, wr, rr, status_I, ...)
-        # because they would overwrite the current settings.
-        _query('%s?%s' % (self.url, urllib.urlencode({
-            'b': balancer,
-            'w': worker,
-            'nonce': self.workers[balancer][worker]['nonce'],
-            'dw': 'Enable' if enable else 'Disable',
-        })), self.virtualHost)
+        self.manageWorker(balancer, worker, {
+            'ls': lbset,
+        })
+
+
+    def takeInWorker(self, balancer, worker):
+        '''Takes in a worker.
+
+        We use the default lbset 0 to give highest priority.
+        '''
+
+        self.moveWorker(balancer, worker, self.lbsets['in'])
+
+
+    def takeOutWorker(self, balancer, worker):
+        '''Takes out a worker.
+
+        Ongoing requests and requests with a ROUTEID cookie pointing to
+        this worker will still be handled by it, but no other requests will
+        come to it. See disableWorker().
+
+        We use the lbset 1 to give a lower priority for new requests,
+        since lower numbered sets have higher priority.
+        '''
+
+        self.moveWorker(balancer, worker, self.lbsets['out'])
 
 
 def printStatus(balancerManagerUrl, virtualHost):
@@ -168,7 +216,7 @@ def printStatus(balancerManagerUrl, virtualHost):
         print '[%s]' % balancer
         for worker in sorted(balancerManager.workers[balancer]):
             data = balancerManager.workers[balancer][worker]
-            print '  %s : route = %s, enabled = %s (%s)' % (worker, data['route'], data['statusBool'], data['status'])
+            print '  %s : route = %s, enabled = %s (%s), lbset = %s' % (worker, data['route'], data['statusBool'], data['status'], data['lbset'])
 
 
 def manageBackend(enable, backend, balancerManagerUrl, virtualHost):
@@ -194,7 +242,10 @@ def manageBackend(enable, backend, balancerManagerUrl, virtualHost):
                 if balancerManager.workers[balancer][worker]['statusBool'] == enable:
                     logging.warn('The state of backend %s for balancer %s was already %s', backend, balancer, balancerManager.workers[balancer][worker]['statusBool'])
 
-                balancerManager.manageWorker(enable, balancer, worker)
+                if enable:
+                    balancerManager.enableWorker(balancer, worker)
+                else:
+                    balancerManager.disableWorker(balancer, worker)
 
         if not match:
             logging.warn('No matching workers for the %s backend in balancer %s. Current ones: %s', backend, balancer, sorted(balancerManager.workers[balancer]))
@@ -209,18 +260,61 @@ def manageBackend(enable, backend, balancerManagerUrl, virtualHost):
                 logging.warn('The state of backend %s for balancer %s is still %s. Check for misconfiguration or bugs in this script.', backend, balancer, balancerManager.workers[balancer][worker]['statusBool'])
 
 
+def moveBackend(takeIn, backend, balancerManagerUrl, virtualHost):
+    '''Enables or disables all workers (i.e. services) in a backend.
+    '''
+
+    # Remove .cern.ch if provided
+    if backend.endswith('.cern.ch'):
+        backend = backend[:-len('.cern.ch')]
+
+    logging.info('%s all workers for the %s backend in the %s virtual host...', 'Taking in' if takeIn else 'Taking out', backend, virtualHost)
+
+    balancerManager = BalancerManager(balancerManagerUrl, virtualHost)
+
+    for balancer in balancerManager.balancers:
+        match = False
+
+        for worker in balancerManager.workers[balancer]:
+            if backend in worker:
+                match = True
+
+                # Warn if it was already in the requested state
+                if balancerManager.workers[balancer][worker]['lbset'] == balancerManager.lbsets['in' if takeIn else 'out']:
+                    logging.warn('The lbset of backend %s for balancer %s was already %s', backend, balancer, balancerManager.workers[balancer][worker]['lbset'])
+
+                if takeIn:
+                    balancerManager.takeInWorker(balancer, worker)
+                else:
+                    balancerManager.takeOutWorker(balancer, worker)
+
+        if not match:
+            logging.warn('No matching workers for the %s backend in balancer %s. Current ones: %s', backend, balancer, sorted(balancerManager.workers[balancer]))
+
+    # Check afterwards (this prevents issues if Apache's version changes
+    # which may change the parameters of the balancer-manager forms)
+    balancerManager.refresh()
+
+    for balancer in balancerManager.balancers:
+        for worker in balancerManager.workers[balancer]:
+            if backend in worker and balancerManager.workers[balancer][worker]['lbset'] != balancerManager.lbsets['in' if takeIn else 'out']:
+                logging.warn('The lbset of backend %s for balancer %s is still %s. Check for misconfiguration or bugs in this script.', backend, balancer, balancerManager.workers[balancer][worker]['lbset'])
+
+
 def main():
     '''Entry point.
     '''
 
     parser = optparse.OptionParser(usage =
         'Usage: %prog status\n'
-        '   or: %prog <command> <backend>\n'
+        '   or: %prog <command> <backend/worker>\n'
         '\n'
-        '  where commmand can be status, enable or disable.\n'
+        '  where commmand can be status, enable, disable, takein or takeout.\n'
+        '  The action will be applied to the backend/worker in *all* proxies.\n'
         '\n'
-        '  e.g.: %prog status  cmsdbbe1 -v cms-conddb-prod2\n'
+        '  e.g.: %prog status           -v cms-conddb-prod2\n'
         '  e.g.: %prog disable cmsdbbe1 -v cms-conddb-prod2\n'
+        '  e.g.: %prog takein  cmsdbbe1 -v cms-conddb-prod2\n'
     )
 
     parser.add_option('-H', '--hostname',
@@ -250,6 +344,9 @@ def main():
 
     if len(arguments) == 2 and arguments[0] in ['enable', 'disable']:
         return manageBackend(arguments[0] == 'enable', arguments[1], balancerManagerUrl = balancerManagerUrl, virtualHost = options.virtualHost)
+
+    if len(arguments) == 2 and arguments[0] in ['takein', 'takeout']:
+        return moveBackend(arguments[0] == 'takein', arguments[1], balancerManagerUrl = balancerManagerUrl, virtualHost = options.virtualHost)
 
     parser.print_help()
     return -2
