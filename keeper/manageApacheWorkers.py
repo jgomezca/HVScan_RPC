@@ -4,7 +4,7 @@
 To debug in case the URLs/parameters change:
 
   1) ssh to a frontend (the Apache configuration only allows to access to
-     the balancer-manage from the machine's IP itself).
+     the balancer-manager from the machine's IP itself).
 
   2) Go to the main page for a given virtual host:
        wget -O - --header 'Host: cms-conddb-prod2.cern.ch' 'https://vocms151.cern.ch/balancer-manager' > ~/balancer-manager.html
@@ -189,7 +189,7 @@ def manageBackend(enable, backend, balancerManagerUrl, virtualHost):
 
                 # Warn if it was already in the requested state
                 if balancerManager.workers[balancer][worker]['statusBool'] == enable:
-                    logging.warn('The state of backend %s for balance %s was already %s', backend, balancer, balancerManager.workers[balancer][worker]['statusBool'])
+                    logging.warn('The state of backend %s for balancer %s was already %s', backend, balancer, balancerManager.workers[balancer][worker]['statusBool'])
 
                 balancerManager.manageWorker(enable, balancer, worker)
 
@@ -203,7 +203,7 @@ def manageBackend(enable, backend, balancerManagerUrl, virtualHost):
     for balancer in balancerManager.balancers:
         for worker in balancerManager.workers[balancer]:
             if backend in worker and balancerManager.workers[balancer][worker]['statusBool'] != enable:
-                logging.warn('The state of backend %s for balance %s is still %s. Check for misconfiguration or bugs in this script.', backend, balancer, balancerManager.workers[balancer][worker]['statusBool'])
+                logging.warn('The state of backend %s for balancer %s is still %s. Check for misconfiguration or bugs in this script.', backend, balancer, balancerManager.workers[balancer][worker]['statusBool'])
 
 
 def main():
