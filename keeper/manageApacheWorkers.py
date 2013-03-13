@@ -46,7 +46,8 @@ import re
 
 defaultVirtualHost = 'cms-conddb-prod'
 # Use the current hostname since the server may not listen on 127.0.0.1
-defaultBalancerManagerUrl = 'https://%s/balancer-manager' % socket.gethostname()
+defaultHostname = socket.gethostname()
+defaultBalancerManagerUrl = 'https://%s/balancer-manager'
 
 
 def _query(url, virtualHost = None):
@@ -222,6 +223,12 @@ def main():
         '  e.g.: %prog disable cmsdbbe1 -v cms-conddb-prod2\n'
     )
 
+    parser.add_option('-H', '--hostname',
+        dest = 'hostname',
+        default = defaultHostname,
+        help = 'Hostname to manage (where the balancer-manager is). Default: %default'
+    )
+
     parser.add_option('-v', '--virtualHost',
         dest = 'virtualHost',
         default = defaultVirtualHost,
@@ -236,11 +243,13 @@ def main():
 
     (options, arguments) = parser.parse_args()
 
+    balancerManagerUrl = options.balancerManagerUrl % options.hostname
+
     if len(arguments) == 1 and arguments[0] in ['status']:
-        return printStatus(balancerManagerUrl = options.balancerManagerUrl, virtualHost = options.virtualHost)
+        return printStatus(balancerManagerUrl = balancerManagerUrl, virtualHost = options.virtualHost)
 
     if len(arguments) == 2 and arguments[0] in ['enable', 'disable']:
-        return manageBackend(arguments[0] == 'enable', arguments[1], balancerManagerUrl = options.balancerManagerUrl, virtualHost = options.virtualHost)
+        return manageBackend(arguments[0] == 'enable', arguments[1], balancerManagerUrl = balancerManagerUrl, virtualHost = options.virtualHost)
 
     parser.print_help()
     return -2
