@@ -56,6 +56,8 @@ def _query(url, virtualHost = None):
     Apache might complain.
     '''
 
+    logging.debug('Querying: %s', url)
+
     if virtualHost is not None:
         url = urllib2.Request(url, headers = {
             'Host': virtualHost,
