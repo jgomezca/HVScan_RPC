@@ -1,7 +1,78 @@
 #!/usr/bin/env python2.6
 '''Script to manage Apache workers.
 
-To debug in case the URLs/parameters change:
+This script should *not* be used in deployments manually. The deploy script
+takes care of all the details about the procedure/policies and uses this script
+to accomplish that.
+
+However, if there is a need to do reboots of backends in production machines,
+then there is a need to manually intervene using this script, in sync
+with the sysadmin. In this case, go one by one:
+
+  0) If debugging is needed, you may run in parallel:
+
+       $ testLoadBalancer.py -s cms-conddb-prod
+
+     Also, you can see the present status of the load balancer with:
+
+       cmsdbfe1 $ manageApacheWorkers.py status -v cms-conddb-prod
+
+     and:
+
+       cmsdbfe2 $ manageApacheWorkers.py status -v cms-conddb-prod
+
+
+  1) In *all* frontends, take out the first backend, i.e.
+
+       cmsdbfe1 $ manageApacheWorkers.py takeout cmsdbbe1 -v cms-conddb-prod
+
+     and:
+
+       cmsdbfe2 $ manageApacheWorkers.py takeout cmsdbbe1 -v cms-conddb-prod
+
+
+  2) Wait a while (currently, 15 minutes -- the time should be enough
+     to let all sessions expire -- even then sessions are not used for that
+     long currently; and only one service uses them: dropBox). Also
+     you may check as above with testLoadBalancer.py that the backend
+     is already out (for non-session) requests.
+
+
+  3) In *all* frontends, disable the backend, i.e.:
+
+       cmsdbfe1 $ manageApacheWorkers.py disable cmsdbbe1 -v cms-conddb-prod
+
+     and:
+
+       cmsdbfe2 $ manageApacheWorkers.py disable cmsdbbe1 -v cms-conddb-prod
+
+
+  4) Request the sysadmin (currently, Jorge) to reboot the machine.
+
+
+  5) Wait until the reboot is completed (should take few minutes, unless
+     fsck runs) and verify everything is running normally after the updates.
+
+
+  6) In *all* frontends, reenable the backend and take it in, i.e.:
+
+       cmsdbfe1 $ manageApacheWorkers.py enable cmsdbbe1 -v cms-conddb-prod
+       cmsdbfe1 $ manageApacheWorkers.py takein cmsdbbe1 -v cms-conddb-prod
+
+     and:
+
+       cmsdbfe2 $ manageApacheWorkers.py enable cmsdbbe1 -v cms-conddb-prod
+       cmsdbfe2 $ manageApacheWorkers.py takein cmsdbbe1 -v cms-conddb-prod
+
+
+  7) Check with testLoadBalancer.py that the backend is again
+     in the load balancer cluster.
+
+
+  8) Now repeat the full procedure with the second backend (i.e. cmsdbbe2).
+
+
+To debug this script in case the URLs/parameters change:
 
   1) ssh to a frontend (the Apache configuration only allows to access to
      the balancer-manager from the machine's IP itself).
@@ -310,6 +381,10 @@ def main():
         '   or: %prog <command> <backend/worker>\n'
         '\n'
         '  where commmand can be status, enable, disable, takein or takeout.\n'
+        '\n'
+        '  If you need to use this script in production, please read\n'
+        '  its full documentation.\n'
+        '\n'
         '  The action will be applied to the backend/worker in *all* proxies.\n'
         '\n'
         '  e.g.: %prog status           -v cms-conddb-prod2\n'
