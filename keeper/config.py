@@ -256,6 +256,12 @@ servicesConfiguration = {
         'hidden':         False,
     },
 
+    #'sessionTest': {
+    #    'filename':       'server.py',
+    #    'listeningPort':  8099,
+    #    'hidden':         True,
+    #},
+
     'shibbolethTest': {
         'filename':       'shibbolethTest.py',
         'listeningPort':  8090,
