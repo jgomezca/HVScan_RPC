@@ -8,10 +8,8 @@ import random
 import time
 from xml.dom.minidom import parse, parseString
 import string
-try:
-    import cx_Oracle
-except ImportError, e:
-    print "Cannot import cx_Oracle:", e
+import cx_Oracle
+
 	
 #global varables
 resCount = 0
