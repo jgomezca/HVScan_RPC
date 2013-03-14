@@ -2,11 +2,10 @@
 import sys
 import re
 import os
-import shlex, subprocess
+import subprocess
 import getopt
 import random
-import time
-from xml.dom.minidom import parse, parseString
+from xml.dom.minidom import parse
 import string
 import cx_Oracle
 
