@@ -37,8 +37,48 @@ serves as documentation as well.
 
 Some bits are yet out, like setting the iptables.
 
+Other OMD/Check_MK notes:
+
+  * After a reboot to update from SLC 6.3 to SLC 6.4, and running 'omd restart',
+    we got several errors relating a missing
+
+        /omd/sites/prod/tmp/nagios/nagios.cfg
+
+    It turns out that OMD's binary
+
+        /opt/omd/versions/0.56/bin/omd
+
+    tries to run
+
+        mount -i /omd/sites/prod/tmp
+
+    but mount complains about that entry not existing in /etc/fstab. However,
+    the entry is there; but /omd is a symlink to /opt/omd and mount tries
+    to look for the resolved path in /etc/fstab instead of the symlink one
+    (see the strace). The error message is confusing because it contains
+    the original (symlink) path instead of the resolved one, and it does not
+    warn about that it tried to find the resolved one either.
+
+    Manually editing the /etc/fstab with the resolved path
+
+        /opt/omd/sites/prod/tmp
+
+    solves this issue, and with it, all the other as well.
+    'omd restart' works again.
+
+    SLC 6.3's util-linux-ng's 'mount -i' [3] with symlinks works fine
+    but it should not, is a security bug! SLC 6.4's one [4] does not,
+    unless you are root. See CVE-2013-0157 and [5] for more details about
+    the security issue and changes in the Red Hat package (patch
+    util-linux-ng-2.17-mount-canonicalize.patch). The link does not explicitly
+    mention this (they talk about mount/umount exposing information,
+    which is caused by the same bug).
+
 [1] http://lists.mathias-kettner.de/pipermail/omd-users/2010-December/000008.html
 [2] http://lists.mathias-kettner.de/pipermail/omd-users/2010-December/000009.html
+[3] http://linuxsoft.cern.ch/cern/slc63/updates/SRPMS/util-linux-ng-2.17.2-12.7.el6.src.rpm
+[4] http://linuxsoft.cern.ch/cern/slc64/updates/SRPMS/util-linux-ng-2.17.2-12.9.el6.src.rpm
+[5] https://bugzilla.redhat.com/show_bug.cgi?id=892330
 '''
 
 __author__ = 'Miguel Ojeda'
