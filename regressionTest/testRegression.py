@@ -6,19 +6,23 @@ import subprocess
 import getopt
 import random
 from xml.dom.minidom import parse
-import string
 import cx_Oracle
+import service
 
-	
+
+connectionDictionary = service.secrets['connections']['pro']
+
+
 #global varables
 resCount = 0
 resNames = []
 mLabel = ''
-DATABASE = "cms_orcoff_prep"
-USERNAME = "CMS_COND_REGRESSION"
-# FIXME: Put the connection string in secrets.py and remove AUTH_PATH -mos
-AUTH_PATH = '/data/secrets/conddb/test/authentication.xml'
-#end
+DATABASE = connectionDictionary['db_name']
+USERNAME = connectionDictionary['user']
+
+# Never used by the web service, only by main() which runs the actual tests.
+# The tests are run in another machine, not in the web interface.
+AUTH_PATH = ''
 
 def getText(nodelist):
     rc = []
@@ -77,25 +81,10 @@ def ParseXML(filename, label):
 									env.append(str(command.attributes["env"].value))
 				execTest = False
 	return initResults,results, finalResults,  env
-def extractLogin(login):
-	pattern = re.compile(r'value="([^"]+)')
-	matching = pattern.search(login)
-	version = 0
-	if matching:
-		g = matching.groups()
-		return g[0]
-def getLogin(auth, connStr):
-	pfile = open(auth, "r")
-	plist = pfile.readlines()
-	for i in range (0, len(plist)):
-		if string.find(plist[i], '<connection name="'+connStr+'">') != -1:
-			PASSWORD = extractLogin(plist[i+2])
-	return (PASSWORD)
-	
 def setConn():
 	os.environ['TNS_ADMIN'] = "/afs/cern.ch/project/oracle/admin"
 	coralConnStr = "oracle://"+DATABASE+"/"+USERNAME+""
-	PASSWORD = getLogin(AUTH_PATH, coralConnStr)
+	PASSWORD = connectionDictionary['password']
 	conn_string = str(USERNAME+"/"+PASSWORD+"@"+DATABASE)	
 	conn = cx_Oracle.connect(conn_string)	
 	return {'r0':conn, 'r1':coralConnStr, 'r2':USERNAME, 'r3':PASSWORD, 'r4':AUTH_PATH}
