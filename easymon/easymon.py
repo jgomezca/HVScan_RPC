@@ -9,6 +9,8 @@ __maintainer__ = 'Miguel Ojeda'
 __email__ = 'mojedasa@cern.ch'
 
 
+import datetime
+
 import cherrypy
 import jinja2
 
@@ -280,7 +282,7 @@ class Easymon(object):
                     'url': url,
                 })
 
-        return treeTemplate.render(title = self.title, items = items)
+        return treeTemplate.render(title = self.title, items = items, datetime = datetime.datetime.now())
 
 
 def build(obj, tree, title):
