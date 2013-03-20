@@ -1,4 +1,9 @@
 '''CMS DB Web easymon server.
+
+It requires to be able to connect to the localAgentHost in port 80.
+Use this iptable rule to add your VM (temporarily) for debugging:
+
+  sudo /sbin/iptables -I INPUT -s <your VM's IP> -m state --state NEW -p tcp --dport 80 -j ACCEPT
 '''
 
 __author__ = 'Miguel Ojeda'
