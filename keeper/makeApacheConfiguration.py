@@ -536,6 +536,9 @@ NameVirtualHost {IP}:443
 
 # Empty default virtual hosts: prevents wrongly matching the other ones.
 # (Apache matches the first virtual host if the others do not match).
+# Note: This does not match requests to other IPs (which would be matched
+# by the _default_ virtual host, or, if there is none like here,
+# the main_server).
 <VirtualHost {IP}:80>
     ServerName x.ch
 
@@ -568,24 +571,6 @@ SSLMutex default
 SSLRandomSeed startup file:/dev/urandom 256
 SSLRandomSeed connect builtin
 SSLCryptoDevice builtin
-
-<VirtualHost _default_:443>
-
-    ErrorLog logs/ssl_error_log
-    TransferLog logs/ssl_access_log
-    LogLevel warn
-
-    SSLEngine On
-    SSLProtocol all -SSLv2
-
-    SSLCipherSuite {sslCipherSuite}
-
-    SSLCertificateFile    {hostcert}
-    SSLCertificateKeyFile {hostkey}
-
-    CustomLog logs/ssl_request_log "%t %h %{{SSL_PROTOCOL}}x %{{SSL_CIPHER}}x \\"%r\\" %b"
-
-</VirtualHost>
 
 Include conf.d/*.conf
 
