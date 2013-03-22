@@ -471,6 +471,25 @@ services['gtc']['protocol'] = 'http'
 
 # Templates
 httpdTemplate = '''
+# Required for SSL
+LoadModule ssl_module modules/mod_ssl.so
+
+# Required for Shibboleth
+LoadModule authz_host_module modules/mod_authz_host.so
+
+# Required for logging
+LoadModule log_config_module modules/mod_log_config.so
+
+# Required for the rewrite rules
+LoadModule rewrite_module modules/mod_rewrite.so
+
+# Required for proxy, balancer and session stickyness
+LoadModule headers_module modules/mod_headers.so
+LoadModule setenvif_module modules/mod_setenvif.so
+LoadModule proxy_module modules/mod_proxy.so
+LoadModule proxy_balancer_module modules/mod_proxy_balancer.so
+LoadModule proxy_http_module modules/mod_proxy_http.so
+
 # August29, patch
 # Reject request when more than 5 ranges in the Range: header.
 # CVE-2011-3192
@@ -537,24 +556,6 @@ NameVirtualHost {IP}:443
 
     {security}
 </VirtualHost>
-
-# Required for Shibboleth
-LoadModule authz_host_module modules/mod_authz_host.so
-
-# Required for logging
-LoadModule log_config_module modules/mod_log_config.so
-
-# Required for the rewrite rules
-LoadModule rewrite_module modules/mod_rewrite.so
-
-# Required for proxy, balancer and session stickyness
-LoadModule headers_module modules/mod_headers.so
-LoadModule setenvif_module modules/mod_setenvif.so
-LoadModule proxy_module modules/mod_proxy.so
-LoadModule proxy_balancer_module modules/mod_proxy_balancer.so
-LoadModule proxy_http_module modules/mod_proxy_http.so
-
-LoadModule ssl_module modules/mod_ssl.so
 
 # ssl.conf start
 Listen 443
