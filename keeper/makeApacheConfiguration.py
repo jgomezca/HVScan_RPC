@@ -15,6 +15,7 @@ import sys
 import socket
 import optparse
 import logging
+import glob
 
 import config
 
@@ -552,6 +553,61 @@ LoadModule setenvif_module modules/mod_setenvif.so
 LoadModule proxy_module modules/mod_proxy.so
 LoadModule proxy_balancer_module modules/mod_proxy_balancer.so
 LoadModule proxy_http_module modules/mod_proxy_http.so
+
+LoadModule ssl_module modules/mod_ssl.so
+
+# ssl.conf start
+Listen 443
+
+SSLPassPhraseDialog builtin
+SSLSessionCache shmcb:/var/cache/mod_ssl/scache(512000)
+SSLSessionCacheTimeout 300
+SSLMutex default
+SSLRandomSeed startup file:/dev/urandom 256
+SSLRandomSeed connect builtin
+SSLCryptoDevice builtin
+
+<VirtualHost _default_:443>
+
+    ErrorLog logs/ssl_error_log
+    TransferLog logs/ssl_access_log
+    LogLevel warn
+
+    SSLEngine on
+    SSLProtocol all -SSLv2
+    SSLCipherSuite ALL:!ADH:!EXPORT:!SSLv2:RC4+RSA:+HIGH:+MEDIUM:+LOW
+    SSLCertificateFile /etc/pki/tls/certs/localhost.crt
+    SSLCertificateKeyFile /etc/pki/tls/private/localhost.key
+
+    <Files ~ "\.(cgi|shtml|phtml|php3?)$">
+        SSLOptions +StdEnvVars
+    </Files>
+    <Directory "/var/www/cgi-bin">
+        SSLOptions +StdEnvVars
+    </Directory>
+
+    SetEnvIf User-Agent ".*MSIE.*" nokeepalive ssl-unclean-shutdown downgrade-1.0 force-response-1.0
+
+    CustomLog logs/ssl_request_log "%t %h %{{SSL_PROTOCOL}}x %{{SSL_CIPHER}}x \\"%r\\" %b"
+
+</VirtualHost>
+# ssl.conf end
+
+# shib.conf start
+<IfModule mod_alias.c>
+  <Location /shibboleth-sp>
+    Allow from all
+  </Location>
+  Alias /shibboleth-sp/main.css /usr/share/doc/shibboleth-2.4.3/main.css
+  Alias /shibboleth-sp/logo.jpg /usr/share/doc/shibboleth-2.4.3/logo.jpg
+</IfModule>
+
+<Location /secure>
+  AuthType shibboleth
+  ShibRequestSetting requireSession 1
+  require valid-user
+</Location>
+# shib.conf end
 
 Include conf.d/*.conf
 
@@ -1292,6 +1348,15 @@ def vhosts(arguments):
     )
 
     (options, arguments) = parser.parse_args(arguments)
+
+    # Remove all other *.conf files in the folder (exception: zzz_omd.conf
+    # for OMD which is not automated yet)
+    for filePath in glob.glob('/etc/httpd/conf.d/*.conf'):
+        if filePath.endswith('zzz_omd.conf'):
+            continue
+        backupPath = '%s.original' % filePath
+        logging.info('Renaming: %s -> %s', filePath, backupPath)
+        os.rename(filePath, backupPath)
 
     for virtualHost in frontends[options.frontend]:
         output = makeApacheConfiguration(options.frontend, virtualHost)
