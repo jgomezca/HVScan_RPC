@@ -524,6 +524,7 @@ MaxRequestsPerChild  0
 </IfModule>
 
 Listen 80
+Listen 443
 
 # Enable name-based virtual hosts for the following IP:port pairs
 NameVirtualHost {IP}:80
@@ -557,9 +558,6 @@ NameVirtualHost {IP}:443
     {security}
 </VirtualHost>
 
-# ssl.conf start
-Listen 443
-
 SSLPassPhraseDialog builtin
 SSLSessionCache shmcb:/var/cache/mod_ssl/scache(512000)
 SSLSessionCacheTimeout 300
@@ -574,18 +572,20 @@ SSLCryptoDevice builtin
     TransferLog logs/ssl_access_log
     LogLevel warn
 
-    SSLEngine on
+    SSLEngine On
     SSLProtocol all -SSLv2
-    SSLCipherSuite ALL:!ADH:!EXPORT:!SSLv2:RC4+RSA:+HIGH:+MEDIUM:+LOW
-    SSLCertificateFile /etc/pki/tls/certs/localhost.crt
-    SSLCertificateKeyFile /etc/pki/tls/private/localhost.key
+
+    #AB SSLCipherSuite ALL:!ADH:!EXPORT:!SSLv2:RC4+RSA:+HIGH:+MEDIUM:+LOW
+    SSLCipherSuite HIGH:MEDIUM:-LOW:-SSLv2
+
+    SSLCertificateFile    {hostcert}
+    SSLCertificateKeyFile {hostkey}
 
     SetEnvIf User-Agent ".*MSIE.*" nokeepalive ssl-unclean-shutdown downgrade-1.0 force-response-1.0
 
     CustomLog logs/ssl_request_log "%t %h %{{SSL_PROTOCOL}}x %{{SSL_CIPHER}}x \\"%r\\" %b"
 
 </VirtualHost>
-# ssl.conf end
 
 Include conf.d/*.conf
 
