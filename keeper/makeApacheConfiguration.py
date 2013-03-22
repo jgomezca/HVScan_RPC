@@ -481,6 +481,7 @@ LoadModule ssl_module modules/mod_ssl.so
 
 # Required for Shibboleth
 LoadModule authz_host_module modules/mod_authz_host.so
+{loadShibboleth}
 
 # Required for logging
 LoadModule log_config_module modules/mod_log_config.so
@@ -1105,7 +1106,11 @@ def makeHttpdConfiguration(frontend):
     if frontend not in frontends:
         raise NotRegisteredError('Error: %s is not in the registered frontends.' % frontend)
 
-    return httpdTemplate.format(**getBasicInfoMap(frontend))
+    loadShibboleth = 'LoadModule mod_shib /usr/lib64/shibboleth/mod_shib_22.so'
+    if frontend == 'private':
+        loadShibboleth = ''
+
+    return httpdTemplate.format(loadShibboleth = loadShibboleth, **getBasicInfoMap(frontend))
 
 
 def makeApacheConfiguration(frontend, virtualHost):
