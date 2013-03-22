@@ -84,6 +84,9 @@ def deployFrontend(tag, shib = 'yes'):
     sudo('%s httpd' % (os.path.join(keeperPath, 'makeApacheConfiguration.py')))
     sudo('%s vhosts' % (os.path.join(keeperPath, 'makeApacheConfiguration.py')))
 
+    # Set required SELinux policies
+    sudo('/usr/sbin/setsebool -P httpd_can_network_connect on')
+
     if shib == 'yes':
         sudo('/etc/init.d/shibd restart')
 
