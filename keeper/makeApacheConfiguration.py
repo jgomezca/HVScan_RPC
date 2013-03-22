@@ -22,6 +22,11 @@ import config
 
 pdmvShibbolethGroups = ['cms-web-access', 'cms-pdmv-serv']
 
+# TLSv1 HIGH/MEDIUM algorithms only, without MD5 nor 3DES and without
+# non-authenticating ones. This still contains TLS_RSA_WITH_RC4_128_SHA
+# for Windows XP's Internet Explorer and other old browsers.
+sslCipherSuite = 'TLSv1+HIGH:TLSv1+MEDIUM:!MD5:!3DES:!aNULL'
+
 
 def getHostname():
     '''Returns the current hostname without '.cern.ch'
@@ -549,8 +554,7 @@ NameVirtualHost {IP}:443
     SSLEngine On
     SSLProtocol all -SSLv2
 
-    #AB SSLCipherSuite ALL:!ADH:!EXPORT:!SSLv2:RC4+RSA:+HIGH:+MEDIUM:+LOW
-    SSLCipherSuite HIGH:MEDIUM:-LOW:-SSLv2
+    SSLCipherSuite {sslCipherSuite}
 
     SSLCertificateFile    {hostcert}
     SSLCertificateKeyFile {hostkey}
@@ -575,8 +579,7 @@ SSLCryptoDevice builtin
     SSLEngine On
     SSLProtocol all -SSLv2
 
-    #AB SSLCipherSuite ALL:!ADH:!EXPORT:!SSLv2:RC4+RSA:+HIGH:+MEDIUM:+LOW
-    SSLCipherSuite HIGH:MEDIUM:-LOW:-SSLv2
+    SSLCipherSuite {sslCipherSuite}
 
     SSLCertificateFile    {hostcert}
     SSLCertificateKeyFile {hostkey}
@@ -679,8 +682,7 @@ mainTemplate = '''
     SSLProtocol all -SSLv2
     SSLProxyEngine On
 
-    #AB SSLCipherSuite ALL:!ADH:!EXPORT:!SSLv2:RC4+RSA:+HIGH:+MEDIUM:+LOW
-    SSLCipherSuite HIGH:MEDIUM:-LOW:-SSLv2
+    SSLCipherSuite {sslCipherSuite}
 
     SSLCertificateFile    {hostcert}
     SSLCertificateKeyFile {hostkey}
@@ -1117,6 +1119,7 @@ def getBasicInfoMap(frontend):
 
     infoMap = {}
     infoMap['security'] = security
+    infoMap['sslCipherSuite'] = sslCipherSuite
 
     # Get the IP of the current hostname if generating the HTTP configuration in a private machine
     if frontend == 'private':
