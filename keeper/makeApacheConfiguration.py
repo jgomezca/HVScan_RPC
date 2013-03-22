@@ -19,6 +19,9 @@ import logging
 import config
 
 
+pdmvShibbolethGroups = ['cms-web-access']
+
+
 def getHostname():
     '''Returns the current hostname without '.cern.ch'
     '''
@@ -288,7 +291,7 @@ services = {
         'backendHostnames': ['cms-pdmv.web'],
         'backendPort': 443,
         'backendUrl': '/cms-pdmv/',
-        'shibbolethGroups': ['cms-web-access'],
+        'shibbolethGroups': pdmvShibbolethGroups,
     },
 
     'golem': {
@@ -296,7 +299,7 @@ services = {
         'backendHostnames': ['cms-pdmv-golem'],
         'backendPort': 80,
         'backendUrl': '',
-        'shibbolethGroups': ['cms-web-access'],
+        'shibbolethGroups': pdmvShibbolethGroups,
     },
 
     'stats': {
@@ -304,7 +307,7 @@ services = {
         'backendHostnames': ['cms-pdmv-stats'],
         'backendPort': 80,
         'backendUrl': '',
-        'shibbolethGroups': ['cms-web-access'],
+        'shibbolethGroups': pdmvShibbolethGroups,
     },
 
     'pdmvprod': {
@@ -312,13 +315,13 @@ services = {
         'backendHostnames': ['cms-pdmv-prod.web'],
         'backendPort': 443,
         'backendUrl': '/cms-pdmv-prod',
-        'shibbolethGroups': ['cms-web-access'],
+        'shibbolethGroups': pdmvShibbolethGroups,
     },
 
     'valdb': {
         'backendPort': config.servicesConfiguration['PdmV/valdb']['listeningPort'],
         'backendUrl': '/PdmV/valdb',
-        'shibbolethGroups': ['cms-web-access'],
+        'shibbolethGroups': pdmvShibbolethGroups,
     },
 
     'mcm/admin': {
@@ -328,7 +331,7 @@ services = {
         'backendHostnames': ['preptest'],
         'backendPort': 5984,
         'backendUrl': '',
-        'shibbolethGroups': ['cms-pdmv-serv'],
+        'shibbolethGroups': pdmvShibbolethGroups,
     },
 
     'mcm': {
@@ -339,42 +342,42 @@ services = {
         #        using a subprocess (next goal) or implementing a queue
         #        (final goal). The longest request takes around 40 minutes now.
         'backendTimeout': 60 * 50, # 50 minutes
-        'shibbolethGroups': ['cms-web-access'],
+        'shibbolethGroups': pdmvShibbolethGroups,
     },
 
     'theplan': {
         'backendHostnames': ['mccm-theplan'],
         'backendPort': 443,
         'backendUrl': '',
-        'shibbolethGroups': ['cms-web-access'],
+        'shibbolethGroups': pdmvShibbolethGroups,
     },
 
     'speed': {
         'backendHostnames': ['cms-pdmv-speed.web'],
         'backendPort': 443,
         'backendUrl': '/cms-pdmv-speed',
-        'shibbolethGroups': ['cms-web-access'],
+        'shibbolethGroups': pdmvShibbolethGroups,
     },
 
     'queue': {
         'backendHostnames': ['cms-pdmv-queue.web'],
         'backendPort': 443,
         'backendUrl': '/cms-pdmv-queue',
-        'shibbolethGroups': ['cms-web-access'],
+        'shibbolethGroups': pdmvShibbolethGroups,
     },
 
     'relmon': {
         'backendHostnames': ['cms-service-reldqm.web'],
         'backendPort': 443,
         'backendUrl': '/cms-service-reldqm/cgi-bin/RelMon.py',
-        'shibbolethGroups': ['cms-web-access'],
+        'shibbolethGroups': pdmvShibbolethGroups,
     },
 
     'ReleaseMonitoring': {
         'backendHostnames': ['cms-service-reldqm.web'],
         'backendPort': 443,
         'backendUrl': '/cms-service-reldqm/ReleaseMonitoring',
-        'shibbolethGroups': ['cms-web-access'],
+        'shibbolethGroups': pdmvShibbolethGroups,
         # Fixes the links to folders without slash (without it, the CERN Apache
         # server tries to do it itself but redirects us to a wrong page)
         'customHttp': '''
@@ -389,7 +392,7 @@ services = {
         'backendHostnames': ['cms-service-reldqm.web'],
         'backendPort': 443,
         'backendUrl': '/cms-service-reldqm/style',
-        'shibbolethGroups': ['cms-web-access'],
+        'shibbolethGroups': pdmvShibbolethGroups,
     },
 
     # From the old cmstags.conf
