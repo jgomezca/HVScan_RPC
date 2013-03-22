@@ -580,13 +580,6 @@ SSLCryptoDevice builtin
     SSLCertificateFile /etc/pki/tls/certs/localhost.crt
     SSLCertificateKeyFile /etc/pki/tls/private/localhost.key
 
-    <Files ~ "\.(cgi|shtml|phtml|php3?)$">
-        SSLOptions +StdEnvVars
-    </Files>
-    <Directory "/var/www/cgi-bin">
-        SSLOptions +StdEnvVars
-    </Directory>
-
     SetEnvIf User-Agent ".*MSIE.*" nokeepalive ssl-unclean-shutdown downgrade-1.0 force-response-1.0
 
     CustomLog logs/ssl_request_log "%t %h %{{SSL_PROTOCOL}}x %{{SSL_CIPHER}}x \\"%r\\" %b"
