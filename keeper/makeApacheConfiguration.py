@@ -490,7 +490,6 @@ LoadModule rewrite_module modules/mod_rewrite.so
 
 # Required for proxy, balancer and session stickyness
 LoadModule headers_module modules/mod_headers.so
-LoadModule setenvif_module modules/mod_setenvif.so
 LoadModule proxy_module modules/mod_proxy.so
 LoadModule proxy_balancer_module modules/mod_proxy_balancer.so
 LoadModule proxy_http_module modules/mod_proxy_http.so
@@ -629,27 +628,6 @@ CustomLog logs/access_log combinedwithvhost
 ServerSignature Off
 
 AddDefaultCharset UTF-8
-
-# The following directives modify normal HTTP response behavior to
-# handle known problems with browser implementations.
-BrowserMatch "Mozilla/2" nokeepalive
-BrowserMatch "MSIE 4\.0b2;" nokeepalive downgrade-1.0 force-response-1.0
-BrowserMatch "RealPlayer 4\.0" force-response-1.0
-BrowserMatch "Java/1\.0" force-response-1.0
-BrowserMatch "JDK/1\.0" force-response-1.0
-
-# The following directive disables redirects on non-GET requests for
-# a directory that does not include the trailing slash.  This fixes a 
-# problem with Microsoft WebFolders which does not appropriately handle 
-# redirects for folders with DAV methods.
-# Same deal with Apple's DAV filesystem and Gnome VFS support for DAV.
-BrowserMatch "Microsoft Data Access Internet Publishing Provider" redirect-carefully
-BrowserMatch "MS FrontPage" redirect-carefully
-BrowserMatch "^WebDrive" redirect-carefully
-BrowserMatch "^WebDAVFS/1.[0123]" redirect-carefully
-BrowserMatch "^gnome-vfs/1.0" redirect-carefully
-BrowserMatch "^XML Spy" redirect-carefully
-BrowserMatch "^Dreamweaver-WebDAV-SCM1" redirect-carefully
 '''
 
 mainTemplate = '''
