@@ -587,22 +587,6 @@ SSLCryptoDevice builtin
 </VirtualHost>
 # ssl.conf end
 
-# shib.conf start
-<IfModule mod_alias.c>
-  <Location /shibboleth-sp>
-    Allow from all
-  </Location>
-  Alias /shibboleth-sp/main.css /usr/share/doc/shibboleth-2.4.3/main.css
-  Alias /shibboleth-sp/logo.jpg /usr/share/doc/shibboleth-2.4.3/logo.jpg
-</IfModule>
-
-<Location /secure>
-  AuthType shibboleth
-  ShibRequestSetting requireSession 1
-  require valid-user
-</Location>
-# shib.conf end
-
 Include conf.d/*.conf
 
 User apache
