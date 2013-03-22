@@ -19,7 +19,7 @@ import logging
 import config
 
 
-pdmvShibbolethGroups = ['cms-web-access']
+pdmvShibbolethGroups = ['cms-web-access', 'cms-pdmv-serv']
 
 
 def getHostname():
