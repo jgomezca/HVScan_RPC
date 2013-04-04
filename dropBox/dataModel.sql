@@ -16,8 +16,8 @@ CREATE TABLE files (
     username VARCHAR2(100 BYTE) NOT NULL,
     fileName VARCHAR2(255 BYTE) NOT NULL,
     fileContent BLOB,
-    creationTimestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL CONSTRAINT ckFilesCrets CHECK (creationTimestamp > to_date('2012-01-01', 'YYYY-MM-DD')),
-    modificationTimestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    creationTimestamp TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL CONSTRAINT ckFilesCrets CHECK (creationTimestamp > to_date('2012-01-01', 'YYYY-MM-DD')),
+    modificationTimestamp TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
     PRIMARY KEY (fileHash),
     CONSTRAINT ckFilesModGtCre CHECK (modificationTimestamp >= creationTimestamp)
 )
@@ -32,7 +32,7 @@ create or replace trigger tumFiles
 before update on files
 for each row
 begin
-        :new.modificationTimestamp := CURRENT_TIMESTAMP;
+        :new.modificationTimestamp := SYSTIMESTAMP;
 end;
 /
 
@@ -44,7 +44,7 @@ CREATE TABLE runLog (
     hltRun NUMBER CONSTRAINT ckHltRun CHECK (hltRun >= 0),
     downloadLog BLOB,
     globalLog BLOB,
-    modificationTimestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    modificationTimestamp TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
     PRIMARY KEY (backend, creationTimestamp),
     CONSTRAINT ckRunLogModGtCre CHECK (modificationTimestamp >= creationTimestamp)
 )
@@ -56,7 +56,7 @@ create or replace trigger tumRunLog
 before update on runLog
 for each row
 begin
-        :new.modificationTimestamp := CURRENT_TIMESTAMP;
+        :new.modificationTimestamp := SYSTIMESTAMP;
 end;
 /
 
@@ -68,8 +68,8 @@ CREATE TABLE fileLog (
     log BLOB,
     runLogCreationTimestamp TIMESTAMP CONSTRAINT ckFileLogRunLogCrets CHECK (runLogCreationTimestamp > to_date('2012-01-01', 'YYYY-MM-DD')),
     runLogBackend VARCHAR2(20 BYTE),
-    creationTimestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL CONSTRAINT ckFileLogCrets CHECK (creationTimestamp > to_date('2012-01-01', 'YYYY-MM-DD')),
-    modificationTimestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    creationTimestamp TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL CONSTRAINT ckFileLogCrets CHECK (creationTimestamp > to_date('2012-01-01', 'YYYY-MM-DD')),
+    modificationTimestamp TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
     PRIMARY KEY (fileHash),
     CONSTRAINT ckFileLogModGtCre CHECK (modificationTimestamp >= creationTimestamp),
     CONSTRAINT fkFileLogFilesFileHash FOREIGN KEY (fileHash) REFERENCES files (fileHash),
@@ -85,7 +85,7 @@ create or replace trigger tumFileLog
 before update on fileLog
 for each row
 begin
-        :new.modificationTimestamp := CURRENT_TIMESTAMP;
+        :new.modificationTimestamp := SYSTIMESTAMP;
 end;
 /
 
@@ -93,8 +93,8 @@ CREATE TABLE fileAcks (
     fileHash VARCHAR2(40 BYTE) NOT NULL,
     username VARCHAR2(100 BYTE) NOT NULL,
     rationale VARCHAR2(4000 BYTE),
-    creationTimestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL CONSTRAINT ckFileAcksCrets CHECK (creationTimestamp > to_date('2012-01-01', 'YYYY-MM-DD')),
-    modificationTimestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    creationTimestamp TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL CONSTRAINT ckFileAcksCrets CHECK (creationTimestamp > to_date('2012-01-01', 'YYYY-MM-DD')),
+    modificationTimestamp TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
     PRIMARY KEY (fileHash),
     CONSTRAINT ckFileAcksModGtCre CHECK (modificationTimestamp >= creationTimestamp),
     CONSTRAINT fkFileAcksFileLogFileHash FOREIGN KEY (fileHash) REFERENCES fileLog (fileHash)
@@ -105,7 +105,7 @@ create or replace trigger tumFileAcks
 before update on fileAcks
 for each row
 begin
-        :new.modificationTimestamp := CURRENT_TIMESTAMP;
+        :new.modificationTimestamp := SYSTIMESTAMP;
 end;
 /
 
@@ -116,8 +116,8 @@ CREATE TABLE emails (
     fromAddress VARCHAR2(200 BYTE) NOT NULL,
     toAddresses VARCHAR2(4000 BYTE) NOT NULL,
     ccAddresses VARCHAR2(4000 BYTE) NULL,
-    creationTimestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL CONSTRAINT ckEmailsCrets CHECK (creationTimestamp > to_date('2012-01-01', 'YYYY-MM-DD')),
-    modificationTimestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    creationTimestamp TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL CONSTRAINT ckEmailsCrets CHECK (creationTimestamp > to_date('2012-01-01', 'YYYY-MM-DD')),
+    modificationTimestamp TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
     PRIMARY KEY (id)
 )
 ;
@@ -140,7 +140,7 @@ create or replace trigger tumEmails
 before update on emails
 for each row
 begin
-        :new.modificationTimestamp := CURRENT_TIMESTAMP;
+        :new.modificationTimestamp := SYSTIMESTAMP;
 end;
 /
 
