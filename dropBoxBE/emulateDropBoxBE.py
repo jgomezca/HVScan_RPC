@@ -4,8 +4,7 @@
 This script was written to finish updating the status and uploading the logs
 for three uploads done on 2013-02-06, since updating/uploading status/code
 failed since the CERN SSO session expired due to extremely long exportations
-due to a huge load in the Oracle cms_orcon_prod database which, at the time
-of writing, it is still under investigation.
+due to a huge load in the Oracle cms_orcon_prod database.
 
 To use it, carefully modify the parameters below and then run:
 
