@@ -256,6 +256,9 @@ virtualHosts['cms-pop-prod2'] = dict(virtualHosts['cms-pop-prod'])
 # Note that you can't use this if you have overlapping URLs, since order
 # matters. See "virtual hosts" explanation above.
 #
+# If 'shibbolethGroups' is None, it will *disable* Shibboleth for that Location
+# or LocationMatch.
+#
 # If 'redirectRoot' is found, the root of the frontend will be redirected
 # to this service.
 #
@@ -773,6 +776,17 @@ shibbolethTemplate = '''
    </{location}>
 '''
 
+shibbolethOffTemplate = '''
+    <Location {parameter}>
+        Satisfy Any
+        ShibRequestSetting requireSession 0
+        ShibRequireSession Off
+        ShibExportAssertion Off
+        ShibUseHeaders Off
+        ShibDisable On
+   </Location>
+'''
+
 shibboleth = shibbolethTemplate.format(
     location = 'Location',
     parameter = '/{url}',
@@ -788,6 +802,20 @@ shibbolethMatch = shibbolethTemplate.format(
     parameter = '{shibbolethMatch}',
 )
 
+shibbolethOff = shibbolethOffTemplate.format(
+    location = 'Location',
+    parameter = '/{url}',
+)
+
+shibbolethOffUrl = shibbolethOffTemplate.format(
+    location = 'Location',
+    parameter = '{shibbolethUrl}',
+)
+
+shibbolethOffMatch = shibbolethOffTemplate.format(
+    location = 'LocationMatch',
+    parameter = '{shibbolethMatch}',
+)
 
 shibbolethXMLHostName = '''
             <Host name="{virtualHost}.cern.ch" applicationId="{virtualHost}" />
@@ -1209,14 +1237,23 @@ def makeApacheConfiguration(frontend, virtualHost):
     # Reversed order, for Locations
     for service in reversed(infoMap['services']):
         if 'shibbolethGroups' in services[service] and virtualHost != 'private' and not isinstance(services[service]['shibbolethGroups'], dict):
-            services[service]['shibbolethGroupsText'] = ' '.join(['"%s"' % x for x in services[service]['shibbolethGroups']])
-
-            if 'shibbolethUrl' in services[service]:
-                infoMap['shibboleth'] += shibbolethUrl.format(**services[service])
-            elif 'shibbolethMatch' in services[service]:
-                infoMap['shibboleth'] += shibbolethMatch.format(**services[service])
+            if services[service]['shibbolethGroups'] is None:
+                # Disable Shibboleth
+                if 'shibbolethUrl' in services[service]:
+                    infoMap['shibboleth'] += shibbolethOffUrl.format(**services[service])
+                elif 'shibbolethMatch' in services[service]:
+                    infoMap['shibboleth'] += shibbolethOffMatch.format(**services[service])
+                else:
+                    infoMap['shibboleth'] += shibbolethOff.format(**services[service])
             else:
-                infoMap['shibboleth'] += shibboleth.format(**services[service])
+                services[service]['shibbolethGroupsText'] = ' '.join(['"%s"' % x for x in services[service]['shibbolethGroups']])
+
+                if 'shibbolethUrl' in services[service]:
+                    infoMap['shibboleth'] += shibbolethUrl.format(**services[service])
+                elif 'shibbolethMatch' in services[service]:
+                    infoMap['shibboleth'] += shibbolethMatch.format(**services[service])
+                else:
+                    infoMap['shibboleth'] += shibboleth.format(**services[service])
 
     if useBalancerManager:
         infoMap['balancerManager'] = balancerManager.format(**infoMap)
