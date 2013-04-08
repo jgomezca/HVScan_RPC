@@ -97,7 +97,7 @@ virtualHosts = {
 
     'cms-pdmv-dev': {
         'backendHostnames': ['vocms145'],
-        'services': ['golem', 'stats', 'pdmvprod', 'libs', 'valdb', 'mcm/admin', 'mcm', 'theplan', 'speed', 'queue', 'ReleaseMonitoring', 'cms-service-reldqm/style', 'relmon', 'pdmvindex'],
+        'services': ['golem', 'stats', 'pdmvprod', 'libs', 'valdb', 'mcm/admin', 'mcm/public', 'mcm', 'theplan', 'speed', 'queue', 'ReleaseMonitoring', 'cms-service-reldqm/style', 'relmon', 'pdmvindex'],
         # libs is used by valdb
         # 'mcm/admin' must come before 'mcm'
     },
@@ -331,6 +331,17 @@ services = {
         'backendPort': config.servicesConfiguration['PdmV/valdb']['listeningPort'],
         'backendUrl': '/PdmV/valdb',
         'shibbolethGroups': pdmvShibbolethGroups,
+    },
+
+    'mcm/public': {
+        'backendHostnames': ['preptest'],
+        'backendPort': 443,
+        'backendUrl': '/public',
+        # FIXME: Temporary fix until mcm moves the work out of the webserver
+        #        using a subprocess (next goal) or implementing a queue
+        #        (final goal). The longest request takes around 40 minutes now.
+        'backendTimeout': 60 * 50, # 50 minutes
+        'shibbolethGroups': None,
     },
 
     'mcm/admin': {
