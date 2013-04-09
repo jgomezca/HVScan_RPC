@@ -5,7 +5,6 @@ import smtplib
 from email.MIMEMultipart import MIMEMultipart
 from email.MIMEText import MIMEText
 from email.Utils import COMMASPACE, formatdate
-from functools import wraps
 
 import cherrypy
 import GTServerSettings as Settings
@@ -23,25 +22,13 @@ def get_gt_lib():
     return UploadGTLib(Settings.AUTHPATH, Settings.GLOBAL_TAG_SCHEMA, Settings.LOG_SCHEMA, Settings.CMSSW_VERSION)
 
 
-def jsonify(func):
-    '''JSON decorator for CherryPy'''
-    #http://pythonwise.blogspot.com/2011/01/json-decorator-for-cherrypy.html
-    #@wraps(func)
-    def wrapper(*args, **kw):
-        value = func(*args, **kw)
-        cherrypy.response.headers["Content-Type"] = "application/json"
-        return json.dumps(value)
-
-    return wrapper
-
-
 @api.generateServiceApi
 class UploadGTServer(object):
     def __init__(self):     
         logger.info("Created UploadGTServer object")
 
     @cherrypy.expose
-    @jsonify
+    @cherrypy.tools.json_out()
     def getGTList(self):
         '''returns json of GT list'''
         return self._getGTList()
@@ -136,7 +123,7 @@ class UploadGTServer(object):
 #        return get_gt_lib().getCurrentGT()
 
     @cherrypy.expose
-    @jsonify
+    @cherrypy.tools.json_out()
     def getGTInfo(self, GT_name, truncated="True"): #format json erased, because now no other formath exist
         return self._getGTInfo(GT_name, truncated)
 
@@ -169,7 +156,7 @@ class UploadGTServer(object):
             return info
 
     @cherrypy.expose
-    @jsonify
+    @cherrypy.tools.json_out()
     def getGTDiff(self, gt1_name, gt2_name, *args, **kwargs):
         '''Comparing GT. Returns json'''
         
@@ -193,7 +180,7 @@ class UploadGTServer(object):
 
 
     @cherrypy.expose()
-    @jsonify
+    @cherrypy.tools.json_out()
     def getProductionGTs(self):
         try:
             data = get_gt_lib().getProductionGTs()
