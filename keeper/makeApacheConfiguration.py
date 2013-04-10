@@ -1113,6 +1113,25 @@ def getVirtualHost(virtualHost):
     return virtualHost
 
 
+def getIPForApache(host):
+    '''Returns the host's first IPv4/IPv6 address found by getaddrinfo() in
+    the format required by Apache in the VirtualHost and Listen directives:
+
+      * For IPv4, as usual.
+      * For IPv6, surrounded in square brackets.
+    '''
+
+    for addrInfo in socket.getaddrinfo(host, None, 0, socket.SOCK_STREAM):
+
+        if addrInfo[0] == socket.AF_INET:
+            return addrInfo[4][0]
+
+        if addrInfo[0] == socket.AF_INET6:
+            return '[%s]' % addrInfo[4][0]
+
+    raise Exception('IPv4/IPv6 address not found for host.')
+
+
 def getBasicInfoMap(frontend):
     '''Returns a basic info map used in both the main HTTP configuration
     and in the virtual hosts.
@@ -1124,9 +1143,9 @@ def getBasicInfoMap(frontend):
 
     # Get the IP of the current hostname if generating the HTTP configuration in a private machine
     if frontend == 'private':
-        infoMap['IP'] = socket.gethostbyname(getHostname())
+        infoMap['IP'] = getIPForApache(getHostname())
     else:
-        infoMap['IP'] = socket.gethostbyname(frontend)
+        infoMap['IP'] = getIPForApache(frontend)
 
     if frontend == 'private':
         infoMap['hostcert'] = config.hostCertificateFiles['private']['crt']
