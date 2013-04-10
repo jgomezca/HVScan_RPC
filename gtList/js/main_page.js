@@ -137,25 +137,25 @@ function loadData(globalTag, globalTag2) {
     if (check == false) {
         $.ajax({
             type: 'POST',
-            url: 'getProductionGTs',
+            url: '_getPromptProductionGT',
             data: {},
             async: false,
             dataType: 'json',
             success: function (data) {     
-                                       if (data["prompt"] == "") { 
+                                       if (data == "") { 
                                            GlobalTag = "GR_P_V14";
                                            GlobalTag2 = "GR_P_V14";
                                        }
                                        else { 
-                                           GlobalTag = data["prompt"];
-                                           GlobalTag2 = data["prompt"];
+                                           GlobalTag = data;
+                                           GlobalTag2 = data;
                                            
                                        }                        
                                       },
             error: function() { 
                                 GlobalTag = "GR_P_V14";
                                 GlobalTag2 = "GR_P_V14";
-                                alert("Error in data send while getting production GT's");                
+                                alert("Error in data send while getting prompt production GT");                
                               }
         }); 
     } 

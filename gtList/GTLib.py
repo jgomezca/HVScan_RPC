@@ -81,6 +81,15 @@ class UploadGTLib(object):
         return gt_names
 
 
+    # XXX: The front page uses only the prompt production GT.
+    def _getPromptProductionGT(self):
+        return T0DASquery.GTValues(dbName=Settings.RUN_INFO_SCHEMA,
+                            authPath=Settings.AUTHPATH,
+                            tag=Settings.RUN_INFO_TAG,
+                            expressSrc=Settings.EXPRESS_URL,
+                            promptSrc = Settings.PROMPT_URL,
+                            proxy = Settings.PRODUCTION_GT_PROXY,
+                            out = Settings.PRODUCTION_GT_TIMEOUT).getPromptGT()
 
     def getProductionGTs(self):
         return T0DASquery.GTValues(dbName=Settings.RUN_INFO_SCHEMA,
