@@ -360,6 +360,11 @@ def start(service, warnIfAlreadyStarted = True, sendEmail = True, maxWaitTime = 
 
     logging.info('Starting %s.', service)
 
+    # Unset LC_CTYPE in case it is still there (e.g. in OS X or, worse, when
+    # ssh'ing from OS X to Linux using the default ssh_config) since some
+    # CMSSW code crashes if the locale name is not valid.
+    del os.environ['LC_CTYPE']
+
     # The service is not running, start it
     pid = os.fork()
     if pid == 0:
