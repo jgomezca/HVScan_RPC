@@ -279,8 +279,7 @@ SERVICE_ACCOUNT_NAMES = 'http://webcondvm2:8083/get_connectionName'
 SERVICE_TAGS_FOR_ACCOUNT = 'https://%s/payloadInspector/get_tagsVScontainer?dbName=' % HOSTNAME
 SERVICE_FOR_RECORDS = 'https://%s/recordsProvider/record_container_map' % HOSTNAME#?hardware_architecture_name=slc5_amd64_gcc323&software_release_name=CMSSW_5_1_0
 SERVICE_GLOBAL_TAG_LIST = 'http://webcondvm2.cern.ch:8081/get_list_GT'
-SERVICE_GT_INFO = 'http://webcondvm2.cern.ch:8081/getGTinfo?GT_name='
-#SERVICE_GT_INFO = 'https://kostas-conddev5.cern.ch/gtList/getGTinfo?GT_name='
+SERVICE_GT_INFO = 'https://%s/gtList/getGTInfo?GT_name=' % HOSTNAME
 SERVICE_GT_INFO_UPDATE = 'http://webcondvm2.cern.ch:8081/uploadGT?tag='
 RELEASES_PATH = "/afs/cern.ch/cms/{hardware_architecture}/cms/cmssw"
 SOFTWARE_RELEASE_NAME_PATTERN = "^CMSSW_(\d+)_(\d+)_(\d+)(?:_pre(\d+))?$"

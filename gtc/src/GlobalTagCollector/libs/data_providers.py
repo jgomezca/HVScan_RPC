@@ -176,10 +176,12 @@ class GlobalTagProvider(BaseDataProvider):
     def _provide(self, global_tag_name):
         try:
             json_data = self._get_remote_data(global_tag_name)
-            rez = {"GlobalTagName": json_data.pop(0)["GlobalTagName"],
-                   "creation_time": datetime.datetime.strptime(json_data.pop(0)["creation_time"], self.cretion_time_format),
-                   "CMSSW_VERSION": json_data.pop(0)["CMSSW_VERSION"],
-                   "global_tag_entries": json_data
+            header = json_data.pop("header")
+            body = json_data.pop("body")
+            rez = {"GlobalTagName": header["GlobalTagName"],
+                   "creation_time": datetime.datetime.strptime(header["creation_time"], self.cretion_time_format),
+                   "CMSSW_VERSION": header["CMSSW_VERSION"],
+                   "global_tag_entries": body
             }
             for global_tag_entry in rez["global_tag_entries"]:
                 pass
