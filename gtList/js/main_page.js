@@ -90,7 +90,7 @@ $(document).ready(function(){
 
     $("#form1").submit(function() {
         var tmp = $('#suggest1').val();
-        window.location.href="GTdiff_html?GlobalTag="+$('#suggest1').val()+"&GlobalTag2="+$('#suggest2').val()+"&filter="+$('#example_filter input').val();
+        window.location.href="?GlobalTag="+$('#suggest1').val()+"&GlobalTag2="+$('#suggest2').val()+"&filter="+$('#example_filter input').val();
         return false;
     });
 
