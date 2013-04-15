@@ -285,6 +285,7 @@ RELEASES_PATH = "/afs/cern.ch/cms/{hardware_architecture}/cms/cmssw"
 SOFTWARE_RELEASE_NAME_PATTERN = "^CMSSW_(\d+)_(\d+)_(\d+)(?:_pre(\d+))?$"
 DATABASES_LIST = "https://%s/payloadInspector/get_dbs" % HOSTNAME
 SCHEMAS_LIST = "https://%s/payloadInspector/get_schemas?" % HOSTNAME
+HARDWARE_ARCHITECTURES_LIST = 'https://%s/recordsProvider/hardwarearchitecture_list' % HOSTNAME
 
 ADMIN_GROUP_NAME = 'global-tag-administrators'
 

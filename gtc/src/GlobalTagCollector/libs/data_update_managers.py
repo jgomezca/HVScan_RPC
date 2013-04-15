@@ -5,7 +5,7 @@ from GlobalTagCollector.libs.GTManagement import RawGT
 from GlobalTagCollector.libs.data_inserters import AccountObjectCreator, TagObjectCreator
 from GlobalTagCollector.libs.data_inserters import RecordObjectCreator, SoftwareReleaseCreator
 from GlobalTagCollector.models import Account, HardwareArchitecture, GTQueue, AccountType, GTAccount, GTType, ObjectForRecords, Record, SoftwareRelease, GlobalTag
-from data_providers import AccountsProvider, TagsProvider, RecordProvider, SoftwareReleaseProvider, GlobalTagListProvider, DatabasesProvider
+from data_providers import AccountsProvider, TagsProvider, RecordProvider, SoftwareReleaseProvider, GlobalTagListProvider, DatabasesProvider, HardwareArchitecturesListProvider
 from data_filters import AccountFilter, TagsFilter, RecordsFilter, SoftwareReleaseFilter, GlobalTagListFilter
 from GlobalTagCollector.libs.data_patchers import PatchTagContainers
 from data_inserters import  AccountTypeObjectsCreator, GlobalTagQueuePreparer, GTCreatorQueueUpdater #, GlobalTagPreparer
@@ -343,13 +343,11 @@ class InitialGlobalUpdate(object):
             tag_container.parent_name = record_container_name
             tag_container.save()
 
-        #Insert starting hardware architectures
-        #TODO take hardware architectures from services
-        HardwareArchitecture.objects.get_or_create(name="slc5_amd64_gcc434")
-        HardwareArchitecture.objects.get_or_create(name="slc5_amd64_gcc451")
-        HardwareArchitecture.objects.get_or_create(name="slc5_ia32_gcc434")
-        HardwareArchitecture.objects.get_or_create(name="slc5_amd64_gcc462")
+        #Populate db (table GlobalTagCollector_hardwarearchitecture) with starting hardware architectures
+        hardware_architectures_list = HardwareArchitecturesListProvider()._provide()
 
+        for hwa in hardware_architectures_list:
+            HardwareArchitecture.objects.get_or_create(name="%s" % hwa)
 
         try:
             flat_page = FlatPage.objects.get(url="/gtc/")

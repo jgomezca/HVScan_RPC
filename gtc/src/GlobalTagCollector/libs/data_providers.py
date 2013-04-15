@@ -193,4 +193,18 @@ class GlobalTagProvider(BaseDataProvider):
         except (ValueError, KeyError, IndexError) as e: #Not valid json, not valid json stucture
             raise DataFormatException(e)
 
+class HardwareArchitecturesListProvider(BaseDataProvider):
 
+    def __init__(self):
+        self.resource_url = settings.HARDWARE_ARCHITECTURES_LIST
+
+    def _provide(self):
+        try:
+            remote_data = urllib.urlopen(self.resource_url).read()
+            json_data = json.loads(remote_data)
+            architectures_list = json_data.pop("body")["hardware_architectures"]
+            return architectures_list
+        except IOError as e:
+            raise DataAccessException(e)
+        except ValueError as e:
+            raise DataFormatException(e)
