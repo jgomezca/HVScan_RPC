@@ -74,16 +74,17 @@ class RawGTEntry(object):
                 #print "PARENT:", record_container_parent
                 self.record_obj = Record.objects.get(object_r__name=tag_container_parent,name = record_name)#TODO - put warning
             except Exception as e:
-                print e
-                print " PARENT", self.tag_obj.object_r.name
-                print "RECORDS", Record.objects.get(name=record_name)
-                print "CONTAINER", Record.objects.get(name=record_name).object_r.__dict__
-                print "RECORD CONTAINER PARENT", Record.objects.get(name=record_name).object_r.parent_name
-                self.tag_container = self.tag_obj.object_r
-                self.record_containers = ObjectForRecords.objects.filter(record__name=record_name)
-                self.records_with_name = list(Record.objects.filter(name=record_name).values()) #!only values, not objs
-                #raise Exception('BREIKING')
-                raise RecordNotDetectedException(self.tag_obj, record_name)
+                try:
+                    print e
+                    print " PARENT", self.tag_obj.object_r.name
+                    print "RECORDS", Record.objects.get(name=record_name)
+                    print "CONTAINER", Record.objects.get(name=record_name).object_r.__dict__
+                    print "RECORD CONTAINER PARENT", Record.objects.get(name=record_name).object_r.parent_name
+                    self.tag_container = self.tag_obj.object_r
+                    self.record_containers = ObjectForRecords.objects.filter(record__name=record_name)
+                    self.records_with_name = list(Record.objects.filter(name=record_name).values()) #NOTE Only values, not objects
+                except Record.DoesNotExist:
+                    raise RecordNotDetectedException(self.tag_obj, record_name)
 
 
 
