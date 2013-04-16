@@ -149,13 +149,19 @@ virtualHosts['cms-conddb-prod']['backendHostnames'] = ['cmsdbbe1', 'cmsdbbe2']
 virtualHosts['cms-conddb-prod1'] = dict(virtualHosts['cms-conddb-prod'])
 virtualHosts['cms-conddb-prod2'] = dict(virtualHosts['cms-conddb-prod'])
 
-# cms-pdmv-int and cms-pdmb must be exactly the same as -dev but with different
-# 'backendHostnames' (this is only for PdmV's keeper services, i.e. only valdb
-# at the moment)
+# cms-pdmv-int is the same as -dev but with different 'backendHostnames'
+# (for PdmV's keeper services, e.g. valdb, libs) and with different mcm/*
+# (-int uses the production backend service and the database's admin web GUI)
 virtualHosts['cms-pdmv-int'] = dict(virtualHosts['cms-pdmv-dev'])
 virtualHosts['cms-pdmv-int']['backendHostnames'] = ['vocms146']
+virtualHosts['cms-pdmv-int']['services'] = list(virtualHosts['cms-pdmv-int']['services'])
+virtualHosts['cms-pdmv-int']['services'][virtualHosts['cms-pdmv-int']['services'].index('mcm')] += '-prod'
+virtualHosts['cms-pdmv-int']['services'][virtualHosts['cms-pdmv-int']['services'].index('mcm/public')] += '-prod'
+virtualHosts['cms-pdmv-int']['services'][virtualHosts['cms-pdmv-int']['services'].index('mcm/admin')] += '-prod'
 
-virtualHosts['cms-pdmv'] = dict(virtualHosts['cms-pdmv-dev'])
+# cms-pdmv is the same as -int (i.e. including the changes in mcm) but with
+# different 'backendHostnames' (for PdmV's keeper services, e.g. valdb, libs)
+virtualHosts['cms-pdmv'] = dict(virtualHosts['cms-pdmv-int'])
 virtualHosts['cms-pdmv']['backendHostnames'] = ['cmsdbbe1', 'cmsdbbe2']
 
 # cmstags-prod has also its -prod{1,2} counterparts, as well as -dev and -int
@@ -487,6 +493,20 @@ services['shibbolethTest']['shibbolethGroups'] = ['zh']
 
 # FIXME: gtc still uses HTTP
 services['gtc']['protocol'] = 'http'
+
+# PdmV's mcm's -int/-prod web backend and database
+services['mcm-prod'] = dict(services['mcm'])
+services['mcm-prod']['url'] = 'mcm'
+services['mcm-prod']['backendHostnames'] = ['cms-pdmv-mcm']
+
+services['mcm/public-prod'] = dict(services['mcm/public'])
+services['mcm/public-prod']['url'] = 'mcm/public'
+services['mcm/public-prod']['backendHostnames'] = ['cms-pdmv-mcm']
+
+services['mcm/admin-prod'] = dict(services['mcm/admin'])
+services['mcm/admin-prod']['url'] = 'mcm/admin'
+services['mcm/admin-prod']['backendHostnames'] = ['cms-pdmv-mcm-db']
+
 
 # Templates
 httpdTemplate = '''
