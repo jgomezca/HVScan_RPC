@@ -72,6 +72,13 @@ with the sysadmin. In this case, go one by one:
   8) Now repeat the full procedure with the second backend (i.e. cmsdbbe2).
 
 
+Looks like the parameters in the admin form in the balancer-manager pages
+are not quite stable, e.g. the first time it changed from "status_D"
+with values 0 and 1 to "dw" with values "Enable" and "Disable". Then,
+after an update to SLC6.4, it changed back again (backported from 2.2.3
+to 2.2.15?). Therefore, this script should support all required cases
+by inspecting the form.
+
 To debug this script in case the URLs/parameters change:
 
   1) ssh to a frontend (the Apache configuration only allows to access to
@@ -86,8 +93,7 @@ To debug this script in case the URLs/parameters change:
        wget -O - --header 'Host: cms-conddb-prod2.cern.ch' 'https://vocms151.cern.ch/balancer-manager?b=admin&w=https://cmsdbbe2.cern.ch:8092/admin&nonce=645e0649-4556-41e1-a405-a3e5369b6e02' > ~/balancer-manager-admin.html
 
   4) In the bottom, there is the form that needs to be read to know which
-     parameters/value to use. e.g. last time it changed from "status_D" with
-     values 0 and 1 to "dw" with values "Enable" and "Disable".
+     parameters/value to use.
 
 Looks like SLC6.3's version of curl/libcurl does not change SNI according to
 the custom Host header, and therefore Apache answers with a 400 Bad Request.
@@ -156,7 +162,9 @@ class BalancerManager(object):
 
     def refresh(self):
         '''Parses the balancer-manager page to find out the available balancers,
-        the workers of each balancer and its status.
+        the workers of each balancer and its status. Also, it finds out which
+        parameters to use in the other methods (different Apache versions
+        may use different parameters).
         '''
 
         page = _query(self.url, self.virtualHost)
@@ -164,6 +172,10 @@ class BalancerManager(object):
         # Find all balancers
         self.balancers = re.findall('<h3>LoadBalancer Status for balancer://(.*?)</h3', page)
         logging.debug('Balancers found: %s', self.balancers)
+
+        if len(self.balancers) == 0:
+            logging.warning('No balancers found.')
+            return
 
         # Find all workers for each balancer and their status
         self.workers = {}
@@ -205,6 +217,35 @@ class BalancerManager(object):
                     'from': matches[7],
                 })
 
+        if len(self.workers) == 0:
+            logging.warning('No workers found.')
+            return
+
+        # All workers share the same admin form parameters; therefore,
+        # just pick the first one and and query its page without additional
+        # parameters, i.e. no action, to read the admin form.
+        balancer = self.balancers[0]
+        worker = self.workers[balancer].keys()[0]
+        page = self.manageWorker(balancer, worker, {})
+
+        self.parameters = {}
+        if "name='status_D'" in page:
+            self.parameters['status'] = {
+                'name': 'status_D',
+                'enabled': '0',
+                'disabled': '1',
+            }
+        elif "name='dw'" in page:
+            self.parameters['status'] = {
+                'name': 'dw',
+                'enabled': 'Enable',
+                'disabled': 'Disable',
+            }
+        else:
+            raise Exception('Impossible to recognize the parameters to manage workers: update the code.')
+
+        logging.debug('Parameters found: %s', self.parameters)
+
 
     def manageWorker(self, balancer, worker, parameters):
         '''Manages a worker.
@@ -218,7 +259,7 @@ class BalancerManager(object):
 
         # Do *not* send the other parameters (lf, ls, wr, rr, status_I, ...)
         # because they would overwrite the current settings.
-        _query('%s?%s' % (self.url, urllib.urlencode(parameters)), self.virtualHost)
+        return _query('%s?%s' % (self.url, urllib.urlencode(parameters)), self.virtualHost)
 
 
     def enableWorker(self, balancer, worker):
@@ -226,7 +267,7 @@ class BalancerManager(object):
         '''
 
         self.manageWorker(balancer, worker, {
-            'dw': 'Enable',
+            self.parameters['status']['name']: self.parameters['status']['enabled'],
         })
 
 
@@ -241,7 +282,7 @@ class BalancerManager(object):
         '''
 
         self.manageWorker(balancer, worker, {
-            'dw': 'Disable',
+            self.parameters['status']['name']: self.parameters['status']['disabled'],
         })
 
 
