@@ -9,9 +9,10 @@ Usage examples:
     You must warn one day before running this, and avoid doing in on Fridays.
 
 
-  * Frontends-only deployment on production of v1.0:
+  * Frontends-only deployment on production of v1.0, including changes
+    in Shibboleth's configuration.
 
-    $ deployFrontends:level=pro,tag=v1.0
+    $ deployFrontends:level=pro,tag=v1.0,shib=yes
 
     This includes Shibboleth reconfiguration and restart, which implies
     that users will see an automatic re-signIn. Even being automatic,
@@ -25,13 +26,19 @@ Usage examples:
 
 
   * Frontends-only deployment on production of v1.0,
-    without reconfiguring/restarting Shibboleth:
+    without reconfiguring/restarting Shibboleth (default):
 
-    $ fab deployFrontends:level=pro,tag=v1.0,shib=no
+    $ fab deployFrontends:level=pro,tag=v1.0
 
     This will only regenerate Apache's configuration and gracefully
     restart it, which should be transparent for users. Use this when,
     for instance, you just add a new proxy/service/rewrite rule in Apache.
+
+    This is the default since it is the safest option and in most deployments
+    the frontend's configuration does not change (or the only changes are
+    to Apache and not Shibboleth). If the deployer really needed to restart
+    Shibboleth and forgot to specify shib=yes, he can anyway do it later after
+    a full deployment.
 '''
 
 import os
@@ -75,7 +82,7 @@ def setup(tag):
 
 
 # Commands that actually deploy a frontend or a backend, independent of hostname
-def deployFrontend(tag, shib = 'yes'):
+def deployFrontend(tag, shib = 'no'):
     setup(tag)
 
     if shib == 'yes':
@@ -125,7 +132,7 @@ def disableBackend(level, tag, backendHostname):
 # Tasks that know where to deploy the frontends or backends for a given
 # production level
 @task
-def deployFrontends(level, tag, shib = 'yes'):
+def deployFrontends(level, tag, shib = 'no'):
     env.hosts = configuration[level]['frontends']
     execute(deployFrontend, tag, shib)
 
@@ -137,7 +144,7 @@ def deployBackends(level, tag):
 
 # Task that deploy both frontends and backends for a given production level
 @task
-def deploy(level, tag, shib = 'yes'):
+def deploy(level, tag, shib = 'no'):
     deployBackends(level, tag)
     deployFrontends(level, tag, shib)
 
