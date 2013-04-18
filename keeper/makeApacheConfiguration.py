@@ -434,7 +434,7 @@ services = {
         'backendUrl': '',
         'redirectRoot': True,
         'shibbolethMatch': '^/tc/(?!ReleasesXML$|public/)',
-        'shibbolethGroups': ['zh'],
+        'shibbolethGroups': [],
     },
 
     # From the old cmssdt.conf
@@ -812,7 +812,6 @@ shibbolethTemplate = '''
 
         Require valid-user
         {{shibbolethGroupsText}}
- 
    </{location}>
 '''
 
