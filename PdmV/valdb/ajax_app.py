@@ -309,6 +309,8 @@ class AjaxApp(object):
                                           stateValue, newComment, comentAuthor, 
                                           newLinks,Session, ",".join(newIDs), returnedStatusValueOld[2])
         if returnedInformation == "True":
+            if statusKind.upper() == "SUMMARY":
+                return simplejson.dumps(["INFO column won't be announced over emails"])
             msgText = """Release: %s
 In category: %s
 In subcategory: %s 
@@ -337,7 +339,7 @@ Has Changed: From status: %s
              To status: %s
 By: %s
 
-The full details was sent to %s find it there""" %(relName.upper(), cat.upper(), subCat.upper(), statusKind.upper(), returnedStatusValueOld[0].upper(), stateValue.upper(), comentAuthor.upper(),hn_address) #new text for RelVal HN
+The full details was sent to %s find it there""" %(relName.upper(), cat.upper(), subCat.upper(), statusKind.upper(), returnedStatusValueOld[0].upper(), stateValue.upper(), comentAuthor.upper(),"https://hypernews.cern.ch/HyperNews/CMS/get/trigger-performance.html") #new text for RelVal HN
                 self.sendMailOnChanges(newText, msgSubject, returnedStatusValueOld[1].split(",")[0], newIDs[0], userName) #send a threaded message to RelVal HN
                 
             elif (cat.upper() == 'RECONSTRUCTION') and (statusKind.upper() == 'MUON'): #same for Reco Muon as for all HLT
@@ -357,7 +359,7 @@ Has Changed: From status: %s
              To status: %s
 By: %s
 
-The full details was sent to %s find it there""" %(relName.upper(), cat.upper(), subCat.upper(), statusKind.upper(), returnedStatusValueOld[0].upper(), stateValue.upper(), comentAuthor.upper(),hn_address) #new text for RelVal HN
+The full details was sent to %s find it there""" %(relName.upper(), cat.upper(), subCat.upper(), statusKind.upper(), returnedStatusValueOld[0].upper(), stateValue.upper(), comentAuthor.upper(),"https://hypernews.cern.ch/HyperNews/CMS/get/muon-object-validation.html") #new text for RelVal HN
                 self.sendMailOnChanges(newText, msgSubject, returnedStatusValueOld[1].split(",")[0], newIDs[0], userName) #send a threaded message to RelVal HN
                 
             else:  #by default send to relval

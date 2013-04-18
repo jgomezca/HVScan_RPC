@@ -786,7 +786,9 @@ function showModal(subcategory, obj){
 	var statName = obj.value;
 	if (statName == "TK"){
 	    statName = "TRACKER"
-	}
+	}else if(statName == "SUMMARY"){
+        statName = "INFO"
+    }
 	document.getElementById('valStatName').textContent = ("name", statName);
 	var rn = $(obj).parent()[0];
 	var releaseName = $(rn).children()[0].textContent;
@@ -796,6 +798,8 @@ function showModal(subcategory, obj){
 	var statvalue = $(tmpval).children()[column].textContent;
 	if (statvalue.toUpperCase() == "TRACKER"){
         statvalue = "TK"
+    }else if(statvalue.toUpperCase() == "INFO"){
+        statvalue = "SUMMARY"
     }
 	var category;
 	var releaseDetails = ["VALIDATION_STATUS","USER_NAME","LINKS","COMMENTS","META_DATE", "RELEASE_NAME"];
@@ -936,6 +940,9 @@ function editModalInfo(){
     if (statusName == "TRACKER"){
         statusName = "TK"
     }
+    if (statusName == "INFO"){
+        statusName = "SUMMARY"
+    }
     var category = obj.substring(0, obj.indexOf('/'));
     var subCategory = obj.substring(obj.indexOf('/')+1, obj.length);
 
@@ -1047,6 +1054,9 @@ function clearEditModal(){
   var statusName = document.getElementById('valStatName').textContent;
   if (statusName == "TRACKER"){
       statusName = "TK"
+  }
+  if (statusName == "INFO"){
+      statusName = "SUMMARY"
   }
   var userName = "";
   var userFullName = "";

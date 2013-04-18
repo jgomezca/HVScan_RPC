@@ -1176,8 +1176,8 @@ function showModal(subcategory, obj){
 	var statName = obj.value;
 	if (statName == "TK"){
         statName = "TRACKER"
-    }else if(statName == "Info"){
-        statName = "SUMMARY"
+    }else if(statName == "SUMMARY"){
+        statName = "INFO"
     }
 	document.getElementById('valStatName').textContent = ("name", statName);
 	var rn = $(obj).parent()[0];
@@ -1697,6 +1697,9 @@ function editModalInfo(){
     if (statusName == "TRACKER"){
         statusName = "TK"
     }
+    if (statusName == "INFO"){
+        statusName = "SUMMARY"
+    }
     var category = obj.substring(0, obj.indexOf('/'));
     var subCategory = obj.substring(obj.indexOf('/')+1, obj.length);
 
@@ -1801,6 +1804,9 @@ function clearEditModal(){
   var statusName = document.getElementById('valStatName').textContent;
   if (statusName == "TRACKER"){
       statusName = "TK"
+  }
+  if (statusName == "INFO"){
+      statusName = "SUMMARY"
   }
   var userName = "";
   var userFullName = "";
