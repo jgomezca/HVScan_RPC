@@ -248,6 +248,9 @@ virtualHosts['cms-pop-prod2'] = dict(virtualHosts['cms-pop-prod'])
 # If 'shibbolethGroups' is found, the service will get a Shibboleth Location.
 # The value is a list of the allowed groups.
 #
+# If 'shibbolethGroups' is [], the empty list, *any* group is allowed
+# (i.e. no restriction, and therefore, all CERN users).
+#
 # If 'shibbolethGroups' is None, it will *disable*. This is different than
 # the empty list: the URL will bypass the CERN SSO, being exposed to the world.
 # Use this to easily disable Shibboleth for full subdirectories: it is better
@@ -786,6 +789,8 @@ balancerManager = '''
     </Location>
 '''
 
+shibbolethGroupsTextTemplate = 'Require ADFS_GROUP %s'
+
 shibbolethTemplate = '''
     <{location} {parameter}>
         SSLRequireSSL
@@ -806,7 +811,7 @@ shibbolethTemplate = '''
         ### option in order to improve security.
 
         Require valid-user
-        Require ADFS_GROUP {{shibbolethGroupsText}}
+        {{shibbolethGroupsText}}
  
    </{location}>
 '''
@@ -1279,7 +1284,10 @@ def makeApacheConfiguration(frontend, virtualHost):
             if isinstance(services[service]['shibbolethGroups'], dict):
                 for url in services[service]['shibbolethGroups']:
                     services[service]['shibbolethUrl'] = url
-                    services[service]['shibbolethGroupsText'] = ' '.join(['"%s"' % x for x in services[service]['shibbolethGroups'][url]])
+                    if services[service]['shibbolethGroups'][url] == []:
+                        services[service]['shibbolethGroupsText'] = ''
+                    else:
+                        services[service]['shibbolethGroupsText'] = shibbolethGroupsTextTemplate % ' '.join(['"%s"' % x for x in services[service]['shibbolethGroups'][url]])
                     infoMap['shibboleth'] += shibbolethUrl.format(**services[service])
 
         if 'customHttp' in services[service]:
@@ -1300,7 +1308,10 @@ def makeApacheConfiguration(frontend, virtualHost):
                 else:
                     infoMap['shibboleth'] += shibbolethOff.format(**services[service])
             else:
-                services[service]['shibbolethGroupsText'] = ' '.join(['"%s"' % x for x in services[service]['shibbolethGroups']])
+                if services[service]['shibbolethGroups'] == []:
+                    services[service]['shibbolethGroupsText'] = ''
+                else:
+                    services[service]['shibbolethGroupsText'] = shibbolethGroupsTextTemplate % ' '.join(['"%s"' % x for x in services[service]['shibbolethGroups']])
 
                 if 'shibbolethUrl' in services[service]:
                     infoMap['shibboleth'] += shibbolethUrl.format(**services[service])
