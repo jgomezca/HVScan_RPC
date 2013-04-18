@@ -246,24 +246,28 @@ virtualHosts['cms-pop-prod2'] = dict(virtualHosts['cms-pop-prod'])
 #   you must not set redirectRoot.
 #
 # If 'shibbolethGroups' is found, the service will get a Shibboleth Location.
-# The value is a list of the allowed groups. Moreover, if 'shibbolethUrl' is
-# found, it will overwrite the default '/{url}'. However, if 'shibbolethMatch'
-# is found, the service will get a Shibboleth LocationMatch. The value is
-# the pattern to match. 'shibbolethGroups' is also used in this case.
-# Consider to use shibbolethMatch if you only have some URLs to *exclude* from
-# your service (i.e. you enumerate the ones outside Shibboleth). However,
-# if you only have a Location/URL to *include*, please use shibbolethUrl
-# since is easier and avoids security risks if your matching regexp does not
-# match all possible cases (e.g. multiple slashes), which can be easily used to
-# bypass Shibboleth and then pass your application custom headers.
+# The value is a list of the allowed groups.
+#
+# If 'shibbolethGroups' is None, it will *disable*. This is different than
+# the empty list: the URL will bypass the CERN SSO, being exposed to the world.
+# Use this to easily disable Shibboleth for full subdirectories: it is better
+# than using complex negative regexps in a 'shibbolethMatch'.
 #
 # If 'shibbolethGroups' is a dictionary, it will create an entry for each key,
 # which is the url, and the allowed groups for each one are the values.
 # Note that you can't use this if you have overlapping URLs, since order
 # matters. See "virtual hosts" explanation above.
 #
-# If 'shibbolethGroups' is None, it will *disable* Shibboleth for that Location
-# or LocationMatch.
+# Moreover, if 'shibbolethUrl' is found, it will overwrite the default '/{url}'.
+# However, if 'shibbolethMatch' is found, the service will get a Shibboleth
+# LocationMatch (i.e. regexp). The value is the pattern to match.
+#
+# Consider to use shibbolethMatch if you only have some URLs to *exclude* from
+# your service (i.e. you enumerate the ones outside Shibboleth). However,
+# if you only have a Location/URL to *include*, please use shibbolethUrl
+# since is easier and avoids security risks if your matching regexp does not
+# match all possible cases (e.g. multiple slashes), which can be easily used to
+# bypass Shibboleth and then pass your application custom headers.
 #
 # If 'redirectRoot' is found, the root of the frontend will be redirected
 # to this service.
