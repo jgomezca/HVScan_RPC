@@ -511,7 +511,7 @@ services = {
     'cms-popularity': {
         'url': '',
         'backendPort': 443,
-        'shibbolethGroups': ['cms-web-access', 'cms-cern-it-web-access'],
+        'shibbolethGroups': ['cms-web-access', 'cms-cern-it-web-access', 'cms-all-t2'],
     },
 }
 
