@@ -110,7 +110,7 @@ virtualHosts = {
 
     # From the old cmssdt.conf
     'cmssdt-prod': {
-        'services': ['SDT', 'dev', 'controllers', 'qa/perfmondb'],
+        'services': ['tcRedirect', 'SDT', 'dev', 'controllers', 'qa/perfmondb'],
     },
 
     # From the old cmscov.conf
@@ -435,6 +435,13 @@ services = {
         'redirectRoot': True,
         'shibbolethMatch': '^/tc/(?!ReleasesXML|getCustomIBRequests.*|py_get.*|ReleaseExternalsXML.*|CategoriesPackagesJSON.*|CategoriesManagersJSON.*|CreateExternalList.*|ReleaseTagsXML.*|CreateTagList.*|getReleasesInformation.*|public.*)',
         'shibbolethGroups': [],
+    },
+
+    'tcRedirect': {
+        'customHttps': '''
+            RewriteCond %{REQUEST_URI} ^/tc/
+            RewriteRule                ^/tc/(.*)$ https://cmstags.cern.ch/tc/$1 [NE,R,L]
+        ''',
     },
 
     # From the old cmssdt.conf
