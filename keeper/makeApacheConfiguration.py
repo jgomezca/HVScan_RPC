@@ -433,7 +433,7 @@ services = {
         'backendPort': 4443,
         'backendUrl': '',
         'redirectRoot': True,
-        'shibbolethMatch': '^/tc/(?!ReleasesXML$|public/)',
+        'shibbolethMatch': '^/tc/(?!ReleasesXML|getCustomIBRequests.*|py_get.*|ReleaseExternalsXML.*|CategoriesPackagesJSON.*|CategoriesManagersJSON.*|CreateExternalList.*|ReleaseTagsXML.*|CreateTagList.*|getReleasesInformation.*|public.*)',
         'shibbolethGroups': [],
     },
 
