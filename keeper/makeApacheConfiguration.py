@@ -1234,7 +1234,7 @@ def makeApacheConfiguration(frontend, virtualHost):
 
         if 'backendHostnames' in services[service]:
             backendHostnames = services[service]['backendHostnames']
-        else:
+        elif 'backendHostnames' in virtualHosts[virtualHost]:
             backendHostnames = virtualHosts[virtualHost]['backendHostnames']
 
         if 'redirectRoot' in services[service]:
