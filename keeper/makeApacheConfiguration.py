@@ -110,7 +110,7 @@ virtualHosts = {
 
     # From the old cmssdt.conf
     'cmssdt-prod': {
-        'services': ['tcRedirect', 'SDT', 'dev', 'controllers', 'qa/perfmondb'],
+        'services': ['tcRedirect', 'SDT', 'lxr', 'dev', 'controllers', 'qa/perfmondb'],
     },
 
     # From the old cmscov.conf
@@ -449,6 +449,17 @@ services = {
         'backendHostnames': ['vocms12'],
         'backendPort': 443,
         'redirectRoot': True,
+    },
+
+    'lxr': {
+        'customHttp': '''
+            RewriteCond %{REQUEST_URI} ^/lxr
+            RewriteRule                ^/lxr(.*)$ /SDT/lxr$1 [NE,R,L]
+        ''',
+        'customHttps': '''
+            RewriteCond %{REQUEST_URI} ^/lxr
+            RewriteRule                ^/lxr(.*)$ /SDT/lxr$1 [NE,R,L]
+        ''',
     },
 
     'dev': {
