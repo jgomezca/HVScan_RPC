@@ -445,6 +445,9 @@ services = {
     },
 
     # From the old cmssdt.conf
+    # Note that if a DNS alias/domain/proxy/frontend is added for /SDT/lxr
+    # two entries in lxr.conf's baseurl_aliases config variable must be added
+    # in the backend: one for the http:// alias and another one for https://
     'SDT': {
         'backendHostnames': ['vocms12'],
         'backendPort': 443,
@@ -463,18 +466,21 @@ services = {
     },
 
     'dev': {
+        'protocol': 'http',
         'backendHostnames': ['vocms117'],
-        'backendPort': 443,
+        'backendPort': 80,
         'shibbolethGroups': ['zh'],
     },
 
     'controllers': {
+        'protocol': 'http',
         'backendHostnames': ['cmsperfvm5'],
         'backendPort': 8085,
         'shibbolethGroups': ['zh'],
     },
 
     'qa/perfmondb': {
+        'protocol': 'http',
         'backendHostnames': ['cmsperfvm5'],
         'backendPort': 8085,
         'backendUrl': '',
