@@ -468,6 +468,26 @@ services = {
         'backendPort': 8085,
         'backendUrl': '',
         'shibbolethGroups': ['zh'],
+        'customHttp': '''
+            RewriteCond %{REQUEST_URI} ^/runs
+            RewriteRule ^/runs/([^/].+)$ /qa/perfmondb/runs/$1 [NE,L,R]
+
+            RewriteCond %{REQUEST_URI} ^/jobs
+            RewriteRule ^/jobs/([^/].+)$ /qa/perfmondb/jobs/$1 [NE,L,R]
+
+            RewriteCond %{REQUEST_URI} ^/events
+            RewriteRule ^/events/([^/].+)$ /qa/perfmondb/events/$1 [NE,L,R]
+        ''',
+        'customHttps': '''
+            RewriteCond %{REQUEST_URI} ^/runs
+            RewriteRule ^/runs/([^/].+)$ /qa/perfmondb/runs/$1 [NE,L,R]
+
+            RewriteCond %{REQUEST_URI} ^/jobs
+            RewriteRule ^/jobs/([^/].+)$ /qa/perfmondb/jobs/$1 [NE,L,R]
+
+            RewriteCond %{REQUEST_URI} ^/events
+            RewriteRule ^/events/([^/].+)$ /qa/perfmondb/events/$1 [NE,L,R]
+        ''',
     },
 
     # From the old cmscov.conf
