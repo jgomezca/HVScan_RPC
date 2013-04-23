@@ -35,8 +35,8 @@ class DatabasesProvider(BaseDataProvider):
 class SchemasProvider(BaseDataProvider):
 
     def _provide(self, database_name, *args, **kwargs):
-        json_data = json_fetcher.JsonFetcher().fetch(settings.SCHEMAS_LIST + urllib.urlencode({'db':database_name}))
-        return json_data
+        accounts_list = settings.SCHEMAS_DICT[database_name]["accounts"]
+        return accounts_list
 
 
 class AccountsProvider(BaseDataProvider):

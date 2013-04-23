@@ -35,11 +35,9 @@ class AccountObjectCreator(object):
         rez = []
 
         for account in accounts:
-            (acc, acc_created) = Account.objects.get_or_create(
-                name=account["Account"], account_type = account_type_obj)
+            (acc, acc_created) = Account.objects.get_or_create(name=account, account_type = account_type_obj)
             rez.append((acc, acc_created))
         return rez
-
 
 
 class TagObjectCreator(object):
