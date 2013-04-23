@@ -8,7 +8,7 @@ from django.shortcuts import render_to_response, get_object_or_404
 from django.template.context import RequestContext
 from GlobalTagCollector import reports
 from GlobalTagCollector.libs.GTQueueManagement import GTQueueManager
-from GlobalTagCollector.models import GTQueue, GTQueueEntry, GlobalTag, GTType
+from GlobalTagCollector.models import GTQueue, GTQueueEntry, GlobalTag, GTType, SoftwareRelease, RecordSoftwareRelease, Record, ObjectForRecords
 from django.contrib import messages
 import logging
 
@@ -136,6 +136,29 @@ def admin_dashboard(request):
         'open_queues':open_queues,
         },
         context_instance=RequestContext(request))
+
+@user_passes_test(lambda u: u.is_superuser)
+def rcd_list(request):
+    template_vars = {}
+
+    all_sw_releases = RecordSoftwareRelease.objects.select_related(depth=1).values('softwarerelease__id','softwarerelease__name').annotate(record_count=Count('record__name'))
+    template_vars['all_sw_releases'] = all_sw_releases
+
+    software_release = request.GET.get('release')
+    if software_release:
+        records_list = ObjectForRecords.objects.select_related().filter(record__software_release__name='%s' % software_release).values_list('record__name','name')
+        template_vars['records_list'] = records_list
+
+    releases_to_compare = request.GET.getlist('compare')
+    if releases_to_compare:
+        base_release_records = ObjectForRecords.objects.select_related().filter(record__software_release__name='%s' % releases_to_compare[0]).values_list('record__name','name')
+        comp_release_records = ObjectForRecords.objects.select_related().filter(record__software_release__name='%s' % releases_to_compare[1]).values_list('record__name','name')
+        template_vars['records_compared'] = [
+            {'release_name': releases_to_compare[0], 'records': list(set(base_release_records)-set(comp_release_records))},
+            {'release_name': releases_to_compare[1], 'records': list(set(comp_release_records)-set(base_release_records))}
+        ]
+
+    return render_to_response("admin2/rcd_list.html", template_vars, context_instance=RequestContext(request))
 
 @user_passes_test(lambda u: u.is_superuser)
 def gt_info(request, gt_name):
