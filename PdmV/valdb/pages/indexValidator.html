@@ -686,6 +686,16 @@ function createdinamictable(tbody, data1, releaseName, subCat){
             .data("col", j)
             .data("row",i)
             .appendTo(trow);  
+    }else if (j == keys.length-1){ //for Info column
+        src = src = "<a rel='tooltip' title='"+ data1["SUMMARY"][1]+"'> <img src='media/help.gif'></a>"
+        $("<td>")
+            .addClass("tableCell")
+            .append(src)
+            .attr('value', keys[j-1])
+            .attr('onclick', 'javascript:showModal("'+subCat+'", this)')
+            .data("col", j)
+            .data("row",i)
+            .appendTo(trow);  
     }
 	else{
 	  if (! isEmpty(data1)) {

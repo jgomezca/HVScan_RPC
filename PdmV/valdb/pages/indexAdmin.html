@@ -1066,7 +1066,7 @@ function createdinamictable(tbody, data1, releaseName, subCat){
             .appendTo(trow);  
 	}
 	else if (j == keys.length-1){ //for Info column
-        src = "<a> <img src='media/help.gif'></a>"
+        src = src = "<a rel='tooltip' title='"+ data1["SUMMARY"][1]+"'> <img src='media/help.gif'></a>"
         $("<td>")
             .addClass("tableCell")
             .append(src)
