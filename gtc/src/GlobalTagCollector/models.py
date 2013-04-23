@@ -413,8 +413,6 @@ class GTQueueEntry(models.Model):
     def __str__(self):
         return "(%s) Tag:%s,  Record:%s, Label:%s" % (self.status, self.tag.name, self.record.name, self.label )
 
-class RecordSoftwareRelease(models.Model):
+class Record_Software_Release(models.Model):
     record = models.ForeignKey(Record, unique=True)
     softwarerelease = models.ForeignKey(SoftwareRelease, unique=True)
-    class Meta:
-        db_table = u'GlobalTagCollector_record_software_release'

@@ -8,7 +8,7 @@ from django.shortcuts import render_to_response, get_object_or_404
 from django.template.context import RequestContext
 from GlobalTagCollector import reports
 from GlobalTagCollector.libs.GTQueueManagement import GTQueueManager
-from GlobalTagCollector.models import GTQueue, GTQueueEntry, GlobalTag, GTType, SoftwareRelease, RecordSoftwareRelease, Record, ObjectForRecords
+from GlobalTagCollector.models import GTQueue, GTQueueEntry, GlobalTag, GTType, SoftwareRelease, Record_Software_Release, Record, ObjectForRecords
 from django.contrib import messages
 import logging
 
@@ -141,7 +141,7 @@ def admin_dashboard(request):
 def rcd_list(request):
     template_vars = {}
 
-    all_sw_releases = RecordSoftwareRelease.objects.select_related(depth=1).values('softwarerelease__id','softwarerelease__name').annotate(record_count=Count('record__name'))
+    all_sw_releases = Record_Software_Release.objects.select_related(depth=1).values('softwarerelease__id','softwarerelease__name').annotate(record_count=Count('record__name'))
     template_vars['all_sw_releases'] = all_sw_releases
 
     software_release = request.GET.get('release')
