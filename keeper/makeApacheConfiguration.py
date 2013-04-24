@@ -94,7 +94,8 @@ frontends['cms-conddb-prod2'] = frontends['cmsdbfe2'] = frontends['vocms151']
 virtualHosts = {
     'cms-conddb-dev': {
         'backendHostnames': ['vocms145'],
-        'services': ['monitoring', 'prod', 'easymon_online', 'frontier_online'],
+        'services': ['monitoring', 'prod', 'easymon_online', 'frontier_online', 'oldGetLumi'],
+        # We need to keep the old getLumi on HTTP until end of May
     },
 
     'cms-pdmv-dev': {
@@ -320,6 +321,14 @@ services = {
 
     'frontier_online': {
         'redirects': ['/frontier/'],
+    },
+
+    # Old getLumi
+    'oldGetLumi': {
+        'customHttp': '''
+            ProxyPass        /getLumi http://vocms118.cern.ch/getLumi
+            ProxyPassReverse /getLumi http://vocms118.cern.ch/getLumi
+        ''',
     },
 
     # PdmV group
@@ -564,6 +573,9 @@ services['gtList']['customHttps'] = '''
             RewriteCond %{REQUEST_URI} ^/gtlist
             RewriteRule                ^/gtlist(.*)$ /gtList$1 [NE,R,L]
 '''
+
+# We need to keep the old getLumi on HTTP until end of May
+services['getLumi']['skipRedirectToHttps'] = True
 
 # Set the allowed groups for services behind Shibboleth
 services['admin']['shibbolethGroups'] = ['cms-cond-dev']
