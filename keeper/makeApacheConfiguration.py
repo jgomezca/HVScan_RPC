@@ -726,8 +726,8 @@ HostnameLookups Off
 # Logging
 ErrorLog logs/error_log
 LogLevel warn
-LogFormat "%v %h %l %u %t \\"%r\\" %>s %b \\"%{{Referer}}i\\" \\"%{{User-Agent}}i\\"" combinedwithvhost
-CustomLog logs/access_log combinedwithvhost
+LogFormat "%p %v %h %l %u %t \\"%r\\" %>s %b \\"%{{Referer}}i\\" \\"%{{User-Agent}}i\\"" combinedwithportvhost
+CustomLog logs/access_log combinedwithportvhost
 
 ServerSignature Off
 
