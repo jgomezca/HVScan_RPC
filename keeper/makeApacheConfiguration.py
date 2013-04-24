@@ -98,8 +98,9 @@ virtualHosts = {
 
     'cms-pdmv-dev': {
         'backendHostnames': ['vocms145'],
-        'services': ['golem', 'stats', 'pdmvprod', 'libs', 'valdb', 'mcm/admin', 'mcm/public', 'mcm', 'theplan', 'speed', 'queue', 'ReleaseMonitoring', 'cms-service-reldqm/style', 'relmon', 'pdmvindex'],
+        'services': ['golem', 'stats/admin', 'stats', 'pdmvprod', 'libs', 'valdb', 'mcm/admin', 'mcm/public', 'mcm', 'theplan', 'speed', 'queue', 'ReleaseMonitoring', 'cms-service-reldqm/style', 'relmon', 'pdmvindex'],
         # libs is used by valdb
+        # 'stats/admin' must come before 'stats'
         # 'mcm/admin' must come before 'mcm'
     },
 
@@ -323,6 +324,16 @@ services = {
         'backendPort': 80,
         'backendUrl': '',
         'shibbolethGroups': pdmvShibbolethGroups,
+    },
+
+    'stats/admin': {
+        'protocol': 'http',
+        # FIXME: Temporary fix until Antanas setups SSL in CouchDB's admin interface.
+        #        The SSL port will probably be 6984.
+        'backendHostnames': ['cms-pdmv-stats'],
+        'backendPort': 5984,
+        'backendUrl': '',
+        'shibbolethGroups': pdmvAdminShibbolethGroups,
     },
 
     'stats': {
