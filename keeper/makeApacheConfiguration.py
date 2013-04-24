@@ -530,6 +530,16 @@ for service in config.servicesConfiguration:
 # Redirect root to docs
 services['docs']['redirectRoot'] = True
 
+# Redirects for the new services
+services['gtList']['customHttp'] = '''
+            RewriteCond %{REQUEST_URI} ^/gtlist
+            RewriteRule                ^/gtlist(.*)$ /gtList$1 [NE,R,L]
+'''
+services['gtList']['customHttps'] = '''
+            RewriteCond %{REQUEST_URI} ^/gtlist
+            RewriteRule                ^/gtlist(.*)$ /gtList$1 [NE,R,L]
+'''
+
 # Set the allowed groups for services behind Shibboleth
 services['admin']['shibbolethGroups'] = ['cms-cond-dev']
 services['dropBox']['shibbolethGroups'] = {
