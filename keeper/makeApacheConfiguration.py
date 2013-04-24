@@ -214,6 +214,8 @@ virtualHosts['cms-pop-prod2'] = dict(virtualHosts['cms-pop-prod'])
 # If 'backendPort' is found, the service will be added in the addingSlashes,
 # proxyPass and redirectToHttps sections. The 'backendHostnames', 'backendPort',
 # 'backendUrl' and 'backendTimeout' will be used in the proxyPass section.
+# If 'skipRedirectToHttps' is True, the redirectToHttps section is skipped
+# (used to put a different service in http than in https, like the old getLumi).
 #
 #   If the 'backendHostnames' is not found, the default is the one
 #   in the Virtual Hosts entry. How do you know whether to it here or
@@ -1327,7 +1329,8 @@ def makeApacheConfiguration(frontend, virtualHost):
             if services[service]['url'] != '':
                 infoMap['addingSlashes'] += addingSlashes.format(**services[service])
 
-            infoMap['redirectToHttps'] += redirectToHttps.format(**services[service])
+            if 'skipRedirectToHttps' not in services[service]:
+                infoMap['redirectToHttps'] += redirectToHttps.format(**services[service])
 
             if 'backendUrl' not in services[service]:
                 services[service]['backendUrl'] = '/' + services[service]['url']
