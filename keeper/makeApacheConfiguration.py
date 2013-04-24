@@ -20,7 +20,8 @@ import glob
 import config
 
 
-pdmvShibbolethGroups = ['cms-web-access', 'cms-pdmv-serv']
+pdmvAdminShibbolethGroups = ['cms-pdmv-serv']
+pdmvShibbolethGroups = pdmvAdminShibbolethGroups + ['cms-web-access']
 
 # TLSv1 HIGH/MEDIUM algorithms only, without MD5 nor 3DES and without
 # non-authenticating ones. This still contains TLS_RSA_WITH_RC4_128_SHA
@@ -364,7 +365,7 @@ services = {
         'backendHostnames': ['preptest'],
         'backendPort': 5984,
         'backendUrl': '',
-        'shibbolethGroups': pdmvShibbolethGroups,
+        'shibbolethGroups': pdmvAdminShibbolethGroups,
     },
 
     'mcm': {
