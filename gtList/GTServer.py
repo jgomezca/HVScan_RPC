@@ -189,10 +189,3 @@ class UploadGTServer(object):
             data = Settings.PRODUCTION_GTS
         return data
 
-    # XXX: The front page uses only the prompt production GT.
-    @cherrypy.expose()
-    @cherrypy.tools.json_out()
-    def _getPromptProductionGT(self):
-        return get_gt_lib()._getPromptProductionGT()
-
-
