@@ -86,6 +86,11 @@ class UploadGTServer(object):
                     return open(os.path.join(PAGES_DIR, 'mainPage.html'), "rb").read()
                 else:
                     raise cherrypy.HTTPError(405, "Error!!! Given 2 parameters should be: GlobalTag, GlobalTag2  with values!!!")
+            elif len(kwargs) == 1:
+                if "GlobalTag" in kwargs:
+                    return open(os.path.join(PAGES_DIR, 'mainPage.html'), "rb").read()
+                else:
+                    raise cherrypy.HTTPError(405, "Error!!! Given 1 parameters should be: GlobalTag with value!!!")
             elif len(kwargs) == 0:
                 return open(os.path.join(PAGES_DIR, 'mainPage.html'), "rb").read()
             else:
