@@ -49,24 +49,25 @@ frontends = {
         'cms-pdmv-dev', 'cms-pdmv-int',
         'cmstags-dev', 'cmstags-int',
         'cmssdt-dev', 'cmssdt-int',
+        'cms-popularity-dev',
     ],
 
     # vocms{150,151} = cmsdbfe{1,2}
     'vocms150': [
-        'cms-conddb-prod', 'cms-conddb-prod1',
+        'cms-conddb', 'cms-conddb-prod', 'cms-conddb-prod1',
         'cms-pdmv',
-        'cmstags-prod', 'cmstags-prod1',
-        'cmssdt-prod', 'cmssdt-prod1',
-        'cmscov-prod', 'cmscov-prod1',
-        'cms-pop-prod', 'cms-pop-prod1',
+        'cmstags', 'cmstags-prod', 'cmstags-prod1',
+        'cmssdt', 'cmssdt-prod', 'cmssdt-prod1',
+        'cmscov', 'cmscov-prod', 'cmscov-prod1',
+        'cms-popularity', 'cms-pop-prod', 'cms-pop-prod1',
     ],
     'vocms151': [
-        'cms-conddb-prod', 'cms-conddb-prod2',
+        'cms-conddb', 'cms-conddb-prod', 'cms-conddb-prod2',
         'cms-pdmv',
-        'cmstags-prod', 'cmstags-prod2',
-        'cmssdt-prod', 'cmssdt-prod2',
-        'cmscov-prod', 'cmscov-prod2',
-        'cms-pop-prod', 'cms-pop-prod2',
+        'cmstags', 'cmstags-prod', 'cmstags-prod2',
+        'cmssdt', 'cmssdt-prod', 'cmssdt-prod2',
+        'cmscov', 'cmscov-prod', 'cmscov-prod2',
+        'cms-popularity', 'cms-pop-prod', 'cms-pop-prod2',
     ],
 
     'private': ['private'],
@@ -126,6 +127,11 @@ virtualHosts = {
         'backendHostnames': ['cms-popularity-prod'],
         'services': ['cms-popularity'],
     },
+
+    'cms-popularity-dev': {
+        'backendHostnames': ['cms-pop-dev'],
+        'services': ['cms-popularity'],
+    },
 }
 
 # Add the services managed by the keeper to the cms-conddb-dev virtual host
@@ -148,6 +154,7 @@ virtualHosts['cms-conddb-int']['backendHostnames'] = ['vocms146']
 # but with different 'backendHostnames'.
 virtualHosts['cms-conddb-prod'] = dict(virtualHosts['cms-conddb-int'])
 virtualHosts['cms-conddb-prod']['backendHostnames'] = ['cmsdbbe1', 'cmsdbbe2']
+virtualHosts['cms-conddb'] = dict(virtualHosts['cms-conddb-prod'])
 virtualHosts['cms-conddb-prod1'] = dict(virtualHosts['cms-conddb-prod'])
 virtualHosts['cms-conddb-prod2'] = dict(virtualHosts['cms-conddb-prod'])
 
@@ -167,6 +174,7 @@ virtualHosts['cms-pdmv'] = dict(virtualHosts['cms-pdmv-int'])
 virtualHosts['cms-pdmv']['backendHostnames'] = ['cmsdbbe1', 'cmsdbbe2']
 
 # cmstags-prod has also its -prod{1,2} counterparts, as well as -dev and -int
+virtualHosts['cmstags'] = dict(virtualHosts['cmstags-prod'])
 virtualHosts['cmstags-prod1'] = dict(virtualHosts['cmstags-prod'])
 virtualHosts['cmstags-prod2'] = dict(virtualHosts['cmstags-prod'])
 
@@ -177,6 +185,7 @@ virtualHosts['cmstags-int'] = dict(virtualHosts['cmstags-prod'])
 virtualHosts['cmstags-int']['backendHostnames'] = ['vocms130']
 
 # cmssdt-prod has also -dev and -int
+virtualHosts['cmssdt'] = dict(virtualHosts['cmssdt-prod'])
 virtualHosts['cmssdt-dev'] = dict(virtualHosts['cmssdt-prod'])
 virtualHosts['cmssdt-int'] = dict(virtualHosts['cmssdt-prod'])
 
@@ -185,9 +194,11 @@ virtualHosts['cmssdt-int'] = dict(virtualHosts['cmssdt-prod'])
 virtualHosts['cmssdt-prod1'] = dict(virtualHosts['cmssdt-prod'])
 virtualHosts['cmssdt-prod2'] = dict(virtualHosts['cmssdt-prod'])
 
+virtualHosts['cmscov'] = dict(virtualHosts['cmscov-prod'])
 virtualHosts['cmscov-prod1'] = dict(virtualHosts['cmscov-prod'])
 virtualHosts['cmscov-prod2'] = dict(virtualHosts['cmscov-prod'])
 
+virtualHosts['cms-popularity'] = dict(virtualHosts['cms-pop-prod'])
 virtualHosts['cms-pop-prod1'] = dict(virtualHosts['cms-pop-prod'])
 virtualHosts['cms-pop-prod2'] = dict(virtualHosts['cms-pop-prod'])
 
