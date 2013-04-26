@@ -201,8 +201,7 @@ class HardwareArchitecturesListProvider(BaseDataProvider):
     def _provide(self):
         try:
             remote_data = urllib.urlopen(self.resource_url).read()
-            json_data = json.loads(remote_data)
-            architectures_list = json_data.pop("body")["hardware_architectures"]
+            architectures_list = json.loads(remote_data)
             return architectures_list
         except IOError as e:
             raise DataAccessException(e)

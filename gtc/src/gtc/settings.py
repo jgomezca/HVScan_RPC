@@ -285,7 +285,7 @@ RELEASES_PATH = "/afs/cern.ch/cms/{hardware_architecture}/cms/cmssw"
 SOFTWARE_RELEASE_NAME_PATTERN = "^CMSSW_(\d+)_(\d+)_(\d+)(?:_pre(\d+))?$"
 DATABASES_LIST = "https://%s/payloadInspector/get_dbs" % HOSTNAME
 SCHEMAS_DICT = secrets.secrets["payloadInspector"]["connections"]
-HARDWARE_ARCHITECTURES_LIST = 'https://%s/recordsProvider/hardwarearchitecture_list' % HOSTNAME
+HARDWARE_ARCHITECTURES_LIST = 'https://cmstags.cern.ch/tc/public/py_getActiveArchitectures'
 
 ADMIN_GROUP_NAME = 'global-tag-administrators'
 

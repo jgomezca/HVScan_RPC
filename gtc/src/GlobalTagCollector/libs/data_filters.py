@@ -26,6 +26,19 @@ class TagsFilter(object):
         return not_existing_tag_containers
 
 
+class HardwareArchitecturesFilter(object):
+
+    def leave_not_existing(self, hw_arch_list):
+        desired_os_hw_archs = ['slc5']
+        manually_excluded_archs = ['slc5_amd64_gcc480']
+        filtered_hw_arch_list = []
+        for hwa in hw_arch_list:
+            os_prefix = hwa.split("_")[0]
+            if os_prefix in desired_os_hw_archs and hwa not in manually_excluded_archs:
+                filtered_hw_arch_list.append(hwa)
+        return filtered_hw_arch_list
+
+
 class SoftwareReleaseFilter(object):
 
     def leave_not_existing(self,hardware_architecture_obj, software_release_names):

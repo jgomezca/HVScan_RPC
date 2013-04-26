@@ -6,7 +6,7 @@ from GlobalTagCollector.libs.data_inserters import AccountObjectCreator, TagObje
 from GlobalTagCollector.libs.data_inserters import RecordObjectCreator, SoftwareReleaseCreator
 from GlobalTagCollector.models import Account, HardwareArchitecture, GTQueue, AccountType, GTAccount, GTType, ObjectForRecords, Record, SoftwareRelease, GlobalTag
 from data_providers import AccountsProvider, TagsProvider, RecordProvider, SoftwareReleaseProvider, GlobalTagListProvider, DatabasesProvider, HardwareArchitecturesListProvider
-from data_filters import AccountFilter, TagsFilter, RecordsFilter, SoftwareReleaseFilter, GlobalTagListFilter
+from data_filters import AccountFilter, TagsFilter, RecordsFilter, SoftwareReleaseFilter, GlobalTagListFilter, HardwareArchitecturesFilter
 from GlobalTagCollector.libs.data_patchers import PatchTagContainers
 from data_inserters import  AccountTypeObjectsCreator, GlobalTagQueuePreparer, GTCreatorQueueUpdater #, GlobalTagPreparer
 from GlobalTagCollector.libs.data_providers import SchemasProvider, GlobalTagProvider
@@ -92,6 +92,16 @@ class TagsUpdateManager(object):
             except Exception as e:
                 logger.exception(e)
                 logger.error("Tags update failed for %s. Exception details %s" % (account_connection_sting, str(e)))
+
+
+class HardwareArchitecturesUpdateManager(object):
+
+    def _run(self):
+        hw_arch_list = HardwareArchitecturesListProvider()._provide()
+        filtered_hw_arch_list = HardwareArchitecturesFilter().leave_not_existing(hw_arch_list)
+        # Populate db (table GlobalTagCollector_hardwarearchitecture) with filtered hardware architectures
+        for hwa in filtered_hw_arch_list:
+            HardwareArchitecture.objects.get_or_create(name="%s" % hwa)
 
 
 class SoftwareReleaseUpdateManager(object):
@@ -343,12 +353,6 @@ class InitialGlobalUpdate(object):
             tag_container.parent_name = record_container_name
             tag_container.save()
 
-        #Populate db (table GlobalTagCollector_hardwarearchitecture) with starting hardware architectures
-        hardware_architectures_list = HardwareArchitecturesListProvider()._provide()
-
-        for hwa in hardware_architectures_list:
-            HardwareArchitecture.objects.get_or_create(name="%s" % hwa)
-
         try:
             flat_page = FlatPage.objects.get(url="/gtc/")
         except FlatPage.DoesNotExist:
@@ -389,10 +393,11 @@ class InitialGlobalUpdate(object):
                 software_release.save()
 
     def _run(self):
-#        logger.info("Initial global data update: Started")
+        logger.info("Initial global data update: Started")
         AccountTypesUpdateManager()._run()
         self.update_initial_account_types()
         self.initial_data_info()
+        HardwareArchitecturesUpdateManager()._run()
         AccountsUpdateManager()._run()
         TagsUpdateManager()._run()
         SoftwareReleaseUpdateManager()._run()
@@ -402,6 +407,7 @@ class InitialGlobalUpdate(object):
 #~     call_command('records_fixer')
 
         GlobalTagsUpdate()._run()
+        logger.info("Initial global data update: Finished")
 #        call_command('loaddata', 'flatpages_base_fixture')
 #        python manage.py loaddata flatpages_base_fixture $set_param
 
@@ -438,12 +444,14 @@ class InitialGlobalUpdate(object):
             )
 
 
-
-
 class GlobalUpdate(object):
 
     def _run(self):
-        logger.info("Global data update: Started")
+        logger.info("Global data update: Starting")
+
+        logger.info("HW Architectures update: Starting")
+        HardwareArchitecturesUpdateManager()._run()
+        logger.info("HW Architectures update: Finished")
 
         logger.info("Accounts update: Starting")
         AccountsUpdateManager()._run()
@@ -455,15 +463,16 @@ class GlobalUpdate(object):
 
         logger.info("Software release update: Starting")
         SoftwareReleaseUpdateManager()._run()
-        logger.info("Tags update: Finished")
+        logger.info("Software release update: Finished")
 
         logger.info("Records update: Starting")
         RecordsUpdateManager()._run()
-        logger.info("Tags update: Finished")
+        logger.info("Records update: Finished")
 
         GlobalTagsUpdate()._run()
-#
-#        logger.info("Global data update: Finished")
+
+        logger.info("Global data update: Finished")
+
 #        #RecordsMigration().update_records( )
 #        #srm = SoftwareReleaseMigration()
 #        #srm.update_software_releases()
