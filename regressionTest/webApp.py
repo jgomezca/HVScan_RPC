@@ -316,14 +316,15 @@ class Server(object):
 
 
     @cherrypy.expose
-    def showLogs(self, **args):
-        runID = int(args['runID'])
-        label = args['label']
-
-        logInfo = "<html><head></head><body><pre>\n"
-        logInfo += web_results_display.GetReadLogStatus(label, runID)
-        logInfo += '\n</pre></body></html>'
-        return logInfo
+    def showLogs(self, runID, label):
+        return '''
+            <html>
+                <head></head>
+                <body>
+                    <pre>%s</pre>
+                </body>
+            </html>
+        ''' % web_results_display.GetReadLogStatus(label, int(runID))
 
 
 def main():
