@@ -45,12 +45,18 @@ class WebResultsDisplay:
     def __init__(self, connect):
         self.conn = connect
             
-    def resultHeaders(self, label):
+    def resultHeaders(self, label, count = 2):
         curs = self.conn.cursor()
-        sqlstr = "SELECT RID, TO_CHAR(RDATE, 'DD.MM.YYYY HH24:MI:SS'), LABEL, T_RELEASE, T_ARCH "
-        sqlstr +="FROM RUN_HEADER WHERE LABEL = :labl ORDER BY RID DESC"
+        sqlstr = '''
+            SELECT *
+            FROM (
+                SELECT RID, TO_CHAR(RDATE, 'DD.MM.YYYY HH24:MI:SS'), LABEL, T_RELEASE, T_ARCH
+                FROM RUN_HEADER WHERE LABEL = :labl ORDER BY RID DESC
+            )
+            WHERE ROWNUM <= :count
+        '''
         curs.prepare(sqlstr)
-        curs.execute(sqlstr, labl = label)
+        curs.execute(sqlstr, labl = label, count = count)
         result = curs.fetchall()
         return result
         
@@ -78,20 +84,47 @@ class WebResultsDisplay:
         count = len(result)
         return result, count
     
-    def releasesHeaders( self, label, release="", arch=""):
+    def releasesHeaders( self, label, release="", arch="", count=2 ):
         curs = self.conn.cursor()
-        if(release != "" and arch != ""):
-            sqlstr = "SELECT RID, TO_CHAR(RDATE, 'DD.MM.YYYY HH24:MI:SS'), LABEL, T_RELEASE, T_ARCH FROM RUN_HEADER WHERE T_RELEASE = :rel AND T_ARCH = :arc AND LABEL = :labl ORDER BY RID DESC"
+        if release and arch:
+            sqlstr = '''
+                SELECT *
+                FROM (
+                    SELECT RID, TO_CHAR(RDATE, 'DD.MM.YYYY HH24:MI:SS'), LABEL, T_RELEASE, T_ARCH
+                    FROM RUN_HEADER
+                    WHERE T_RELEASE = :rel AND T_ARCH = :arc AND LABEL = :labl
+                    ORDER BY RID DESC
+                )
+                WHERE ROWNUM <= :count
+            '''
             curs.prepare(sqlstr)
-            curs.execute(sqlstr, rel=release, arc=arch, labl=label)
-        elif(release != ""):
-            sqlstr = "SELECT RID, TO_CHAR(RDATE, 'DD.MM.YYYY HH24:MI:SS'), LABEL, T_RELEASE, T_ARCH FROM RUN_HEADER WHERE T_RELEASE = :rel AND LABEL = :labl ORDER BY RID DESC"
+            curs.execute(sqlstr, rel=release, arc=arch, labl=label, count=count)
+        elif release:
+            sqlstr = '''
+                SELECT *
+                FROM (
+                    SELECT RID, TO_CHAR(RDATE, 'DD.MM.YYYY HH24:MI:SS'), LABEL, T_RELEASE, T_ARCH
+                    FROM RUN_HEADER
+                    WHERE T_RELEASE = :rel AND LABEL = :labl
+                    ORDER BY RID DESC
+                )
+                WHERE ROWNUM <= :count
+            '''
             curs.prepare(sqlstr)
-            curs.execute(sqlstr, rel=release, labl=label)
-        elif(arch != ""):
-            sqlstr = "SELECT RID, TO_CHAR(RDATE, 'DD.MM.YYYY HH24:MI:SS'), LABEL, T_RELEASE, T_ARCH FROM RUN_HEADER WHERE T_ARCH = :arc AND LABEL = :labl ORDER BY RID DESC"
+            curs.execute(sqlstr, rel=release, labl=label, count=count)
+        elif arch:
+            sqlstr = '''
+                SELECT *
+                FROM (
+                    SELECT RID, TO_CHAR(RDATE, 'DD.MM.YYYY HH24:MI:SS'), LABEL, T_RELEASE, T_ARCH
+                    FROM RUN_HEADER
+                    WHERE T_ARCH = :arc AND LABEL = :labl
+                    ORDER BY RID DESC
+                )
+                WHERE ROWNUM <= :count
+            '''
             curs.prepare(sqlstr)
-            curs.execute(sqlstr, arc=arch, labl=label)
+            curs.execute(sqlstr, arc=arch, labl=label, count=count)
         result = curs.fetchall()
         return result
     
@@ -124,17 +157,17 @@ def GetLabels():
     conn.close
     return zip(*webLabels)[0]
     
-def GetReleasesHeaders( label, release="", arch="" ):
+def GetReleasesHeaders( label, release="", arch="", count=2 ):
     conn = createDBConnection()
     resDb = WebResultsDisplay( conn )
-    relHeaders = resDb.releasesHeaders( label, release, arch)
+    relHeaders = resDb.releasesHeaders( label, release, arch, count )
     conn.close
     return relHeaders
 
-def GetResultHeaders( label ):
+def GetResultHeaders( label, count = 2 ):
     conn = createDBConnection()
     resDb = WebResultsDisplay( conn )
-    statusHeaders = resDb.resultHeaders( label )
+    statusHeaders = resDb.resultHeaders( label, count )
     conn.close
     return statusHeaders
 

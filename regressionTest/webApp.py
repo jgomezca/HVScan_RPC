@@ -301,26 +301,15 @@ class Server(object):
         )
 
         if release:
-            DBdata = web_results_display.GetReleasesHeaders(label, release, arch)
+            DBdata = web_results_display.GetReleasesHeaders(label, release, arch, count)
 
-            i = 0
-            for data in DBdata:
-                i += 1
-                if i > count:
-                    break
-                htmlCode += self.ShowTable(data, label)
-
-            if i == 0:
+            if len(DBdata) == 0:
                 htmlCode += '<h3>No entries found</h3>'
-
+            else:
+                for data in DBdata:
+                    htmlCode += self.ShowTable(data, label)
         else:
-            DBdata = web_results_display.GetResultHeaders(label)
-
-            i = 0
-            for data in DBdata:
-                i += 1
-                if i > count:
-                    break
+            for data in web_results_display.GetResultHeaders(label, count):
                 htmlCode += self.ShowTable(data, label)
 
         return htmlCode
