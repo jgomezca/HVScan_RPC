@@ -122,7 +122,7 @@ def GetLabels():
     resDb = WebResultsDisplay( conn )
     webLabels = resDb.labels()
     conn.close
-    return webLabels
+    return zip(*webLabels)[0]
     
 def GetReleasesHeaders( label, release="", arch="" ):
     conn = createDBConnection()

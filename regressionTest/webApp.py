@@ -3,8 +3,6 @@ import cherrypy
 import web_results_display
 import service
 
-sessionsDirectory = os.path.join(service.settings['rootDirectory'], 'sessions')
-
 class Server(object):
 
     def ShowTable(self, curs, label):
@@ -71,37 +69,16 @@ class Server(object):
         return Code
 
     @cherrypy.expose
-    def index(self, **args):
+    def index(self, release = '', arch = '', label = '', count = 2):
 
-        selectRel = False
-        if 'reset' in args.keys():
-            cherrypy.session.clear()
-        it = 0
-        for row in web_results_display.GetLabels():
-            if not 'label' in cherrypy.session.keys():
-                cherrypy.session['label'] = row[0]
-            break
-        if 'submit' in args.keys():
-            cherrypy.session['submit'] = args['submit']
-            cherrypy.session['label'] = args['label']
-            if 'release' in args.keys() and args['release'] != '':
-                cherrypy.session['release'] = args['release']
-            if 'release' in cherrypy.session.keys() and args['release'] != cherrypy.session['release']:
-                cherrypy.session['release'] = args['release']
-            if 'arch' in args.keys() and args['arch'] != '':
-                cherrypy.session['arch'] = args['arch']
-            if 'arch' in cherrypy.session.keys() and args['arch'] != cherrypy.session['arch']:
-                cherrypy.session['arch'] = args['arch']
-            if 'count' in args.keys() and args['count'].isdigit():
-                cherrypy.session['count'] = args['count']
+        labels = web_results_display.GetLabels()
+        if not label:
+            label = labels[0]
 
-        if 'arch' in cherrypy.session.keys() and cherrypy.session['arch'] != ''  or 'release' in cherrypy.session.keys() and cherrypy.session['release'] != '':
-            selectRel = True
-        if 'count' in cherrypy.session.keys() and cherrypy.session['count'].isdigit():
-                stCount = int(cherrypy.session['count'])
-        else:
-            stCount = 2;
-        
+        count = int(count)
+        if count > 100:
+            count = 100
+       
         htmlCode = """
         <html>
             <META HTTP-EQUIV="REFRESH" CONTENT="60">
@@ -293,66 +270,59 @@ class Server(object):
                 </style>
             </head>
             <body>
-                <form method="post" action="index" >
-                        <div class="topbar">
-                            <div class="fill">
-                                <div class="container">
-                                    <select name = "label">"""
-        curs = web_results_display.GetLabels()
-        for row in curs:
-            if str(row[0]) == cherrypy.session['label']:
-                htmlCode += """<option value = """+str(row[0])+""" selected = "selected">"""+str(row[0])+"""</option>
-                """
-            else:
-                htmlCode += """<option value = """+str(row[0])+""">"""+str(row[0])+"""</option>
-                """
-        htmlCode+="""</select>
-            """
-        if 'release' in cherrypy.session.keys():
-            htmlCode += """Candidate Release:<input type="text" name="release" size="30" maxlength="50" value=\""""+str(cherrypy.session['release'])+""""\"/>
-            """
-        else:
-            htmlCode += """Candidate Release:<input type="text" name="release" size="30" maxlength="50"/>
-            """
-        if 'arch' in cherrypy.session.keys():
-            htmlCode += """Candidate Architecture:<input type="text" name="arch" size="15" maxlength="30" value=\""""+cherrypy.session['arch']+""""\"/>
-            """
-        else:
-            htmlCode += """Candidate Architecture:<input type="text" name="arch" size="15" maxlength="30" />
-            """
-        if 'count' in cherrypy.session.keys():
-            htmlCode += """Number of results:<input type="text" name="count" size="1" maxlength="4" value=\""""+cherrypy.session['count']+""""\"/>
-            """
-        else:
-            htmlCode += """Number of results:<input type="text" name="count" size="4" maxlength="4" />
-            """
-        htmlCode +="""<div class = "buts"><input type="submit" name="submit" value="Refresh"/>
-                            <input type="submit" name="reset" value="Reset"/>
-                        </div></div></div></div>
-                        <br>
+                <form method="get" action="index" >
+                    <div class="topbar">
+                        <div class="fill">
+                            <div class="container">
+                                <select name="label">
+        """
+
+        for l in labels:
+            htmlCode += '<option value="%s" %s>%s</option>' % (l, 'selected="selected"' if label == l else '', l)
+
+        htmlCode += '''
+                                </select>
+                                Candidate Release: <input type="text" name="release" size="30" maxlength="50" %s />
+                                Candidate Architecture: <input type="text" name="arch" size="15" maxlength="30" %s />
+                                Number of results: <input type="text" name="count" size="1" maxlength="4" value="%s" />
+
+                                <div class="buts">
+                                    <input type="submit" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <br>
                 </form>
-            """
-        if(selectRel == True):
-            if 'arch' in cherrypy.session.keys() and 'release' in cherrypy.session.keys():
-                DBdata = web_results_display.GetReleasesHeaders(cherrypy.session['label'], cherrypy.session['release'], cherrypy.session['arch'])
-            elif 'release' in cherrypy.session.keys():
-                DBdata = web_results_display.GetReleasesHeaders(cherrypy.session['label'], cherrypy.session['release'])
-            elif 'arch' in cherrypy.session.keys():
-                DBdata = web_results_display.GetReleasesHeaders(cherrypy.session['label'], "", cherrypy.session['arch'])
-            counter =0
+        ''' % (
+            ('value="%s"' % release) if release else '',
+            ('value="%s"' % arch) if arch else '',
+            count,
+        )
+
+        if release:
+            DBdata = web_results_display.GetReleasesHeaders(label, release, arch)
+
+            i = 0
             for data in DBdata:
-                counter += 1
-                if stCount != 0:
-                    htmlCode += self.ShowTable( data, cherrypy.session['label'])
-                    stCount = stCount -1
-            if (counter == 0):
-                htmlCode += """<h3> No entries found </h3>"""
+                i += 1
+                if i > count:
+                    break
+                htmlCode += self.ShowTable(data, label)
+
+            if i == 0:
+                htmlCode += '<h3>No entries found</h3>'
+
         else:
-            DBdata = web_results_display.GetResultHeaders(cherrypy.session['label'])
+            DBdata = web_results_display.GetResultHeaders(label)
+
+            i = 0
             for data in DBdata:
-                if stCount != 0:
-                    htmlCode += self.ShowTable(data, cherrypy.session['label'])
-                    stCount = stCount -1
+                i += 1
+                if i > count:
+                    break
+                htmlCode += self.ShowTable(data, label)
+
         return htmlCode
 
 
