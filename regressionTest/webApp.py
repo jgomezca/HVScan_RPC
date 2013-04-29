@@ -9,7 +9,8 @@ class Server(object):
         res1 = web_results_display.GetRunResults(curs[0])
         # only 
         for rows in res1:
-            res2, stCount = web_results_display.GetResultsList(rows[0])
+            res2 = web_results_display.GetResultsList(rows[0])
+            stCount = len(res2)
             break
 
         Code ="""
@@ -29,7 +30,7 @@ class Server(object):
                     Architecture:
                     <b>"""+str(curs[4])+"""</b>
                     </td>
-                    <td class="links"><a href="showLogs?runID="""+str(curs[0])+"""&label="""+label+"""">&gt&gt Logfile</a></td>
+                    <td class="links"><a href="showLogs?runID="""+str(curs[0])+"""">&gt&gt Logfile</a></td>
                     </tr>
             </table>
             <table id="status">
@@ -46,7 +47,9 @@ class Server(object):
             """
         Code +="""</tr>"""
         for rows in res1:
-            res2, stCount = web_results_display.GetResultsList(rows[0])
+            res2 = web_results_display.GetResultsList(rows[0])
+            stCount = len(res2)
+
             Code += """<tr>
                     <td align="left" >"""+str(rows[1])+"""</td>
                     <td>"""+str(rows[2])+"""</td>
@@ -300,23 +303,19 @@ class Server(object):
             count,
         )
 
-        if release:
-            DBdata = web_results_display.GetReleasesHeaders(label, release, arch, count)
+        DBdata = web_results_display.GetReleasesHeaders(label, release, arch, count)
 
-            if len(DBdata) == 0:
-                htmlCode += '<h3>No entries found</h3>'
-            else:
-                for data in DBdata:
-                    htmlCode += self.ShowTable(data, label)
+        if len(DBdata) == 0:
+            htmlCode += '<h3>No entries found</h3>'
         else:
-            for data in web_results_display.GetResultHeaders(label, count):
+            for data in DBdata:
                 htmlCode += self.ShowTable(data, label)
 
         return htmlCode
 
 
     @cherrypy.expose
-    def showLogs(self, runID, label):
+    def showLogs(self, runID):
         return '''
             <html>
                 <head></head>
@@ -324,7 +323,7 @@ class Server(object):
                     <pre>%s</pre>
                 </body>
             </html>
-        ''' % web_results_display.GetReadLogStatus(label, int(runID))
+        ''' % web_results_display.GetReadLogStatus(int(runID))
 
 
 def main():
