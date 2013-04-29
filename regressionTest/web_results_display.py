@@ -77,7 +77,7 @@ class WebResultsDisplay:
     
     def stepResults( self, id ):
         curs = self.conn.cursor()
-        sqlstr = "SELECT ID, STATUS, STEP_LABEL FROM RUN_STEP_RESULT WHERE ID= :ids"
+        sqlstr = "SELECT ID, STATUS, STEP_LABEL FROM RUN_STEP_RESULT WHERE ID= :ids and STEP_LABEL IS NOT NULL"
         curs.prepare(sqlstr)
         curs.execute(sqlstr, ids=id)
         result = curs.fetchall()
