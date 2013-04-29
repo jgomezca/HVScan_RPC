@@ -5,15 +5,15 @@ import service
 
 sessionsDirectory = os.path.join(service.settings['rootDirectory'], 'sessions')
 
-class Server:
-		
+class Server(object):
+
 	def ShowTable(self, curs, label):
 		res1 = web_results_display.GetRunResults(curs[0])
 		# only 
 		for rows in res1:
 			res2, stCount = web_results_display.GetResultsList(rows[0])
 			break
-		#print stCount
+
 		Code ="""
 		        <table id="header" bgcolor="#D8D8D8">
 					<tr>
@@ -69,9 +69,10 @@ class Server:
 		</html>
 		"""
 		return Code
+
+        @cherrypy.expose
 	def index(self, **args):
-		print "Arguments :"
-		print args
+
 		selectRel = False
 		if 'reset' in args.keys():
 			cherrypy.session.clear()
@@ -93,8 +94,7 @@ class Server:
 				cherrypy.session['arch'] = args['arch']
 			if 'count' in args.keys() and args['count'].isdigit():
 				cherrypy.session['count'] = args['count']
-			print "Session :"	
-			print cherrypy.session
+
 		if 'arch' in cherrypy.session.keys() and cherrypy.session['arch'] != ''  or 'release' in cherrypy.session.keys() and cherrypy.session['release'] != '':
 			selectRel = True
 		if 'count' in cherrypy.session.keys() and cherrypy.session['count'].isdigit():
@@ -355,7 +355,8 @@ class Server:
 					stCount = stCount -1
 		return htmlCode
 
-	index.exposed = True
+
+        @cherrypy.expose
 	def showLogs(self, **args):
 		runID = int(args['runID'])
 		label = args['label']
@@ -364,8 +365,7 @@ class Server:
 		logInfo += web_results_display.GetReadLogStatus(label, runID)
 		logInfo += '\n</pre></body></html>'
 		return logInfo
-				
-	showLogs.exposed = True
+
 
 def main():
 	service.start(Server())
@@ -373,5 +373,4 @@ def main():
 
 if __name__ == '__main__':
 	main()
-
 
