@@ -57,11 +57,12 @@ class TagObjectCreator(object):
 class SoftwareReleaseCreator():
 
     def _create_objects(self, hardware_architecture_obj, software_release_names):
+        '''Includes pre-releases.
+        '''
+
         rez = []
         for software_release_name in software_release_names: #todo possible but it seems not necessary to use transactions
             sr_version_number = utils.software_release_name_to_version(software_release_name)
-            if sr_version_number % 1000 != 999:
-                continue #because it is prerelease
             (sr, sr_created) = SoftwareRelease.objects.get_or_create(name=software_release_name, internal_version=sr_version_number)
             sr.hardware_architecture.add(hardware_architecture_obj)
             rez.append((sr, sr_created))
