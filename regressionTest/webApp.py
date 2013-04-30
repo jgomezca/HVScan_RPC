@@ -1,7 +1,9 @@
-import os
 import cherrypy
-import web_results_display
+
 import service
+
+import web_results_display
+
 
 class Server(object):
 
