@@ -82,8 +82,8 @@ def json_queues_for_record(request): #TODO try except
     record_releases = list(record.software_release.all().order_by('internal_version'))
     lowest_internal_version = record_releases[0].internal_version
     higest_internal_version = record_releases[-1].internal_version
-    #TODO hardware ach , open.
-    queue_list = GTQueue.objects.filter(release_from__internal_version__lte=higest_internal_version).filter(Q(release_to__internal_version__gte=lowest_internal_version) | Q(release_to=None)).order_by('name')
+    #TODO hardware arch
+    queue_list = GTQueue.objects.filter(is_open=True).filter(release_from__internal_version__lte=higest_internal_version).filter(Q(release_to__internal_version__gte=lowest_internal_version) | Q(release_to=None)).order_by('name')
     obj_dics = [{'id': obj.id, 'name':obj.name, 'descr':obj.description } for obj in queue_list] #obj.description
     return HttpResponse(json.dumps(obj_dics), mimetype="application/json")
 
