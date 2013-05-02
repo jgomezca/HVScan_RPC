@@ -1,3 +1,14 @@
+'''regressionTest's database access layer.
+'''
+
+__author__ = 'Giacomo Govi'
+__copyright__ = 'Copyright 2013, CERN CMS'
+__credits__ = ['Giacomo Govi', 'Miguel Ojeda', 'Andreas Pfeiffer']
+__license__ = 'Unknown'
+__maintainer__ = 'Miguel Ojeda'
+__email__ = 'mojedasa@cern.ch'
+
+
 import database
 import service
 
