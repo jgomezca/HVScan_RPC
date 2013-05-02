@@ -188,7 +188,7 @@ servicesConfiguration = {
     'dropBox': {
         'filename':       'server.py',
         'listeningPort':  8095,
-        'hidden':         False,
+        'hidden':         True,
     },
 
     #'dropBoxBE': {
