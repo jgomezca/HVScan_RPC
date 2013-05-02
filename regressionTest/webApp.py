@@ -20,11 +20,8 @@ class Server(object):
 
     def ShowTable(self, curs, label):
         res1 = web_results_display.GetRunResults(curs[0])
-        # only 
-        for rows in res1:
-            res2 = web_results_display.GetResultsList(rows[0])
-            stCount = len(res2)
-            break
+        res2 = web_results_display.GetResultsList(res1[0][0])
+        stCount = len(res2)
 
         Code ="""
             <table id="header" bgcolor="#D8D8D8">
