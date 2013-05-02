@@ -21,64 +21,58 @@ class Server(object):
     def ShowTable(self, curs, label):
         res1 = web_results_display.GetRunResults(curs[0])
         res2 = web_results_display.GetResultsList(res1[0][0])
-        stCount = len(res2)
 
-        Code ="""
+        Code = '''
             <table id="header" bgcolor="#D8D8D8">
-                    <tr>
+                <tr>
                     <td colspan = "2">Test Sequence:
-                    <b>"""+str(curs[2])+"""</b>&nbsp&nbsp&nbsp&nbsp
+                    <b>%s</b>&nbsp&nbsp&nbsp&nbsp
                     RunID:
-                    """+str(curs[0])+"""&nbsp&nbsp&nbsp&nbsp
+                    %s&nbsp&nbsp&nbsp&nbsp
                     Time:
-                    """+str(curs[1])+"""
+                    %s
                     </td>
-                    <tr>
+                <tr>
                     <td>
                     Candidate:
-                    <b>"""+str(curs[3])+"""</b>&nbsp&nbsp&nbsp&nbsp
+                    <b>%s</b>&nbsp&nbsp&nbsp&nbsp
                     Architecture:
-                    <b>"""+str(curs[4])+"""</b>
+                    <b>%s</b>
                     </td>
-                    <td class="links"><a href="showLogs?runID="""+str(curs[0])+"""">&gt&gt Logfile</a></td>
-                    </tr>
+                    <td class="links"><a href="showLogs?runID=%s">&gt&gt Logfile</a></td>
+                </tr>
             </table>
             <table id="status">
-            """
-        Code +="""
-                    <tr>
-                        <!--<th rowspan="2" colspan = "2">Reference releases</th>-->
-                        <th>Reference release</th>
-                        <th>Reference architecture</th>
-                    
-        """
-        for i in range (0, stCount):
-            Code += """<th>"""+str(res2[i][2])+"""</th>
-            """
-        Code +="""</tr>"""
+                <tr>
+                    <!--<th rowspan="2" colspan = "2">Reference releases</th>-->
+                    <th>Reference release</th>
+                    <th>Reference architecture</th>
+        ''' % (curs[2], curs[0], curs[1], curs[3], curs[4], curs[0])
+
+        for i in range(0, len(res2)):
+            Code += '<th>%s</th>' % res2[i][2]
+
+        Code += '</tr>'
+
         for rows in res1:
             res2 = web_results_display.GetResultsList(rows[0])
-            stCount = len(res2)
 
-            Code += """<tr>
-                    <td align="left" >"""+str(rows[1])+"""</td>
-                    <td>"""+str(rows[2])+"""</td>
-            """
-            for i in range (0, stCount):
-                if(res2[i][1] == 0):
-                    Code +="""<td align="center" bgcolor ="#A7C942"><b>OK</b></td>
-                    """
+            Code += '''
+                <tr>
+                    <td align="left" >%s</td>
+                    <td>%s</td>
+            ''' % (rows[1], rows[2])
+
+            for i in range(0, len(res2)):
+                if res2[i][1] == 0:
+                    Code += '<td align="center" bgcolor ="#A7C942"><b>OK</b></td>'
                 else:
-                    Code +="""<td align="center" bgcolor ="#FF0000"><b>Failure</b></td>
-                    """
-            Code += """</tr></tr>
-            """
-        Code += """</table><hr>
-        """
-        Code += """
-        </body>
-        </html>
-        """
+                    Code += '<td align="center" bgcolor ="#FF0000"><b>Failure</b></td>'
+
+            Code += '</tr></tr>'
+
+        Code += '</table><hr></body></html>'
+
         return Code
 
     @cherrypy.expose
@@ -92,7 +86,7 @@ class Server(object):
         if count > 100:
             count = 100
        
-        htmlCode = """
+        htmlCode = '''
         <html>
             <META HTTP-EQUIV="REFRESH" CONTENT="60">
             <head>
@@ -288,7 +282,7 @@ class Server(object):
                         <div class="fill">
                             <div class="container">
                                 <select name="label">
-        """
+        '''
 
         for l in labels:
             htmlCode += '<option value="%s" %s>%s</option>' % (l, 'selected="selected"' if label == l else '', l)
