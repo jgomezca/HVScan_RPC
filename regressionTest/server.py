@@ -13,14 +13,14 @@ import cherrypy
 
 import service
 
-import web_results_display
+import dataAccess
 
 
 class Server(object):
 
     def ShowTable(self, curs, label):
-        res1 = web_results_display.GetRunResults(curs[0])
-        res2 = web_results_display.GetResultsList(res1[0][0])
+        res1 = dataAccess.GetRunResults(curs[0])
+        res2 = dataAccess.GetResultsList(res1[0][0])
 
         ret = '''
             <table id="header" bgcolor="#D8D8D8">
@@ -55,7 +55,7 @@ class Server(object):
         ret += '</tr>'
 
         for rows in res1:
-            res2 = web_results_display.GetResultsList(rows[0])
+            res2 = dataAccess.GetResultsList(rows[0])
 
             ret += '''
                 <tr>
@@ -78,7 +78,7 @@ class Server(object):
     @cherrypy.expose
     def index(self, release = '', arch = '', label = '', count = 2):
 
-        labels = web_results_display.GetLabels()
+        labels = dataAccess.GetLabels()
         if not label:
             label = labels[0]
 
@@ -307,7 +307,7 @@ class Server(object):
             count,
         )
 
-        DBdata = web_results_display.GetReleasesHeaders(label, release, arch, count)
+        DBdata = dataAccess.GetReleasesHeaders(label, release, arch, count)
 
         if len(DBdata) == 0:
             ret += '<h3>No entries found</h3>'
@@ -327,7 +327,7 @@ class Server(object):
                     <pre>%s</pre>
                 </body>
             </html>
-        ''' % web_results_display.GetReadLogStatus(int(runID))
+        ''' % dataAccess.GetReadLogStatus(int(runID))
 
 
 def main():

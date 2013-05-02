@@ -279,7 +279,7 @@ servicesConfiguration = {
     },
 
     'regressionTest': {
-        'filename':       'webApp.py',
+        'filename':       'server.py',
         'listeningPort':  8083,
         'hidden':         False,
     },
