@@ -22,7 +22,7 @@ class Server(object):
         res1 = web_results_display.GetRunResults(curs[0])
         res2 = web_results_display.GetResultsList(res1[0][0])
 
-        Code = '''
+        ret = '''
             <table id="header" bgcolor="#D8D8D8">
                 <tr>
                     <td colspan = "2">Test Sequence:
@@ -50,14 +50,14 @@ class Server(object):
         ''' % (curs[2], curs[0], curs[1], curs[3], curs[4], curs[0])
 
         for i in range(0, len(res2)):
-            Code += '<th>%s</th>' % res2[i][2]
+            ret += '<th>%s</th>' % res2[i][2]
 
-        Code += '</tr>'
+        ret += '</tr>'
 
         for rows in res1:
             res2 = web_results_display.GetResultsList(rows[0])
 
-            Code += '''
+            ret += '''
                 <tr>
                     <td align="left" >%s</td>
                     <td>%s</td>
@@ -65,15 +65,15 @@ class Server(object):
 
             for i in range(0, len(res2)):
                 if res2[i][1] == 0:
-                    Code += '<td align="center" bgcolor ="#A7C942"><b>OK</b></td>'
+                    ret += '<td align="center" bgcolor ="#A7C942"><b>OK</b></td>'
                 else:
-                    Code += '<td align="center" bgcolor ="#FF0000"><b>Failure</b></td>'
+                    ret += '<td align="center" bgcolor ="#FF0000"><b>Failure</b></td>'
 
-            Code += '</tr></tr>'
+            ret += '</tr></tr>'
 
-        Code += '</table><hr></body></html>'
+        ret += '</table><hr></body></html>'
 
-        return Code
+        return ret
 
     @cherrypy.expose
     def index(self, release = '', arch = '', label = '', count = 2):
@@ -86,7 +86,7 @@ class Server(object):
         if count > 100:
             count = 100
        
-        htmlCode = '''
+        ret = '''
         <html>
             <META HTTP-EQUIV="REFRESH" CONTENT="60">
             <head>
@@ -285,9 +285,9 @@ class Server(object):
         '''
 
         for l in labels:
-            htmlCode += '<option value="%s" %s>%s</option>' % (l, 'selected="selected"' if label == l else '', l)
+            ret += '<option value="%s" %s>%s</option>' % (l, 'selected="selected"' if label == l else '', l)
 
-        htmlCode += '''
+        ret += '''
                                 </select>
                                 Candidate Release: <input type="text" name="release" size="30" maxlength="50" %s />
                                 Candidate Architecture: <input type="text" name="arch" size="15" maxlength="30" %s />
@@ -310,12 +310,12 @@ class Server(object):
         DBdata = web_results_display.GetReleasesHeaders(label, release, arch, count)
 
         if len(DBdata) == 0:
-            htmlCode += '<h3>No entries found</h3>'
+            ret += '<h3>No entries found</h3>'
         else:
             for data in DBdata:
-                htmlCode += self.ShowTable(data, label)
+                ret += self.ShowTable(data, label)
 
-        return htmlCode
+        return ret
 
 
     @cherrypy.expose
