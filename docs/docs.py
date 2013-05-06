@@ -14,7 +14,7 @@ import cherrypy
 import service
 
 
-class Docs:
+class Docs(object):
     '''Docs server.
     '''
 
