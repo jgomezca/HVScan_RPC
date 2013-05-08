@@ -19,7 +19,6 @@ if __name__ == '__main__':
 
 
 defaultOutputDirectory = 'generated'
-docsFilename = 'docs.css'
 indexFilename = 'index.html'
 
 indexTitle = 'CMS DB Web Services'
@@ -28,7 +27,26 @@ docsTemplate = '''
     <html>
         <head>
             <title>%s</title>
-            <link rel="stylesheet" type="text/css" href="%s" />
+            <style>
+                body {
+	                font-size: 95%%;
+                }
+
+                h2 {
+	                margin-top: 30px;
+                }
+
+                pre {
+	                margin-left: 60px;
+	                margin-bottom: 25px;
+
+	                padding: 10px;
+	                border-left: 3px solid;
+	                border-top: 1px solid;
+	                border-top-left-radius: 10px;
+	                background-color: #DFDFDF;
+                }
+            </style>
         </head>
         <body>
             %s
@@ -63,11 +81,6 @@ def main():
     options = {
         'outputDirectory': defaultOutputDirectory,
     }
-
-    # Copy docs.css into the destination folder
-    outputFilename = os.path.join(options['outputDirectory'], docsFilename)
-    logger.info('Copying: ' + docsFilename + ' to ' + outputFilename)
-    shutil.copy(docsFilename, outputFilename)
 
     # Generate all the docs
     mdwn = markdown.Markdown(safe_mode = 'escape', extensions = ['headerid'])
@@ -116,7 +129,7 @@ def main():
             firstSection = bodyText.find('<h2')
             bodyText = bodyText[:firstSection] + index + bodyText[firstSection:]
 
-        outputText = docsTemplate % (title, docsFilename, bodyText)
+        outputText = docsTemplate % (title, bodyText)
 
         write(outputFilename, outputText)
 
