@@ -18,6 +18,12 @@ if __name__ == '__main__':
         keeper.run('docs', sys.argv[0], replaceProcess = True)
 
 
+import os
+import re
+import markdown
+import logging
+
+
 defaultOutputDirectory = 'generated'
 indexFilename = 'index.html'
 
@@ -53,12 +59,6 @@ docsTemplate = '''
         </body>
     </html>
 '''
-
-
-import os
-import re
-import markdown
-import logging
 
 
 # In order to print the list of services we need to exceptionally access the keeper's config
