@@ -32,6 +32,7 @@ indexFilename = 'index.html'
 indexTitle = 'CMS DB Web Services'
 
 docsTemplate = mako.template.Template('''
+    <!DOCTYPE html>
     <html>
         <head>
             <title>${title}</title>
