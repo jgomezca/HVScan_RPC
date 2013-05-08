@@ -105,7 +105,7 @@ def main():
         outputName = match.groups()[0]
         outputFilename = os.path.join(options['outputDirectory'], outputName + '.html')
 
-        logger.info('Generating: ' + outputFilename + ' from ' + inputFilename)
+        logging.info('Generating: ' + outputFilename + ' from ' + inputFilename)
 
         fd = open(inputFilename, 'r')
         inputText = fd.read()
@@ -145,7 +145,7 @@ def main():
 
     # Generate a simple docs' index (i.e. a list of the files)
     outputFilename = os.path.join(options['outputDirectory'], indexFilename)
-    logger.info('Generating: ' + outputFilename)
+    logging.info('Generating: ' + outputFilename)
 
     developmentMailingList = read('developmentMailingList.txt')
     gitWeb = read('gitWeb.txt')
@@ -174,7 +174,6 @@ if __name__ == '__main__':
             format = '[%(asctime)s] %(levelname)s: %(message)s',
             level = logging.INFO
     )
-    logger = logging.getLogger(__name__)
 
     main()
 
