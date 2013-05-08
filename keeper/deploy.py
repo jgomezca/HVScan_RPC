@@ -290,6 +290,29 @@ def checkPackage(package, testCommand = None):
         raise Exception('This script requires %s.' % package)
 
 
+def checkRubyGem(gem, testCommand = None):
+    '''Checks whether a Ruby Gem is installed. If not, gives the option
+    to the user to install it.
+    '''
+
+    logging.info('Checking Ruby gem: %s', gem)
+
+    try:
+        try:
+            execute('gem list -i %s' % gem)
+        except Exception as e:
+            logging.warning('Ruby Gem %s is not installed.', gem)
+            text = raw_input('Would you like to install it? [y/N] ')
+            if text != 'y':
+                raise e
+            execute('umask 0022 && sudo gem install %s 1>&2' % gem)
+
+        if testCommand is not None:
+            execute(testCommand)
+    except:
+        raise Exception('This script requires %s.' % gem)
+
+
 def checkFile(path, checkReadAccess = False):
     '''Checks whether a file exists and is a regular file. Optionally, also
     checks whether the file can be open for read access.
