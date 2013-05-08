@@ -69,6 +69,14 @@ sys.path.append('../keeper')
 import config
 
 
+def read(filename):
+    '''Read stripped data from file.
+    '''
+
+    with open(filename, 'rb') as f:
+        return f.read().strip()
+
+
 def write(filename, data):
     '''Write data to a file.
     '''
@@ -140,9 +148,9 @@ def main():
     outputFilename = os.path.join(options['outputDirectory'], indexFilename)
     logger.info('Generating: ' + outputFilename)
 
-    developmentMailingList = open('developmentMailingList.txt').read().strip()
-    gitWeb = open('gitWeb.txt').read().strip()
-    jiraWeb = open('jiraWeb.txt').read().strip()
+    developmentMailingList = read('developmentMailingList.txt')
+    gitWeb = read('gitWeb.txt')
+    jiraWeb = read('jiraWeb.txt')
 
     servicesList = ''
     for service in config.getServicesList():
