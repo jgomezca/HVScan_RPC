@@ -359,6 +359,13 @@ def checkRequirements(options):
     checkPackage('rsync', 'rsync --version')
     checkPackage('redis', 'redis-cli -v')
 
+    # sass and compass (based on Ruby) are required only for development,
+    # and therefore should not be installed in the official deployments
+    if config.getProductionLevel() == 'private':
+        checkPackage('rubygems', 'gem --version')
+        checkRubyGem('sass', 'sass --version')
+        checkRubyGem('compass', 'compass --version')
+
     # httpd and mod_ssl are required for private deployments
     # (i.e. in order to set up the private frontend)
     if config.getProductionLevel() == 'private':
