@@ -43,11 +43,6 @@ import shutil
 import re
 import markdown
 import logging
-logging.basicConfig(
-        format = '[%(asctime)s] %(levelname)s: %(message)s',
-        level = logging.INFO
-)
-logger = logging.getLogger(__name__)
 
 
 # In order to print the list of services we need to exceptionally access the keeper's config
@@ -155,5 +150,11 @@ def main():
 
 
 if __name__ == '__main__':
+    logging.basicConfig(
+            format = '[%(asctime)s] %(levelname)s: %(message)s',
+            level = logging.INFO
+    )
+    logger = logging.getLogger(__name__)
+
     main()
 
