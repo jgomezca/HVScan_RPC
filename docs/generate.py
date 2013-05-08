@@ -20,8 +20,10 @@ if __name__ == '__main__':
 
 import os
 import re
-import markdown
 import logging
+
+import mako.template
+import markdown
 
 
 defaultOutputDirectory = 'generated'
@@ -29,13 +31,13 @@ indexFilename = 'index.html'
 
 indexTitle = 'CMS DB Web Services'
 
-docsTemplate = '''
+docsTemplate = mako.template.Template('''
     <html>
         <head>
-            <title>%s</title>
+            <title>${title}</title>
             <style>
                 body {
-	                font-size: 95%%;
+	                font-size: 95%;
                 }
 
                 h2 {
@@ -54,11 +56,9 @@ docsTemplate = '''
                 }
             </style>
         </head>
-        <body>
-            %s
-        </body>
+        <body>${body}</body>
     </html>
-'''
+''')
 
 
 # In order to print the list of services we need to exceptionally access the keeper's config
@@ -135,7 +135,7 @@ def main():
             firstSection = bodyText.find('<h2')
             bodyText = bodyText[:firstSection] + index + bodyText[firstSection:]
 
-        outputText = docsTemplate % (title, bodyText)
+        outputText = docsTemplate.render(title = title, body = bodyText)
 
         write(outputFilename, outputText)
 
@@ -164,7 +164,7 @@ def main():
         <p>If it is your first time, please start by reading Developing.</p>
     ''' % (indexTitle, servicesList, developmentMailingList, developmentMailingList, gitWeb, gitWeb, jiraWeb, jiraWeb, documentsList)
 
-    outputText = docsTemplate % (indexTitle, docsFilename, bodyText)
+    outputText = docsTemplate.render(title = indexTitle, body = bodyText)
     write(outputFilename, outputText)
 
 
