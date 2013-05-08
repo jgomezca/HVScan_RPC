@@ -54,9 +54,9 @@ import config
 def write(filename, data):
     '''Write data to a file.
     '''
-    fd = open(filename, 'w')
-    fd.write(data)
-    fd.close()
+
+    with open(filename, 'wb') as f:
+        f.write(data)
 
 
 def main():
