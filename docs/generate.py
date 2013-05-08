@@ -56,8 +56,6 @@ docsTemplate = '''
 
 
 import os
-import socket
-import shutil
 import re
 import markdown
 import logging
