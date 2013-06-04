@@ -114,7 +114,7 @@ virtualHosts = {
 
     # From the old cmssdt.conf
     'cmssdt-prod': {
-        'services': ['tcRedirect', 'SDT', 'lxr', 'dev', 'controllers', 'qa/perfmondb'],
+        'services': ['tcRedirect', 'lxr', 'dev', 'controllers', 'qa/perfmondb', 'SDT'],
     },
 
     # From the old cmscov.conf
@@ -483,10 +483,11 @@ services = {
     # two entries in lxr.conf's baseurl_aliases config variable must be added
     # in the backend: one for the http:// alias and another one for https://
     'SDT': {
+        'url': '',
         'protocol': 'http',
         'backendHostnames': ['vocms12'],
         'backendPort': 80,
-        'redirectRoot': True,
+        'backendUrl': '/',
     },
 
     'lxr': {
