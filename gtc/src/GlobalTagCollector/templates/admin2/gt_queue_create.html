@@ -6,12 +6,25 @@
 
 {% block media%}
 {{ block.super }}
-
 <script type="text/javascript">
     $(document).ready(function() {
         $("select#id_release_from").chosen();
         $("select#id_release_to").chosen();
         $("select#id_last_gt").chosen();
+
+        // Hide error box by default
+        $("#error_box").hide();
+
+        // Validate queue name field
+        $('#form_submit_new_queue').submit(function(e){
+            var queue_name = $("#id_name").val();
+            valid_regex = new RegExp('^[a-zA-Z0-9_]{1,100}$');
+
+            if (!valid_regex.test(queue_name)) {
+                $("#error_box").show();
+                e.preventDefault();
+            }
+        })
     });
 </script>
 {% endblock %}
@@ -21,32 +34,34 @@
 
 
 <div class="row">
-    <div class="span6">
+    <div class="span5">
         <h1>Create GT queue</h1>
     </div>
-    <div class="span6" style="text-align: right;">
-        <!--<a href="gt_queue_create" class="btn">Create GT Queue</a>-->
+    <div class="span7" style="float: right; margin-top: 12px;">
+        <div id="error_box" class="alert alert-error" style="margin: 0;">
+            <a onClick="$(this).parent().hide();">× </a>
+            <strong>ERROR: </strong>Queue name can contain only characters, digits and underscores.
+        </div>
     </div>
 </div>
-<div class="row">
-    <div class="span12">
-        <form action="" method="post">
+
+<form action="" id="form_submit_new_queue" method="POST">
+    <div class="row">
+        <div class="span12">
             {% csrf_token %}
-            <table  class="table table-condensed table-bordered">
-                {% if queue_name %}
+            <table class="table table-condensed table-bordered">
+            {% if queue_name %}
                 <tr>
                     <th>Queue name</th>
                     <td>{{queue_name}}</td>
                 </tr>
-                {% endif %}
+            {% endif %}
                 {{gt_queue_form}}
             </table>
             <div class="form-actions">
                 <button type="submit" class="btn btn-primary">Save changes</button>
-                <!--<button class="btn">Cancel</button>-->
             </div>
-        </form>
-
+        </div>
     </div>
-</div>
+</form>
 {% endblock %}

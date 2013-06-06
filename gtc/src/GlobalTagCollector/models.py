@@ -4,6 +4,7 @@ from django.db import models
 from django.db.models.signals import pre_save
 from django.utils.translation import ugettext as _
 from GlobalTagCollector.managers import ImportedGTByDate
+import re
 
 
 class ServiceData(models.Model):
@@ -344,8 +345,13 @@ class GTQueue(models.Model):
         if (self.release_to is not None) and (self.release_from.internal_version > self.release_to.internal_version):
             raise ValidationError('Release to must be None or internal version must be not smaller than Relase from')
 
+        # Custom validation for queue name field
+        queue_name = self.name
+        raw_regex = "[a-zA-Z0-9_]+"
+        queue_name_pattern = re.compile(raw_regex)
+        if not queue_name_pattern.match(queue_name):
+            raise ValidationError("Queue name can contain only characters, digits and underscores.")
 
-#
     def __unicode__(self):
         return self.name
 
