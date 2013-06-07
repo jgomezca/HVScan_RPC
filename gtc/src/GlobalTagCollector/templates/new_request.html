@@ -39,14 +39,27 @@
 
 {% block content %}
 
-<h2>Submit new Tag</h2>
-
-<div id="alert_container"></div>
-
 <form id="record_submit_form" method="post" action="#">
     <input type="hidden" name="form-TOTAL_FORMS" value="1" id="id_form-TOTAL_FORMS" />
     <input type="hidden" name="form-INITIAL_FORMS" value="1" id="id_form-INITIAL_FORMS" />
     <input type="hidden" name="form-MAX_NUM_FORMS" id="id_form-MAX_NUM_FORMS" />
+
+    <div class="row">
+        <div class="span4">
+            <h2>Submit new Tag</h2>
+        </div>
+        <div class="span8" style="float: left; margin-top: 12px;">
+            <div id="disclaimer_well_box" class="well well-small" style="margin: 0;">
+                <strong>Disclaimer: </strong>In case of doubt what queue to use, please <a href="mailto:cms-alca-globaltag@cern.ch">contact the AlCaDB conveners</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="span12">
+            <div id="alert_container"></div>
+        </div>
+    </div>
 
     <div class="row">
         <div class="span8">
