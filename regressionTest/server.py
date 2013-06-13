@@ -18,7 +18,7 @@ import dataAccess
 
 class Server(object):
 
-    def ShowTable(self, curs, label):
+    def ShowTable(self, curs):
         res1 = dataAccess.GetRunResults(curs[0])
         res2 = dataAccess.GetResultsList(res1[0][0])
 
@@ -313,7 +313,7 @@ class Server(object):
             ret += '<h3>No entries found</h3>'
         else:
             for data in DBdata:
-                ret += self.ShowTable(data, label)
+                ret += self.ShowTable(data)
 
         return ret
 
