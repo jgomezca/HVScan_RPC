@@ -12,6 +12,7 @@ __email__ = 'mojedasa@cern.ch'
 import cherrypy
 
 import service
+import html
 
 import dataAccess
 
@@ -302,8 +303,8 @@ class Server(object):
                     <br>
                 </form>
         ''' % (
-            ('value="%s"' % release) if release else '',
-            ('value="%s"' % arch) if arch else '',
+            ('value="%s"' % html.escape(release)) if release else '',
+            ('value="%s"' % html.escape(arch)) if arch else '',
             count,
         )
 
