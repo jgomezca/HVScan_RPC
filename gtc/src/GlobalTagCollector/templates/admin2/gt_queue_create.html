@@ -6,14 +6,58 @@
 
 {% block media%}
 {{ block.super }}
+<style type="text/css">
+    div #warn { color: black; }
+    .table th:first-child { width: 25%; }
+    div #gt_warning_box {
+        margin: 0;
+        padding: 3px 15px;
+        float: right;
+    }
+    div #collapse_div {
+        margin-top: 6px;
+        width: 100%;
+    }
+</style>
 <script type="text/javascript">
     $(document).ready(function() {
-        $("select#id_release_from").chosen();
-        $("select#id_release_to").chosen();
-        $("select#id_last_gt").chosen();
-
         // Hide error box by default
         $("#error_box").hide();
+
+        // Last GT selector
+        last_gt = $("select#id_last_gt");
+
+        $("select#id_release_from").chosen();
+        $("select#id_release_to").chosen();
+        last_gt.chosen();
+
+        last_gt.parent().append('<div id="gt_warning_box" class="alert alert-info"></div>');
+
+        warn_box = $("#gt_warning_box");
+        warn_box.html('<strong>WARNING: </strong>This GT has missing entries.');
+        // Hide warnings box by default
+        warn_box.hide();
+
+        // Create collapsible div
+        last_gt.parent().append('<div id="collapse_div"></div>');
+        collapse_div = $("#collapse_div"); collapse_div.hide();
+        
+        last_gt.change(function(){
+            $.get("/gtc/json/warnings_gt/?gt_id=" + $(this).val(), function(data){
+                if (data.no_warnings) {
+                    // Hide all warning elements
+                    if (collapse_div.is(':visible')) collapse_div.slideUp(function(){ warn_box.hide(); });
+                } else {
+                    collapse_div.hide(); warn_box.show();
+                    // Create and populate warnings info div
+                    collapse_div.html('<div id="warn" class="alert alert-info"></div>');
+                    for(var i=0; i<data.length; i++) {
+                        $("#warn").append("Rcd: " + data[i].data.record + "<br />Tag: " + data[i].data.tag + "<br />PFN: " + data[i].data.pfn + "<br /><br />");
+                    }
+                    collapse_div.slideDown('slow');
+                } // end else
+            }, "json");
+        }); // end change event
 
         // Validate queue name field
         $('#form_submit_new_queue').submit(function(e){
@@ -24,7 +68,8 @@
                 $("#error_box").show();
                 e.preventDefault();
             }
-        })
+        }); // end submit event
+
     });
 </script>
 {% endblock %}

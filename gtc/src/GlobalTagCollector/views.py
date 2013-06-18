@@ -87,6 +87,13 @@ def json_queues_for_record(request): #TODO try except
     obj_dics = [{'id': obj.id, 'name':obj.name, 'descr':obj.description } for obj in queue_list] #obj.description
     return HttpResponse(json.dumps(obj_dics), mimetype="application/json")
 
+@login_required
+def json_warnings_gt(request):
+    """ Fetch GT import warnings if any """
+    warn = GlobalTag.objects.get(pk=int_or_zero(request.GET.get('gt_id', None)))
+    obj_dict = json.loads(warn.warnings) if warn.warnings else {'no_warnings': 'True'}
+    return HttpResponse(json.dumps(obj_dict), mimetype="application/json")
+
 #--------------
 @login_required
 def list_view(request):
