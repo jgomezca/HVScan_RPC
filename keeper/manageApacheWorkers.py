@@ -11,24 +11,24 @@ with the sysadmin. In this case, go one by one:
 
   0) If debugging is needed, you may run in parallel:
 
-       $ testLoadBalancer.py -s cms-conddb-prod
+       $ testLoadBalancer.py -s cms-conddb
 
      Also, you can see the present status of the load balancer with:
 
-       cmsdbfe1 $ manageApacheWorkers.py status -v cms-conddb-prod
+       cmsdbfe1 $ manageApacheWorkers.py status -v cms-conddb
 
      and:
 
-       cmsdbfe2 $ manageApacheWorkers.py status -v cms-conddb-prod
+       cmsdbfe2 $ manageApacheWorkers.py status -v cms-conddb
 
 
   1) In *all* frontends, take out the first backend, i.e.
 
-       cmsdbfe1 $ manageApacheWorkers.py takeout cmsdbbe1 -v cms-conddb-prod
+       cmsdbfe1 $ manageApacheWorkers.py takeout cmsdbbe1 -v cms-conddb
 
      and:
 
-       cmsdbfe2 $ manageApacheWorkers.py takeout cmsdbbe1 -v cms-conddb-prod
+       cmsdbfe2 $ manageApacheWorkers.py takeout cmsdbbe1 -v cms-conddb
 
 
   2) Wait a while (currently, 15 minutes -- the time should be enough
@@ -40,11 +40,11 @@ with the sysadmin. In this case, go one by one:
 
   3) In *all* frontends, disable the backend, i.e.:
 
-       cmsdbfe1 $ manageApacheWorkers.py disable cmsdbbe1 -v cms-conddb-prod
+       cmsdbfe1 $ manageApacheWorkers.py disable cmsdbbe1 -v cms-conddb
 
      and:
 
-       cmsdbfe2 $ manageApacheWorkers.py disable cmsdbbe1 -v cms-conddb-prod
+       cmsdbfe2 $ manageApacheWorkers.py disable cmsdbbe1 -v cms-conddb
 
 
   4) Request the sysadmin (currently, Jorge) to reboot the machine.
@@ -56,13 +56,13 @@ with the sysadmin. In this case, go one by one:
 
   6) In *all* frontends, reenable the backend and take it in, i.e.:
 
-       cmsdbfe1 $ manageApacheWorkers.py enable cmsdbbe1 -v cms-conddb-prod
-       cmsdbfe1 $ manageApacheWorkers.py takein cmsdbbe1 -v cms-conddb-prod
+       cmsdbfe1 $ manageApacheWorkers.py enable cmsdbbe1 -v cms-conddb
+       cmsdbfe1 $ manageApacheWorkers.py takein cmsdbbe1 -v cms-conddb
 
      and:
 
-       cmsdbfe2 $ manageApacheWorkers.py enable cmsdbbe1 -v cms-conddb-prod
-       cmsdbfe2 $ manageApacheWorkers.py takein cmsdbbe1 -v cms-conddb-prod
+       cmsdbfe2 $ manageApacheWorkers.py enable cmsdbbe1 -v cms-conddb
+       cmsdbfe2 $ manageApacheWorkers.py takein cmsdbbe1 -v cms-conddb
 
 
   7) Check with testLoadBalancer.py that the backend is again
@@ -121,7 +121,7 @@ import optparse
 import re
 
 
-defaultVirtualHost = 'cms-conddb-prod'
+defaultVirtualHost = 'cms-conddb'
 # Use the current hostname since the server may not listen on 127.0.0.1
 defaultHostname = socket.gethostname()
 defaultBalancerManagerUrl = 'https://%s/balancer-manager'
