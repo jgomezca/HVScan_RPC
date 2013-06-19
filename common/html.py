@@ -41,7 +41,10 @@ def escape(data):
     '''
 
     if isinstance(data, str) or isinstance(data, unicode):
-        return xml.sax.saxutils.escape(data)
+        return xml.sax.saxutils.escape(data, {
+            '"': '&quot;',
+            "'": '&apos;',
+        })
 
     elif data is None or isinstance(data, bool) or isinstance(data, int) or isinstance(data, long):
         return data
