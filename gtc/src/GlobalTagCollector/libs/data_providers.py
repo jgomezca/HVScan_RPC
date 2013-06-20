@@ -148,7 +148,6 @@ class GlobalTagProvider(BaseDataProvider):
 
     def __init__(self):
         self.resource_url = settings.SERVICE_GT_INFO
-        self.update_resouce_url = settings.SERVICE_GT_INFO_UPDATE
         self.cretion_time_format = "%d %B, %Y %H:%M:%S" #18 February, 2012 21:11:58
         self.entry_time_format = "%d %b %Y %H:%M" #"09 Jun 2009 10:05"
 
@@ -156,22 +155,15 @@ class GlobalTagProvider(BaseDataProvider):
         request_url = self.resource_url + urllib.quote(global_tag_name)
         response = urllib.urlopen(request_url)
         if response.getcode() != 200: # if we got answer NOT OK
-            self._update_gt_info(global_tag_name)    # update gt info
             response = urllib.urlopen(request_url)
             remote_data = response.read()
         else:
             remote_data = response.read()
             if remote_data == '[{}]': # if we got empty response
-                self._update_gt_info(global_tag_name) # update gt info
                 response = urllib.urlopen(request_url)
                 remote_data = response.read()
         json_data = json.loads(remote_data)
         return json_data
-
-    def _update_gt_info(self, global_tag_name):
-        request_url = self.update_resouce_url + urllib.quote(global_tag_name)
-        response = urllib.urlopen(request_url)
-
 
     def _provide(self, global_tag_name):
         try:
