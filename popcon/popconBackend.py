@@ -98,29 +98,7 @@ class PopCon:
         else:
             raise cherrypy.HTTPError(405, "There has to be no arguments or parameters!!!!!")
         return json.dumps(RACData)
-        
-    def PopConRecentActivityRecorded_diff(self):
-        last_id = '-1'
-        rez = []
-        r = self.PopConRecentActivityRecorded()
-        js = json.loads(r)
-        data = js['aaData']
-        if last_id == '-1':
-            return '["last_id", %d]' % int(data[0][0])
-        else:
-            try:
-                tmp = int(last_id)
-            except ValueError:
-                return ''
-        for i in data:
-            if int(i[0]) > tmp:
-                rez.append(i)
-              
-        if rez != []:
-            return json.dumps(rez)
-        else:
-            return 'No data'
-    
+
     # @TODO: JsonProvider, future-usage: startDate and endDate
     @cherrypy.expose
     def popconActivityHisto(self, *args, **kwargs):
