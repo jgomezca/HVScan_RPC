@@ -445,10 +445,6 @@ Total [#total#]" } ], "title": { "text": "Stuff I'm thinking about, Tue May 18 2
             raise cherrypy.HTTPError(405, "Bad serviceName: '" + serviceName + "' not in allowed list.")
         return
     
-    def PopConCronjobStatus(self, *args, **kwargs):
-        jobList = popconSQL.popconSQL().PopConCronjobStatus(self.auth)
-        return json.dumps(jobList)
-    
 
 def main():
 

@@ -55,36 +55,6 @@ class popconSQL:
     time_transformed = str(time_tuple[1])+'/'+str(time_tuple[2])+'/'+str(time_tuple[0])
     return time_transformed
  
- def PopConCronjobStatus(self, authfile="./auth.xml"): 
-     conn = cx_Oracle.connect(conn_string)
-     jobList = []
-     try:
-         curs = conn.cursor()
-         sqlstr = """ 
-         select 
-         CMS_COND_31X_POPCONLOG.logtails.filename as filename,
-         CMS_COND_31X_POPCONLOG.logtails.short_tail as short_tail 
-         from 
-         CMS_COND_31X_POPCONLOG.logtails
-         """
-         curs.prepare(sqlstr)
-         curs.execute(sqlstr)
-         
-         print 'QUERY EXECUTION DONE'
-         for row in curs:
-             job = row[0]
-             job = job.replace('.log', '')
-             job = job.replace('PopCon', '')
-             job = job.replace('Job', '')
-             
-             status = 'dead'
-             if (self.isTimeConsistent(logTail=row[1])):
-                 status = 'alive'
-             jobList.append({'job':job, 'status':status})
-     finally:
-         conn.close()
-         return jobList
-
  def PopConCronjobTailFetcherStatus(self, authfile="./auth.xml",serviceName="EcalDCSO2O"):
     conn = cx_Oracle.connect(conn_string)
     try:
