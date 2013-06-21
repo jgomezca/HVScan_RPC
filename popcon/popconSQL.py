@@ -7,16 +7,11 @@ import datetime
 import dateutil.tz
 
 import popconUtils
-try:
-    import cx_Oracle
-except ImportError, e: 
-    print "Cannot import cx_Oracle:", e 
 
 import service
+import database
 
-
-conn_dict = service.secrets['connections']['pro']
-conn_string = service.getCxOracleConnectionString(conn_dict)
+connection = database.Connection(service.secrets['connections']['pro'])
 
 
 class popconSQL:
@@ -56,32 +51,25 @@ class popconSQL:
     return time_transformed
  
  def PopConCronjobTailFetcherStatus(self, authfile="./auth.xml",serviceName="EcalDCSO2O"):
-    conn = cx_Oracle.connect(conn_string)
-    try:
-    	start = time.time()
-        curs = conn.cursor()
-        curs.arraysize = 256
-        sqlstr = """
-            select 
+
+    rows = connection.fetch('''
+        select 
             CMS_COND_31X_POPCONLOG.logtails.filename as filename,
-	    CMS_COND_31X_POPCONLOG.logtails.short_tail as short_tail	
-            from 
+            CMS_COND_31X_POPCONLOG.logtails.short_tail as short_tail
+        from 
             CMS_COND_31X_POPCONLOG.logtails 
-	    where filename like '%"""+serviceName+"""%'
-        """
-        curs.prepare(sqlstr)
-        curs.execute(sqlstr)
-	result	=	{}
-        for rows_ in curs:
-		serviceName		=	rows_[0].replace(".log","")
-		short_tail  		=       rows_[1]
-            	error_check = 1
-            	if self.isTimeConsistent(logTail=short_tail):
-                	error_check     =       0
-		result[serviceName]	=	error_check
-	return result
-    finally:
-        conn.close()
+        where filename like :s
+    ''', ('%' + serviceName + '%', ))
+
+    result = {}
+    for row in rows:
+        error_check = 1
+        if self.isTimeConsistent(logTail = row[1]):
+            error_check = 0
+
+        result[row[0].replace(".log", "")] = error_check
+
+    return result
          
  def PopConCronjobTailFetcher(self, authfile="./auth.xml", search_string=""):
     if search_string == "" or \
@@ -94,101 +82,73 @@ class popconSQL:
        search_string == "where filename='EcalDCSO2O.log'" or \
        search_string == "where filename='RunInfoStop.log'" or \
        search_string == "where filename='EcalLaserTimeBasedO2O.log'":
-       conn = cx_Oracle.connect(conn_string)
-       #map_detector    =   ['Pixel','Alig','Ecal','DT','Run','RPC','CSC','SiStrip','HLT']
-       try:
-           start = time.time()
-           curs = conn.cursor()
-           curs.arraysize = 256
-           sqlstr = """
-               select 
-               CMS_COND_31X_POPCONLOG.logtails.filename as filename,
-               86400000 * (cast(sys_extract_utc(CMS_COND_31X_POPCONLOG.logtails.crontime) as date) - to_date('01-01-1970','DD-MM-YYYY')) as crontime, 
-               /* 86400000 * (cast(sys_extract_utc(CMS_COND_31X_POPCONLOG.logtails.prevcrontime) as date) -
-               to_date('01-01-1970','DD-MM-YYYY')) as prevcrontime,*/
-               CMS_COND_31X_POPCONLOG.logtails.short_tail as short_tail,
-               CMS_COND_31X_POPCONLOG.logtails.long_tail as long_tail
-               from 
-               CMS_COND_31X_POPCONLOG.logtails
-               {0}
-               /*where rownum < 6 and 
-               filename='/cmsnfshome0/nfshome0/popcondev/RunInfoJob/CMSSW_2_1_0/src/CondTools/RunInfo/test/L1Scaler.log'*/
-               order by crontime desc 
-           """.format(search_string)
-             #print "\nPopConCronjobTailFetcher:\n",sqlstr,"\n"
-           curs.prepare(sqlstr)
-           curs.execute(sqlstr)
-           name_of_columns = []
-           for fieldDesc in curs.description: 
-               name_of_columns.append(fieldDesc[0])
-           rows = {}
-           rows['name_of_columns'] = name_of_columns
-           rows["aaData"] = {}
-           #print "\nPopConCronjobTailFetcher:\n",int((time.time()-start)*1000),"\n"
-           list   =   []
-           for rows_ in curs:
-               short_tail  =       rows_[2]
-               one_row     =       []
-               map_detector    =   rows_[0].replace(".log","")
-               map_detector    =   map_detector.replace("PopCon","")
 
-               try:
-                   rows["aaData"][map_detector]
-               except:
-                   rows["aaData"][map_detector]=[]
+       rows = connection.fetch('''
+            select 
+                CMS_COND_31X_POPCONLOG.logtails.filename as filename,
+                86400000 * (cast(sys_extract_utc(CMS_COND_31X_POPCONLOG.logtails.crontime) as date) - to_date('01-01-1970','DD-MM-YYYY')) as crontime, 
+                CMS_COND_31X_POPCONLOG.logtails.short_tail as short_tail,
+                CMS_COND_31X_POPCONLOG.logtails.long_tail as long_tail
+            from 
+                CMS_COND_31X_POPCONLOG.logtails
+            {0}
+            order by crontime desc 
+       '''.format(search_string))
 
-               #one_row = [str(col).replace("\n","<br>") for col in rows_]
-               date_seconds    =   int(str((rows_[1]))[0:-3])
-               date_info   =   "<b>Crontime (ms)</b>"+str(rows_[1])+"<br><b>Crontime (hr)</b>:"+time.strftime('%d/%m/%y %H:%M:%S', time.gmtime(date_seconds))
-               first_row   =   "<b>Filename:</b>"+str(rows_[0])+"<br><hr>"+date_info+"<hr><b>Short Tail:</b><br>"+rows_[2].replace("\n","<br>")   
-               one_row =   [first_row,str(rows_[3]).replace("\n","<br>")]
-               error_check = 1
-               if self.isTimeConsistent(logTail=short_tail):
-                   error_check     =       0
-               one_row.append({"error": error_check})
-               rows["aaData"][map_detector].append(one_row)
-           return rows
-       finally:
-           conn.close()
+       ret = {}
+       ret['name_of_columns'] = ['FILENAME', 'CRONTIME', 'SHORT_TAIL', 'LONG_TAIL']
+       ret["aaData"] = {}
+       for row in rows:
+           one_row = []
+           map_detector = row[0].replace(".log","").replace("PopCon","")
+
+           try:
+               ret["aaData"][map_detector]
+           except:
+               ret["aaData"][map_detector]=[]
+
+           date_seconds = int(str((row[1]))[0:-3])
+           date_info = "<b>Crontime (ms)</b>"+str(row[1])+"<br><b>Crontime (hr)</b>:"+time.strftime('%d/%m/%y %H:%M:%S', time.gmtime(date_seconds))
+           first_row = "<b>Filename:</b>"+str(row[0])+"<br><hr>"+date_info+"<hr><b>Short Tail:</b><br>"+row[2].replace("\n","<br>")   
+           one_row = [first_row,str(row[3]).replace("\n","<br>")]
+           error_check = 1
+           if self.isTimeConsistent(logTail = row[2]):
+               error_check = 0
+           one_row.append({"error": error_check})
+           ret["aaData"][map_detector].append(one_row)
+       return ret
+
     else:
         raise SystemExit
 
  def checkLongTail(self,authfile="./auth.xml",serviceName='OfflineDropBox'):
-    conn = cx_Oracle.connect(conn_string)
-    try:
-    	start = time.time()
-        curs = conn.cursor()
-        curs.arraysize = 256
-        sqlstr = """
-            select 
+
+    rows = connection.fetch('''
+        select 
             CMS_COND_31X_POPCONLOG.logtails.filename as filename,
-	    CMS_COND_31X_POPCONLOG.logtails.short_tail as short_tail,
-	    CMS_COND_31X_POPCONLOG.logtails.long_tail as long_tail
-            from 
+            CMS_COND_31X_POPCONLOG.logtails.short_tail as short_tail,
+            CMS_COND_31X_POPCONLOG.logtails.long_tail as long_tail
+        from 
             CMS_COND_31X_POPCONLOG.logtails 
-	    where filename like '%"""+serviceName+"""%'
-        """
-        curs.prepare(sqlstr)
-        curs.execute(sqlstr)
-	result	=	{}
-        for rows_ in curs:
-		serviceName		=	rows_[0].replace(".log","")
-		long_tail  		=       str(rows_[2])
-            	error_check = 1
-	check_errror = long_tail.lower().find('error')
-	check_warning = long_tail.lower().find('warning')
-	if(check_errror > -1 ):
-		return {serviceName:2} 
-	elif (check_warning > -1):
-		return {serviceName:1}
-	else:
-		return {serviceName:0}
-		
-	return check_errror,check_warning
-    finally:
-        conn.close()
-    pass
-        
+        where filename like :s
+    ''', ('%' + serviceName + '%', ))
+
+    for row in rows:
+        serviceName = row[0].replace(".log","")
+        long_tail = str(row[2])
+
+    check_errror = long_tail.lower().find('error')
+    check_warning = long_tail.lower().find('warning')
+
+    if check_errror > -1:
+        return { serviceName: 2 }
+    elif check_warning > -1:
+        return { serviceName: 1 }
+    else:
+        return { serviceName: 0 }
+
+    return check_errror, check_warning
+
  def isTimeConsistent(self, logTail=None, tolerance=0.5, minInterval=60*60*2):
     '''The normal gap is the maximum latency between 2 consecutive jobs
     in the latest 5. The delta time is the difference between the latest job
@@ -243,133 +203,62 @@ class popconSQL:
     else:
         end_date = self.transform_date(end_date)
 
-    #start_date  =   "11/23/2009"
-    #end_date    =   "12/16/2009"
-
-    conn = cx_Oracle.connect(conn_string)
-    try:
-        start = time.time()
-        curs = conn.cursor()
-        curs.arraysize = 256
-        """
-        When you will use this methods with start_date and end_date params,
-        change curs.execute(sqlstr) into curs.execute(sqlstr, (start_date,
-        end_date)) and sqlstr line ('+start_date+'... into %s (same with
-        end_date)
-        """
-        sqlstr = """
-            select 
-            ACCOUNT,
-            /*HOUR,*/
-            DAY,
-            FREQUENCY 
-            from 
-            /*p_con_hits_hourly_new */
-            """+str(conn_dict['account'])+""".p_con_hits_daily_new
-            where 
-            trunc(to_date(DAY, 'yyyy:mm:dd')) between to_date('"""+start_date+"""', 'MM/DD/YYYY') and to_date('"""+end_date+"""', 'MM/DD/YYYY') and
-            ACCOUNT like '%"""+account+"""%' 
-            /*and rownum <435*/
-            order by ACCOUNT,DAY
-        """
-        #print conn_string
-        #print "sqlstro_popconActivityHisto:",sqlstr
-
-        curs.execute(sqlstr)
-
-        rows = {}
-        for row in curs.fetchall():
-            try:
-                rows[row[0]]
-            except KeyError:
-                rows[row[0]] = {}
-            rows[row[0]].update({row[1]:row[2]})
-        return rows
-    finally:
-        conn.close()
-
- # SQL INJECTION
- def PopConRecentActivityRecorded(self, authfile="./auth.xml", rownumbers = 100, account="", payloadcontainer="", iovtag="", start_date="", end_date=""):
-    if start_date == '':
-        start_date = self.get_default_date('three_days_ago')
-    else:
-        start_date = self.transform_date(start_date)
-        
-    if end_date == '':
-        end_date = self.get_default_date('today')
-    else:
-        end_date = self.transform_date(end_date)
-
-    #@TODO: SQLInjection
-    time_constraints = """
-        trunc(exectime) 
-        between 
-        to_date('"""+start_date+"""', 'MM/DD/YYYY') and 
-        to_date('"""+end_date+"""', 'MM/DD/YYYY') 
     """
-    conn = cx_Oracle.connect(conn_string)
-    try:
-        start = time.time()
-        curs = conn.cursor()
-	sqlstr = """
-		SELECT
-		logid,
-		iovtimetype,
-		to_char(exectime,'DD-MM-YY ') || to_char(exectime, 'HH24:MI:SS') as exectime,
-		iovtag, 
-            	payloadcontainer,
-            	payloadname, 
-            	destinationdb, 
-            	execmessage,
-        	lastsince,
-    	        payloadindex,
-        	provenance,
-    	        usertext,
-                payloadtoken
-		FROM """+str(conn_dict['account'])+""".cond_log_view
-		WHERE logid >= (SELECT
-				MAX(logid)
-				FROM """+str(conn_dict['account'])+""".cond_log_view
-				)-"""+str(rownumbers-1)+"""
-		and destinationdb like '%"""+account+"""%'
-	       	and payloadcontainer like '%"""+payloadcontainer+"""%'
-		and iovtag like '%"""+iovtag+"""%'
-		ORDER BY """+str(conn_dict['account'])+""".cond_log_view.logid desc				
-	"""
-        #print "sqlstr:",sqlstr
-        #rows = curs.execute(sqlstr, (start_date, end_date, '%' + account + '%',
-        #    '%' + payloadcontainer + '%', '%' + iovtag + '%'))
+    When you will use this methods with start_date and end_date params,
+    change curs.execute(sqlstr) into curs.execute(sqlstr, (start_date,
+    end_date)) and sqlstr line ('+start_date+'... into %s (same with
+    end_date)
+    """
+    rows = connection.fetch('''
+        select ACCOUNT, DAY, FREQUENCY 
+        from CMS_COND_31X_POPCONLOG.p_con_hits_daily_new
+        where
+            trunc(to_date(DAY, 'yyyy:mm:dd')) between to_date(:s, 'MM/DD/YYYY') and to_date(:s, 'MM/DD/YYYY')
+            and ACCOUNT like :s
+        order by ACCOUNT,DAY
+    ''', (start_date, end_date, '%' + account + '%'))
 
-        #print "sqlstr:",sqlstr
-        rows = curs.execute(sqlstr)
-        #rows    =   curs.fetchall()
-        #print "\n"+str(int((time.time()-start)*1000))
-        name_of_columns = []
-        for fieldDesc in curs.description:     
-            name_of_columns.append(fieldDesc[0])
-        rows = {}
-        data = curs.fetchall()
-        i=0
-        for row in data:
-            row = list(row)
-            conn_str = row[6]
-            #make the last part of connection string upper case
-            #conn_str = conn_str[:conn_str.rindex('/')] + conn_str[conn_str.rindex('/'):].upper()
-            row[6] = conn_str
-            data[i] = row
-            i += 1
-        #rows['name_of_columns']     =   name_of_columns
-	false = 'false'
-	true = 'true'
-	rows['aaSorting'] = [[ 0, "desc" ]]
-        rows['aaColumns'] = [{"sTitle": "LOG ID", "bSortable" :true},{"sTitle": "IOV TIME TYPE", "bSortable" : false },{"sTitle": "EXEC TIME", "bSortable" : true, "sType": "custdate"},{"sTitle": "IOV TAG", "bSortable" : true},{"sTitle": "Payload container", "bSortable" : true},{"sTitle": "Payload Name", "bSortable" : true},{"sTitle": "DESTINATION DB", "bSortable" : false},{"sTitle": "Exec Mess", "bSortable" : false},{"sTitle": "Last Since", "bSortable" : true},{"sTitle": "PAYLOAD INDEX", "bSortable" : false},{"sTitle": "Prov.", "bSortable" : false},{"sTitle": "USER TEXT", "bSortable" : false},{"sTitle": "PAYLOAD TOKEN", "bSortable" : false}]
-        rows['aaColumns'] = [{"sTitle": "ID", "bSortable" :true},{"sTitle": "T-type", "bSortable" : false },{"sTitle": "Exec-time", "bSortable" : true, "sType": "custdate"},{"sTitle": "TAG", "bSortable" : true},{"sTitle": "Container", "bSortable" : true},{"sTitle": "Name", "bSortable" : true},{"sTitle": "Destination DB", "bSortable" : false},{"sTitle": "St.", "bSortable" : false},{"sTitle": "Last-Since", "bSortable" : true},{"sTitle": "Index", "bSortable" : false},{"sTitle": "Prov.", "bSortable" : false},{"sTitle": "USER TEXT", "bSortable" : false},{"sTitle": "PAYLOAD TOKEN", "bSortable" : false}]
-        rows["aaData"] = {}
-        rows["aaData"] = [map(str,rows_) for rows_ in data]
-        #print "\n",int((time.time()-start)*1000)
-        return rows
-    finally:
-        conn.close()
+    ret = {}
+    for row in rows:
+        try:
+            ret[row[0]]
+        except KeyError:
+            ret[row[0]] = {}
+        ret[row[0]].update({row[1]:row[2]})
+    return ret
+
+ def PopConRecentActivityRecorded(self, authfile="./auth.xml", rownumbers = 100, account="", payloadcontainer="", iovtag="", start_date="", end_date=""):
+    rows = connection.fetch('''
+        select
+            logid, iovtimetype, to_char(exectime,'DD-MM-YY ') || to_char(exectime, 'HH24:MI:SS') as exectime,
+            iovtag, payloadcontainer, payloadname, destinationdb, execmessage,
+            lastsince, payloadindex, provenance, usertext, payloadtoken
+        from
+            CMS_COND_31X_POPCONLOG.cond_log_view
+        where
+            logid >= (
+                SELECT MAX(logid)
+                FROM CMS_COND_31X_POPCONLOG.cond_log_view
+            ) - :s
+            and destinationdb like :s
+            and payloadcontainer like :s
+            and iovtag like :s
+        order by CMS_COND_31X_POPCONLOG.cond_log_view.logid desc
+    ''', (
+        rownumbers - 1,
+        '%' + account + '%',
+        '%' + payloadcontainer + '%',
+        '%' + iovtag + '%',
+    ))
+
+    ret = {}
+    false = 'false'
+    true = 'true'
+    ret['aaSorting'] = [[ 0, "desc" ]]
+    ret['aaColumns'] = [{"sTitle": "LOG ID", "bSortable" :true},{"sTitle": "IOV TIME TYPE", "bSortable" : false },{"sTitle": "EXEC TIME", "bSortable" : true, "sType": "custdate"},{"sTitle": "IOV TAG", "bSortable" : true},{"sTitle": "Payload container", "bSortable" : true},{"sTitle": "Payload Name", "bSortable" : true},{"sTitle": "DESTINATION DB", "bSortable" : false},{"sTitle": "Exec Mess", "bSortable" : false},{"sTitle": "Last Since", "bSortable" : true},{"sTitle": "PAYLOAD INDEX", "bSortable" : false},{"sTitle": "Prov.", "bSortable" : false},{"sTitle": "USER TEXT", "bSortable" : false},{"sTitle": "PAYLOAD TOKEN", "bSortable" : false}]
+    ret['aaColumns'] = [{"sTitle": "ID", "bSortable" :true},{"sTitle": "T-type", "bSortable" : false },{"sTitle": "Exec-time", "bSortable" : true, "sType": "custdate"},{"sTitle": "TAG", "bSortable" : true},{"sTitle": "Container", "bSortable" : true},{"sTitle": "Name", "bSortable" : true},{"sTitle": "Destination DB", "bSortable" : false},{"sTitle": "St.", "bSortable" : false},{"sTitle": "Last-Since", "bSortable" : true},{"sTitle": "Index", "bSortable" : false},{"sTitle": "Prov.", "bSortable" : false},{"sTitle": "USER TEXT", "bSortable" : false},{"sTitle": "PAYLOAD TOKEN", "bSortable" : false}]
+    ret["aaData"] = [map(str,row) for row in rows]
+    return ret
     
 if __name__ == "__main__":
     popconSQL  = popconSQL()
