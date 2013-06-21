@@ -288,50 +288,6 @@ class popconSQL:
     finally:
         conn.close()
 
- def get_IOVTAGs(self, authfile="./auth.xml"):
-    conn = cx_Oracle.connect(conn_string)
-    try:
-        curs = conn.cursor()
-        sqlstr = """
-            select distinct IOVTAG 
-            from  """+str(conn_dict['account'])+""".cond_log_view 
-            where trunc(sysdate, 'hh24') - trunc(exectime, 'hh24') < 180
-        """
-        curs.execute(sqlstr)
-        rows = curs.fetchall()
-        return rows
-    finally:
-        conn.close()
-
- def get_DESTINATIONDBs(self, authfile="./auth.xml"):
-    conn = cx_Oracle.connect(conn_string)
-    try:
-        curs = conn.cursor()
-        sqlstr = """
-            select distinct DESTINATIONDB 
-            from  """+str(conn_dict['account'])+""".cond_log_view 
-            where trunc(sysdate, 'hh24') - trunc(exectime, 'hh24') < 90
-        """
-        curs.execute(sqlstr)
-        rows = curs.fetchall()
-        return rows
-    finally:
-        conn.close()
-
- def get_ACCOUNTs(self, authfile="./auth.xml"):
-    conn = cx_Oracle.connect(conn_string)
-    try:
-        curs = conn.cursor()
-        sqlstr = """
-            select distinct ACCOUNT 
-            from p_con_hits_daily_new   
-        """
-        curs.execute(sqlstr)
-        rows = curs.fetchall()
-        return rows
-    finally:
-        conn.close()
-
  # SQL INJECTION
  def PopConRecentActivityRecorded(self, authfile="./auth.xml", rownumbers = 100, account="", payloadcontainer="", iovtag="", start_date="", end_date=""):
     if start_date == '':
@@ -430,7 +386,6 @@ if __name__ == "__main__":
 #        print 'Consistent'
 #    else:
 #        print 'Not consistent'
-    #print popconSQL.get_DESTINATIONDBs("./auth.xml")
     #popconSQL.extract("auth.xml")
     #print popconSQL.PopConRecentActivityRecorded()
     
