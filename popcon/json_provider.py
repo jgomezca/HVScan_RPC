@@ -425,8 +425,6 @@ if __name__ == "__main__":
     print JsonProvider.json_dict_output_barstack()
     #print   JsonProvider.queryRow2dict()
     #print   JsonProvider.json_dict_output(data_dict=JsonProvider.queryRow2dict())
-    #print   JsonProvider.Elements_pie(data_dict=JsonProvider.queryRow2dict(popconSQL().get_quotaInfo()))
     #print   JsonProvider.Elements_pie()
     #JsonProvider   =   JsonProvider.IOVTAGs_json_format()
     #print JsonProvider
-    #print popconSQL().get_quotaInfo()

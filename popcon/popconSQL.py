@@ -288,25 +288,6 @@ class popconSQL:
     finally:
         conn.close()
 
- def get_quotaInfo(self, authfile="./auth.xml"):
-    conn = cx_Oracle.connect(conn_string)
-    try:
-        curs = conn.cursor()
-        sqlstr = """
-            select 
-            to_char(CHECKTIME,'yyyy:mm:dd'),
-            USED,
-            LIMIT
-            from  """+str(conn_dict['account'])+""".quotainfo 
-            order by CHECKTIME 
-        """
-        print sqlstr
-        curs.execute(sqlstr)
-        rows                =   curs.fetchall()
-        return rows
-    finally:
-        conn.close()
-
  def get_IOVTAGs(self, authfile="./auth.xml"):
     conn = cx_Oracle.connect(conn_string)
     try:
@@ -452,5 +433,4 @@ if __name__ == "__main__":
     #print popconSQL.get_DESTINATIONDBs("./auth.xml")
     #popconSQL.extract("auth.xml")
     #print popconSQL.PopConRecentActivityRecorded()
-    #print popconSQL.get_quotaInfo()
     

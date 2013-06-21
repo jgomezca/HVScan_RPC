@@ -120,11 +120,6 @@ class PopCon:
             return json.dumps(rez)
         else:
             return 'No data'
-
-    # getQuataInfo method
-    # @TODO: change name, JsonProvider
-    def get_quotaInfo(self, *args, **kwargs):
-	    return json_provider.JsonProvider().Elements_pie(data_dict = json_provider.JsonProvider().queryRow2dict(popconSQL.popconSQL().get_quotaInfo()))
     
     # @TODO: JsonProvider, future-usage: startDate and endDate
     @cherrypy.expose
