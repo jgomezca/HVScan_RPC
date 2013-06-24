@@ -23,8 +23,8 @@ class GTQueueModelForm(ModelForm):
     class Meta:
         model = GTQueue
 
-    def __init__(self, user=None, **kwargs):
-        super(GTQueueModelForm, self).__init__(**kwargs)
+    def __init__(self, *args, **kwargs):
+        super(GTQueueModelForm, self).__init__(*args, **kwargs)
         self.fields['last_gt'].queryset = GlobalTag.objects.filter(entry_ignored=False)
 
 class GTQueueModelEditForm(GTQueueModelForm):
