@@ -122,6 +122,22 @@ def gt_queue_entry_status_change(request, gt_queue_entry_id, new_status):
     return HttpResponseRedirect(reverse('gt_queue_entries', kwargs={'queue_id':queue.id})+"?entry_status_filter="+entry_status_filter)
 
 @user_passes_test(lambda u: u.is_superuser)
+def gt_queue_entry_multiple_status_change(request, gt_queue_id, new_status):
+    
+    queue_pending_entries = GTQueueEntry.objects.filter(queue_id=gt_queue_id,status='P')
+    entry_status_filter = request.GET.get('entry_status_filter', '')
+
+    for e in queue_pending_entries:
+        gt_queue_entry = get_object_or_404(GTQueueEntry, pk=e.id)
+        queue = gt_queue_entry.queue
+        change_results = GTQueueManager(queue).change_queue_entry_status(gt_queue_entry, new_status, request.user)
+        queue_entry_obj, affected_records, old_status, old_status_display = change_results
+        reports.report_queue_entry_status_changed(queue_entry_obj, affected_records, old_status, old_status_display)
+        messages.add_message(request, messages.INFO, "Queue entry with record name " + gt_queue_entry.record.name + " changed multiple entries status to " + new_status)
+
+    return HttpResponseRedirect(reverse('gt_queue_entries', kwargs={'queue_id':queue.id})+"?entry_status_filter="+entry_status_filter)
+
+@user_passes_test(lambda u: u.is_superuser)
 def admin_dashboard(request):
     global_tag_count = GlobalTag.objects.filter(entry_ignored=False).count()
     not_imported_global_tags = GlobalTag.objects.filter(entry_ignored=False, has_errors=True)

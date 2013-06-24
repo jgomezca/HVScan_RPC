@@ -10,7 +10,7 @@ admin.autodiscover()
 
 #from tastypie.api import Api
 #from GlobalTagCollector.api import AccountTypesResource, QueueResource, AccountsResource, TagsResource
-from GlobalTagCollector.admin2 import gt_queues_list, gt_queue_create, gt_queue_edit, gt_queue_entries, gt_queue_entry_status_change, admin_dashboard, gt_info, gt_list, rcd_list, gt_settings
+from GlobalTagCollector.admin2 import gt_queues_list, gt_queue_create, gt_queue_edit, gt_queue_entries, gt_queue_entry_status_change, gt_queue_entry_multiple_status_change, admin_dashboard, gt_info, gt_list, rcd_list, gt_settings
 from GlobalTagCollector.views import gt_conf_export, new_request, list_view, details_view, json_account_types, json_accounts, json_tags, json_records, json_queues_for_record, login, admin2_logout, record_container_map, json_warnings_gt
 
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
@@ -37,6 +37,7 @@ regular_urlpatterns = patterns('',
     url(r'^admin2/gt_queue_edit/(?P<queue_id>\d+)/$', gt_queue_edit, name="gt_queue_edit"),
     url(r'^admin2/gt_queue_entries/(?P<queue_id>\d+)/$', gt_queue_entries, name="gt_queue_entries"),
     url(r'^admin2/gt_queue_entry_status_change/(?P<gt_queue_entry_id>\d+)/(?P<new_status>[ARPIO])/', gt_queue_entry_status_change, name="gt_queue_entry_status_change"),
+    url(r'^admin2/gt_queue_entry_multiple_status_change/(?P<gt_queue_id>\d+)/(?P<new_status>[ARPIO])/', gt_queue_entry_multiple_status_change, name="gt_queue_entry_multiple_status_change"),
     url(r'^gt_conf_export/(?P<gt_queue_name>[a-zA-Z0-9_\-]+)$', gt_conf_export, name="gt_conf_export"),
 
 

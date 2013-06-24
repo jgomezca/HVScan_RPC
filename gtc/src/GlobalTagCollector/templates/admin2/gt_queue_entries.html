@@ -60,7 +60,16 @@ span.entry_value_right{
                 <li {% if entry_status_filter == "ALL" %}class="active"{% endif %}><a href="{{ request.path }}?entry_status_filter=ALL" >All</a></li>
             </ul>
         </div>
-
+        {% if entry_status_filter == 'P' %}
+        <div id="group_action" style="margin-bottom: 10px;">
+            <a href="{% url gt_queue_entry_multiple_status_change gt_queue_id=gt_queue.id new_status='A' %}?entry_status_filter={{ entry_status_filter }}" class="btn btn-success">
+                <i class="icon-white icon-check"></i> Accept All
+            </a>
+            <a href="{% url gt_queue_entry_multiple_status_change gt_queue_id=gt_queue.id new_status='R' %}?entry_status_filter={{ entry_status_filter }}" class="btn btn-danger">
+                <i class="icon-white icon-ban-circle"></i> Reject All
+            </a>
+        </div>
+        {% endif %}
         <table class="table table-striped table-condensed table-bordered">
             <tr>
                 <th>Status</th>
