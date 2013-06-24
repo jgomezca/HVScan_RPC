@@ -1,0 +1,172 @@
+{% extends "app_layout.html" %}
+{# load humanize #}
+
+
+{% block title %}Global Tag Collector :: Settings{% endblock %}
+
+{% block media%}
+{{ block.super }}
+<style type="text/css">
+    #id_name {
+        width: 97%;
+    }
+    #id_entry_comment {
+        width: 97%;
+        max-width: 97%;
+        height: 60px;
+    }
+</style>
+<script>
+    jQuery(document).ready(function(){
+
+        // Hide error box by default
+        $("#error_box").hide();
+
+        // Request user focus by changing text opacity
+        {% if not request.REQUEST.gt and form_submitted %}
+            for(var i=0;i<3;i++) {
+                $("tr:visible:last",".table-striped").fadeTo('fast', 0.4).fadeTo('fast', 1.0);
+            } // end for
+        {% else %}
+            {% if not request.GET.del_hwa and not request.GET.del_acc and not request.GET.gt %}
+                // FadeIn Animation on page load
+                $("div.active").hide().fadeIn('normal');
+            {% endif %}
+        {% endif %}
+
+        // Check for invalid put and show error message if so
+        $('form').submit(function(e){
+            input_field = $("#id_name").val()
+            if ((input_field === null) || (input_field.trim().length < 2)){
+                $("#error_box").show();
+                e.preventDefault();
+            } // end if
+        });
+
+        // GTC TAB
+        jQuery(".chosen").chosen({ max_selected_options: 1 });
+
+    });
+</script>
+{% endblock %}
+
+{%  block content %}
+{# load tags #}
+
+<div class="row">
+    <div class="span5">
+        <h1>GTC Settings</h1>
+    </div>
+    <div class="span7" style="float: right; margin-top: 12px;">
+        <div id="error_box" class="alert alert-error" style="margin: 0;">
+            <a onClick="$(this).parent().hide();">× </a>
+            <strong>ERROR: </strong>Please, check your input.
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="span12">
+        <div class="tabbable">
+            <ul class="nav nav-tabs">
+                <li{% if not request.GET.section or request.GET.section == "hwa" %} class="active"{% endif %}><a href="?section=hwa">Hardware Architectures</a></li>
+                <li{% if request.GET.section == "gtc" %} class="active"{% endif %}><a href="?section=gtc">GT Control</a></li>
+                <li{% if request.GET.section == "acc" %} class="active"{% endif %}><a href="?section=acc">Account Control</a></li>
+            </ul>
+            <div class="tab-content">
+                {% if not request.GET.section or request.GET.section == "hwa" %}
+                <div class="tab-pane fade in active" id="hwa">
+                    <form action="" id="form_hwa" method="POST">
+                        <div class="row">
+                            <div class="span4">
+                                <table class="table table-striped table-condensed table-bordered">
+                                    <tr>
+                                        <th>Active Architectures</th>
+                                        <th>Action</th>
+                                        {% for a in hwa_objects_all %}
+                                        <tr><td>{{a.name}}</td><td><a href="?section=hwa&del_hwa={{a.id}}"><i class="icon-trash"></i>Delete</a></td></tr>
+                                        {% endfor %}
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="span8">
+                                {% csrf_token %}
+                                {{ hwa_form }}
+                                <div class="form-actions" style="text-align: center;">
+                                    <button type="submit" class="btn btn-success" id="button_add"><i class="icon-white icon-plus-sign"></i> Add Architecture</button>
+                                    <a class="btn btn-danger" href="{% url gt_settings %}"><i class="icon-white icon-refresh"></i> Clean Form</a>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                    
+                </div>
+                {% endif %}
+                {% if request.GET.section == "gtc" %}
+                <div class="tab-pane fade in active" id="gtc">
+                <form action="" id="gtc_form222" method="POST">
+                {% csrf_token %}
+                    <div class="row" style="min-height: 275px;">
+                       <div class="span5">
+                            <table class="table table-striped table-condensed table-bordered">
+                                <tr>
+                                    <th>Excluded GTs</th>
+                                    <th>Action</th>
+                                    {% for gt in gtc_objects_all %}
+                                        {% if gt.entry_ignored %}
+                                        <tr><td>{{ gt.name }}</td><td><a href="?section=gtc&gt={{gt.id}}"><i class="icon-check"></i> Recover</a></td></tr>
+                                        {% endif %}
+                                    {% endfor %}
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="span4">
+                            <select class="chosen" multiple="multiple" name="gt" id="id_name" data-placeholder="Click here to select a GT to exclude" style="width:300px;">
+                            {% for gt in gtc_objects_all %}
+                                {% if not gt.entry_ignored %}
+                                <option value="{{ gt.id }}">{{ gt.name }}</option>
+                                {% endif %}
+                            {% endfor %}
+                            </select>
+                        </div>
+                        <div class="span3">
+                            <input type="hidden" name="exclude" value="1" />
+                            <button id="submit_and_view" type="submit" class="btn btn-danger" style="width: 100%"><i class="icon-white icon-off"></i> Exclude GT</button>
+                        </div>
+                    </div>
+                </form>
+                </div>
+                {% endif %}
+                {% if request.GET.section == "acc" %}
+                <div class="tab-pane fade in active" id="acc">
+                    <form action="" id="form_acc" method="POST">
+                        <div class="row">
+                            <div class="span5">
+                                <table class="table table-striped table-condensed table-bordered">
+                                    <tr>
+                                        <th>Manually Added Accounts</th>
+                                        <th>Action</th>
+                                        {% for a in acc_objects_all %}
+                                        <tr><td>{{a.name}}</td><td><a href="?section=acc&del_acc={{a.id}}"><i class="icon-trash"></i>Delete</a></td></tr>
+                                        {% endfor %}
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="span7">
+                                {% csrf_token %}
+                                {{ acc_form }}
+                                <div class="form-actions" style="text-align: center;">
+                                    <button type="submit" class="btn btn-success" id="button_add"><i class="icon-white icon-plus-sign"></i> Add Account</button>
+                                    <a class="btn btn-danger" href="{% url gt_settings %}"><i class="icon-white icon-refresh"></i> Clean Form</a>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                    
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -8,7 +8,9 @@ from django.shortcuts import render_to_response, get_object_or_404
 from django.template.context import RequestContext
 from GlobalTagCollector import reports
 from GlobalTagCollector.libs.GTQueueManagement import GTQueueManager
+from GlobalTagCollector.libs.GTSettings import *
 from GlobalTagCollector.models import GTQueue, GTQueueEntry, GlobalTag, GTType, SoftwareRelease, Record_Software_Release, Record, ObjectForRecords
+from GlobalTagCollector.forms import HardwareArchitectureModelForm
 from django.contrib import messages
 import logging
 
@@ -20,6 +22,10 @@ from GlobalTagCollector.reports import report_queue_created
 class GTQueueModelForm(ModelForm):
     class Meta:
         model = GTQueue
+
+    def __init__(self, user=None, **kwargs):
+        super(GTQueueModelForm, self).__init__(**kwargs)
+        self.fields['last_gt'].queryset = GlobalTag.objects.filter(entry_ignored=False)
 
 class GTQueueModelEditForm(GTQueueModelForm):
     class Meta:
@@ -41,7 +47,7 @@ def gt_queues_list(request):
 
 @user_passes_test(lambda u: u.is_superuser)
 def gt_list(request):
-    gt_obj_list = GlobalTag.objects.all()
+    gt_obj_list = GlobalTag.objects.all().filter(entry_ignored=False)
     return render_to_response("admin2/gt_list.html", {"gt_obj_list": gt_obj_list}, context_instance=RequestContext(request))
 
 
@@ -117,8 +123,8 @@ def gt_queue_entry_status_change(request, gt_queue_entry_id, new_status):
 
 @user_passes_test(lambda u: u.is_superuser)
 def admin_dashboard(request):
-    global_tag_count = GlobalTag.objects.count()
-    not_imported_global_tags = GlobalTag.objects.filter(has_errors=True)
+    global_tag_count = GlobalTag.objects.filter(entry_ignored=False).count()
+    not_imported_global_tags = GlobalTag.objects.filter(entry_ignored=False, has_errors=True)
     global_tag_queue_count = GTQueue.objects.all().count()
     global_tag_queue_pending_elements_count = GTQueueEntry.objects.filter(status="P").count()
     tb_name = GTQueueEntry()._meta.db_table
@@ -159,6 +165,38 @@ def rcd_list(request):
         ]
 
     return render_to_response("admin2/rcd_list.html", template_vars, context_instance=RequestContext(request))
+
+@user_passes_test(lambda u: u.is_superuser)
+def gt_settings(request):
+    template_vars = {}
+
+    form_submitted = False
+
+    section = request.GET.get('section') if request.GET.get('section') else 'hwa'
+    if section == 'hwa':
+        hwa_settings_obj = HardwareArchitectureSettings()
+        template_vars.update(hwa_settings_obj.init_form())
+        if request.method == 'POST':
+            form_submitted = hwa_settings_obj.insert_hwa(request.POST)
+        elif request.GET.get('del_hwa'):
+            hwa_settings_obj.delete_hwa(request.GET.get('del_hwa'))
+    elif section == 'gtc':
+        gts_settings_obj = GlobalTagSettings()
+        template_vars.update(gts_settings_obj.init_form())
+        if request.method == 'POST':
+            form_submitted = gts_settings_obj.update_gtc(request.POST.get('gt'), 1)
+        elif request.GET.get('gt'):
+            form_submitted = gts_settings_obj.update_gtc(request.GET.get('gt'), False)
+    elif section == 'acc':
+        acc_settings_obj = AccountSettings()
+        template_vars.update(acc_settings_obj.init_form())
+        if request.method == 'POST':
+            form_submitted = acc_settings_obj.insert_acc(request.POST)
+        elif request.GET.get('del_acc'):
+            acc_settings_obj.delete_acc(request.GET.get('del_acc'))
+
+    template_vars['form_submitted'] = form_submitted
+    return render_to_response("admin2/gt_settings.html", template_vars, context_instance=RequestContext(request))
 
 @user_passes_test(lambda u: u.is_superuser)
 def gt_info(request, gt_name):

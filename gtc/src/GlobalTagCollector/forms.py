@@ -1,8 +1,43 @@
-from django.forms.formsets import  BaseFormSet, formset_factory
+from django.forms.formsets import BaseFormSet, formset_factory
 from django import forms
 from django.forms import ModelForm
-from  GlobalTagCollector import models
-from GlobalTagCollector.models import Account, AccountType
+from GlobalTagCollector import models
+from GlobalTagCollector.models import Account, AccountType, Record, HardwareArchitecture
+
+class AccountModelForm(ModelForm):
+    def __init__(self, *args, **kwargs):
+        super(AccountModelForm, self).__init__(*args, **kwargs)
+        self.fields['name'].label = "Account Name:"
+        self.fields['name'].help_text = ""
+        self.fields['entry_comment'].label = "Comment:"
+        self.fields['entry_comment'].help_text = ""
+
+    class Meta:
+        model = Account
+        fields = ['id', 'name', 'entry_comment', 'account_type']
+
+    def clean_name(self):
+        name = self.cleaned_data['name'].strip()
+        return name
+
+
+class HardwareArchitectureModelForm(ModelForm):
+    def __init__(self, *args, **kwargs):
+        super(HardwareArchitectureModelForm, self).__init__(*args, **kwargs)
+        self.fields['name'].label = "HWA Name:"
+        self.fields['name'].help_text = ""
+        self.fields['entry_comment'].label = "Comment:"
+        self.fields['entry_comment'].help_text = ""
+        self.fields['name'].required = True
+
+    class Meta:
+        model = HardwareArchitecture
+        fields = ['id', 'name', 'entry_comment']
+
+    def clean_name(self):
+        name = self.cleaned_data['name'].strip()
+        return name
+
 
 class QueueTagEntryForm(ModelForm):
     #todo prohibid ID fields
