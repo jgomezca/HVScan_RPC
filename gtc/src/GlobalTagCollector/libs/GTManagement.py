@@ -71,20 +71,9 @@ class RawGTEntry(object):
             #search by parent
             try:
                 tag_container_parent = self.tag_obj.object_r.parent_name
-                #print "PARENT:", record_container_parent
                 self.record_obj = Record.objects.get(object_r__name=tag_container_parent,name = record_name)#TODO - put warning
-            except Exception as e:
-                try:
-                    print e
-                    print " PARENT", self.tag_obj.object_r.name
-                    print "RECORDS", Record.objects.get(name=record_name)
-                    print "CONTAINER", Record.objects.get(name=record_name).object_r.__dict__
-                    print "RECORD CONTAINER PARENT", Record.objects.get(name=record_name).object_r.parent_name
-                    self.tag_container = self.tag_obj.object_r
-                    self.record_containers = ObjectForRecords.objects.filter(record__name=record_name)
-                    self.records_with_name = list(Record.objects.filter(name=record_name).values()) #NOTE Only values, not objects
-                except Record.DoesNotExist:
-                    raise RecordNotDetectedException(self.tag_obj, record_name)
+            except Record.DoesNotExist:
+                raise RawGTEntryIgnoredException("Could not detect record with name %s which belongs to tag %s" % (record_name, self.tag_obj))
 
 
 
@@ -236,6 +225,18 @@ class RawGT(object):
             if not self.has_errors():
                 self._set_children_gt(gt_obj)
                 valid_entries = self.valid_entry_objects(gt_obj)
+
+                new_valid = []
+
+                for e in range(0, len(valid_entries)):
+                    obj_exists = GlobalTagRecord.objects.filter(global_tag_id=valid_entries[e].global_tag, tag_id=valid_entries[e].tag, record_id=valid_entries[e].record, label=valid_entries[e].label)
+                    if obj_exists:
+                        obj_exists = False
+                    else:
+                        new_valid.append(valid_entries[e])
+
+                valid_entries = new_valid
+
                 for i in range(0, len(valid_entries), 50):
                     GlobalTagRecord.objects.bulk_create(valid_entries[i:i+50])
 

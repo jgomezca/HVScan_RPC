@@ -68,7 +68,7 @@ class AccountsUpdateManager(object):
 class TagsUpdateManager(object):
 
     def _run(self):
-        accounts_for_update = Account.objects.filter(account_type__visible_for_users=True, use_in_gt_import=True).select_related()
+        accounts_for_update = Account.objects.filter(use_in_gt_import=True).select_related()
         logger.error("Accounts for update: " + str(accounts_for_update))
         for account in accounts_for_update:
             try:
@@ -239,13 +239,13 @@ class InitialGlobalUpdate(object):
                   visible_for_users = False,
                   title = "Archive",
                   connection_string = "frontier://FrontierArc/",
-                  use_in_gt_import  = False,
+                  use_in_gt_import  = True,
               )
         integr = AccountType.objects.filter(name='int').update(
                   visible_for_users = True,
                   title = "Offline Integration",
                   connection_string = "frontier://FrontierInt/",
-                  use_in_gt_import  = False,
+                  use_in_gt_import  = True,
               )
         dev = AccountType.objects.filter(name='dev').update(
                   visible_for_users = True,
@@ -306,30 +306,6 @@ class InitialGlobalUpdate(object):
         GTType.objects.get_or_create(pk=16,  account_type=pro,    gt_type_category=gttc_online,
             type_conn_string="frontier://(proxyurl=http://localhost:3128)(serverurl=http://localhost:8000/FrontierOnProd)(serverurl=http://localhost:8000/FrontierOnProd)(retrieve-ziplevel=0)")
 
-
-        deprecated_production_account_names = [
-            'CMS_COND_31X_DQM_SUMMARY',
-            'CMS_COND_31X_GEOMETRY',
-            'CMS_COND_34X_DQM',
-            'CMS_COND_34X_GEOMETRY',
-            'CMS_COND_34X_ECAL_PED',
-            'CMS_COND_38X_HCAL',
-            'CMS_COND_38X_PIXEL',
-            'CMS_COND_311X_ECAL_LAS',
-            'CMS_COND_43X_RPC_NOISE',
-        ]
-        deprecated_preparation_account_names = [ #(manual prep and integration)
-            "CMS_COND_30X_HCAL",
-            "CMS_COND_31X_BTAU",
-            "CMS_COND_31X_DQM_SUMMARY",
-        ]
-
-
-        for deprecated_production_account_name in deprecated_production_account_names:
-            a, created = Account.objects.get_or_create(name=deprecated_production_account_name, account_type=pro, use_in_gt_import=False)
-
-        for deprecated_preparation_account_name in deprecated_preparation_account_names:
-            a, created = Account.objects.get_or_create(name=deprecated_preparation_account_name, account_type=dev, use_in_gt_import=False)
 
         #There are records, where tag and record containers don't match (e.g. payload inspector shows parent container
         # ant recods provider shows child). these values are mapped by adding extra mapping
