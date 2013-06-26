@@ -67,7 +67,7 @@ def _getPIDs(matchString, notMatchString = 'bash'):
 
     pids = []
 
-    for line in os.popen('ps -eo pid,command').readlines():
+    for line in os.popen('ps -wweo pid,command').readlines():
 
         (pid, command) = line.split(None, 1)
 
