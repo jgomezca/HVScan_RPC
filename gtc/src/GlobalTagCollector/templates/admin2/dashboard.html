@@ -20,7 +20,13 @@
     border-bottom: 1px solid #CCCCCC;
     margin-top: 0px;
 }
-
+#gt_queue_tbl {
+    margin: 0 auto;
+    width: 100%;
+}
+#gt_queue_tbl td {
+    padding-left: 20px;
+}
 </style>
 
 {% endblock %}
@@ -37,14 +43,22 @@
 <div class="row">
     <div class="span6 dashboard-container" >
         <h3>Global Tags</h3>
-        <table class="span6">
+        <table class="span6" style="margin-bottom: 10px;">
             <tr>
                 <td>Global Tag Count</td>
                 <td><span class="badge">{{ global_tag_count }}</span></td>
             </tr>
             <tr>
                 <td>Not imported Global Tag count</td>
-                <td><span class="badge badge-important">{{ not_imported_global_tags|length }}</span></td>
+                <td>
+                    {% if not_imported_global_tags|length == 0 %}
+                        <span class="badge badge-success">
+                    {% else %}
+                       <span class="badge badge-important">
+                    {% endif %}
+                    {{ not_imported_global_tags|length }}
+                    </span>
+                </td>
             </tr>
             <tr>
                 <td colspan="2">
@@ -58,13 +72,16 @@
                     {% endif %}
                 </td>
             </tr>
-
+            <tr>
+                <td>Inconsistent Global Tag count</td>
+                <td><span class="badge badge-important">{{ inconsistent_global_tags_count }}</span></td>
+            </tr>
         </table>
     </div>
 
     <div class="span6 dashboard-container">
         <h3>Global Tags Queues</h3>
-        <table class="span6">
+        <table class="span6" id="gt_queue_tbl">
             <tr>
                 <td>GT queue count</td>
                 <td><span class="badge">{{ global_tag_queue_count }}</span></td>

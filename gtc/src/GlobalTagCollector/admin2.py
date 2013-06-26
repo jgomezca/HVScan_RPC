@@ -141,6 +141,7 @@ def gt_queue_entry_multiple_status_change(request, gt_queue_id, new_status):
 def admin_dashboard(request):
     global_tag_count = GlobalTag.objects.filter(entry_ignored=False).count()
     not_imported_global_tags = GlobalTag.objects.filter(entry_ignored=False, has_errors=True)
+    inconsistent_global_tags_count = GlobalTag.objects.filter(entry_ignored=False, has_warnings=True).count()
     global_tag_queue_count = GTQueue.objects.all().count()
     global_tag_queue_pending_elements_count = GTQueueEntry.objects.filter(status="P").count()
     tb_name = GTQueueEntry()._meta.db_table
@@ -151,11 +152,12 @@ def admin_dashboard(request):
     )
 
     return render_to_response("admin2/dashboard.html", {
-        'global_tag_count':global_tag_count,
-        'global_tag_queue_count':global_tag_queue_count,
-        'not_imported_global_tags':not_imported_global_tags,
-        'global_tag_queue_pending_elements_count':global_tag_queue_pending_elements_count,
-        'open_queues':open_queues,
+        'global_tag_count': global_tag_count,
+        'global_tag_queue_count': global_tag_queue_count,
+        'not_imported_global_tags': not_imported_global_tags,
+        'inconsistent_global_tags_count': inconsistent_global_tags_count,
+        'global_tag_queue_pending_elements_count': global_tag_queue_pending_elements_count,
+        'open_queues': open_queues,
         },
         context_instance=RequestContext(request))
 
