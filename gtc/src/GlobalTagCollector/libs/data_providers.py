@@ -126,6 +126,19 @@ class RecordProvider(BaseDataProvider):
             DataAccessException(e)
 
 
+class RecordsFixtureProvider(BaseDataProvider):
+    ''' Provide a list of record-container mapping '''
+    def __init__(self):
+        self.fixture_filename = settings.RECORDS_FIXTURE
+
+    def _provide(self):
+        try:
+            with open(self.fixture_filename) as f:
+                record_container_list = json.load(f)
+            return record_container_list
+        except IOError as e:
+            raise DataAccessException(e)
+
 
 class GlobalTagListProvider(BaseDataProvider):
 
