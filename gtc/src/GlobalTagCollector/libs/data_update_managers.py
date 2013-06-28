@@ -5,7 +5,7 @@ from GlobalTagCollector.libs.GTManagement import RawGT
 from GlobalTagCollector.libs.data_inserters import AccountObjectCreator, TagObjectCreator
 from GlobalTagCollector.libs.data_inserters import RecordObjectCreator, SoftwareReleaseCreator
 from GlobalTagCollector.models import Account, HardwareArchitecture, GTQueue, AccountType, GTAccount, GTType, ObjectForRecords, Record, SoftwareRelease, GlobalTag
-from data_providers import AccountsProvider, TagsProvider, RecordProvider, SoftwareReleaseProvider, GlobalTagListProvider, DatabasesProvider, HardwareArchitecturesListProvider
+from data_providers import *
 from data_filters import AccountFilter, TagsFilter, RecordsFilter, SoftwareReleaseFilter, GlobalTagListFilter, HardwareArchitecturesFilter
 from GlobalTagCollector.libs.data_patchers import PatchTagContainers
 from data_inserters import  AccountTypeObjectsCreator, GlobalTagQueuePreparer, GTCreatorQueueUpdater #, GlobalTagPreparer
@@ -24,10 +24,7 @@ from GlobalTagCollector.models import GTTypeCategory
 from GlobalTagCollector.libs.exceptions import DataAccessException, DataFormatException
 import pprint
 
-
 logger = logging.getLogger("print_them_all")
-#logger.setLevel(logging.DEBUG)
-logger.error("Kazkas")
 
 class AccountTypesUpdateManager(object):
     def _run(self):
@@ -124,6 +121,24 @@ class SoftwareReleaseUpdateManager(object):
                 logger.error(exception_info)
 
 
+class RecordsFixtureUpdateManager(object):
+    ''' Provide and insert correct record-container mapping from a fixture file '''
+    def __init__(self):
+        self.record_container_list = RecordsFixtureProvider()._provide()
+
+    def _run(self):
+        with commit_on_success():
+            new_records = []
+            for record_name, container_name in self.record_container_list:
+                container, container_created = ObjectForRecords.objects.get_or_create(name=container_name)
+                record, record_created = Record.objects.get_or_create(name=record_name, object_r=container)
+                if record_created:
+                    new_records.append(record)
+            for software_release in SoftwareRelease.objects.all():
+                software_release.record_set.add(*new_records)
+                software_release.save()
+
+
 class RecordsUpdateManager(object):
 
     def _get_software_releases_for_update(self):
@@ -212,7 +227,7 @@ class GlobalTagsUpdate(object):
         gt_names_count = len(global_tag_names_for_update)
         for i, global_tag_name in enumerate(global_tag_names_for_update):
             try:
-                logger.info("Processing %d global tag out of %d. Name: %s" % (i, gt_names_count, global_tag_name))
+                logger.info("Processing global tag %d out of %d. Name: %s" % ((i+1), gt_names_count, global_tag_name))
                 self._process_global_tag(global_tag_name)
             except (DataAccessException, DataFormatException) as e:
                 logger.error("Data is not accessible or has bad format")
@@ -345,29 +360,6 @@ class InitialGlobalUpdate(object):
                 flat_page.sites.add(site)
             flat_page.save()
 
-
-    def _add_missing_records(self):
-        #missing records
-        #(container_name, record_name)
-        # each record associated with all software releases
-
-        missing_records = [
-            (u'EcalSampleMask', u'EcalSampleMaskRcd'),
-            (u'JetCorrectorParametersCollection', u'JetCorrectionsRecord'),
-            (u'lumi::HLTScaler', u'HLTScalerRcd'),
-            (u'lumi::LuminosityInfo', u'LuminosityInfoRcd')
-        ]
-        with commit_on_success():
-            new_records = []
-            for container_name, record_name in missing_records:
-                container, created = ObjectForRecords.objects.get_or_create(name=container_name)
-                record, record_created = Record.objects.get_or_create(name=record_name, object_r=container)
-                if record_created:
-                    new_records.append(record)
-            for software_release in SoftwareRelease.objects.all():
-                software_release.record_set.add(*new_records)
-                software_release.save()
-
     def _run(self):
         logger.info("Initial global data update: Started")
         AccountTypesUpdateManager()._run()
@@ -377,15 +369,10 @@ class InitialGlobalUpdate(object):
         AccountsUpdateManager()._run()
         TagsUpdateManager()._run()
         SoftwareReleaseUpdateManager()._run()
-        self._add_missing_records()
+        RecordsFixtureUpdateManager()._run()
         RecordsUpdateManager()._run()
-
-#~     call_command('records_fixer')
-
         GlobalTagsUpdate()._run()
         logger.info("Initial global data update: Finished")
-#        call_command('loaddata', 'flatpages_base_fixture')
-#        python manage.py loaddata flatpages_base_fixture $set_param
 
     def initial_data_info(self):
         print
@@ -421,7 +408,6 @@ class InitialGlobalUpdate(object):
 
 
 class GlobalUpdate(object):
-
     def _run(self):
         logger.info("Global data update: Starting")
 
@@ -442,6 +428,7 @@ class GlobalUpdate(object):
         logger.info("Software release update: Finished")
 
         logger.info("Records update: Starting")
+        RecordsFixtureUpdateManager()._run()
         RecordsUpdateManager()._run()
         logger.info("Records update: Finished")
 
