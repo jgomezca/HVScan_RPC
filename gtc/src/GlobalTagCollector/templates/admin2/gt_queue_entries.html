@@ -28,7 +28,16 @@ span.entry_value_right{
 }
 
 </style>
-
+<script type="text/javascript">
+    $(document).ready(function() {
+        var js_data = "{{gt_queue_entries}}"
+        if(js_data == "[]") {
+            $("#group_action a").attr('disabled', true).click(function(link){
+                link.preventDefault();
+            });
+        }
+    });
+</script>
 {% endblock %}
 
 {%  block content %}
