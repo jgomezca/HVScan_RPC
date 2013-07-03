@@ -68,6 +68,13 @@ def gt_queue_create(request):
         gt_queue_form = GTQueueModelForm()
     return render_to_response("admin2/gt_queue_create.html", {"gt_queue_form":gt_queue_form}, context_instance=RequestContext(request))
 
+@user_passes_test(lambda u: u.is_superuser)
+def gt_queue_clone(request, queue_id):
+    ''' Clone an existing queue and its entries via GTQueueManager class '''
+    gt_queue_obj = get_object_or_404(GTQueue, pk=queue_id)
+    cloned_queue_obj = GTQueueManager(gt_queue_obj).queue_clone()
+
+    return HttpResponseRedirect(reverse('gt_queue_edit', kwargs={'queue_id':cloned_queue_obj.id}))
 
 @user_passes_test(lambda u: u.is_superuser)
 def gt_queue_edit(request, queue_id):

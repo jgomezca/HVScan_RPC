@@ -58,7 +58,8 @@ span.entry_value_right{
 <div class="row">
     <div class="span12">
         <a href="{% url gt_conf_export gt_queue_name=gt_queue.name %}">Download configuration</a>
-
+        &nbsp; | &nbsp;
+        <a href="{% url gt_queue_clone queue_id=gt_queue.id %}">Clone this queue</a>
         <div class="tabbable"> <!-- Only required for left/right tabs -->
             <ul class="nav nav-tabs">
                 <li {% if entry_status_filter == "P" %}class="active"{% endif %}><a href="{{ request.path }}?entry_status_filter=P" >Pending</a></li>

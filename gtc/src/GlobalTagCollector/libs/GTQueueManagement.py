@@ -257,4 +257,39 @@ leafdata=
             'items_to_render':items_to_render})
         return template.render(c)
 
+    def queue_clone(self):
+        ''' Clone an existing queue and its entries '''
+        queue_obj = self.queue_obj
+        src_queue_id = queue_obj.id
+        copy_id = 1
+        queue_exists = True
 
+        # Loop through GTQueue objects to generate available queue name
+        while queue_exists:
+            cloned_queue_name = "%s_copy%s" % (queue_obj.name, copy_id)
+            cloned_queue_expected_gt_name = "%s_copy%s" % (queue_obj.expected_gt_name, copy_id)
+            copy_id += 1
+
+            # Exit loop when available queue name is found
+            try:
+                queue_exists = GTQueue.objects.get(name=cloned_queue_name, expected_gt_name=cloned_queue_expected_gt_name)
+            except GTQueue.DoesNotExist:
+                break
+
+        # Change cloned queue properties and save 
+        queue_obj.pk = None
+        queue_obj.name = cloned_queue_name
+        queue_obj.expected_gt_name = cloned_queue_expected_gt_name
+        queue_obj.save()
+
+        # Fetch source queue entries and change queue id
+        queue_entries = GTQueueEntry.objects.filter(queue_id=src_queue_id)
+        for entry in queue_entries:
+            entry.pk = None
+            entry.queue_id = queue_obj.id
+
+        # Bulk create all objects 50 at a time
+        for i in range(0, len(queue_entries), 50):
+            GTQueueEntry.objects.bulk_create(queue_entries[i:i+50])
+
+        return queue_obj
