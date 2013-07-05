@@ -1,4 +1,4 @@
-import datetime
+import datetime, time
 import json
 import django
 from django.conf import settings
@@ -9,6 +9,7 @@ from django.forms.models import ModelForm
 
 from django.http import  HttpResponseForbidden
 from django.template.context import RequestContext
+from django.template import Context, Template
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 from django.contrib.auth.decorators import login_required, permission_required
@@ -192,6 +193,56 @@ def details_view(request, id):
     if (entry.submitter != request.user) and (not request.user.is_superuser):
         return HttpResponseForbidden('Not enough permissions')
     return render_to_response("details_view.html", {'entry':entry}, context_instance=RequestContext(request))
+
+@login_required
+def tag_list(request):
+    ''' Quick access to all available tags and for a given GT '''
+    template_vars = {}
+
+    distinct_tags_all = False
+
+    gt_id = request.GET.get('gt')
+    if gt_id:
+        distinct_tags = GlobalTagRecord.objects.filter(global_tag_id=gt_id).select_related(depth=1).values('record__name','tag__name')
+    else:
+        distinct_tags = Tag.objects.all().values('name').distinct()
+        distinct_tags_all = True
+
+    if request.GET.get('download'):
+        if distinct_tags_all:
+            response_template = '''{% for t in distinct_tags %}{{ t.name }}{% if not forloop.last %}\n{% endif %}{% endfor %}'''
+            filename = "GTC_tags_%s.txt" % int(time.time())
+        else:
+            response_template = '''{% for t in distinct_tags %}{{ t.tag__name }}{% if not forloop.last %}\n{% endif %}{% endfor %}'''
+            filename = "%s_tags_%s.txt" % (GlobalTag.objects.get(pk=gt_id).name, int(time.time()))
+            
+        template = Template(template_string=response_template)
+        c = Context({'distinct_tags': distinct_tags})
+
+        response = HttpResponse(template.render(c))
+        response['Content-Disposition'] = 'attachment; filename=%s' % filename
+
+        return response
+
+    gt_obj_list = GlobalTag.objects.all().filter(entry_ignored=False)
+    template_vars["gt_obj_list"] = gt_obj_list
+
+
+    paginator = Paginator(distinct_tags, 25) # Show 25 tags per page
+    page = request.GET.get('page')
+    try:
+        tags = paginator.page(page)
+    except PageNotAnInteger:
+        tags = paginator.page(1)
+    except EmptyPage:
+        tags = paginator.page(paginator.num_pages)
+    
+    if distinct_tags_all:
+        template_vars["distinct_tags_all"] = True
+    template_vars["distinct_tags"] = tags
+    template_vars["distinct_tags_count"] = len(distinct_tags)
+
+    return render_to_response("admin2/tag_list.html", template_vars, context_instance=RequestContext(request))
 
 @login_required
 @ensure_csrf_cookie
