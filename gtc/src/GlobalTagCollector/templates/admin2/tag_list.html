@@ -10,18 +10,6 @@
         jQuery(document).ready(function(){
             jQuery(".chosen").chosen({ max_selected_options: 1 });
 
-            // Hide error box by default
-            $("#error_box").hide();
-
-            // Check if a GT has been chosen, otherwise show error message
-            $('#gt_tags_form').submit(function(e){
-                var gt = $(".chosen").val()
-                if ((gt === null) || (gt.length != 1)) {
-                    $("#error_box").show();
-                    e.preventDefault();
-                } // end if
-            })
-
             $("#gt_name").change(function(){
                 var action = $(this).val();
                 $('#gt_tags_form').attr("action", "?gt=" + action)
@@ -50,14 +38,8 @@
         {% endfor %}
         </select>
     </div>
-    <div class="span2">
+    <div class="span7">
         <input id="submit_and_view" type="submit" class="btn btn-info" value="Get GT Tags" />
-    </div>
-    <div class="span5">
-        <div id="error_box" class="alert alert-error" style="margin: 0px; margin-right: 16px; padding: 4px">
-            <a onClick="$(this).parent().hide();">×</a>
-             <strong>ERROR: </strong>Please select one Global Tag.
-        </div>
     </div>
 </div>
 </form>
@@ -65,6 +47,7 @@
 <div class="row" style="margin-bottom: 10px;">
     <div class="span7">
         Displaying {{ distinct_tags|length }} tags out of {{ distinct_tags_count }}
+        in GT: <strong>{% if gt_name %}{{ gt_name }}{% else %}ALL GTs{% endif %}</strong>
     </div>
     <div class="span4" style="text-align: right;">
         <a href="?gt={{request.GET.gt}}&download=true">Download as text file</a>
@@ -98,6 +81,7 @@
 <div class="row">
     <div class="span7">
         Displaying {{ distinct_tags|length }} tags out of {{ distinct_tags_count }}
+        in GT: <strong>{% if gt_name %}{{ gt_name }}{% else %}ALL GTs{% endif %}</strong>
     </div>
     <div class="span4" style="text-align: right;">
         <a href="?gt={{request.GET.gt}}&download=true">Download as text file</a>
@@ -111,7 +95,7 @@
                     {% if request.GET.gt %}
                     <a href="?gt={{ request.GET.gt }}&page={{ distinct_tags.previous_page_number }}">&laquo; Previous</a>
                     {% else %}
-                    <a href="?page={{ distinct_tags.next_page_number }}">Next &raquo;</a>
+                    <a href="?page={{ distinct_tags.previous_page_number }}">&laquo; Previous</a>
                     {% endif %}
                 {% endif %}
 

@@ -204,6 +204,7 @@ def tag_list(request):
     gt_id = request.GET.get('gt')
     if gt_id:
         distinct_tags = GlobalTagRecord.objects.filter(global_tag_id=gt_id).select_related(depth=1).values('record__name','tag__name')
+        template_vars['gt_name'] = GlobalTag.objects.get(pk=gt_id)
     else:
         distinct_tags = Tag.objects.all().values('name').distinct()
         distinct_tags_all = True
