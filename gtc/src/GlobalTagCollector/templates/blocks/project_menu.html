@@ -11,8 +11,8 @@
                 </ul>
                 <ul class="nav pull-right">
                     {% if request.user.is_superuser %}
-                        <li class="dropdown" id="menu1">
-                            <a class="dropdown-toggle" data-toggle="dropdown" href="#menu1">
+                        <li class="dropdown" id="menu_admin">
+                            <a class="dropdown-toggle" data-toggle="dropdown" href="#menu_admin">
                                 Admin
                                 <b class="caret"></b>
                             </a>
@@ -24,9 +24,19 @@
                                 <li><a href="{% url gt_list %}">Global Tag list</a></li>
                                 <li><a href="{% url gt_settings %}?section=hwa">Settings</a></li>
                                 <li class="divider"></li>
-                                <li><a href="{% url admin:index %}">Old Admin</a></li>                                                            </ul>
+                                <li><a href="{% url admin:index %}">Old Admin</a></li>
+                            </ul>
                         </li>
-
+                    {% else %}
+                        <li class="dropdown" id="menu_user">
+                            <a class="dropdown-toggle" data-toggle="dropdown" href="#menu_user">
+                                Functions
+                                <b class="caret"></b>
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a href="{% url tag_list %}">Tags List</a></li>
+                            </ul>
+                        </li>
                     {% endif %}
                     <li><a href="{% url admin2_logout %}">Logout</a></li>
                 </ul>
