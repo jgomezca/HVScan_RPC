@@ -246,6 +246,30 @@ def tag_list(request):
     return render_to_response("admin2/tag_list.html", template_vars, context_instance=RequestContext(request))
 
 @login_required
+def gt_compare(request):
+    ''' Provides functionality to compare 2 GTs '''
+    template_vars = {}
+
+    all_gts = GlobalTag.objects.filter(entry_ignored=False)
+    template_vars['all_gts'] = all_gts
+
+    gts_to_compare = request.GET.getlist('compare')
+    if gts_to_compare:
+        base_gt_id = GlobalTag.objects.get(name='%s' % gts_to_compare[0])
+        comp_gt_id = GlobalTag.objects.get(name='%s' % gts_to_compare[1])
+
+        base_gt = GlobalTagRecord.objects.select_related().filter(global_tag_id=base_gt_id).values_list('tag__name', 'record__name', 'label', 'tag__gtqueueentry__comment')
+        comp_gt = GlobalTagRecord.objects.select_related().filter(global_tag_id=comp_gt_id).values_list('tag__name', 'record__name', 'label', 'tag__gtqueueentry__comment')
+
+        template_vars['gts_compared'] = [
+            {'gt': gts_to_compare[0], 'tags': list(set(base_gt) - set(comp_gt))},
+            {'gt': gts_to_compare[1], 'tags': list(set(comp_gt) - set(base_gt))},
+            {'intersection': True, 'tags': list(set(comp_gt) & set(base_gt))}
+        ]
+
+    return render_to_response("gt_compare.html", template_vars, context_instance=RequestContext(request))
+
+@login_required
 @ensure_csrf_cookie
 def new_request(request):
     request.META["CSRF_COOKIE_USED"] = True 
