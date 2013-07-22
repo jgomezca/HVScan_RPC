@@ -255,16 +255,41 @@ def gt_compare(request):
 
     gts_to_compare = request.GET.getlist('compare')
     if gts_to_compare:
+        template_vars['gts_to_compare'] = gts_to_compare
+        account_ignored = request.GET.get('acc_ignored') if request.GET.get('acc_ignored') else False;
+        template_vars['account_ignored'] = account_ignored
+
         base_gt_id = GlobalTag.objects.get(name='%s' % gts_to_compare[0])
         comp_gt_id = GlobalTag.objects.get(name='%s' % gts_to_compare[1])
 
-        base_gt = GlobalTagRecord.objects.select_related().filter(global_tag_id=base_gt_id).values_list('tag__name', 'record__name', 'label', 'tag__gtqueueentry__comment')
-        comp_gt = GlobalTagRecord.objects.select_related().filter(global_tag_id=comp_gt_id).values_list('tag__name', 'record__name', 'label', 'tag__gtqueueentry__comment')
+        comp_a_b_data = []
+        comp_b_a_data = []
+        comp_intersect_data = []
+
+        if account_ignored:
+            base_gt = GlobalTagRecord.objects.filter(global_tag_id=base_gt_id).values_list('tag__name', 'record_id', 'label')
+            comp_gt = GlobalTagRecord.objects.filter(global_tag_id=comp_gt_id).values_list('tag__name', 'record_id', 'label')
+        else:
+            base_gt = GlobalTagRecord.objects.filter(global_tag_id=base_gt_id).values_list('tag__name', 'record_id', 'label', 'tag__account__id')
+            comp_gt = GlobalTagRecord.objects.filter(global_tag_id=comp_gt_id).values_list('tag__name', 'record_id', 'label', 'tag__account__id')
+
+        comp_a_b = list(set(base_gt) - set(comp_gt))
+        comp_b_a = list(set(comp_gt) - set(base_gt))
+        comp_intersect = list(set(base_gt) & set(comp_gt))
+
+        for tup in comp_a_b:
+            comp_a_b_data.append( GlobalTagRecord.objects.select_related().filter(global_tag_id=base_gt_id, tag__name=tup[0], record_id=tup[1], label=tup[2]).values_list('tag__name', 'record__name', 'label', 'tag__gtqueueentry__comment', 'tag__account__name') )
+
+        for tup in comp_b_a:
+            comp_b_a_data.append( GlobalTagRecord.objects.select_related().filter(global_tag_id=comp_gt_id, tag__name=tup[0], record_id=tup[1], label=tup[2]).values_list('tag__name', 'record__name', 'label', 'tag__gtqueueentry__comment', 'tag__account__name') )
+
+        for tup in comp_intersect:
+            comp_intersect_data.append( GlobalTagRecord.objects.select_related().filter(tag__name=tup[0], record_id=tup[1], label=tup[2]).values_list('tag__name', 'tag__account__name') )
 
         template_vars['gts_compared'] = [
-            {'gt': gts_to_compare[0], 'tags': list(set(base_gt) - set(comp_gt))},
-            {'gt': gts_to_compare[1], 'tags': list(set(comp_gt) - set(base_gt))},
-            {'intersection': True, 'tags': list(set(comp_gt) & set(base_gt))}
+            {'gt': gts_to_compare[0], 'tags': comp_a_b_data},
+            {'gt': gts_to_compare[1], 'tags': comp_b_a_data},
+            {'intersection': True, 'tags': comp_intersect_data}
         ]
 
     return render_to_response("gt_compare.html", template_vars, context_instance=RequestContext(request))
