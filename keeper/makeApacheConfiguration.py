@@ -495,7 +495,7 @@ services = {
         'backendHostnames': ['vocms12'],
         'backendPort': 80,
         'backendUrl': '/jenkins',
-        'shibbolethGroups': [],
+        'shibbolethGroups': ['zh'],
     },
 
     'lxr': {
