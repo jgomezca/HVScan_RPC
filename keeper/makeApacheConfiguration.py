@@ -113,7 +113,7 @@ virtualHosts = {
 
     # From the old cmssdt.conf
     'cmssdt-prod': {
-        'services': ['tcRedirect', 'lxr', 'dev', 'controllers', 'qa/perfmondb', 'SDT'],
+        'services': ['tcRedirect', 'lxr', 'dev', 'controllers', 'qa/perfmondb', 'jenkins', 'SDT'],
     },
 
     # From the old cmscov.conf
@@ -487,6 +487,15 @@ services = {
         'backendHostnames': ['vocms12'],
         'backendPort': 80,
         'backendUrl': '/',
+        'backendExclude': ['Shibboleth.sso/ADFS'],
+    },
+
+    'jenkins': {
+        'protocol': 'http',
+        'backendHostnames': ['vocms12'],
+        'backendPort': 80,
+        'backendUrl': '/jenkins',
+        'shibbolethGroups': [],
     },
 
     'lxr': {
