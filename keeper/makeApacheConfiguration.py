@@ -256,6 +256,14 @@ virtualHosts['cms-pop-prod2'] = dict(virtualHosts['cms-pop-prod'])
 #   behaviour when accessing the service directly to the backend or from
 #   the frontend.
 #
+#   If 'backendUrl' is '/', i.e. a proxy that redirects all (the rest of)
+#   requests, and another service uses Shibboleth in the same virtual host,
+#   you will probably want to exclude /Shibboleth.sso/ADFS from that ProxyPass
+#   rule using 'backendExclude'. See below.
+#
+#   If 'backendExclude' is found, the service's ProxyPass rule will not match
+#   the URLs contained in the list.
+#
 #   Note: if a service runs in / in both the frontend and the backend,
 #   you only need to set 'url' == ''. In addition, in this case
 #   you must not set redirectRoot.
@@ -838,7 +846,12 @@ redirectToHttps = '''
     RewriteRule ^/{url} https://%{{SERVER_NAME}}%{{REQUEST_URI}} [NE,L,R]
 '''
 
+proxyPassExclude = '''
+    ProxyPass        /{url} !
+'''
+
 proxyPass = '''
+    {exclude}
     ProxyPass        /{url} {protocol}://{backendHostname}.cern.ch:{backendPort}{backendUrl} retry=0 {timeout}
     ProxyPassReverse /{url} {protocol}://{backendHostname}.cern.ch:{backendPort}{backendUrl}
 '''
@@ -850,6 +863,7 @@ proxyPassLoadBalanced = '''
     </Proxy>
     <Location /{url}>
         Header add Set-Cookie "ROUTEID=.%{{BALANCER_WORKER_ROUTE}}e; path=/{url}" env=BALANCER_ROUTE_CHANGED
+        {exclude}
         ProxyPass        balancer://{balancerName}
         ProxyPassReverse balancer://{balancerName}
     </Location>
@@ -1342,8 +1356,15 @@ def makeApacheConfiguration(frontend, virtualHost):
             else:
                 services[service]['timeout'] = ''
 
+            if 'backendExclude' not in services[service]:
+                services[service]['backendExclude'] = []
+
+            exclude = ''
+            for backendExcludeUrl in services[service]['backendExclude']:
+                exclude += proxyPassExclude.format(url = backendExcludeUrl)
+
             if len(backendHostnames) == 1:
-                infoMap['proxyPass'] += proxyPass.format(backendHostname = backendHostnames[0], **services[service])
+                infoMap['proxyPass'] += proxyPass.format(backendHostname = backendHostnames[0], exclude = exclude, **services[service])
             else:
                 useBalancerManager = True
                 balancerMembers = ''
@@ -1352,7 +1373,7 @@ def makeApacheConfiguration(frontend, virtualHost):
                     route += 1
                     dictCopy = dict(services[service])
                     dictCopy.update(backendHostname = backendHostname)
-                    balancerMembers += balancerMember.format(route = route, **dictCopy)
+                    balancerMembers += balancerMember.format(route = route, exclude = exclude, **dictCopy)
                 infoMap['proxyPass'] += proxyPassLoadBalanced.format(
                     balancerMembers = balancerMembers,
                     # We can't use the url as the balancerName
