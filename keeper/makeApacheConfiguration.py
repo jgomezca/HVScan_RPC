@@ -1382,12 +1382,13 @@ def makeApacheConfiguration(frontend, virtualHost):
                     route += 1
                     dictCopy = dict(services[service])
                     dictCopy.update(backendHostname = backendHostname)
-                    balancerMembers += balancerMember.format(route = route, exclude = exclude, **dictCopy)
+                    balancerMembers += balancerMember.format(route = route, **dictCopy)
                 infoMap['proxyPass'] += proxyPassLoadBalanced.format(
                     balancerMembers = balancerMembers,
                     # We can't use the url as the balancerName
                     # if the 'url' contains slashes, e.g. PdmV/valdb.
                     balancerName = services[service]['url'].replace('/', '_'),
+                    exclude = exclude,
                     **services[service]
                 )
 
