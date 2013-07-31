@@ -1,0 +1,124 @@
+{% extends "app_layout.html" %}
+{# load humanize #}
+
+
+{% block title %}Global Tag Collector :: Records List{% endblock %}
+
+{% block media%}
+{{ block.super }}
+    <script>
+        jQuery(document).ready(function(){
+            jQuery(".chosen").chosen({ max_selected_options: 2 });
+            
+            // Hide error box by default
+            $("#error_box").hide();
+            
+            // Check if exactly 2 releases have been chosen, otherwise show error message
+            $('#compare_form').submit(function(e){
+                var selected_releases = $(".chosen").val()
+                if ((selected_releases === null) || (selected_releases.length != 2)) {
+                    $("#error_box").show();
+                    e.preventDefault();
+                } // end if
+            })
+            
+        });
+    </script>
+{% endblock %}
+
+{%  block content %}
+{# load tags #}
+
+<div class="row">
+    <div class="span6">
+        <h1 id="toppage">Records</h1>
+    </div>
+</div>
+
+<form action="" id="compare_form" method="GET">
+<div class="row">
+    <div class="span4">
+        <!-- multiple dropdown -->
+        <select class="chosen" multiple="true" name="compare" data-placeholder="Click here to select 2 releases to compare" style="width:300px;">
+        {% for release in all_sw_releases %}
+            <option value="{{ release.softwarerelease__name }}">{{ release.softwarerelease__name }}</option>
+        {% endfor %}
+        </select>
+    </div>
+    <div class="span2">
+        <input id="submit_and_view" type="submit" class="btn btn-info" value="Compare Records" />
+    </div>
+    <div class="span6">
+        <div id="error_box" class="alert alert-error" style="margin: 0px; margin-right: 16px; padding: 4px">
+            <a onClick="$(this).parent().hide();">×</a>
+             <strong>ERROR: </strong>Please select <strong>exactly two</strong> releases to compare.
+        </div>
+    </div>
+</div>
+</form>
+
+
+<div class="row">
+    <div class="span4">
+        <table class="table table-striped table-condensed table-bordered">
+            <tr>
+                <th>Release</th>
+                <th>Records Count</th>
+            </tr>
+            {% for release in all_sw_releases %}
+            <tr>
+                <td><a href="?release={{release.softwarerelease__name}}">{{release.softwarerelease__name}}</a></td>
+                <td><a href="?release={{release.softwarerelease__name}}">{{release.record_count}}</a></td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+{% if records_compared %}
+    <div class="span8">
+    <table class="table table-striped table-condensed table-bordered">
+        <tr>
+            <th colspan="2">Records in <span class="badge badge-success">{{ records_compared.0.release_name }}</span> but NOT in <span class="badge badge-info">{{ records_compared.1.release_name }}</span></th>
+        </tr>
+        <tr><th>Record</th><th>Associated Object</th></tr>
+        {% for record in records_compared.0.records %}
+        <tr><td>{{ record.0 }}</td><td>{{ record.1 }}</td></tr>
+        {% empty %}
+        <tr><td colspan="2">- - -</td></tr>
+        {% endfor %}
+    </table>
+    
+    <table class="table table-striped table-condensed table-bordered">
+        <tr>
+            <th colspan="2">Records in <span class="badge badge-info">{{ records_compared.1.release_name }}</span> but NOT in <span class="badge badge-success">{{ records_compared.0.release_name }}</span></th>
+        </tr>
+        <tr><th>Record</th><th>Associated Object</th></tr>
+        {% for record in records_compared.1.records %}
+        <tr><td>{{ record.0 }}</td><td>{{ record.1 }}</td></tr>
+        {% empty %}
+        <tr><td colspan="2">- - - -</td></tr>
+        {% endfor %}
+    </table>
+    </div>
+
+{% else %}
+    <div class="span8">
+        <table class="table table-striped table-condensed table-bordered">
+        {% if records_list %}
+            <tr><th colspan="2"><span class="badge badge-success">{{ request.GET.release }}</span> Records and Associated Objects</th></tr>
+            <tr><th>Record</th><th>Associated object</th></tr>
+        {% else %}
+            <tr><th>Click on a release to browse records and associated objects</th></tr>
+        {% endif %}
+            {% for record in records_list %}
+            <tr>
+                <td>{{ record.0 }}</td>
+                <td>{{ record.1 }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
