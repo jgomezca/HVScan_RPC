@@ -8,12 +8,17 @@ class Curler( object ) :
         self.curl = http.HTTP()
         if config.proxy:
             self.curl.setProxy(config.proxy)
-        self.curl.setTimeout(config.timeout)
         self.curl.setRetries(config.retriesPyCurler)
+        self.config = config
 
     def get(self, url, data=None) :
         if data is not None:
             data = dict(data)
+
+        if url.endswith('getFile'):
+            self.curl.setTimeout(self.config.payloadTimeout)
+        else:
+            self.curl.setTimeout(self.config.timeout)
 
         try:
             result = self.curl.query(url, data)

@@ -20,6 +20,7 @@ class BaseConfig( object ) :
         # get info on next run which will be processed for prompt:
         self.src = 'https://samir-wmcore.cern.ch/t0wmadatasvc/replay'
         self.timeout     = 30
+        self.payloadTimeout  = 60 * 10 # 10 minutes for downloading big payloads
         self.retries     = 3
         self.retriesPyCurler = [30, 30, 30] # FIXME: Move to self.retries when we change tier0.py to use http.py
         self.retryPeriod = 30
