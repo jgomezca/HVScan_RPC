@@ -1,0 +1,87 @@
+{% extends "app_layout.html" %}
+{# load humanize #}
+
+
+{% block title %}Global Tag Collector{% endblock %}
+
+{% block media%}
+{{ block.super }}
+{% endblock %}
+
+{%  block content %}
+{# load tags #}
+
+
+<div class="row">
+    <div class="span6">
+        <h1 id="toppage">Global Tags</h1>
+    </div>
+
+</div>
+<div class="row">
+    <div class="span12">
+
+        <div>
+            Starts with:
+            {% for gt_obj in gt_obj_list %}
+
+            {% ifchanged gt_obj.name|first %}
+
+                <a href="#{{gt_obj.name|first}}">{{gt_obj.name|first}}</a> |
+
+            {% endifchanged %}
+
+            {% endfor %}
+
+        </div>
+
+        <table class="table table-striped table-condensed table-bordered">
+            <tr>
+                <th>Name</th>
+                <th>Has warnings</th>
+                <th>Has errors</th>
+                <th>External Finding Timestamp</th>
+                <th>Internal Creation Timestamp</th>
+                <th>Creator</th>
+            </tr>
+            {% for gt_obj in gt_obj_list %}
+
+            {% ifchanged gt_obj.name|first %}
+            <tr>
+                <th id="{{gt_obj.name|first}}" colspan="6">{{gt_obj.name|first}} <a href="#toppage">Up</a></th>
+            </tr>
+            {% endifchanged %}
+
+
+            <tr>
+                <td><a href="{% url gt_info gt_name=gt_obj.name %}">{{gt_obj.name}}</a></td>
+                <td>
+                    {% if gt_obj.has_warnings %}
+                    <span class="label label">{{gt_obj.has_warnings}}</span>
+                    {% else %}
+                    <span class="label label-success">{{gt_obj.has_warnings}}</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if gt_obj.has_errors == False %}
+                    <span class="label label-important">{{gt_obj.has_errors}}</span>
+                    {% else %}
+                    <span class="label label-success">{{gt_obj.has_errors}}</span>
+                    {% endif %}
+                </td>
+                <td>{{gt_obj.external_finding_timestamp}}</td>
+                <td>{{gt_obj.internal_creation_timestamp}}</td>
+                <td>{{gt_obj.creator}}</td>
+
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="9">No data available</td>
+            </tr>
+            {% endfor %}
+        </table>
+
+
+    </div>
+</div>
+{% endblock %}

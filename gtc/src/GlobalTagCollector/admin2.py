@@ -46,12 +46,6 @@ def gt_queues_list(request):
     return render_to_response("admin2/gt_queues_list.html", {"gt_queues": gt_queues, "fqs":queue_status}, context_instance=RequestContext(request))
 
 @user_passes_test(lambda u: u.is_superuser)
-def gt_list(request):
-    gt_obj_list = GlobalTag.objects.all().filter(entry_ignored=False)
-    return render_to_response("admin2/gt_list.html", {"gt_obj_list": gt_obj_list}, context_instance=RequestContext(request))
-
-
-@user_passes_test(lambda u: u.is_superuser)
 def gt_queue_create(request):
     if request.method == 'POST':
         gt_queue_form = GTQueueModelForm(request.POST)
@@ -200,12 +194,3 @@ def gt_settings(request):
 
     template_vars['form_submitted'] = form_submitted
     return render_to_response("admin2/gt_settings.html", template_vars, context_instance=RequestContext(request))
-
-@user_passes_test(lambda u: u.is_superuser)
-def gt_info(request, gt_name):
-    gt_obj = get_object_or_404(GlobalTag, name=gt_name)
-    return render_to_response(
-        "admin2/gt_info.html",
-        {'gt_obj':gt_obj},
-        context_instance=RequestContext(request)
-    )

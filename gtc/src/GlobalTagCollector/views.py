@@ -195,6 +195,16 @@ def details_view(request, id):
     return render_to_response("details_view.html", {'entry':entry}, context_instance=RequestContext(request))
 
 @login_required
+def gt_list(request):
+    gt_obj_list = GlobalTag.objects.all().filter(entry_ignored=False)
+    return render_to_response("gt_list.html", {"gt_obj_list": gt_obj_list}, context_instance=RequestContext(request))
+
+@login_required
+def gt_info(request, gt_name):
+    gt_obj = get_object_or_404(GlobalTag, name=gt_name)
+    return render_to_response("gt_info.html", {'gt_obj':gt_obj}, context_instance=RequestContext(request))
+
+@login_required
 def rcd_list(request):
     template_vars = {}
 
