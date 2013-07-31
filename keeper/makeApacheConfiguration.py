@@ -596,6 +596,9 @@ services['logs']['shibbolethMatch'] = '^/logs/(?!dropBox/getStatus$)'
 services['PdmV/valdb']['shibbolethGroups'] = ['cms-web-access']
 services['shibbolethTest']['shibbolethGroups'] = ['zh']
 
+# Same as in dropBoxBE's HTTP client
+services['dropBox']['backendTimeout'] = 60 * 10 # 10 minutes
+
 # FIXME: gtc still uses HTTP
 services['gtc']['protocol'] = 'http'
 
