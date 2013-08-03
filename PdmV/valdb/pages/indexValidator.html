@@ -1,1486 +1,187 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
-   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
-	<head>
-		<title>The PdmV Validation DB</title>
-		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html lang="en" ng-app="strap">
+  <head>
+    <title>The PdmV Validation DB</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
         <link href="/libs/bootstrap/2.1.0/css/bootstrap.min.css" rel="stylesheet">
         <link href="/libs/bootstrap/2.1.0/css/bootstrap-responsive.css" rel="stylesheet">
-		<link href="media/menu.css" rel="stylesheet">
-    <script type="text/javascript" src="/libs/jquery-1.7.2.min.js" ></script>
-    <script type="text/javascript" src="/libs/bootstrap/2.1.0/js/bootstrap.min.js" ></script>
-
-
-<!--Modals for pop-up information-->
-<!--Default modal for showing information-->
-          <div id="myModal" class="modal hide fade" style="max-height:500px;">
-	    <div class="modal-header">
-	      <h2>Release: <text id="modalReleaseName"></text></h2>
-	      <h4><text id="modalHeaderTree"></text><h4>
-	      <h3>Author: <text id = "author"></text></h3>
-	    </div>
-	    <div id ="modalkunas" class="modal-body">
-	      <h4>Validation Status: <text id ="valStat"></text> </h4>
-	      <p>Comments:</br> <text id ="comments" style="width: 454px; height:129px;"></text> </p>
-            <text id="linkTEXT">Links:</text> 
-            <p id="links"></p>
-	    </div>
-	    <div class="modal-footer">
-	      <p> Date: <text id = "comdate"></text></p>
-	      <a onclick="editModalInfo();" data-dismiss="modal" class="btn" id="btnEditInfo"> Edit Information </a>
-	      <a href="#" class="btn btn-primary" data-dismiss="modal" >Close</a>
-	    </div>
-	  </div>
-
-<!--MODAL to edit available release stats information-->
-          <div id="editModal" class="modal hide fade" style="max-height:500px;">
-	    <div class="modal-header">
-	      <h2>Release: <text type="text" id="modalEditReleaseName"/><br/></h2>
-	      <h4> <text id="editModalHeaderTree"> </text><h4>
-	      <h3>Author: <text type="text" id="modalEditAuthor"/><br/></h3>
-	    </div>
-	    <div id ="modalkunas" class="modal-body">
-		<h4> <text id="valStatName"></text>
-		     Validation Status:<h4>
-		    <select id="editDropdown">
-			<option value='NOT YET DONE'>NOT YET DONE</option>
-			<option value='OK'>OK</option>
-			<option value='FAILURE'>FAILURE</option>
-			<option value='CHANGES EXPECTED'>CHANGES EXPECTED</option>
-			<option value='IN PROGRESS'>IN PROGRESS</option>
-			<option value='OK TO BE SIGNED-OFF BY THE VALIDATORS'>OK TO BE SIGNED-OFF BY THE VALIDATORS</option>
-			<option value='FAILURE TO BE SIGNED-OFF BY THE VALIDATORS'>FAILURE TO BE SIGNED-OFF BY THE VALIDATORS</option>
-		    </select>
-		<p>Comments:</br><textarea id ="modalEditComments" rows="3" name="comment" cols="24" style="width: 454px; height:129px;"></textarea> <br/></p>
-		<p>Links: </br><textarea id="modalEditLinks" style="width: 362px; height:60px;"></textarea> </p>
-	    </div>
-	      <div class="modal-footer" id="editModalFooter">
-            <div>
-                <text align='left' style='font-size:14px;'>
-                    The message will be sent to: <text id='hn-address'></text>
-                </text>
-            </div>
-            <div>
-                <input id="btnSave" class="btn" type="submit" value="Save information" onclick="notEmpty();" />
-                <a onclick="clearEditModalValues();" class="btn btn-primary" data-dismiss="modal" >Close</a>
-            </div>
-	    </div>
-	  </div>
-<!--Modals for pop-up information-->
-
-</head>
-	<body>
-	
-		<body style="background-color: #ADD8E6">
-		<br>
-                  <div class="container">
-		  <div class="row">
-		    <div class="span11">
-		      <h1  id="title" style="text-align:center; font-family:verdana">ValDb: The PdmV Validation DB</h1>
-		    </div>
-		    <div class="span1">
-		      <span>%USERNAME</span>
-		      <input name = "logOutBTN" class="btn" type="button" value="Logout" onclick="logoutUser();"/>
-		    </div>
-		  </div>
-		</div>
-		<br>
-		<br>	
-	
-	
-<div class="container">
-		<div class="row">
-			<div class="span9">
-				<div>
-					<label style="font-family:verdana; font-size:18px"><br></label>
-					<form id="searchform" action="#" method="post" class="form-inline">
-							<label for="releaseName" style="display:inline; font-family:verdana; font-size:18px">Select one release  </label>
-							<input type="text" id="releaseName" />
-							<input class="btn" type="submit" value="OK" onclick="clearSelectList();"/>
-							<output id="buttonOk">
-					</form>
-				</div>
-					<hr align="left" width="100%" size="4" style="background-color:black">
-				<div>
-					<label style="font-family:verdana; font-size:18px; display:inline">Validation Tables</label>
-					<br>
-					
-				</div>
-				<div>
-				  <h3 id="legend" style="text-align:left; font-family:verdana">Legend</h3>
-				    <ul>
-				      <li> 
-					  <img width="16" alt="target" align="top" src="media/target.gif" height="16" border="0" /> : Changes are expected;
-				      </li> 
-				      <li> 
-					  <img width="16" alt="choice-no" align="top" src="media/choice-no.gif" height="16" border="0" /> : Failure;
-				      </li> 
-				      <li> 
-					  <img width="16" alt="choice-yes" align="top" src="media/choice-yes.gif" height="16" border="0" /> : OK;
-				      </li> 
-				      <li> 
-					  <img width="16" alt="wip" align="top" src="media/wip.gif" height="16" border="0" /> : In progress;
-				      </li> 
-				      <li> 
-					  <img width="16" alt="minus" align="top" src="media/minus.gif" height="16" border="0" /> : Not yet done;
-				      </li> 
-				      <li> 
-					  <img width="16" alt="stop" align="top" src="media/thumbs-up.gif" height="16" border="0" /> : OK - to be signed-off by the validators;
-				      </li>
- 
-				      <li> 
-					  <img width="16" alt="stop" align="top" src="media/thumbs-down.gif" height="16" border="0" /> : Failure - to be signed-off by the validators;
-				      </li>
-				    </ul>
-				</div>
-				<div>
-				<input class="btnOK" type="submit" value="Show All" onclick="showAllMenus();"/>
-				<div>
-                        <table border='0'>
-                            <tbody>
-                                <td style='margin:0; padding:0;'>
-                                    <a href="javascript:showMenu('RECO')" class="Group">Reconstruction </a>
-                                </td>
-                                <td style='margin:0; padding:0;'>
-                                    <input class="btnOK" type="submit" value="Show All" onclick="showRecoMenu();" style='width=100%;height=100%; margin:0; padding:0;'/>
-                                </td>
-                            </tbody>
-                        </table>
-						<div class="showM" id="RECO">
-							<a class="SubCategory" href="javascript:showMenu('iRData');"> Data</a>
-							<div class="showM" id="iRData">
-								<table name = "infoTable" class="table table-striped table-bordered table-condensed" style="border-color:black;" id= "RData" border="0">
-									<tbody>
-                                    <th style="font-size: 8pt">Release Name</th>
-
-                                    <th style="font-size: 8pt">Tracker</th>
-                                    <th style="font-size: 8pt">Ecal</th>
-                                    <th style="font-size: 8pt">Hcal</th>
-                                    <th style="font-size: 8pt">DT</th>
-                                    <th style="font-size: 8pt">CSC</th>
-                                    <th style="font-size: 8pt">RPC</th>
-                                    
-                                    <th style="font-size: 8pt">Tracking</th>
-                                    <th style="font-size: 8pt">Electron</th>
-                                    <th style="font-size: 8pt">Photon</th>
-                                    <th style="font-size: 8pt">Muon</th>
-                                    <th style="font-size: 8pt">Jet</th>
-                                    <th style="font-size: 8pt">MET</th>
-                                    <th style="font-size: 8pt">bTag</th>
-                                    <th style="font-size: 8pt">Tau</th>
-
-                                    <th style="font-size: 8pt">Summary</th>
-                                    <th style="font-size: 8pt">RelMon</th>
-									</tbody>
-								</table>
-							</div>
-							<a href="javascript:showMenu('iRFull')" class="SubCategory"> FullSim</a>
-							<div class="showM" id="iRFull">
-								<table name= "infoTable" class="table table-striped table-bordered table-condensed" style="border-color:black;" id='RFull' border="0">
-									<tbody>
-                                    <th style="font-size: 8pt">Release Name</th>
-
-                                    <th style="font-size: 8pt">Tracker</th>
-                                    <th style="font-size: 8pt">Ecal</th>
-                                    <th style="font-size: 8pt">Hcal</th>
-                                    <th style="font-size: 8pt">DT</th>
-                                    <th style="font-size: 8pt">CSC</th>
-                                    <th style="font-size: 8pt">RPC</th>
-
-                                    <th style="font-size: 8pt">Tracking</th>
-                                    <th style="font-size: 8pt">Electron</th>
-                                    <th style="font-size: 8pt">Photon</th>
-                                    <th style="font-size: 8pt">Muon</th>
-                                    <th style="font-size: 8pt">Jet</th>
-                                    <th style="font-size: 8pt">MET</th>
-                                    <th style="font-size: 8pt">bTag</th>
-                                    <th style="font-size: 8pt">Tau</th>
-
-                                    <th style="font-size: 8pt">Summary</th>
-                                    <th style="font-size: 8pt">RelMon</th>
-									</tbody>
-								</table>
-							</div>
-							<a href="javascript:showMenu('iRFast')" class="SubCategory"> FastSim</a>
-							<div class="showM" id="iRFast">
-								<table name = "infoTable" class="table table-striped table-bordered table-condensed" style="border-color:black;" id='RFast' border="0">
-									<tbody>
-                                    <th style="font-size: 8pt">Release Name</th>
-
-                                    <th style="font-size: 8pt">Tracker</th>
-                                    <th style="font-size: 8pt">Ecal</th>
-                                    <th style="font-size: 8pt">Hcal</th>
-                                    <th style="font-size: 8pt">DT</th>
-                                    <th style="font-size: 8pt">CSC</th>
-                                    <th style="font-size: 8pt">RPC</th>
-
-                                    <th style="font-size: 8pt">Tracking</th>
-                                    <th style="font-size: 8pt">Electron</th>
-                                    <th style="font-size: 8pt">Photon</th>
-                                    <th style="font-size: 8pt">Muon</th>
-                                    <th style="font-size: 8pt">Jet</th>
-                                    <th style="font-size: 8pt">MET</th>
-                                    <th style="font-size: 8pt">bTag</th>
-                                    <th style="font-size: 8pt">Tau</th>
-
-                                    <th style="font-size: 8pt">Summary</th>
-                                    <th style="font-size: 8pt">RelMon</th>
-									</tbody>
-								</table>
-							</div>
-						</div>
-                        <table border='0'>
-                            <tbody>
-                                <td style='margin:0; padding:0;'>
-                                    <a href="javascript:showMenu('HLT')" class="Group">HLT</a>
-                                </td>
-                                <td style='margin:0; padding:0;'>
-                                    <input class="btnOK" type="submit" value="Show All" onclick="showHLTMenu();" style='width=100%;height=100%; margin:0; padding:0;'/>
-                                </td>
-                            </tbody>
-                        </table>
-						<div class="showM" id="HLT">
-							<a href="javascript:showMenu('iHData')" class="SubCategory"> Data</a>
-							<div class="showM" id="iHData">
-								<table name="infoTable" class="table table-striped table-bordered table-condensed" style="border-color:black;" id='HData' border="0">
-									<tbody>
-                                    <th style="font-size: 8pt">Release Name</th>
-                                    
-                                    <th style="font-size: 8pt">Tracking</th>
-                                    <th style="font-size: 8pt">Electron</th>
-                                    <th style="font-size: 8pt">Photon</th>
-                                    <th style="font-size: 8pt">Muon</th>
-                                    <th style="font-size: 8pt">Jet</th>
-                                    <th style="font-size: 8pt">MET</th>
-                                    <th style="font-size: 8pt">bTag</th>
-                                    <th style="font-size: 8pt">Tau</th>
-                                    
-                                    <th style="font-size: 8pt">SMP</th>
-                                    <th style="font-size: 8pt">Higgs</th>
-                                    <th style="font-size: 8pt">Top</th>
-                                    <th style="font-size: 8pt">Susy</th>
-                                    <th style="font-size: 8pt">Exotica</th>
-                                    <th style="font-size: 8pt">B</th>
-                                    <th style="font-size: 8pt">Fwd</th>
-                                    
-                                    <th style="font-size: 8pt">Summary</th>
-                                    <th style="font-size: 8pt">RelMon</th>
-									</tbody>
-								</table>
-							</div>
-							<a href="javascript:showMenu('iHFull')" class="SubCategory"> FullSim</a>
-								<div class="showM" id="iHFull">
-									<table name="infoTable" class="table table-striped table-bordered table-condensed" style="border-color:black;" id='HFull' border="0">
-										<tbody>
-                                        <th style="font-size: 8pt">Release Name</th>
-                                        
-                                        <th style="font-size: 8pt">Tracking</th>
-                                        <th style="font-size: 8pt">Electron</th>
-                                        <th style="font-size: 8pt">Photon</th>
-                                        <th style="font-size: 8pt">Muon</th>
-                                        <th style="font-size: 8pt">Jet</th>
-                                        <th style="font-size: 8pt">MET</th>
-                                        <th style="font-size: 8pt">bTag</th>
-                                        <th style="font-size: 8pt">Tau</th>
-                                        
-                                        <th style="font-size: 8pt">SMP</th>
-                                        <th style="font-size: 8pt">Higgs</th>
-                                        <th style="font-size: 8pt">Top</th>
-                                        <th style="font-size: 8pt">Susy</th>
-                                        <th style="font-size: 8pt">Exotica</th>
-                                        <th style="font-size: 8pt">B</th>
-                                        <th style="font-size: 8pt">Fwd</th>
-                                        
-                                        <th style="font-size: 8pt">Summary</th>
-                                        <th style="font-size: 8pt">RelMon</th>
-										</tbody>
-									</table>
-								</div>	
-							<a href="javascript:showMenu('iHFast')" class="SubCategory"> FastSim</a>
-								<div class="showM" id="iHFast">
-									<table name="infoTable" class="table table-striped table-bordered table-condensed" style="border-color:black;" id='HFast' border="0">
-										<tbody>
-                                        <th style="font-size: 8pt">Release Name</th>
-                                        
-                                        <th style="font-size: 8pt">Tracking</th>
-                                        <th style="font-size: 8pt">Electron</th>
-                                        <th style="font-size: 8pt">Photon</th>
-                                        <th style="font-size: 8pt">Muon</th>
-                                        <th style="font-size: 8pt">Jet</th>
-                                        <th style="font-size: 8pt">MET</th>
-                                        <th style="font-size: 8pt">bTag</th>
-                                        <th style="font-size: 8pt">Tau</th>
-                                        
-                                        <th style="font-size: 8pt">SMP</th>
-                                        <th style="font-size: 8pt">Higgs</th>
-                                        <th style="font-size: 8pt">Top</th>
-                                        <th style="font-size: 8pt">Susy</th>
-                                        <th style="font-size: 8pt">Exotica</th>
-                                        <th style="font-size: 8pt">B</th>
-                                        <th style="font-size: 8pt">Fwd</th>
-
-                                        <th style="font-size: 8pt">Summary</th>
-                                        <th style="font-size: 8pt">RelMon</th>
-										</tbody>
-									</table>
-								</div>
-						</div>
-                        <table border='0'>
-                            <tbody>
-                                <td style='margin:0; padding:0;'>
-                                    <a href="javascript:showMenu('PAGs')" class="Group">PAGs</a>
-                                </td>
-                                <td style='margin:0; padding:0;'>
-                                    <input class="btnOK" type="submit" value="Show All" onclick="showPAGSMenu();" style='width=100%;height=100%; margin:0; padding:0;'/>
-                                </td>
-                            </tbody>
-                        </table>
-						<div class="showM" id="PAGs">
-						<a href="javascript:showMenu('iPData')" class="SubCategory"> Data</a>
-							<div class="showM" id="iPData">
-								<table name="infoTable" class="table table-striped table-bordered table-condensed" style="border-color:black;" id='PData' border="0">
-									<tbody>
-                                    <th style="font-size: 8pt">Release Name</th>
-                                    
-                                    <th style="font-size: 8pt">SMP</th>
-                                    <th style="font-size: 8pt">Higgs</th>
-                                    <th style="font-size: 8pt">Top</th>
-                                    <th style="font-size: 8pt">Susy</th>
-                                    <th style="font-size: 8pt">Exotica</th>
-                                    <th style="font-size: 8pt">B</th>
-                                    <th style="font-size: 8pt">Fwd</th>
-                                    
-                                    <th style="font-size: 8pt">Summary</th>
-                                    <th style="font-size: 8pt">RelMon</th>
-									</tbody>
-								</table>
-							</div>
-						<a href="javascript:showMenu('iPFull')" class="SubCategory"> FullSim</a>
-							<div class="showM" id="iPFull">
-								<table name="infoTable" class="table table-striped table-bordered table-condensed" style="border-color:black;" id='PFull' border="0">
-									<tbody>
-                                    <th style="font-size: 8pt">Release Name</th>
-                                    
-                                    <th style="font-size: 8pt">SMP</th>
-                                    <th style="font-size: 8pt">Higgs</th>
-                                    <th style="font-size: 8pt">Top</th>
-                                    <th style="font-size: 8pt">Susy</th>
-                                    <th style="font-size: 8pt">Exotica</th>
-                                    <th style="font-size: 8pt">B</th>
-                                    <th style="font-size: 8pt">Fwd</th>
-                                    
-                                    <th style="font-size: 8pt">Summary</th>
-                                    <th style="font-size: 8pt">RelMon</th>
-									</tbody>
-								</table>
-							</div>
-						<a href="javascript:showMenu('iPFast')" class="SubCategory"> FastSim</a>
-							<div class="showM" id="iPFast">
-								<table name="infoTable" class="table table-striped table-bordered table-condensed" style="border-color:black;" id='PFast' border="0">
-									<tbody>
-                                    <th style="font-size: 8pt">Release Name</th>
-                                    
-                                    <th style="font-size: 8pt">SMP</th>
-                                    <th style="font-size: 8pt">Higgs</th>
-                                    <th style="font-size: 8pt">Top</th>
-                                    <th style="font-size: 8pt">Susy</th>
-                                    <th style="font-size: 8pt">Exotica</th>
-                                    <th style="font-size: 8pt">B</th>
-                                    <th style="font-size: 8pt">Fwd</th>
-                                    
-                                    <th style="font-size: 8pt">Summary</th>
-                                    <th style="font-size: 8pt">RelMon</th>
-									</tbody>
-								</table>
-							</div>
-						</div>
-				</div>
-				</div>
-			</div>
-			<div class="span3">
-				<div>
-					<label style="font-family:verdana; font-size:18px">List of releases</label>
-					<select id = "releaseList" style="width:200px">
-					<option value="------">------</option>
-					</select>
-					<img src="media/add_icon.png" alt="Add" style="vertical-align: center; margin-bottom:9px;" onclick="selectList($(this).prev().get(0));" />
-					<div><input name = "showAlllLitsBTN" class="btnOK" type="button" value="Show All" onclick="showAllList();"/></div>
-					<label style="font-family:verdana; font-size:18px; margin-top: 15px;">Selected releases:</label>
-					<br>
-					<ul id="list" style="list-style:none;">
-					</ul>
-				</div>
-			</div>
-		</div>
-	</div>
-
-</select> 
-	</body>
-		
-		
-<script type="text/javascript">
-        function showAllList(){
-            selectedArray = []
-            selectedList = document.getElementById('list');
-            $(selectedList).children().each(function(data){
-                selectedArray.push(this.textContent);
-            });
-            select = document.getElementById('releaseList');
-
-           if ( (select.length)-1 != selectedArray.length){ //check if all elements are showed (-1 because list has ----- value)
-                for(var i=0; i< select.children.length;i++){  // if not all then show all searched list elements
-                    select.selectedIndex = i;
-                    if (selectedArray.indexOf(select.options[i].textContent) == -1){
-                        selectList(select);
-                    }
-                }
-           }
-           else{ //if all are shown -> delete them all
-                $(selectedList).children().each(function(){
-                   deleteChildTableRow(this);
-                });
-           }
-        }
-        
-  function selectList(select)
-		{
-		  var option = select.options[select.selectedIndex];
-		  var ul = select.parentNode.getElementsByTagName('ul')[0]; 
-		  var choices = ul.getElementsByTagName('input');
-		  if (option.value == '------')
-			return;
-		  for (var i = 0; i < choices.length; i++)
-			if (choices[i].value == option.value)
-			  return;  
-		  var li = document.createElement('li');
-		  var input = document.createElement('input');
-		  var img = document.createElement('img');
-		  var text = document.createTextNode(option.firstChild.data);
-		  var url = option.firstChild.data + "=addnew&";
-		  window.location.hash = window.location.hash+ url;			
-		  input.type = 'hidden';
-		  input.value = option.value;
-		  
-		  img.src = "media/remove_icon.png";
-		  img.alt="Remove";
-		  img.style.verticalAlign = "bottom";
-		  img.setAttribute('onclick', 'deleteChildTableRow (this.parentNode);');
-
-		  li.appendChild(input);
-		  li.appendChild(img);
-		  li.appendChild(text);
-		  li.setAttribute('name', 'selectedList');
-		  li.style.backgroundColor = "#AFEEEE";
-		  li.style.width = "175px";
-		  
-		  var relN = $(text).text();
-
-			$.ajax({
-					type: 'POST',
-					url: 'mainInformation',
-					data: {catSubCat: "RData", relName: relN },
-					dataType: 'json',
-					success: function (data) {if (data.link) {
-                                                  window.location.href = data.link;
-                                        } else {createdinamictable($(eval("'#" + "RData" +"'")), data, relN, "RData")}},
-					error: function() { alert("Error in data send"); }
-			});
-			$.ajax({
-					type: 'POST',
-					url: 'mainInformation',
-					data: {catSubCat: "HData", relName: relN },
-					dataType: 'json',
-					success: function (data) {if (data.link) {
-                                                  window.location.href = data.link;
-                                        } else {createdinamictable($(eval("'#" + "HData" +"'")), data, relN, "HData")}},
-					error: function() { alert("Error in data send"); }
-			});
-			$.ajax({
-					type: 'POST',
-					url: 'mainInformation',
-					data: {catSubCat: "PData", relName: relN },
-					dataType: 'json',
-					success: function (data) {if (data.link) {
-                                                  window.location.href = data.link;
-                                        } else {createdinamictable($(eval("'#" + "PData" +"'")), data, relN, "PData")}},
-					error: function() { alert("Error in data send"); }
-			});
-			$.ajax({
-					type: 'POST',
-					url: 'mainInformation',
-					data: {catSubCat: "RFull", relName: relN },
-					dataType: 'json',
-					success: function (data) {if (data.link) {
-                                                  window.location.href = data.link;
-                                        } else {createdinamictable($(eval("'#" + "RFull" +"'")), data, relN, "RFull")}},
-					error: function() { alert("Error in data send"); }
-			});
-			$.ajax({
-					type: 'POST',
-					url: 'mainInformation',
-					data: {catSubCat: "HFull", relName: relN },
-					dataType: 'json',	
-					success: function (data) {if (data.link) {
-                                                  window.location.href = data.link;
-                                        } else {createdinamictable($(eval("'#" + "HFull" +"'")), data, relN, "HFull")}},
-					error: function() { alert("Error in data send"); }
-			});
-			$.ajax({
-					type: 'POST',
-					url: 'mainInformation',
-					data: {catSubCat: "PFull", relName: relN },
-					dataType: 'json',
-					success: function (data) {if (data.link) {
-                                                  window.location.href = data.link;
-                                        } else {createdinamictable($(eval("'#" + "PFull" +"'")), data, relN, "PFull")}},
-					error: function() { alert("Error in data send"); }
-			});
-			$.ajax({
-					type: 'POST',
-					url: 'mainInformation',
-					data: {catSubCat: "RFast", relName: relN },
-					dataType: 'json',
-					success: function (data) {if (data.link) {
-                                                  window.location.href = data.link;
-                                        } else {createdinamictable($(eval("'#" + "RFast" +"'")), data, relN, "RFast")}},
-					error: function() { alert("Error in data send"); }
-			});
-			$.ajax({
-					type: 'POST',
-					url: 'mainInformation',
-					data: {catSubCat: "HFast", relName: relN },
-					dataType: 'json',
-					success: function (data) {if (data.link) {
-                                                  window.location.href = data.link;
-                                        } else {createdinamictable($(eval("'#" + "HFast" +"'")), data, relN, "HFast")}},
-					error: function() { alert("Error in data send"); }
-			});
-			$.ajax({
-					type: 'POST',
-					url: 'mainInformation',
-					data: {catSubCat: "PFast", relName: relN },
-					dataType: 'json',
-					success: function (data) {if (data.link) {
-                                                  window.location.href = data.link;
-                                        } else {createdinamictable($(eval("'#" + "PFast" +"'")), data, relN, "PFast")}},
-					error: function() { alert("Error in data send"); }
-			});
-		  
-		  ul.appendChild(li);
-		}
-	</script>
-	
-<script type="text/javascript">
-  function clearSelectList()
-		{
-			list = document.getElementById("list");
-			rdata = document.getElementById("RData");
-			rfull = document.getElementById("RFull");
-			rfast = document.getElementById("RFast");
-			hdata = document.getElementById("HData");
-			hfull = document.getElementById("HFull");
-			hfast = document.getElementById("HFast");
-			pdata = document.getElementById("PData");
-			pfull = document.getElementById("PFull");
-			pfast = document.getElementById("PFast");
-			while ( list.childNodes.length >= 1 )
-			{
-				list.removeChild( list.firstChild );
-			}
-			while (rdata.firstChild.nextSibling.rows[1] != null) 
-			{
-				deleteChildTableRow(rdata.firstChild.nextSibling.rows[1]);
-			}
-			while (hdata.firstChild.nextSibling.rows[1] != null) 
-			{
-				deleteChildTableRow(hdata.firstChild.nextSibling.rows[1]);
-			}
-			while (pdata.firstChild.nextSibling.rows[1] != null) 
-			{
-				deleteChildTableRow(pdata.firstChild.nextSibling.rows[1]);
-			}
-		}
-	</script>
-		
-           <script type="text/javascript">
-            $(function() {
-                // When the insertform is submitted...
-                $("#searchform").submit(function() {
-		      //Clear release info into document
-		      var url = window.location.hash;
-		      var releaseSearch = document.getElementById("releaseName");
-			  releaseSearch = releaseSearch.value;
-		      if(window.location.hash.indexOf("srch") != -1){
-			var tmp1 = window.location.hash.substring(0, url.indexOf("srch="));
-			var tmp2 = window.location.hash.substring(url.indexOf("&&")+2, url.length);
-			window.location.hash = tmp1+tmp2;
-		      }
-			  window.location.hash = window.location.hash+"srch=" +releaseSearch + "&&";
-                    
-                    // post the form values via AJAX...
-                     $("#buttonOk").empty().html('<img src="media/loading.gif" />');
-                      $.ajax({
-  							type: 'POST',
-  							url: 'submit',
-  							data: {releaseName: $("#releaseName").val()},
-							dataType: 'json',
-  							success: function (data) {if (data.link) {
-                                                  					window.location.href = data.link;
-                                        					} else {
-                                        					alert(data.length +" Releases were found. Showing them in List of releases");
-                            								document.getElementById("releaseList").innerHTML = "";
-                            								appendOptionLast(data);
-                            								$("#buttonOk").css('display', 'none');
-										}
-                           			 	},
-                           	error: function() { alert("Error in data send") }
-                           });
-                    return false ;
-                    });
-            });
-
-	</script>
-	
-	<!--Create and perform action with table-->
-
-<script  type="text/javascript">
-function createdinamictable(tbody, data1, releaseName, subCat){
-  var colnumb;
-  var keys;
-  if (subCat == 'RData'|| subCat == 'RFull' || subCat == 'RFast'){
-    colnumb = 17;
-    keys = ["CSC", "TAU", "TRACKING", "BTAG", "JET", "ECAL", "RPC", "PHOTON", "MUON", "MET", "ELECTRON", "TK", "HCAL", "DT", "SUMMARY", "RELMON"];
-  }
-  if (subCat == 'HData'||subCat == 'HFull'||subCat == 'HFast'){
-    colnumb = 18;
-    keys = ["TRACKING", "ELECTRON", "PHOTON", "MUON", "JET", "MET", "BTAG", "TAU", "SMP", "HIGGS", "TOP", "SUSY", "EXOTICA", "B", "FWD", "SUMMARY", "RELMON"];
-  }
-  if (subCat == 'PData'||subCat == 'PFull'||subCat == 'PFast'){
-    colnumb = 10;
-    keys = ["B", "HIGGS", "FWD", "TOP", "SMP", "EXOTICA", "SUSY", "SUMMARY", "RELMON"];
-  }
-  var text;
-  if(tbody == null || tbody.length <1) return;
-  for(var i = 1; i <= 1; i++){
-    var trow = $("<tr>");
-    for(var j = 0; j < colnumb; j++){
-      if(i==1 && j==0){
-      text = releaseName;
-	  $("<td>")
-	    .addClass("tableCell")
-	    .text(releaseName)
-	    .attr('id', releaseName)
-	    .data("col", j)
-	    .data("row",i)
-	    .appendTo(trow);
-	}else if (j == keys.length){
-        if (data1["RelMon"] != null){
-            src = "<a href='"+data1["RelMon"]+"'> <img src='media/arrowlink.gif'></a>"
-        } else{
-            src = "<a ></a>"
-        }
-        $("<td>")
-            .addClass("tableCell")
-            .append(src)
-            .attr('value', keys[j-1])
-            .data("col", j)
-            .data("row",i)
-            .appendTo(trow);  
-    }else if (j == keys.length-1){ //for Info column
-        src = src = "<a rel='tooltip' title='"+ data1["SUMMARY"][1]+"'> <img src='media/help.gif'></a>"
-        $("<td>")
-            .addClass("tableCell")
-            .append(src)
-            .attr('value', keys[j-1])
-            .attr('onclick', 'javascript:showModal("'+subCat+'", this)')
-            .data("col", j)
-            .data("row",i)
-            .appendTo(trow);  
-    }
-	else{
-	  if (! isEmpty(data1)) {
-	  	return;
-	  } else {
-	var headValue = $(tbody)[0];
-	var tmpchild = $(headValue).children()[0];
-	headValue = $(tmpchild).children()[0];
-	var ilgiauchild = $(headValue).children();
-	var key = ilgiauchild[j].textContent.toUpperCase();
-	if (key == "TRACKER"){
-       key = "TK"
-    }
-    if (typeof data1[key] === 'undefined'){
-        text = null;
-        comment = null;
-    }
-    else{
-        text = data1[key][0];
-        comment = data1[key][1];
-    }
-	var src
-	switch(text){
-	case "OK" : 
-          src = '<a href="#" rel="tooltip" title="'+comment +'">'
-          src +=  "<img src='media/choice-yes.gif'/>";
-          src += "</a>"
-	      break;
-	case "FAILURE":
-          src = '<a href="#" rel="tooltip" title="'+comment +'">'
-          src +=  "<img src='media/choice-no.gif'/>";
-          src += "</a>"
-	      break;
-	case "CHANGES EXPECTED":
-          src = '<a href="#" rel="tooltip" title="'+comment +'">'
-          src +=  "<img src='media/target.gif'/>";
-          src += "</a>"
-	      break;
-	case "IN PROGRESS":
-          src = '<a href="#" rel="tooltip" title="'+comment +'">'
-          src +=  "<img src='media/wip.gif'/>";
-          src += "</a>"
-	      break;
-	case "OK TO BE SIGNED-OFF BY THE VALIDATORS":
-          src = '<a href="#" rel="tooltip" title="'+comment +'">'
-          src +=  "<img src='media/thumbs-up.gif'/>";
-          src += "</a>"
-	      break;
-	case "FAILURE TO BE SIGNED-OFF BY THE VALIDATORS":
-          src = '<a href="#" rel="tooltip" title="'+comment +'">'
-          src +=  "<img src='media/thumbs-down.gif'/>";
-          src += "</a>"
-	      break;
-	default:
-	      src = "<img src='media/minus.gif'/>";
-	      break;
-	}
-	  }
-	$("<td>")
-	    .addClass("tableCell")
-	    .append(src)
-	    .attr('value', key)
-	    .attr('onclick', 'javascript:showModal("'+subCat+'", this)')
-	    .data("col", j)
-	    .data("row",i)
-	    .appendTo(trow);  
-	}
-      } 
-      trow.appendTo(tbody);
-    }
-  }
-  
-  function isEmpty(object) {
-  	for(var i in object) {
-  		return true;
-  	}
-  	return false;
-  }
-  
-</script>
-
-<script>
-function linkify(inputText) {
-    var replaceText, replacePattern1, replacePattern2, replacePattern3;
-
-    //URLs starting with http://, https://, or ftp://
-    replacePattern1 = /(\b(https?|ftp):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/gim;
-    replacedText = inputText.replace(replacePattern1, '<a href="$1" target="_blank">$1</a>');
-
-    //URLs starting with "www." (without // before it, or it'd re-link the ones done above).
-    replacePattern2 = /(^|[^\/])(www\.[\S]+(\b|$))/gim;
-    replacedText = replacedText.replace(replacePattern2, '$1<a href="http://$2" target="_blank">$2</a>');
+        <script type="text/javascript" src="/libs/angular-1.0.7.min.js"></script>
+        <script type="text/javascript" src="/libs/underscore-1.5.1.min.js"></script>
     
-    return replacedText.replace(/\n/g,"<br>")  //return formatted links with new line to <br> as HTML <P> tag skips '\n'   
-}
-
-function showModal(subcategory, obj){
-	var statName = obj.value;
-	if (statName == "TK"){
-	    statName = "TRACKER"
-	}else if(statName == "SUMMARY"){
-        statName = "INFO"
-    }
-	document.getElementById('valStatName').textContent = ("name", statName);
-	var rn = $(obj).parent()[0];
-	var releaseName = $(rn).children()[0].textContent;
-	var column = $(obj).data("col");
-	var reiksm = $(obj).parent().parent()[0];
-	var tmpval = $(reiksm).children()[0];
-	var statvalue = $(tmpval).children()[column].textContent;
-	if (statvalue.toUpperCase() == "TRACKER"){
-        statvalue = "TK"
-    }else if(statvalue.toUpperCase() == "INFO"){
-        statvalue = "SUMMARY"
-    }
-	var category;
-	var releaseDetails = ["VALIDATION_STATUS","USER_NAME","LINKS","COMMENTS","META_DATE", "RELEASE_NAME"];
-	switch (subcategory[0]){
-	 case "R":
-	      category = "Reconstruction";
-	      break;
-	 case "H":
-	      category = "HLT";
-	      break;
-	 case "P":
-	      category = "PAGs";
-	      break;
-	 default:
-	      category = "";
-	      break;
-	}
-	var subCat = subcategory.substring(1,subcategory.length);
-	switch(subCat){
-	  case "Full":
-		subCat = subCat + "Sim";
-		break;
-	  case "Fast":
-		subCat=subCat + "Sim";
-	  default:
-		break;
-	}
-	$.ajax({
-	type: 'POST',
-            url: 'getDetailInformation',
-	    data: {catSubCat: subcategory, relName: releaseName, state: statvalue.toUpperCase() },
-	    dataType: 'json',	
-            success: function (data) {if (data.link) {
-                                                  window.location.href = data.link;
-                                        } else {	
-				$('#myModal').bind('show', function () { 
-				document.getElementById('modalHeaderTree').innerHTML = category +"/"+subCat;
-			    	document.getElementById('author').innerHTML = data[releaseDetails[1]];
-			      	document.getElementById('valStat').innerHTML = data[releaseDetails[0]];
-			      	document.getElementById('comments').innerHTML = data[releaseDetails[3]];
-			      	document.getElementById('comdate').innerHTML = data[releaseDetails[4]];
-			      	document.getElementById('modalReleaseName').innerHTML = data[releaseDetails[5]];
-			        linksElem = document.getElementById('links');
-                    linksElem.innerHTML = "";
-                    linksData = data[releaseDetails[2]];
-                if (linksData != null){
-                    linksElem.innerHTML = linkify(linksData);
-                }
-				}),
-				$('#myModal').modal({backdrop: 'static'},'toggle');
-				}},
-            error: function() { alert("Error in data send"); }
-	});
-}
-</script>
-
-<script>
-function showMenu(category){
-	var whichcategory = document.getElementById(category);
-	var url = window.location.hash;
-	if(whichcategory.className == "showM"){
-		whichcategory.className="hideM";
-		if(url.indexOf(category) ==-1){
-		  window.location.hash = window.location.hash + category + "=show&";
-		  } else{
-		    var tmp1 = window.location.hash.substring(0, url.indexOf(category));
-		    var tmp2 = window.location.hash.substring(url.indexOf(category)+category.length+6, url.length);
-		    window.location.hash = tmp1+tmp2;
-		    }
-	}
-	else{
-	whichcategory.className="showM";
-	var tmp1 = window.location.hash.substring(0, url.indexOf(category));
-	var tmp2 = window.location.hash.substring(url.indexOf(category)+category.length+6, url.length);
-	window.location.hash = tmp1+tmp2;
-    }
-}
-</script>
-<script>
-function deleteChildTableRow (obj){
-  var name = obj.textContent;
-  var url = window.location.hash;
-  var tmp1 = window.location.hash.substring(0, url.indexOf(name));
-  var tmp2 = window.location.hash.substring(url.indexOf(name)+name.length+8, url.length);
-  window.location.hash = tmp1+tmp2;
-  obj.parentNode.removeChild(obj);
-
-//delete information of release from all tables;
-  for(i=0; i<9; i++){
-    var row = document.getElementById(obj.textContent);
-    if(row !=null){
-      var elem = row.parentNode; 
-      $(elem).remove();
-    }
-  }	      
-}
-</script>
-
-<script>
-function displayExtraInfo(obj){
-    var stuff= obj.nextElementSibling;
-    stuff.className="hideM";
-}
-function hideExtraInfo(obj){
-    var stuff = $(obj).parent().parent()[0];
-    stuff.className="showM";
-}
-
-function clearModal(obj){
-   var stats = $(obj).parent();  //get modal footer object
-   var stasChild = $(stats).parent()[0]; //get whole modal object
-   stats = $(stasChild).children()[0]; //get modal HEADER object
-   objCpy = stats;
-   var stuff = $(objCpy).parent();
-   var kl = document.getElementById('newStats');
-
-    $(kl).children().each(function(){
-      $(this).remove();
-    });
-
-    document.getElementById('newCatName').value="";
-    document.getElementById('newRelName').value="";
-    document.getElementById('editSubCategories').value=""; 
-    stuff = document.getElementById('editSubCategories');   
-    var dataValues = $(stuff).children();
-    for(i=0; i<dataValues.length; i++){
-      if(dataValues[i].value == "Data"){ //TO DO: clear option to preselect- doesnt clear value?
-	 dataValues[i].setAttribute('selected','selected');
-	i= dataValues.length;
-      }
-    }
-}
-
-function editModalInfo(){
-    var obj = document.getElementById('modalHeaderTree').textContent;
-
-    var statusName = document.getElementById('valStatName').textContent;
-    if (statusName == "TRACKER"){
-        statusName = "TK"
-    }
-    if (statusName == "INFO"){
-        statusName = "SUMMARY"
-    }
-    var category = obj.substring(0, obj.indexOf('/'));
-    var subCategory = obj.substring(obj.indexOf('/')+1, obj.length);
-
-    $.ajax({
-                type: 'POST',
-                url: 'getLogedUserName',
-                data: {},
-		dataType: 'json',
-                success: function(data) {if (data.link) {
-                                                  window.location.href = data.link;
-                                        } else {document.getElementById('modalEditAuthor').textContent = data[1];}},
-                error: function() { alert("Error in data send") }
-          });
-
-    $.ajax({
-		type: 'POST',
-	        url: 'checkValidatorsRights',
-		data: {'cat': category, 'subCategory': subCategory, 'statusKind': statusName},
-		dataType: 'json',
-		success: function (data) {     if (data.link) {
-                                                  window.location.href = data.link;
-                                        } else { if (data == "true") {
-                                                    $('#editModal').bind('show', function (){});
-	                                            $('#editModal').modal('toggle');  
-	                                            setEditModal();
-	                                            elem = document.getElementById('btnEditInfo');
-	                                            elem.setAttribute('data-dismiss', 'modal');
-	                                            return true;
-	                                        } else {
-                                                   alert("You don't have privilegies to edit this field")
-                                                   return true;
-	                                        }
-					}
-                },
-                error: function() { alert("Error in data send") }
-          });
-}
-
-function setEditModal(){
-   var obj = document.getElementById('valStat').textContent;
-   var stuff = document.getElementById('editDropdown');
-   var dataValues = $(stuff).children();
-    for(i=0; i<dataValues.length; i++){
-      if(dataValues[i].text == obj){
-	 dataValues[i].setAttribute('selected','selected');
-	 dataValues[i].value = obj;
-	i= dataValues.length;
-      }
-    }
- 
-   var tmpInfo = document.getElementById('modalReleaseName').innerHTML
-   document.getElementById('modalEditReleaseName').textContent = tmpInfo;
-   document.getElementById('modalEditComments').value = document.getElementById('comments').innerHTML;
-   document.getElementById('modalEditLinks').value = document.getElementById('links').textContent;
-   tmpInfo = document.getElementById('modalHeaderTree').textContent;
-   catSubCat = tmpInfo.split('/')
-   statusKind = document.getElementById('valStatName').textContent;
-   if (catSubCat[0] == 'HLT'){
-      document.getElementById('hn-address').textContent = 'hn-cms-trigger-performance@cern.ch';
-   }
-   else if ((catSubCat[0] == 'Reconstruction') && (statusKind == 'MUON')){
-      document.getElementById('hn-address').textContent = 'hn-cms-muon-object-validation@cern.ch';
-   }
-   else{
-      document.getElementById('hn-address').textContent = 'hn-cms-relval@cern.ch';
-   }
-   document.getElementById('editModalHeaderTree').textContent = tmpInfo;  
-}
-
-function notEmpty(){
-  elem = document.getElementById('editDropdown');
-	if(elem.value.length == 0){
-		alert("Status value MUST be selected");
-		elem.focus(); // set the focus to this input
-		return false;
-	}
-  clearEditModal();
-  elem = document.getElementById('btnSave');
-  elem.setAttribute('data-dismiss', 'modal');
-  return true;
-}
-  function updateTableValues(relName, catSubCatName){
-    var table = document.getElementById(catSubCatName);
-    tbBody = $(table).children(); //get <tbody> tag obj
-    tableId = table.id; //get <table> id name as a string
-    $(tbBody).children().each(function(){
-	  if($(this).children()[0].id == relName)
-		  $(this).remove();
-	  });  
-  $.ajax({
-		type: 'POST',
-		url: 'mainInformation',
-		data: {catSubCat: catSubCatName, relName: relName },
-		success: function (data) {createdinamictable($(eval("'#" + catSubCatName +"'")), data, relName, catSubCatName)},
-		error: function() { alert("Error in data send"); }
-  });
-}
-
-function clearEditModal(){
-  var releasName = document.getElementById('modalEditReleaseName').textContent;
-  var editAuthor = document.getElementById('modalEditAuthor').textContent;
-  var editComments = document.getElementById('modalEditComments').value;
-  var editSatusValue = document.getElementById('editDropdown').value;
-  var editLinks = document.getElementById('modalEditLinks').value;
-  var cat = document.getElementById('modalHeaderTree').textContent;
-  var tmpCategoryName = cat[0];
-  var tmpSubCatVal = cat.substring(cat.indexOf('/')+1,cat.indexOf('/')+5);
-  cat = tmpCategoryName + tmpSubCatVal;  
-  var statusName = document.getElementById('valStatName').textContent;
-  if (statusName == "TRACKER"){
-      statusName = "TK"
-  }
-  if (statusName == "INFO"){
-      statusName = "SUMMARY"
-  }
-  var userName = "";
-  var userFullName = "";
-  $.ajax({
-          type: 'POST',
-          url: 'getLogedUserName',
-          data: {},
-          async: false,
-          dataType: 'json',
-          success: function(data) {
-                    userName = data[0];
-                    userFullName = data[1];
-               },
-          error: function() { alert("Error in data send") }
-         });
-  $.ajax({
-		type: 'POST',
-		url: 'updateReleaseInfo',
-		data: {comentAuthor: userFullName, stateValue: editSatusValue, relName: releasName, newComment: editComments, newLinks: editLinks, catSubCat: cat, statusKind: statusName, userName:userName},
-		dataType: 'json',
-		success: function (data) {if (data.link) {
-                                       window.location.href = data.link;
-                                  } else {alert(data); clearEditModalValues(); updateTableValues(releasName, cat);}},
-		error: function() {alert("Data send failure"); clearEditModalValues();}
-		});
-
-}
-function clearEditModalValues(){
-  document.getElementById('modalEditReleaseName').textContent="";
-  document.getElementById('modalEditAuthor').textContent="";
-  document.getElementById('modalEditComments').value="";
-  document.getElementById('modalEditLinks').value="";
-  document.getElementById('valStatName').textContent="";
-  var stuff = document.getElementById('editDropdown');
-  stuff.value="";
-  var dataValues = $(stuff).children();
-  for(i=0; i<dataValues.length; i++){
-	 dataValues[i].removeAttribute('selected',0); 
-   }
-}
-</script>
-
-<script>
-function appendOptionLast(data){
-  var select = document.getElementById("releaseList");
-  var lngth = select.options.length;
-	
-  if(lngth == 0){
-    select.options[lngth] = new Option('------');
-    select.options[lngth].value = '------';
-  }
-  for(index in data){
-    	select.options[select.options.length] = new Option(data[index], index);
-  }
-}
-
-function addReleaseURL(releaseURLName){
-  var ul = document.getElementById('list'); 
-  var choices = ul.getElementsByTagName('input');
-  var li = document.createElement('li');
-  var input = document.createElement('input');
-  var img = document.createElement('img');
-  var text = document.createTextNode(releaseURLName);
-  input.type = 'hidden';
-  input.value = releaseURLName
-
-  img.src = "media/remove_icon.png";
-  img.alt="Remove";
-  img.style.verticalAlign = "bottom";
-  img.setAttribute('onclick', 'deleteChildTableRow(this.parentNode);');
-
-  li.appendChild(input);
-  li.appendChild(img);
-  li.appendChild(text);
-  li.setAttribute('name', 'selectedList');
-  li.style.backgroundColor = "#AFEEEE";
-  li.style.width = "175px";
-
-  var relN = $(text).text();
-
-  $.ajax({
-		type: 'POST',
-		url: 'mainInformation',
-		data: {catSubCat: "RData", relName: relN },
-		dataType: 'json',
-		success: function (data) {if (data.link) {
-                                                  window.location.href = data.link;
-                                        } else {createdinamictable($(eval("'#" + "RData" +"'")), data, relN, "RData")}},
-		error: function() { alert("Error in data send"); }
-  });
-  $.ajax({
-		type: 'POST',
-		url: 'mainInformation',
-		data: {catSubCat: "HData", relName: relN },
-		dataType: 'json',
-		success: function (data) {if (data.link) {
-                                                  window.location.href = data.link;
-                                        } else {createdinamictable($(eval("'#" + "HData" +"'")), data, relN, "HData")}},
-		error: function() { alert("Error in data send"); }
-  });
-  $.ajax({
-		type: 'POST',
-		url: 'mainInformation',
-		data: {catSubCat: "PData", relName: relN },
-		dataType: 'json',
-		success: function (data) {if (data.link) {
-                                                  window.location.href = data.link;
-                                        } else {createdinamictable($(eval("'#" + "PData" +"'")), data, relN, "PData")}},
-		error: function() { alert("Error in data send"); }
-  });
-  $.ajax({
-		type: 'POST',
-		url: 'mainInformation',
-		data: {catSubCat: "RFull", relName: relN },
-		dataType: 'json',
-		success: function (data) {if (data.link) {
-                                                  window.location.href = data.link;
-                                        } else {createdinamictable($(eval("'#" + "RFull" +"'")), data, relN, "RFull")}},
-		error: function() { alert("Error in data send"); }
-  });
-  $.ajax({
-		type: 'POST',
-		url: 'mainInformation',
-		data: {catSubCat: "HFull", relName: relN },
-		dataType: 'json',
-		success: function (data) {if (data.link) {
-                                                  window.location.href = data.link;
-                                        } else {createdinamictable($(eval("'#" + "HFull" +"'")), data, relN, "HFull")}},
-		error: function() { alert("Error in data send"); }
-  });
-  $.ajax({
-		type: 'POST',
-		url: 'mainInformation',
-		data: {catSubCat: "PFull", relName: relN },
-		dataType: 'json',
-		success: function (data) {if (data.link) {
-                                                  window.location.href = data.link;
-                                        } else {createdinamictable($(eval("'#" + "PFull" +"'")), data, relN, "PFull")}},
-		error: function() { alert("Error in data send"); }
-  });
-  $.ajax({
-		type: 'POST',
-		url: 'mainInformation',
-		data: {catSubCat: "RFast", relName: relN },
-		dataType: 'json',
-		success: function (data) {if (data.link) {
-                                                  window.location.href = data.link;
-                                        } else {createdinamictable($(eval("'#" + "RFast" +"'")), data, relN, "RFast")}},
-		error: function() { alert("Error in data send"); }
-  });
-  $.ajax({
-		type: 'POST',
-		url: 'mainInformation',
-		data: {catSubCat: "HFast", relName: relN },
-		dataType: 'json',
-		success: function (data) {if (data.link) {
-                                                  window.location.href = data.link;
-                                        } else {createdinamictable($(eval("'#" + "HFast" +"'")), data, relN, "HFast")}},
-		error: function() { alert("Error in data send"); }
-  });
-  $.ajax({
-		type: 'POST',
-		url: 'mainInformation',
-		data: {catSubCat: "PFast", relName: relN },
-		dataType: 'json',
-		success: function (data) {if (data.link) {
-                                                  window.location.href = data.link;
-                                        } else {createdinamictable($(eval("'#" + "PFast" +"'")), data, relN, "PFast")}},
-		error: function() { alert("Error in data send"); }
-  });
-		  
-  ul.appendChild(li);
-}
-
-function getCookie(c_name)
-{
-var i,x,y,ARRcookies=document.cookie.split(";");
-for (i=0;i<ARRcookies.length;i++)
-{
- x=ARRcookies[i].substr(0,ARRcookies[i].indexOf("="));
- y=ARRcookies[i].substr(ARRcookies[i].indexOf("=")+1);
- x=x.replace(/^\s+|\s+$/g,"");
- if (x==c_name)
- {
- return unescape(y);
- }
- }
-}
-function createCookie(name,value,days) {
-    if (days) {
-        var date = new Date();
-        date.setTime(date.getTime()+(days*24*60*60*1000));
-        var expires = "; expires="+date.toGMTString();
-    }
-    else var expires = "";
-    document.cookie = name+"="+value+expires+"; path=/";
-}
-
-function eraseCookie(name) {
-    createCookie(name,"",-1);
-}
-
-$(document).ready(function(){
-  var coockieValue = getCookie("redirectionLink");
-  if (coockieValue !=null){
-  window.location.hash = window.location.hash + coockieValue.substring(1,coockieValue.length-1);
-  }
-  eraseCookie("redirectionLink");
-  var i, variables = window.location.hash.substring(1).split('&');
-  var tmp = window.location.hash.substring(1);
-  tmp = tmp.split('&');
-
-  if (variables.length > 1) {
-      for (i = 0; i < variables.length; i++) {
-	  keyValuePair = variables[i].split('=');
-	    if(keyValuePair[1] == 'show'){
-	      showMenuURL(keyValuePair[0]);
-	    }
-	    if(keyValuePair[1] == 'addnew'){
-		addReleaseURL(keyValuePair[0]);
-	    }
-	    if(keyValuePair[0] == 'srch'){
-	      document.getElementById('releaseName').value = keyValuePair[1];
-                      $.ajax({
-  					type: 'POST',
-  					url: 'submit',
-  					data: {releaseName: keyValuePair[1]},
-					dataType: 'json',
-  					success: function (data) { if (data.link) {
-                                                 			 window.location.href = data.link;
-                                      	  			} else {
-                        						document.getElementById("releaseList").innerHTML = "";
-                        						appendOptionLast(data);
-								}
-                        		 },
-					error: function() { alert("Error in data send") }
-                      });
-	  }
-
-      }
-  }
-});
-
-function showMenuURL(category){
-	var whichcategory = document.getElementById(category);
-	if(whichcategory.className == "showM"){
-		whichcategory.className="hideM";
-	}
-	else{
-	whichcategory.className="showM";
-    }
-}
-function logoutUser(){
-    window.location.replace('https://login.cern.ch/adfs/ls/?wa=wsignout1.0');
-}
-function showRecoMenu(){
-    if (document.getElementById('RECO').className == 'hideM'){
-        if (document.getElementById('iRData').className == 'hideM'){
-            if (document.getElementById('iRFull').className == 'hideM'){
-                if (document.getElementById('iRFast').className == 'hideM'){
-                    showMenu('RECO');
-                    showMenu('iRData');
-                    showMenu('iRFast');
-                    showMenu('iRFull');
-                    return false;
-                }
-            }
-        }   
-    }
-    if (document.getElementById('RECO').className == 'showM'){
-    showMenu('RECO')
-    }
-    if (document.getElementById('iRData').className == 'showM'){
-    showMenu('iRData')
-    }
-    if (document.getElementById('iRFull').className == 'showM'){
-    showMenu('iRFull')
-    }
-    if (document.getElementById('iRFast').className == 'showM'){
-    showMenu('iRFast')
-    }
-    return true;
-}
-function showHLTMenu(){
-    if (document.getElementById('HLT').className == 'hideM'){
-        if (document.getElementById('iHData').className == 'hideM'){
-            if (document.getElementById('iHFull').className == 'hideM'){
-                if (document.getElementById('iHFast').className == 'hideM'){
-                    showMenu('HLT');
-                    showMenu('iHData');
-                    showMenu('iHFast');
-                    showMenu('iHFull');
-                    return false;
-                }
-            }
-        }   
-    }
-    if (document.getElementById('HLT').className == 'showM'){
-    showMenu('HLT')
-    }
-    if (document.getElementById('iHData').className == 'showM'){
-    showMenu('iHData')
-    }
-    if (document.getElementById('iHFull').className == 'showM'){
-    showMenu('iHFull')
-    }
-    if (document.getElementById('iHFast').className == 'showM'){
-    showMenu('iHFast')
-    }
-    return true;
-}
-function showPAGSMenu(){
-    if (document.getElementById('PAGs').className == 'hideM'){
-        if (document.getElementById('iPData').className == 'hideM'){
-            if (document.getElementById('iPFull').className == 'hideM'){
-                if (document.getElementById('iPFast').className == 'hideM'){
-                    showMenu('PAGs');
-                    showMenu('iPData');
-                    showMenu('iPFast');
-                    showMenu('iPFull');
-                    return false;
-                }
-            }
-        }   
-    }
-    if (document.getElementById('PAGs').className == 'showM'){
-    showMenu('PAGs')
-    }
-    if (document.getElementById('iPData').className == 'showM'){
-    showMenu('iPData')
-    }
-    if (document.getElementById('iPFull').className == 'showM'){
-    showMenu('iPFull')
-    }
-    if (document.getElementById('iPFast').className == 'showM'){
-    showMenu('iPFast')
-    }
-    return true;
-}
-function showAllMenus(){
-    if (document.getElementById('RECO').className == 'hideM'){
-        if (document.getElementById('iRData').className == 'hideM'){
-            if (document.getElementById('iRFull').className == 'hideM'){
-                if (document.getElementById('iRFast').className == 'hideM'){
-      if (document.getElementById('HLT').className == 'hideM'){
-        if (document.getElementById('iHData').className == 'hideM'){
-            if (document.getElementById('iHFull').className == 'hideM'){
-                if (document.getElementById('iHFast').className == 'hideM'){
-      if (document.getElementById('PAGs').className == 'hideM'){
-        if (document.getElementById('iPData').className == 'hideM'){
-            if (document.getElementById('iPFull').className == 'hideM'){
-                if (document.getElementById('iPFast').className == 'hideM'){
-                    showMenu('RECO');
-                    showMenu('iRData');
-                    showMenu('iRFast');
-                    showMenu('iRFull');
-                                        showMenu('HLT');
-                    showMenu('iHData');
-                    showMenu('iHFast');
-                    showMenu('iHFull');
-                                        showMenu('PAGs');
-                    showMenu('iPData');
-                    showMenu('iPFast');
-                    showMenu('iPFull');
-                    return false;
-                }
-              }
-           }
-        }
-                 }
-              }
-           }
-        }
-                 }
-              }
-           }
-        }
-    if (document.getElementById('RECO').className == 'showM'){
-    showMenu('RECO')
-    }
-    if (document.getElementById('iRData').className == 'showM'){
-    showMenu('iRData')
-    }
-    if (document.getElementById('iRFull').className == 'showM'){
-    showMenu('iRFull')
-    }
-    if (document.getElementById('iRFast').className == 'showM'){
-    showMenu('iRFast')
-    }
-        if (document.getElementById('HLT').className == 'showM'){
-    showMenu('HLT')
-    }
-    if (document.getElementById('iHData').className == 'showM'){
-    showMenu('iHData')
-    }
-    if (document.getElementById('iHFull').className == 'showM'){
-    showMenu('iHFull')
-    }
-    if (document.getElementById('iHFast').className == 'showM'){
-    showMenu('iHFast')
-    }
-        if (document.getElementById('PAGs').className == 'showM'){
-    showMenu('PAGs')
-    }
-    if (document.getElementById('iPData').className == 'showM'){
-    showMenu('iPData')
-    }
-    if (document.getElementById('iPFull').className == 'showM'){
-    showMenu('iPFull')
-    }
-    if (document.getElementById('iPFast').className == 'showM'){
-    showMenu('iPFast')
-    }
-    return true;
-}
-</script>
+    <script type="text/javascript" src="media/ui-bootstrap-custom-0.1.0-SNAPSHOT.min.js"></script>
+    <script type="text/javascript" src="media/validator_controller.js"></script>
+    <link href="media/menu.css" rel="stylesheet">
+  </head>
+  <body ng-controller="tableController" style="background-color: #ADD8E6">
+    <div class="container">
+      <div class="row">
+        <div class="span11">
+          <h1  id="title" style="text-align:center; font-family:verdana">ValDb: The PdmV Validation DB</h1>
+        </div>
+        <div class="span1">
+          <span id='userNameButton'>%USERNAME</span>
+          <input name = "logOutBTN" class="btn" type="button" value="Logout" onclick="logoutUser();"/>
+        </div>
+      </div>
+    </div>
+    <div class="container">
+      <div class="row">
+        <div class="span9">
+          <div>
+            <label style="font-family:verdana; font-size:18px"><br></label>
+            <form class="form-inline">
+              <label for="releaseName" style="display:inline; font-family:verdana; font-size:18px">Select one release</label>
+              <input type="text" ng-model="searchableName"/>
+              <button class="btn" ng-click="getReleaseList()">OK</button>
+              <img ng-show="pendingRequests" ng-src="https://twiki.cern.ch/twiki/pub/TWiki/TWikiDocGraphics/processing-bg.gif"></img>
+              <span ng-show="showSearchLength">
+                Releases found: <b>{{releaseList.length}}</b>
+              </span>
+            </form>
+          </div>
+          <hr align="left" width="100%" size="4" style="background-color:black">
+          <div>
+            <label style="font-family:verdana; font-size:18px; display:inline">Validation Tables</label>
+            <br>
+          </div>
+          <div>
+            <h3 id="legend" style="text-align:left; font-family:verdana">Legend</h3>
+            <ul>
+              <li> 
+                <img width="16" alt="target" align="top" src="media/target.gif" height="16" border="0" /> : Changes are expected;
+              </li> 
+              <li> 
+                <img width="16" alt="choice-no" align="top" src="media/choice-no.gif" height="16" border="0" /> : Failure;
+              </li> 
+              <li> 
+                <img width="16" alt="choice-yes" align="top" src="media/choice-yes.gif" height="16" border="0" /> : OK;
+              </li> 
+              <li> 
+                <img width="16" alt="wip" align="top" src="media/wip.gif" height="16" border="0" /> : In progress;
+              </li> 
+              <li> 
+                <img width="16" alt="minus" align="top" src="media/minus.gif" height="16" border="0" /> : Not yet done;
+              </li> 
+              <li> 
+                <img width="16" alt="stop" align="top" src="media/thumbs-up.gif" height="16" border="0" /> : OK - to be signed-off by the validators;
+              </li>
+              <li> 
+                <img width="16" alt="stop" align="top" src="media/thumbs-down.gif" height="16" border="0" /> : Failure - to be signed-off by the validators;
+              </li>
+            </ul>
+          </div> <!--end of Legend <div>-->
+          <button type="btn btn-mini" ng-click="showAllMenus();">Show All </button>
+          <div ng-repeat="category in orderedMenu">
+            {{category.priority}}
+            <table border="0">
+              <tbody>
+                <tr>
+                  <td style="margin:0; padding:0;">
+                    <a class="Group" ng-click="showSubCategory(menus[category].name);" ng-href="#">{{menus[category].name}}</a>
+                  </td>
+                  <td style="margin:0; padding:0;">
+                    <button type="btn btn-mini" ng-click="showAllSubMenus(menus[category].name);">Show All</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table> 
+             <div ng-repeat="subcategory in menus[category]['subcats']" ng-controller="ModalCtrl">
+               <!--     MODAL -->
+                  <div modal="shouldBeOpen" close="close()" style="display: block;max-height:500px;"> <!--hidden modal template-->
+                    <div class="modal-header">
+                      <h2>Release: <text>{{details['RELEASE_NAME']}}</text></h2>
+                      <h4><text>{{catSubCat}}</text></h4>
+                      <a ng-repeat="version in details['VERSIONS']" rel="tooltip" title="{{$index}}" ng-click="selectVersion(version);" ng-href="#">
+                        <!-- <i class="icon-asterisk"></i> -->
+                        rev-{{$index}}
+                        <i class="icon-arrow-right" ng-hide="underscore.last(details['VERSIONS']) == version"></i>
+                      </a>
+                    </div>  <!--end of modal header-->
+                    <div class="modal-body">
+                      <h4>Author: <text>{{details[''+selected_version+'']['USER_NAME']}}</text></h4>
+                      <h4>Validation Status: <text> {{details[''+selected_version+'']['VALIDATION_STATUS']}}</text> </h4>
+                      <p style="margin-bottom: 0px;">Comments:</p>
+                      <p ng-bind-html-unsafe="details[''+selected_version+'']['COMMENTS'] | newlines"></p>
+                      <p style="margin-bottom: 0px;">Links:</p>
+                      <p ng-bind-html-unsafe="details[''+selected_version+'']['LINKS'] | linkify"></p>
+                    </div> <!--end of modal body-->
+                    <div class="modal-footer">
+                      <div style="text-align:right;">Date: <text>{{details[''+selected_version+'']['META_DATE']}}</text></div>
+                      <button class="btn" ng-click="checkUserName(menus[category].name,subcategory.name)">Edit Information</button>
+                      <button class="btn btn-primary" ng-click="close()">Close</button>
+                    </div> <!--end of modal footer-->
+                  </div>
+                  <edit-modal release="details['RELEASE_NAME']" catSubCat="catSubCat"></edit-modal>
+               <!--     END OF MODAL             -->
+               <span ng-show="menus[category]['showSubCat']">
+                 <a class="SubCategory" ng-click="showTable(menus[category].name, subcategory.name);" ng-href="#">{{subcategory.name}}</a>
+                 <table class="table table-striped table-bordered table-condensed" style="border-color:black;" border="0" ng-show="subcategory.show">
+                   <tbody>
+                     <tr>
+                       <th ng-repeat="header in Headers[menus[category].name]">{{header["name"]}}</th>
+                     </tr>
+                     <tr ng-repeat="release in shortInfo" ng-show="underscore.keys(release[menus[category].name][subcategory.name]).length > 0">
+                       <td ng-repeat="header in Headers[menus[category].name]" ng-switch on='header["name"]'>
+                         <div ng-switch-when="Release Name">
+                           {{release["RELEASE NAME"]}}
+                         </div>
+                         <div ng-switch-when="RelMon">
+                           <span ng-switch on="release[menus[category].name][subcategory.name][header['db_name']] != undefined">
+                             <a ng-href="{{release[menus[category].name][subcategory.name][header['db_name']]}}" target="_blank" ng-switch-when="true">
+                               <img ng-src="{{status_icons['RelMon']}}">
+                             </a>
+                             <a ng-switch-when="false"></a>
+                           </span>
+                         </div>
+                         <div ng-switch-when="Info" ng-click="openDetailModal(release['RELEASE NAME'],menus[category].name,subcategory.name,header['db_name'].toUpperCase(),header['name'],header['db_name'])">
+                           <a ng-href="{{release[menus[category].name][subcategory.name][header['db_name']]}}" target="_blank">
+                             <img ng-src="{{status_icons['Info']}}">
+                           </a>
+                         </div>
+                         <div ng-switch-default ng-click="openDetailModal(release['RELEASE NAME'],menus[category].name,subcategory.name,header['db_name'].toUpperCase(),header['name'],header['db_name'])">
+                           <a ng-switch on = "underscore.isUndefined(release[menus[category].name][subcategory.name][header['db_name'].toUpperCase()]['status'])">
+                             <img ng-switch-when="true" ng-src="{{status_icons['NOT YET DONE']}}" rel="tooltip" title='NOT YET DONE'></img>
+                             <img ng-switch-when="false" ng-src='{{status_icons[release[menus[category].name][subcategory.name][header["db_name"].toUpperCase()]["status"]]}}' rel="tooltip"
+                                title='{{release[menus[category].name][subcategory.name][header["db_name"].toUpperCase()]["comments"]}}'></img>
+                           </a>
+                         </div>                       
+                       </td>
+                     </tr>
+                   </tbody>
+                 </table>
+               </span>
+            </div>
+          </div>
+          <add-release></add-release>
+          <search-user></search-user>
+          <remove-user></remove-user>
+          <add-user></add-user>
+        </div> <!--end of span9-->
+        <div class="span3">
+          <div>
+            <label style="font-family:verdana; font-size:18px">List of releases</label>
+            <span class="nullable">
+              <select ng-model="selectedRelease" ng-options="value for value in releaseList">
+                <option value="">------</option>
+              </select>
+            </span>
+            <img src="media/add_icon.png" alt="Add" style="vertical-align: center; margin-bottom:9px;" ng-click="addSelectedRelease();"/>
+            <div><input name = "showAlllLitsBTN" class="btnOK" type="button" value="Show All" ng-click="addAllReleases();"/></div>
+            <label style="font-family:verdana; font-size:18px; margin-top: 15px;">Selected releases:</label>
+            <br>
+            <ul id="list" style="list-style:none;">
+             <li ng-repeat="elem in shortInfoReleases">
+               <img src="media/remove_icon.png" alt="Remove" style="vertical-align: bottom;" ng-click="removeReleaseFromList(elem);">{{elem}}
+             </li>
+            </ul>
+          </div>
+          <!-- <div align="center" ><input class="btn" type="button" value="Get History" align="right" style="width:125px;" onclick="getHistory();"/></div> -->
+          <!-- <div align="center" ><a class="btn" style="width:125px; padding-left: 0px; padding-right: 0px;" ng-href="showAllHistory">Get All History</a></div> -->
+          <!-- <div align="center" ><input class="btn" type="button" value="Get User info" align="right" style="width:125px;" ng-click="getUserList();"/></div> -->
+          <!-- <div align="center" ><input class="btn" type="button" value="Add User" align="right" style="width:125px;" ng-click="openAddUser();"/></div> -->
+          <!-- <div align="center" ><input class="btn" type="button" value="Remove User" align="right" style="width:125px;" ng-click="openRemoveUser();"/></div> -->
+        </div> <!--end of span3-->
+      </div> <!--end of row-->
+    </div> <!--end of container-->
+  </body>
 </html>

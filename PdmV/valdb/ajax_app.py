@@ -12,7 +12,7 @@ from email.Utils import COMMASPACE, formatdate
 from jinja2 import Template
 from sqlalchemy import create_engine
 import urllib
-
+import logging
 import service
 
 
@@ -79,14 +79,13 @@ class API(object):
             relmon_url = ""
         defaultKeys = []
         mailId = self.parent_obj.getMsgId()
-        #print catSubCatList
         for cat in catSubCatList: #in case user specified a comma separated list for releases CatSubCats
             if cat[0].upper() == 'R': #get subCategory collumn list
                 defaultKeys = ["CSC", "TAU", "TRACKING", "BTAG", "JET", "ECAL", "RPC", "PHOTON", "MUON", "MET", "ELECTRON", "TK", "HCAL", "DT", "SUMMARY"]
             elif cat[0].upper() == 'H':
                 defaultKeys = ["TAU", "JET", "HIGGS", "TOP", "MUON", "PHOTON", "MET", "ELECTRON", "EXOTICA", "SUSY", "SMP", "FWD", "BTAG", "TRACKING", "B", "SUMMARY"]
             elif cat[0].upper() == 'P':
-                defaultKeys = ["B", "HIGGS", "FWD", "TOP", "SMP", "EXOTICA", "SUSY", "SUMMARY"]
+                defaultKeys = ["B2G","B", "HIGGS", "FWD", "TOP", "SMP", "EXOTICA", "SUSY", "SUMMARY"]
             subCat = self.parent_obj.configuration[cat]
             StatList = []
             StatValList = []
@@ -111,8 +110,10 @@ class API(object):
             msgText = "New release: "+release_name +" was added by "+self.parent_obj.get_username()+". Please check it!"
           ##sendMail(self, messageText, emailSubject, org_message_ID, new_message_ID, username=False, **kwargs):
             self.parent_obj.sendMail(msgText, msgSubject, "", mailId, "vlimant") ##send emails from Jean-Roch as for now (its Robot uses api)
+            logging.info("API: added release %s successfuly by", release_name, self.get_fullname())
             return "Added successfuly"
         else:
+            logging.error("API: error adding release %s by %s", release_name, self.get_fullname())
             return returninfo[0] #Failure in adding -> return DB interface output
 
 class AjaxApp(object):
@@ -132,7 +133,7 @@ class AjaxApp(object):
         self.api = API(self)
 
     MAILING_LIST = ["hn-cms-relval@cern.ch","hn-cms-trigger-performance@cern.ch","hn-cms-muon-object-validation@cern.ch"]
-    #MAILING_LIST = ["anorkus@cern.ch","vlimant@cern.ch","franzoni @cern.ch"]#, "hn-cms-hnTest@cern.ch"] #testing mailing list
+    #MAILING_LIST = ["anorkus@cern.ch","vlimant@cern.ch","franzoni@cern.ch"]#, "hn-cms-hnTest@cern.ch"] #testing mailing list
     VALIDATION_STATUS = "VALIDATION_STATUS"
     COMMENTS = "COMMENTS"
     LINKS = "LINKS"
@@ -164,7 +165,6 @@ class AjaxApp(object):
 
         if checkAdmin(username, Session):
             return self.loadPage('indexAdmin')
-#            return self.loadPage('indexAdmin_testAngular')
         elif checkValidator(username, Session):
             return self.loadPage('indexValidator')
         else:
@@ -200,19 +200,23 @@ class AjaxApp(object):
         return simplejson.dumps(info)
 
     @cherrypy.expose
-    def checkValidatorsRights (self, cat, subCategory, statusKind, **kwargs):
+    def checkValidatorsRights (self):
         if not self.check_validator():
             raise cherrypy.InternalRedirect('/permissionErrorMessage')
+        cl = cherrypy.request.headers['Content-Length']
+        rawbody = cherrypy.request.body.read(int(cl))
+        request = json.loads(rawbody)
         cherrypy.response.headers['Content-Type'] = 'application/json'
-        return simplejson.dumps([checkValidatorRights(cat, subCategory,  statusKind, self.get_username(), Session)])
+        return simplejson.dumps([checkValidatorRights(request["cat"], request["subCategory"],  request["statusKind"], self.get_username(), Session)])
 
     @cherrypy.expose
-    def submit(self, releaseName):
-        #cl = cherrypy.request.headers['Content-Length']
-        #rawbody = cherrypy.request.body.read(int(cl))
-        #request = json.loads(rawbody)
-        #releaseName = request["releaseName"]
+    def submit(self):
+        cl = cherrypy.request.headers['Content-Length']
+        rawbody = cherrypy.request.body.read(int(cl))
+        request = json.loads(rawbody)
+        releaseName = request["releaseName"]
         cherrypy.response.headers['Content-Type'] = 'application/json'
+        logging.info("%s searching form: %s",self.get_fullname(), releaseName)
         return search(releaseName, Session)
         
     @cherrypy.expose
@@ -222,19 +226,26 @@ class AjaxApp(object):
         request = json.loads(rawbody)
         releaseName = request["releaseName"]
         cherrypy.response.headers['Content-Type'] = 'application/json'
-        #print testFullReleaseInfo(releaseName, Session)
+        logging.info("%s searching details for: %s",self.get_fullname(), releaseName)
         return testFullReleaseInfo(releaseName, Session)
 
     @cherrypy.expose
+    def FullDetails(self):
+        cl = cherrypy.request.headers['Content-Length']
+        rawbody = cherrypy.request.body.read(int(cl))
+        request = json.loads(rawbody)
+        catSubCat = request["category"][0]+request["subCategory"][:4]
+        logging.info("%s searching for details. release: %s column: %s",self.get_fullname(), request["release"], request["column"])
+        return self.getDetailInformation(catSubCat, request["release"], request["column"])
+
     def getDetailInformation(self, catSubCat, relName, state, **kwargs):
        cherrypy.response.headers['Content-Type'] = 'application/json'
        cat = None
        subCat = None
        configuration = self.configuration
        cat, subCat = configuration.get(catSubCat, (None,None))
-       return getReleaseDetails(cat, subCat, relName, state, Session)
+       return getReleaseFullDetails(cat, subCat, relName, state, Session)
 
-    @cherrypy.expose
     def addNewRelease(self, sendMail, categ, subCat, relName, statusNames, statusValues, statComments, statAuthors, statLinks, mailID, relMonURL, **kwargs):
         if not (self.check_admin() or self.check_validator()):
             raise cherrypy.InternalRedirect('/permissionErrorMessage')
@@ -271,20 +282,104 @@ class AjaxApp(object):
                # self.sendMailOnChanges(msgText, msgSubject, None, mime_MSG_id)
                 info = "New release added successfuly"
                 cherrypy.response.headers['Content-Type'] = 'application/json'
+                logging.info("%s",info)
                 return simplejson.dumps([info])
             else:
                 cherrypy.response.headers['Content-Type'] = 'application/json'
                 info = 'Error. In parameters settings'
+                logging.error("Error adding new release. %s", info)
                 return simplejson.dumps([returnedInformation])
         else:
             cherrypy.response.headers['Content-Type'] = 'application/json'
             info = "Error. Information is damaged"
+            logging.error("Error adding new release. %s", info)
             return simplejson.dumps([info])
 
     @cherrypy.expose
-    def updateReleaseInfo(self, comentAuthor, stateValue, relName, newComment, newLinks, catSubCat, statusKind, userName, **kwargs):
+    def addNewReleaseUpdated(self):
+        if not (self.check_admin()):
+            raise cherrypy.InternalRedirect('/permissionErrorMessage')
+        cl = cherrypy.request.headers['Content-Length']
+        rawbody = cherrypy.request.body.read(int(cl))
+        request = json.loads(rawbody)
+        releaseName = request["release_name"]
+        relmon_url = request["relmon_url"]
+        categories = request["categories"]
+        subcategories = request["subcats"]
+        msgIDs = self.getMultipleMsgId()
+        messageID_to_inform = ["","",""]
+        reco_default_keys = ["CSC", "TAU", "TRACKING", "BTAG", "JET", "ECAL", "RPC", "PHOTON", "MUON", "MET", "ELECTRON", "TK", "HCAL", "DT", "SUMMARY"]
+        hlt_default_keys = ["TAU", "JET", "HIGGS", "TOP", "MUON", "PHOTON", "MET", "ELECTRON", "EXOTICA", "SUSY", "SMP", "FWD", "BTAG", "TRACKING", "B", "SUMMARY"]
+        pags_default_keys = ["B2G", "B", "HIGGS", "FWD", "TOP", "SMP", "EXOTICA", "SUSY", "SUMMARY"]
+        msgSubject = "New release %s added" %(releaseName)
+        success = []
+        for cat in categories:
+            if cat.upper() == "PAGS":
+                default_keys = pags_default_keys
+                mime_MSG_id = msgIDs[0]
+                messageID_to_inform[0] = msgIDs[0]
+            elif cat.upper() == "HLT":
+                default_keys = hlt_default_keys
+                mime_MSG_id = msgIDs[0] + "," +msgIDs[1]
+                messageID_to_inform[0] = msgIDs[0]
+                messageID_to_inform[1] = msgIDs[1]
+            elif  cat.upper() == "RECONSTRUCTION":
+                default_keys = reco_default_keys
+                mime_MSG_id = msgIDs[0] + "," +msgIDs[2]
+                messageID_to_inform[0] = msgIDs[0]
+                messageID_to_inform[2] = msgIDs[2]
+            else:
+                cherrypy.response.headers['Content-Type'] = 'application/json'
+                return simplejson.dumps(["Problems while processing default columns"])
+
+            for subCat in subcategories:
+                tmp_dict = {}
+                for column in default_keys:
+                    tmp_dict[column]={}
+                    tmp_dict[column]["VALIDATION_STATUS"] = "NOT YET DONE"
+                    tmp_dict[column]["COMMENTS"] = ""
+                    tmp_dict[column]["LINKS"] = ""
+                    tmp_dict[column]["USER_NAME"] = ""
+                    if cat.upper() == "RECONSTRUCTION":
+                        if column.upper() == "MUON" :
+                            tmp_dict[column][MESSAGE_ID] = mime_MSG_id #if column in RECO/MUON -> make messages for 2 HyperNews
+                        else:
+                            tmp_dict[column][MESSAGE_ID] = mime_MSG_id.split(',')[0] #else make the messageId only for RelVals
+                    elif cat.upper() == "HLT": 
+                        tmp_dict[column][MESSAGE_ID] = mime_MSG_id # for HLT all messageIds are 2: RelVals and Trigger
+                    else:
+                        tmp_dict[column][MESSAGE_ID] = mime_MSG_id.split(',')[0] #by default make only 1 messageID for RelVal HyperNews
+                    tmp_dict[column]['EMAIL_SUBJECT'] = msgSubject.encode('ascii','ignore')
+                    tmp_dict[column]['RELMON_URL'] = relmon_url.encode('ascii','ignore')
+                returnedInformation = newRelease(cat, subCat, releaseName, simplejson.dumps(tmp_dict), Session)
+                if returnedInformation == "True":
+                  success.append("%s and %s success" %(cat,subCat))
+                else:
+                  cherrypy.response.headers['Content-Type'] = 'application/json'
+                  info = 'Error. While adding new release in %s and %s' %(cat,subCat)
+                  logging.error("%s. %s",self.get_fullname(), info)
+                  return simplejson.dumps(returnedInformation)
+        msgText = "New release: %s was added by %s. Please check it!"%(releaseName, self.get_fullname())
+        messageID_to_inform = filter(lambda x:x!='',messageID_to_inform)
+        self.sendMail(msgText, msgSubject, "", ','.join(messageID_to_inform), self.get_username())
+        logging.info("%s", msgText)
+        return json.dumps({"results": True, "data":"New release %s  was added"%(releaseName)})
+
+    @cherrypy.expose
+    def updateReleaseInfo(self):
         if not (self.check_admin() or self.check_validator()):
             raise cherrypy.InternalRedirect('/permissionErrorMessage')
+        cl = cherrypy.request.headers['Content-Length']
+        rawbody = cherrypy.request.body.read(int(cl))
+        request = json.loads(rawbody)
+        comentAuthor = request["comentAuthor"]
+        stateValue = request["stateValue"]
+        relName = request["relName"]
+        newComment = request["newComment"]
+        newLinks = request["newLinks"]
+        catSubCat = request["catSubCat"]
+        statusKind = request["statusKind"]
+        userName = request["userName"]
         cat = None
         subCat = None
         returnedInformation = None
@@ -302,7 +397,7 @@ class AjaxApp(object):
         else:
             emailCat = cat
         if statusKind == "TK":
-            msgSubject = ">TRACKER< "+ emailCat + " " + subCat + "< " + returnedStatusValueOld[2]  ##make a message subject with statuskin/subcat mentioned in case of Tracker subCat
+            msgSubject = ">TRACKER "+ emailCat + " " + subCat + "< " + returnedStatusValueOld[2]  ##make a message subject with statuskin/subcat mentioned in case of Tracker subCat
         else:
             msgSubject = ">"+statusKind + " " + emailCat + " " + subCat + "< " + returnedStatusValueOld[2]  ##make a message subject with statuskin/subcat mentioned in case of other subCats
         returnedInformation = changeStatus(cat, subCat, relName, statusKind,
@@ -325,7 +420,7 @@ Links: %s
             if (cat.upper() == 'HLT'): #if the category is HLT  -> send email to trigger hn and a reply to orginal with text to diff hn
                 hlt_msg_id = email.utils.make_msgid()
                 hn_address = 'hn-cms-trigger-performance@cern.ch'
-                #hn_address = 'hn-cms-hnTest@cern.ch'
+                hn_address = 'hn-cms-hnTest@cern.ch'
                 #hn_address = 'vlimant@cern.ch'  # Testing adresses
                 if len(returnedStatusValueOld[1].split(",")) == 1:
                     self.sendMailOnChanges(msgText, msgSubject, None, hlt_msg_id, userName, hn_address) #send message to other HN adress without threading
@@ -366,18 +461,36 @@ The full details was sent to %s find it there""" %(relName.upper(), cat.upper(),
                 self.sendMailOnChanges(msgText, msgSubject, returnedStatusValueOld[1], newIDs[0], userName) 
             info = "Release information updated successfuly"
             cherrypy.response.headers['Content-Type'] = 'application/json'
+            logging.info("%s %s %s", self.get_fullname(), relName, info)
             return simplejson.dumps([info])
         else:
+            logging.error("%s %s %s", self.get_fullname(), relName, returnedInformation)
             cherrypy.response.headers['Content-Type'] = 'application/json'
             return simplejson.dumps([returnedInformation])
 
     @cherrypy.expose
-    def addNewUser (self, user_Name, userTypeValue, userEmail, usrRDataStatList, usrRFastStatList, usrRFullStatList, usrHDataStatList, usrHFastStatList, usrHFullStatList, usrPDataStatList, usrPFastStatList, usrPFullStatList, **kwargs):
+    def addNewUser (self):
         if not self.check_admin():
             raise cherrypy.InternalRedirect('/permissionErrorMessage')
+        cl = cherrypy.request.headers['Content-Length']
+        rawbody = cherrypy.request.body.read(int(cl))
+        request = json.loads(rawbody)
+        user_Name = request["user_Name"]
+        userTypeValue = request["userTypeValue"]
+        userEmail = request["userEmail"]
+        usrRDataStatList = request["usrRDataStatList"]
+        usrRFastStatList = request["usrRFastStatList"]
+        usrRFullStatList = request["usrRFullStatList"]
+        usrHDataStatList = request["usrHDataStatList"]
+        usrHFastStatList = request["usrHFastStatList"]
+        usrHFullStatList = request["usrHFullStatList"]
+        usrPDataStatList = request["usrPDataStatList"]
+        usrPFastStatList = request["usrPFastStatList"]
+        usrPFullStatList = request["usrPFullStatList"]
         if userTypeValue == "------":
             info = "User with status ------ cannot be added"
             cherrypy.response.headers['Content-Type'] = 'application/json'
+            logging.error("%s %s", self.get_fullname(), info)
             return simplejson.dumps([info])
         elif userTypeValue == "Validator":
             removeUser(user_Name, Session)
@@ -386,11 +499,13 @@ The full details was sent to %s find it there""" %(relName.upper(), cat.upper(),
             check3 = grantValidatorRightsForStatusKindList(user_Name, usrRDataStatList, usrRFastStatList, usrRFullStatList, usrHDataStatList, usrHFastStatList, usrHFullStatList, usrPDataStatList, usrPFastStatList, usrPFullStatList, Session)
             if check1 and check2 and check3:
                 info = "User " + user_Name + " as VALIDATOR was added successfuly"
-                cherrypy.response.headers['Content-Type'] = 'application/json'    
+                cherrypy.response.headers['Content-Type'] = 'application/json'
+                logging.error("%s %s", self.get_fullname(), info)
                 return simplejson.dumps([info])
             else:
                 info = "User " + user_Name + " was not added. Problems with database"
                 cherrypy.response.headers['Content-Type'] = 'application/json'
+                logging.error("%s %s", self.get_fullname(), info)
                 return simplejson.dumps([info]) 
         elif userTypeValue == "Admin":
             removeUser(user_Name, Session)
@@ -399,29 +514,38 @@ The full details was sent to %s find it there""" %(relName.upper(), cat.upper(),
             if check1 and check2:
                 info = "User " + user_Name + " as ADMIN was added successfuly"
                 cherrypy.response.headers['Content-Type'] = 'application/json'
+                logging.error("%s %s", self.get_fullname(), info)
                 return simplejson.dumps([info])
             else:
                 info = "User " + user_Name + " was not added. Problems with database"
                 cherrypy.response.headers['Content-Type'] = 'application/json'
+                logging.error("%s %s", self.get_fullname(), info)
                 return simplejson.dumps([info])
         else:
             info = "Something happend wrong with User Type"
             cherrypy.response.headers['Content-Type'] = 'application/json'
+            logging.error("%s %s", self.get_fullname(), info)
             return simplejson.dumps([info])
 
     @cherrypy.expose
-    def removeUser (self, user_Name, **kwargs):
+    def removeUser (self):
         if not self.check_admin():
             raise cherrypy.InternalRedirect('/permissionErrorMessage')
         cherrypy.response.headers['Content-Type'] = 'application/json'
+        cl = cherrypy.request.headers['Content-Length']
+        rawbody = cherrypy.request.body.read(int(cl))
+        request = json.loads(rawbody)
+        user_Name = request["user_Name"]
         returnInformation = removeUser(user_Name, Session)
         if returnInformation == "True":
             info = "User " + user_Name + " was removed successfuly"
             cherrypy.response.headers['Content-Type'] = 'application/json'
+            logging.info("%s %s", self.get_fullname(), info)
             return simplejson.dumps([info])
         else:
             info = "User " + user_Name + " was not removed because - " + returnInformation
             cherrypy.response.headers['Content-Type'] = 'application/json'
+            logging.error("%s %s", self.get_fullname(), info)
             return simplejson.dumps([info])
 
     @cherrypy.expose
@@ -431,37 +555,11 @@ The full details was sent to %s find it there""" %(relName.upper(), cat.upper(),
         header = 'Selected Users:'
         users = getAllUsersInfo(userName, Session)
         users = simplejson.loads(users)
+        logging.error("%s searching for user: %s", self.get_fullname(), userName)
         try:
             return template.render(title=title, header=header, users=users['validators'], admins=users['admins'], validators_email=users["validator_mail"])
         except Exception as e:
-            return str(e)
-
-    @cherrypy.expose
-    def showAllHistory (self, **kwargs):
-        if not self.check_admin():
-            raise cherrypy.InternalRedirect('/permissionErrorMessage')
-        template = Template(open('pages/historyTemplate.html', "rb").read())
-        title = 'PdmV history'
-        header = 'Selected history:'
-        history = getAllHistory(Session)
-        history = simplejson.loads(history)
-        try:
-            return template.render(title=title, header=header, history=history)
-        except Exception as e:
-            return str(e)
-
-    @cherrypy.expose
-    def showHistory (self, subCatList, recoStatsChecked, hltStatsChecked, pagsStatsChecked, releaseList, **kwargs):
-        if not self.check_admin():
-            raise cherrypy.InternalRedirect('/permissionErrorMessage')
-        template = Template(open('pages/historyTemplate.html', "rb").read())
-        title = 'PdmV history'
-        header = 'Selected history:'
-        history = getHistory(releaseList, subCatList, recoStatsChecked, hltStatsChecked, pagsStatsChecked, Session)
-        history = simplejson.loads(history)
-        try:
-            return template.render(title=title, header=header, history=history)
-        except Exception as e:
+            logging.error("%s %s", self.get_fullname(), str(e))
             return str(e)
 
     def sendMailOnChanges(self, messageText, emailSubject, org_message_ID, new_message_ID, username=False, diff_HN_adress=None, **kwargs):
@@ -497,7 +595,7 @@ The full details was sent to %s find it there""" %(relName.upper(), cat.upper(),
             smtpObj.sendmail(send_from, send_to, msg.as_string())
             smtpObj.close()         
         except Exception as e:
-            print "Error: unable to send email", e.__class__
+            logging.error("Error: unable to send email: %s", str(e))
 
     @cherrypy.expose
     def mainInformation(self, catSubCat, relName, **kwargs):
@@ -506,45 +604,29 @@ The full details was sent to %s find it there""" %(relName.upper(), cat.upper(),
         subCat = None
         configuration = self.configuration
         response = {}
-#        for release in relName:
-#            response[relName] = {}
-#            for elem in configuration:
-#                cat, subCat = configuration.get(elem, (None,None))
-#                tmp = getReleaseShortInfo(cat, subCat, relName, Session)
-#                print tmp
-#                #response[relName][elem] = {}
-#                response[relName][elem] = tmp
-#                print "@@@"
-#                print elem
-#                print "@@@"
-#                
-#        print "###"
-#        print response
-#        return json.dumps(response)
         cat, subCat = configuration.get(catSubCat, (None,None))
         return getReleaseShortInfo(cat, subCat, relName, Session)
 
-    
+
     def check_admin(self):
         if checkAdmin(self.get_username(), Session) == False:
             return False
         else:
             return True;
         
-    def check_validator(self):
-        
+    def check_validator(self):        
         if checkValidator(self.get_username(), Session) == False:
            return False
         else:
            return True
-   
+
     def get_username(self):
         if service.settings['productionLevel'] == 'private':
             username = pwd.getpwuid(os.getuid())[0]
         else:
             username = service.getUsername()
         return username
-            
+
     def get_fullname(self):
         if service.settings['productionLevel'] == 'private':
             fullname = pwd.getpwuid(os.getuid())[0]
@@ -552,7 +634,7 @@ The full details was sent to %s find it there""" %(relName.upper(), cat.upper(),
             fullname = service.getFullName()
         return fullname
 
-        
+
 ###UPDATED FUNCTIONALITIES as of 2012-09-07###
 
     ##method to generate and get email messageID for first email sending.
@@ -561,20 +643,17 @@ The full details was sent to %s find it there""" %(relName.upper(), cat.upper(),
         cherrypy.response.headers['Content-Type'] = 'application/json'
         messageID = email.utils.make_msgid()
         return json.dumps(messageID)
-    @cherrypy.expose
+
     def getMultipleMsgId(self, *args, **kwargs):
         cherrypy.response.headers['Content-Type'] = 'application/json'
         info = []
         for i in range(3):
             info.append(email.utils.make_msgid()) #3 msgIDs -> RelVal,HLT,MUON hypernews
         #messageID = email.utils.make_msgid()
-        return json.dumps(info)
+        return info
     ######
 
-    @cherrypy.expose
     def sendMail(self, messageText, emailSubject, org_message_ID, new_message_ID, username=False, **kwargs):
-        if not self.check_admin():
-            raise cherrypy.InternalRedirect('/permissionErrorMessage')
         for index,elem in enumerate(new_message_ID.split(',')):
             msg = MIMEMultipart()
             if org_message_ID != None:
@@ -604,11 +683,11 @@ The full details was sent to %s find it there""" %(relName.upper(), cat.upper(),
                 smtpObj.sendmail(send_from, send_to, msg.as_string())
                 smtpObj.close()         
             except Exception as e:
-                print "Error: unable to send email", e.__class__
+                logging.error("Error: unable to send email: %s", str(e))
         return json.dumps('New release added. Email was sent.')
 
 def main():
-	service.start(AjaxApp())
+    service.start(AjaxApp())
 
 if __name__ == '__main__':
-	main()
+    main()

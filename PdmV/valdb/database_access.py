@@ -6,7 +6,8 @@ import json
 import service
 import fnmatch
 import types
-
+import sys
+import logging
 schema_name = service.secrets['connections']['dev']["writer"]["account"] #as service uses different users DB schema, to connect we get schema name.
 
 Base = declarative_base()
@@ -176,7 +177,7 @@ possible_subcatrgory_list = ["Data", "FullSim", "FastSim"]
 
 reconstruction_status_list = ["CSC", "TAU", "TRACKING", "BTAG", "JET", "ECAL", "RPC", "PHOTON", "MUON", "MET", "ELECTRON", "TK", "HCAL", "DT", "SUMMARY"]
 hlt_status_list = ["TAU", "JET", "HIGGS", "TOP", "MUON", "PHOTON", "MET", "ELECTRON", "EXOTICA", "SUSY", "TRACKING", "BTAG", "SMP", "FWD", "B","SUMMARY"]
-pags_status_list = ["B", "HIGGS", "FWD", "TOP", "SMP", "EXOTICA", "SUSY", "SUMMARY"]
+pags_status_list = ["B2G","B", "HIGGS", "FWD", "TOP", "SMP", "EXOTICA", "SUSY", "SUMMARY"]
 
 # Returns validation statuses in JSON key-value form, found by release category, subcategory and name 
 def getReleaseShortInfo(cat, sub_cat, rel_name, Session):
@@ -195,13 +196,13 @@ def getReleaseShortInfo(cat, sub_cat, rel_name, Session):
         return json.dumps(info_dict)
     except Exception as e:
         session.close()
-        print e
+        logging.error("Error getting short info: %s", str(e))
         
 def testFullReleaseInfo(rel_name, Session):
     session = Session()
     info = {}
     try:
-        info[rel_name] = {"Reconstruction": {
+        info = {"Reconstruction": {
                             "Data":{},
                             "FullSim":{},
                             "FastSim":{}},
@@ -212,19 +213,23 @@ def testFullReleaseInfo(rel_name, Session):
                           "PAGs": {
                             "Data":{},
                             "FullSim":{},
-                            "FastSim":{}}
+                            "FastSim":{}},
+                          "RELEASE NAME": rel_name
                           }
         for i in session.query(Releases_Table).filter(Releases_Table.release_name == rel_name):
-            info[rel_name][i.category][i.subcategory][i.status_kind] = {}
+            info[i.category][i.subcategory][i.status_kind] = {}
 
             for j in session.query(Status_Table).filter(Status_Table.id == i.id):
-                info[rel_name][i.category][i.subcategory][i.status_kind]["status"] = j.validation_status
-                info[rel_name][i.category][i.subcategory][i.status_kind]["comments"] = j.comments
-                info[rel_name][i.category][i.subcategory]["RelMon"] = j.RELMON_URL
+                info[i.category][i.subcategory][i.status_kind]["status"] = j.validation_status
+                info[i.category][i.subcategory][i.status_kind]["comments"] = j.comments
+                info[i.category][i.subcategory]["RelMon"] = j.RELMON_URL
+            session.close()
+        session.close()
         return json.dumps(info)
     except Exception as e:
         session.close()
-        print e
+        logging.error("error getting FullReleaseInfo: %s", str(e))
+
 # Returns validation status by column of release
 def getStatus(cat, sub_cat, rel_name, status_kind, Session):
     session = Session()
@@ -242,25 +247,27 @@ def getStatus(cat, sub_cat, rel_name, status_kind, Session):
         return "Error! Unknown status kind"
     except Exception as e:
         session.close()
-        print e
+        logging.error("Error getting status: %s", str(e))
     
 # Returns release status details in JSON key-value form, found by release category, subcategory and name and kind of validation status
-def getReleaseDetails(cat, sub_cat, rel_name, status_kind, Session):
+def getReleaseFullDetails(cat, sub_cat, rel_name, status_kind, Session):
     session = Session()
     try:
         version = 0
         info_dict = {}
-        for i in session.query(Releases_Table).filter(Releases_Table.category == cat).\
-                                                filter(Releases_Table.subcategory == sub_cat).\
-                                                filter(Releases_Table.release_name == rel_name).\
-                                                filter(Releases_Table.status_kind == status_kind):
-            for j in session.query(Status_Table).filter(Status_Table.id == i.id):
-                info_dict[RELEASE_NAME] = i.release_name
-                info_dict[VALIDATION_STATUS] = j.validation_status
-                info_dict[COMMENTS] = j.comments
-                info_dict[LINKS] = j.links
-                info_dict[META_DATE] = i.date.strftime("%Y-%m-%d %H:%M:%S")
-                info_dict[USER_NAME] = j.user_name
+        info_dict[RELEASE_NAME] = rel_name                       
+        for i in session.query(Releases_LV_Table).filter(Releases_LV_Table.category == cat).\
+                                                filter(Releases_LV_Table.subcategory == sub_cat).\
+                                                filter(Releases_LV_Table.release_name == rel_name).\
+                                                filter(Releases_LV_Table.status_kind == status_kind):
+            info_dict[i.version] = {}
+            for j in session.query(Status_LV_Table).filter(Status_LV_Table.id == i.id):
+                info_dict[i.version][RELEASE_NAME] = i.release_name
+                info_dict[i.version][VALIDATION_STATUS] = j.validation_status
+                info_dict[i.version][COMMENTS] = j.comments
+                info_dict[i.version][LINKS] = j.links
+                info_dict[i.version][META_DATE] = i.date.strftime("%Y-%m-%d %H:%M:%S")
+                info_dict[i.version][USER_NAME] = j.user_name
         if cat == 'HLT' and status_kind == 'B':  #check if B is not existing (a.k.a column addded
             info_dict[RELEASE_NAME] = rel_name   # after the release.
         elif cat == 'HLT' and status_kind == 'TRACKING': #SAME
@@ -271,11 +278,27 @@ def getReleaseDetails(cat, sub_cat, rel_name, status_kind, Session):
             info_dict[RELEASE_NAME] = rel_name
         elif cat == 'HLT' and status_kind == 'BTAG': #SAME   ##update ELIF in case new columns added
             info_dict[RELEASE_NAME] = rel_name
+        results = {}
+        results['VERSIONS'] = []
         session.close()
-        return json.dumps(info_dict)
+        #return json.dumps(info_dict)
+        previous_data = []
+        sorted_keys = sorted(info_dict.iterkeys())
+        for elem in sorted_keys:
+            if info_dict[elem].__class__ == dict:
+                if len(info_dict[elem].keys()) != 0:
+                    current_data = "%s%s%s"%(info_dict[elem]['VALIDATION_STATUS'],info_dict[elem]['COMMENTS'],info_dict[elem]['LINKS'])
+                    if previous_data.count(current_data) == 0:
+                        results[elem] = info_dict[elem]
+                        results['VERSIONS'].append(elem)
+                        previous_data.append(current_data)
+            else:
+                results[elem] = info_dict[elem] #put simple data - in case of RelMon URL or release name
+        results['VERSIONS'].sort()
+        return json.dumps(results)
     except Exception as e:
         session.close()
-        print e
+        logging.error("Error getting FullRelease details: %s", str(e))
 
 # Returns release name(s) in JSON list, found by keyword
 def search(regexp, Session):
@@ -307,77 +330,7 @@ def search(regexp, Session):
             return json.dumps(new_list)
     except Exception as e:
         session.close()
-        print e
- 
-# Returns all history of releases
-def getAllHistory(Session):
-    session = Session()
-    try:
-        release_list = []
-        for i in session.query(Releases_Table.release_name, func.count(Releases_Table.release_name)).group_by(Releases_Table.release_name).all():
-                if i.release_name not in release_list:
-                    release_list.append(i.release_name)
-        session.close()    
-        return getHistory(release_list, possible_subcatrgory_list, reconstruction_status_list, hlt_status_list, pags_status_list, Session)
-    except Exception as e:
-        session.close()
-        print e
-        return "Error in database reading!"
-   
-# Returns history of releases
-def getHistory(release_list, subcategory_list, reco_list, hlt_list, pags_list, Session):
-    session = Session()
-    try:
-        history_dict = {}
-        for rel_name in release_list:
-            cat_dict = {}
-            for i in possible_category_list:
-                sub_cat_dict = {}
-                for j in possible_subcatrgory_list:
-                    sub_cat_dict[j] = rel_name
-                cat_dict[i] = sub_cat_dict
-            A = {}
-            for i in cat_dict:
-                B = {}
-                for j in cat_dict[i]:
-                    C = {}
-                    if j not in subcategory_list:
-                        continue
-                    for k in session.query(Releases_LV_Table.version, func.count(Releases_LV_Table.version)).filter(Releases_LV_Table.release_name == rel_name).\
-                                                            filter(Releases_LV_Table.category == i).\
-                                                            filter(Releases_LV_Table.subcategory == j).\
-                                                            group_by(Releases_LV_Table.version).all():
-                        D = {}
-                        for l in session.query(Releases_LV_Table).filter(Releases_LV_Table.release_name == rel_name).\
-                                                                filter(Releases_LV_Table.category == i).\
-                                                                filter(Releases_LV_Table.subcategory == j).\
-                                                                filter(Releases_LV_Table.version == k.version):
-                            E = {}
-                            if i == possible_category_list[0]: # Reconstruction
-                                if l.status_kind not in reco_list:
-                                    continue
-                            if i == possible_category_list[1]: # HLT
-                                if l.status_kind not in hlt_list:
-                                    continue
-                            if i == possible_category_list[2]: # PAGs
-                                if l.status_kind not in pags_list:
-                                    continue
-                            for m in session.query(Status_LV_Table).filter(Status_LV_Table.id == l.id):
-                                E[VALIDATION_STATUS] = m.validation_status
-                                E[META_DATE] = l.date.strftime("%Y-%m-%d %H:%M:%S")
-                                E[COMMENTS] = m.comments
-                                E[LINKS] = m.links
-                                E[USER_NAME] = m.user_name
-                            if E: D[l.status_kind] = E
-                        if D: C[k.version] = D
-                    if C: B[j] = C
-                if B: A[i] = B
-            history_dict[rel_name] = A
-        session.close()
-        return json.dumps(history_dict)
-    except Exception as e:
-        session.close()
-        print e
+        logging.error("Error while searching: %s", str(e))
        
 # Creates new release. Parameters:   cat - release category
 #                                    sub_cat - release subcategory
@@ -400,7 +353,7 @@ def newRelease(cat, sub_cat, rel_name, dict_json, Session, *args):
         for i in session.query(Releases_Table).filter(Releases_Table.category == cat).filter(Releases_Table.subcategory == sub_cat).filter(Releases_Table.release_name == rel_name):
             if i != None:
                 session.close()
-                return "Error! Release already exists"
+                logging.error("Error! Release %s already exists", rel_name)
         dict = json.loads(dict_json)
         list = dict.keys()
         date = datetime.datetime.now()
@@ -419,7 +372,7 @@ def newRelease(cat, sub_cat, rel_name, dict_json, Session, *args):
             user_name = dict[status_kind][USER_NAME]
             if user_name == "":
                 user_name = "Unknown name"
-            status = Status_Table(id, dict[status_kind][VALIDATION_STATUS], dict[status_kind][COMMENTS], dict[status_kind][LINKS], user_name, dict[status_kind][MESSAGE_ID], dict[status_kind][EMAIL_SUBJECT], dict[status_kind][RELMON_URL])
+            status = Status_Table(id, dict[status_kind][VALIDATION_STATUS], str(dict[status_kind][COMMENTS]), str(dict[status_kind][LINKS]), user_name, dict[status_kind][MESSAGE_ID], dict[status_kind][EMAIL_SUBJECT], dict[status_kind][RELMON_URL])
             session.add(status)
             release_lv = Releases_LV_Table(id, cat, sub_cat, rel_name, version, date, status_kind)
             session.add(release_lv)
@@ -429,7 +382,7 @@ def newRelease(cat, sub_cat, rel_name, dict_json, Session, *args):
                                                     filter(Releases_Table.release_name == rel_name).\
                                                     filter(Releases_LV_Table.status_kind == status_kind):
                 id_lv = i.id
-            status_lv = Status_LV_Table(id, dict[status_kind][VALIDATION_STATUS], dict[status_kind][COMMENTS], dict[status_kind][LINKS], user_name, dict[status_kind][MESSAGE_ID], dict[status_kind][EMAIL_SUBJECT],dict[status_kind][RELMON_URL])
+            status_lv = Status_LV_Table(id, dict[status_kind][VALIDATION_STATUS], str(dict[status_kind][COMMENTS]), str(dict[status_kind][LINKS]), user_name, dict[status_kind][MESSAGE_ID], dict[status_kind][EMAIL_SUBJECT],dict[status_kind][RELMON_URL])
             session.add(status_lv)
         if len(args) > 0:
             session.commit()
@@ -440,8 +393,10 @@ def newRelease(cat, sub_cat, rel_name, dict_json, Session, *args):
             session.close()
             return "True"
     except Exception as e:
+        print sys.exc_info()[0]
         session.close()
-        print e
+        logging.error("Error adding new release: %s",e)
+        return e
 
 # Changes validation status of given release
 def changeStatus(cat, sub_cat, rel_name, status_kind, new_status, new_comment, new_user_name, new_links, Session, new_messageID, new_email_subject):
@@ -453,6 +408,7 @@ def changeStatus(cat, sub_cat, rel_name, status_kind, new_status, new_comment, n
         for i in session.query(Releases_Table).filter(Releases_Table.category == cat).\
                                                 filter(Releases_Table.subcategory == sub_cat).\
                                                 filter(Releases_Table.release_name == rel_name):
+            logging.error("i in session: %s",i)
             version = i.version
         if version == None:
             session.close()
@@ -479,6 +435,8 @@ def changeStatus(cat, sub_cat, rel_name, status_kind, new_status, new_comment, n
 
         if cat == 'HLT' and "RELMON_URL" not in dict[status_kind]: #if the new column B added, but no info was saved before.
             dict[status_kind]["RELMON_URL"] = RELMON
+        if cat == 'PAGs' and "RELMON_URL" not in dict[status_kind]: #if the new column B added, but no info was saved before.
+            dict[status_kind]["RELMON_URL"] = RELMON
             
         dict[status_kind][VALIDATION_STATUS] = new_status
         dict[status_kind][COMMENTS] = new_comment
@@ -486,7 +444,6 @@ def changeStatus(cat, sub_cat, rel_name, status_kind, new_status, new_comment, n
         dict[status_kind][USER_NAME] = new_user_name
         dict[status_kind][MESSAGE_ID] = new_messageID
         dict[status_kind][EMAIL_SUBJECT] = new_email_subject
-            
         for i in status_id_for_delete:
             session.query(Status_Table).filter(Status_Table.id == i).delete()
         session.query(Releases_Table).filter(Releases_Table.category == cat).\
@@ -503,7 +460,7 @@ def changeStatus(cat, sub_cat, rel_name, status_kind, new_status, new_comment, n
             return "Error!"
     except Exception as e:
         session.close()
-        print e
+        logging.error("Error changing status: %s", str(e))
   
 #=======================USERS===========================
 
@@ -533,7 +490,7 @@ def addUser(user_name, Session, email=None):
             return "False"
     except Exception as e:
         session.close()
-        print e
+        logging.error("Error adding user: %s", str(e))
 
 # Removes user from database
 def removeUser(user_name, Session):
@@ -562,7 +519,7 @@ def removeUser(user_name, Session):
             return "False"
     except Exception as e:
         session.close()
-        print e
+        logging.error("Error removing user: %s", str(e))
 
 # Returns emlail by username
 def getUserEmail(user_name, Session):
@@ -578,7 +535,7 @@ def getUserEmail(user_name, Session):
                 return i.email
     except Exception as e:
         session.close()
-        print e
+        logging.error("Error getting user  e-mail: %s", str(e))
         
 # Grants administrator rights
 def grantAdminRights(user_name, Session):
@@ -592,7 +549,7 @@ def grantAdminRights(user_name, Session):
         return "True"
     except Exception as e:
         session.close()
-        print e
+        logging.error("Error getting admin rights: %s", str(e))
         return "False"
 
 # Grants validator rights
@@ -607,7 +564,7 @@ def grantValidatorRights(user_name, Session):
         return "True"
     except Exception as e:
         session.close()
-        print e
+        logging.error("Error granting validator rights: %s", str(e))
         return "False"
 
 # Withdraws administrator rights
@@ -622,7 +579,7 @@ def withdrawAdminRights(user_name, Session):
         return "True"
     except Exception as e:
         session.close()
-        print e
+        logging.error("Error withdrawing admin rights: %s", str(e))
         return "False"
 
 # Withdraws validator rights
@@ -637,7 +594,7 @@ def withdrawValidatorRights(user_name, Session):
         return "True"
     except Exception as e:
         session.close()
-        print e
+        logging.error("Error withdrawing validator rights: %s", str(e))
         return "False"
 
 # Returns TRUE if user is administrator and FALSE - vice versa
@@ -652,7 +609,7 @@ def checkAdmin(user_name, Session):
         return False
     except Exception as e:
         session.close()
-        print e
+        logging.error("Error checking admin: %s", str(e))
         return False
 
 # Returns TRUE if user is validator and FALSE - vice versa
@@ -667,7 +624,7 @@ def checkValidator(user_name, Session):
         return False
     except Exception as e:
         session.close()
-        print e
+        logging.error("Error checking validator: %s", str(e))
         return False
     
 # Checks validator rights to modify release status
@@ -687,7 +644,7 @@ def checkValidatorRights(cat, sub_cat, status_kind, user_name, Session):
         return "False"
     except Exception as e:
         session.close()
-        print e
+        logging.error("Error checking validator rights: %s", str(e))
 
     
 # Grants validator rights to modify release status    
@@ -702,7 +659,7 @@ def grantValidatorRightsForStatusKind(cat, sub_cat, status_kind, user_name, Sess
         return "True"
     except Exception as e:
         session.close()
-        print e
+        logging.error("Error granting validator rights for subcat: %s", str(e))
         return "False"
 
 
@@ -805,7 +762,7 @@ def searchUsers(regexp, Session):
             return json.dumps([])
     except Exception as e:
         session.close()
-        print e
+        logging.error("Error searching users: %s", str(e))
 
 # Returns all information (in JSON) about users rights
 def getAllUsersInfo(regexp, Session):
@@ -840,5 +797,5 @@ def getAllUsersInfo(regexp, Session):
         return json.dumps(dict)
     except Exception as e:
         session.close()
-        print e
+        logging.error("Error getting All users info: %s", str(e))
         return "Error in database reading!"
