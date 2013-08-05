@@ -586,6 +586,7 @@ services['gtList']['customHttps'] = '''
 
 # Set the allowed groups for services behind Shibboleth
 services['admin']['shibbolethGroups'] = ['cms-cond-dev']
+services['browser']['shibbolethGroups'] = ['zh']
 services['dropBox']['shibbolethGroups'] = {
     '/dropBox/signInSSO': ['cms-cond-dropbox'],
     '/dropBox/acknowledgeFileIssue': ['cms-cond-dropbox-admin'],

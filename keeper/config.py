@@ -179,6 +179,12 @@ servicesConfiguration = {
         'hidden':         False,
     },
 
+    'browser': {
+        'filename':       'browser.py',
+        'listeningPort':  8084,
+        'hidden':         True,
+    },
+
     'docs': {
         'filename':       'docs.py',
         'listeningPort':  8089,
