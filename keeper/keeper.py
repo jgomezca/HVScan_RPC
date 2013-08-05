@@ -946,6 +946,31 @@ def flushCache(service, cache):
     subprocess.call('redis-cli -n %s flushdb' % cacheID, stdout = subprocess.PIPE, shell = True)
 
 
+def compass(inputFile, outputFile):
+    '''Compiles a Sass/Compass .scss file script.
+    '''
+
+    tmpPath = '/tmp/compass'
+
+    logging.info('Compiling %s...', inputFile)
+
+    subprocess.call(
+        '    compass create --force %s'
+        ' && cp %s %s'
+        ' && compass compile --force --output-style compressed --no-line-comments %s'
+        ' && cp %s %s'
+
+        % (
+            tmpPath,
+            inputFile, os.path.join(tmpPath, 'sass/screen.scss'),
+            tmpPath,
+            os.path.join(tmpPath, 'stylesheets/screen.css'), outputFile,
+        ),
+        stdout = subprocess.PIPE,
+        shell = True,
+    )
+
+
 def keep():
     '''Keeps services and its jobs up and running.
     '''
@@ -993,6 +1018,8 @@ Commands:
   cache  flushall                   Flushes all caches (including ones
                                     unknown by the keeper).
   cache  flush  <service>  <cache>  Flushes a service's cache.
+
+  compass  <inputFile> <outputFile>  Compiles a Sass/Compass .scss file script.
 
   keep                Keeps the services and its jobs up and running.
                       (this is what the keeper-service runs).
@@ -1121,6 +1148,7 @@ def main():
             'flushall': flushallCache,
             'flush': flushCache,
         },
+        'compass': compass,
         'keep': keep,
         'run': run,
     }
