@@ -39,6 +39,15 @@ Usage examples:
     to Apache and not Shibboleth). If the deployer really needed to restart
     Shibboleth and forgot to specify shib=yes, he can anyway do it later after
     a full deployment.
+
+
+  * Redeploy/Bootstrap a backend/frontend (in a new machine, e.g. after
+    reinstallation of a machine or migration to another SLC):
+
+    $ fab redeployFrontend:frontend=cmsdbfe2,level=pro,tag=v1.0,shib=yes
+
+    Typically you will need shib=yes. The default is 'no' to be consistent
+    with the other functions, but you will get a warning if so as a reminder.
 '''
 
 import os
@@ -114,6 +123,29 @@ def deployBackend(level, tag):
 def manageBackend(tag, backendHostname, action):
     setup(tag)
     run('%s %s %s' % (os.path.join(keeperPath, 'manageApacheWorkers.py'), action, backendHostname))
+
+
+# Tasks that redeploy an explicit backend or frontend (typically used for
+# bootstrapping after a reinstallation of a machine/migration to another SLC)
+def redeployChecks(kind, hostname, level, shib):
+    if hostname not in configuration[level][kind]:
+        raise Exception("%s is not in %s level's %s: %s" % (hostname, level, kind, configuration[level]['frontends']))
+    if shib != 'yes':
+        print 'Warning: If you are redeploying/bootstrapping, you probably want shib == yes.'
+        if 'y' != raw_input('Continue? [n]: '):
+            raise Exception('Aborted by the user.')
+
+@task
+def redeployFrontend(frontend, level, tag, shib = 'no'):
+    redeployChecks('frontends', frontend, level, shib)
+    env.hosts = [frontend]
+    execute(deployFrontend, tag, shib)
+
+@task
+def redeployBackend(backend, level, tag, shib = 'no'):
+    redeployChecks('backends', backend, level, shib)
+    env.hosts = [backend]
+    execute(deployBackend, tag, shib)
 
 
 # Tasks that enable/disable a backend in the load balancer of all frontends
