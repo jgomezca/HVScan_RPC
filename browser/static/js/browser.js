@@ -1,3 +1,28 @@
+var escapeHTMLMap = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#x27;',
+    '/': '&#x2F;',
+};
+
+var escapeHTMLRegexpKeys = '';
+$.each(escapeHTMLMap, function(index, value) {
+    escapeHTMLRegexpKeys += index;
+});
+
+var escapeHTMLRegexp = new RegExp('[' + escapeHTMLRegexpKeys + ']', 'g');
+
+function escapeHTML(string) {
+    if (string == null)
+        return '';
+
+    return ('' + string).replace(escapeHTMLRegexp, function(match) {
+        return escapeHTMLMap[match];
+    });
+};
+
 function results(html) {
     $('#results').html(html);
 }
@@ -47,6 +72,12 @@ function dataTable(data) {
 
     $.each(data['headers'], function(index, value) {
         aoColumns.push({'sTitle': value});
+    });
+
+    $.each(data['data'], function(rowIndex, row) {
+        $.each(row, function(columnIndex, cell) {
+            row[columnIndex] = escapeHTML(cell);
+        });
     });
 
     return {
