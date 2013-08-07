@@ -140,7 +140,6 @@ button::-moz-focus-inner, input::-moz-focus-inner {
     button {
         border: 1px solid $uploadcolor;
         @include border-radius($radius);
-        //@include background-image(linear-gradient(scale-color($uploadcolor, $lightness: 25%), scale-color($uploadcolor, $lightness: 5%)));
         @include background-image(url("../images/upload.png"), linear-gradient(scale-color($uploadcolor, $lightness: 40%), scale-color($uploadcolor, $lightness: 5%)));
         background-repeat: no-repeat;
         background-position: 50%;
