@@ -649,9 +649,9 @@ ServerTokens ProductOnly
 ServerRoot {serverRoot}
 PidFile run/httpd.pid
 Timeout 120
-KeepAlive Off
-MaxKeepAliveRequests 100
-KeepAliveTimeout 15
+KeepAlive On
+MaxKeepAliveRequests 40
+KeepAliveTimeout 4
 
 <IfModule prefork.c>
 StartServers       8
