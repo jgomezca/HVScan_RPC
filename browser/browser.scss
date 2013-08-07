@@ -18,16 +18,22 @@
     display: none;
 }
 
-$radius: 6px;
-$searchcolor: #0080B0;
-$uploadcolor: #B08000;
-$helpcolor:   #8000B0;
-$margin: 10px;
+$margin:  10px;
 $padding: 10px;
-$height: 30px;
+$height:  30px;
+$radius:  6px;
+
+$basecolor:     #0080B0;
+
+$databasecolor: #70A000;
+$uploadcolor:   #B08000;
+$helpcolor:     #8000B0;
+$listcolor:     #B08000;
+$diffcolor:     #8000B0;
+
 
 body {
-    background-color: scale-color($searchcolor, $lightness: 90%);
+    background-color: scale-color($basecolor, $lightness: 90%);
 }
 
 .working {
@@ -52,15 +58,20 @@ header, #results {
 }
 
 .container {
-    width: 780px;
+    width: 1030px;
     margin-left: auto;
     margin-right: auto;
     padding: 0 $padding;
+
+    > * {
+        float: left;
+        margin-right: $margin;
+        display: block;
+    }
 }
 
 h1 {
-    float: left;
-    margin: 0 ($margin * 2) 0 0;
+    margin-right: $margin * 2;
 
     $titlepadding: 5px;
 
@@ -68,17 +79,11 @@ h1 {
     font-size: $height - ($titlepadding * 2);
     padding-top: $titlepadding;
 
-    font-family: 'Open Sans', sans-serif;
+    font-family: sans-serif;
     font-weight: bold;
     text-align: center;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
     color: #000000;
-}
-
-form {
-    float: left;
-    margin: 0 $margin 0 0;
-    display: block;
 }
 
 hr {
@@ -99,17 +104,44 @@ input {
 }
 
 button {
-    float: right;
-
     margin: 0;
     color: #FFFFFF;
 
     padding: $padding / 2;
     height: $height;
+    width: $height;
 
     &:hover {
         cursor: pointer;
     }
+}
+
+@mixin image-button($color, $image-path) {
+    border: 1px solid $color;
+    @include border-radius($radius);
+    @include background-image(url($image-path), linear-gradient(scale-color($color, $lightness: 40%), scale-color($color, $lightness: 5%)));
+    background-repeat: no-repeat, repeat;
+    background-position: 50%;
+}
+
+@mixin text-image-button($color, $image-path) {
+    @include image-button($color, $image-path);
+
+    width: auto;
+
+    font-weight: bold;
+    font-size: $height / 2;
+
+    padding-left: $height;
+    padding-right: $padding;
+
+    background-position: ($padding / 2) 50%;
+}
+
+@mixin search-input {
+    border: 1px solid $basecolor;
+    @include border-left-radius($radius);
+    @include box-shadow(inset 0 0 8px scale-color($basecolor, $lightness: 25%));
 }
 
 button::-moz-focus-inner, input::-moz-focus-inner {
@@ -118,10 +150,10 @@ button::-moz-focus-inner, input::-moz-focus-inner {
 }
 
 #search {
+    $searchcolor: #0080B0;
+
     input {
-        border: 1px solid $searchcolor;
-        @include box-shadow(inset 0 0 8px scale-color($searchcolor, $lightness: 25%));
-        @include border-left-radius($radius);
+        @include search-input;
     }
 
     button {
@@ -130,39 +162,26 @@ button::-moz-focus-inner, input::-moz-focus-inner {
         border-left: 0;
         @include border-right-radius($radius);
         @include background-image(url("../images/search.png"), linear-gradient(scale-color($searchcolor, $lightness: 40%), scale-color($searchcolor, $lightness: 5%)));
-        background-repeat: no-repeat;
+        background-repeat: no-repeat, repeat;
         background-position: 50%;
-        width: $height;
     }
+}
+
+#database {
+    @include text-image-button($databasecolor, "../images/select.png");
 }
 
 #upload {
-    button {
-        border: 1px solid $uploadcolor;
-        @include border-radius($radius);
-        @include background-image(url("../images/upload.png"), linear-gradient(scale-color($uploadcolor, $lightness: 40%), scale-color($uploadcolor, $lightness: 5%)));
-        background-repeat: no-repeat;
-        background-position: 50%;
-        width: $height;
-    }
+    @include text-image-button($uploadcolor, "../images/upload.png");
 }
 
 #help {
-    button {
-        border: 1px solid $helpcolor;
-        @include border-radius($radius);
-        @include background-image(url("../images/help.png"), linear-gradient(scale-color($helpcolor, $lightness: 40%), scale-color($helpcolor, $lightness: 5%)));
-        background-repeat: no-repeat;
-        background-position: 50%;
-        width: $height;
-    }
+    @include image-button($helpcolor, "../images/help.png");
 }
 
 #results {
     input {
-        border: 1px solid $searchcolor;
-        @include box-shadow(inset 0 0 8px scale-color($searchcolor, $lightness: 25%));
-        @include border-radius($radius);
+        @include search-input;
     }
 }
 
@@ -174,14 +193,36 @@ p {
     margin-bottom: $margin;
 }
 
+.tableHeaderContainer {
+    width: 300px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
 h2 {
-    margin-top: $margin * 2;
+    float:left;
+    margin-right: $margin * 2;
+    padding-top: 6px;
 
     height: $height;
 
-    font-family: 'Open Sans', sans-serif;
+    font-family: sans-serif;
+    font-weight: bold;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
     color: #000000;
+}
+
+.tableHeaderContainer > button {
+    float: left;
+    margin-right: $margin;
+}
+
+.list {
+    @include text-image-button($listcolor, "../images/list.png");
+}
+
+.diff {
+    @include text-image-button($diffcolor, "../images/diff.png");
 }
 
 .ui-widget {
@@ -204,5 +245,17 @@ h2 {
 
 .dataTables_wrapper .ui-toolbar {
     padding: 1px 1px 1px 5px;
+}
+
+.dataTables_wrapper {
+    margin-bottom: $margin * 3;
+}
+
+.even.selectedRow td {
+	background-color: #B0BED9 !important;
+}
+
+.odd.selectedRow td {
+	background-color: #9FAFD1 !important;
 }
 

@@ -30,7 +30,10 @@ class Browser(object):
         with open('index.html', 'rb') as f:
             self.indexTemplate = mako.template.Template(f.read())
 
-        self.connection = database.Connection(service.secrets['connections']['dev'])
+        self.connections = dict(map(
+            lambda x: (x, database.Connection(service.secrets['connections'][x])),
+            ['Development', 'Integration', 'Archive', 'Production']
+        ))
 
     @cherrypy.expose
     def index(self):
@@ -42,10 +45,10 @@ class Browser(object):
         )
 
     @cherrypy.expose
-    def search(self, string):
+    def search(self, database, string):
         string = '%%%s%%' % string.lower()
 
-        tags = self.connection.fetch('''
+        tags = self.connections[database].fetch('''
             select *
             from (
                 select name, time_type, object_type, synchronization, insertion_time, description
@@ -59,7 +62,7 @@ class Browser(object):
             where rownum <= :s
         ''', (string, string, string, limit))
 
-        payloads = self.connection.fetch('''
+        payloads = self.connections[database].fetch('''
             select *
             from (
                 select hash, object_type, version, insertion_time
@@ -72,7 +75,7 @@ class Browser(object):
             where rownum <= :s
         ''', (string, string, limit))
 
-        gts = self.connection.fetch('''
+        gts = self.connections[database].fetch('''
             select *
             from (
                 select name, release, insertion_time, description
@@ -103,6 +106,50 @@ class Browser(object):
         }, default = lambda obj:
             obj.strftime('%Y-%m-%d %H:%M:%S,%f') if isinstance(obj, datetime.datetime) else None
         )
+
+
+    @cherrypy.expose
+    def list_(self, database, type_, item):
+        service.setResponseJSON()
+
+        if type_ == 'tags':
+            return json.dumps({
+                'headers': ['Since', 'Insertion Time', 'Payload'],
+                'data': self.connections[database].fetch('''
+                        select *
+                        from (
+                            select *
+                            from (
+                                select since, insertion_time, payload_hash
+                                from iov
+                                where tag_name = :s
+                                order by since desc, insertion_time desc
+                            )
+                            where rownum <= :s
+                        )
+                        order by since, insertion_time
+                    ''', (item, limit)),
+            }, default = lambda obj:
+                obj.strftime('%Y-%m-%d %H:%M:%S,%f') if isinstance(obj, datetime.datetime) else None
+            )
+
+        if type_ == 'gts':
+            return json.dumps({
+                'headers': ['Record', 'Label', 'Tag'],
+                'data': self.connections[database].fetch('''
+                        select record, label, tag_name
+                        from global_tag_map
+                        where global_tag_name = :s
+                        order by record, label
+                    ''', (item, )),
+            })
+
+        raise Exception('Wrong type requested for listing.')
+
+
+    @cherrypy.expose
+    def diff(self, database, type_, first, second):
+        return json.dumps([])
 
 
 def main():

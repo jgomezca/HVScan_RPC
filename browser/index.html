@@ -3,7 +3,6 @@
     <head>
         <meta charset='utf-8'>
         <title>${title}</title>
-        <link href='//fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
         <link href='//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/themes/redmond/jquery-ui.min.css' rel='stylesheet' type='text/css'>
         <link href='/libs/datatables/1.9.4/media/css/jquery.dataTables_themeroller.css' rel='stylesheet' type='text/css'>
         <link href='static/css/browser.css' rel='stylesheet' type='text/css'>
@@ -13,8 +12,9 @@
             <div class='container clearfix'>
                 <h1>${title}</h1>
                 <form id='search'><div><button type='submit' title='Search'></button><input type='text' name='string' placeholder='Search or type a command' required></div></form>
-                <form id='upload'><div><button type='submit' title='Upload payload'></button></div></form>
-                <form id='help'><div><button type='submit' title='Help'></button></div></form>
+                <button id='database' title='Database'><span>Production</span></button>
+                <button id='upload' title='Upload'><span>Upload</span></button>
+                <button id='help' title='Help'></button>
             </div>
         </header>
         <hr class='firsttime displaynone'>
