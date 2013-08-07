@@ -93,7 +93,7 @@ input {
     margin: 0;
     border-right: 0;
     background-color: #FFFFFF;
-    padding: $padding / 2;
+    padding: ($padding / 2) ($padding / 1.5);
     height: $height;
     width: 300px;
 }
