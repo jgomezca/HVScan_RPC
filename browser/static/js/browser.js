@@ -23,6 +23,20 @@ function escapeHTML(string) {
     });
 };
 
+function escapeRegExp(string) {
+    if (string == null)
+        return '';
+
+    return ('' + string).replace(/[\-\[\]{}()*+?.,\\\^$|#\s]/g, '\\$&');
+}
+
+function highlight(highlightRegexp, string) {
+    if (string == null)
+        return '';
+
+    return ('' + string).replace(highlightRegexp, '<span class="highlight">$&</span>');
+}
+
 function results(html) {
     $('#results').html(html);
 }
@@ -67,16 +81,18 @@ function post(url, data, success) {
     });
 }
 
-function dataTable(data) {
+function dataTable(data, searchString) {
     var aoColumns = [];
 
     $.each(data['headers'], function(index, value) {
         aoColumns.push({'sTitle': value});
     });
 
+    // Escape HTML and highlight results
+    var highlightRegexp = new RegExp(escapeRegExp(escapeHTML(searchString)), 'ig');
     $.each(data['data'], function(rowIndex, row) {
         $.each(row, function(columnIndex, cell) {
-            row[columnIndex] = escapeHTML(cell);
+            row[columnIndex] = highlight(highlightRegexp, escapeHTML(cell));
         });
     });
 
@@ -91,7 +107,8 @@ function dataTable(data) {
 
 $('#search').submit(function() {
     firsttime();
-    post('search', $(this).serialize(), function(data) {
+    var string = $('#search input').val();
+    post('search', { 'string': string }, function(data) {
         $('#results').html(
               '<h2>Tags</h2>'
             + '<table id="tags"></table>'
@@ -100,9 +117,9 @@ $('#search').submit(function() {
             + '<h2>Global Tags</h2>'
             + '<table id="gts"></table>'
         );
-        $('#tags').dataTable(dataTable(data['tags']));
-        $('#payloads').dataTable(dataTable(data['payloads']));
-        $('#gts').dataTable(dataTable(data['gts']));
+        $('#tags').dataTable(dataTable(data['tags'], string));
+        $('#payloads').dataTable(dataTable(data['payloads'], string));
+        $('#gts').dataTable(dataTable(data['gts'], string));
     });
     return false;
 });
