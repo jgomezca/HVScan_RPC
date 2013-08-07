@@ -372,7 +372,7 @@ def newRelease(cat, sub_cat, rel_name, dict_json, Session, *args):
             user_name = dict[status_kind][USER_NAME]
             if user_name == "":
                 user_name = "Unknown name"
-            status = Status_Table(id, dict[status_kind][VALIDATION_STATUS], str(dict[status_kind][COMMENTS]), str(dict[status_kind][LINKS]), user_name, dict[status_kind][MESSAGE_ID], dict[status_kind][EMAIL_SUBJECT], dict[status_kind][RELMON_URL])
+            status = Status_Table(id, dict[status_kind][VALIDATION_STATUS], dict[status_kind][COMMENTS].encode('ascii', 'replace'), dict[status_kind][LINKS].encode('ascii', 'replace'), user_name, dict[status_kind][MESSAGE_ID], dict[status_kind][EMAIL_SUBJECT], dict[status_kind][RELMON_URL])
             session.add(status)
             release_lv = Releases_LV_Table(id, cat, sub_cat, rel_name, version, date, status_kind)
             session.add(release_lv)
@@ -382,7 +382,7 @@ def newRelease(cat, sub_cat, rel_name, dict_json, Session, *args):
                                                     filter(Releases_Table.release_name == rel_name).\
                                                     filter(Releases_LV_Table.status_kind == status_kind):
                 id_lv = i.id
-            status_lv = Status_LV_Table(id, dict[status_kind][VALIDATION_STATUS], str(dict[status_kind][COMMENTS]), str(dict[status_kind][LINKS]), user_name, dict[status_kind][MESSAGE_ID], dict[status_kind][EMAIL_SUBJECT],dict[status_kind][RELMON_URL])
+            status_lv = Status_LV_Table(id, dict[status_kind][VALIDATION_STATUS], dict[status_kind][COMMENTS].encode('ascii', 'replace'), dict[status_kind][LINKS].encode('ascii', 'replace'), user_name, dict[status_kind][MESSAGE_ID], dict[status_kind][EMAIL_SUBJECT],dict[status_kind][RELMON_URL])
             session.add(status_lv)
         if len(args) > 0:
             session.commit()
