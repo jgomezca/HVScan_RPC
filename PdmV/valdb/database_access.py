@@ -408,7 +408,6 @@ def changeStatus(cat, sub_cat, rel_name, status_kind, new_status, new_comment, n
         for i in session.query(Releases_Table).filter(Releases_Table.category == cat).\
                                                 filter(Releases_Table.subcategory == sub_cat).\
                                                 filter(Releases_Table.release_name == rel_name):
-            logging.error("i in session: %s",i)
             version = i.version
         if version == None:
             session.close()

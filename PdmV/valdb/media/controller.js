@@ -129,6 +129,7 @@ function tableController($scope, $http, $location){
   };
   $scope.removeReleaseFromList = function(releaseName){
     $scope.shortInfoReleases = _.without($scope.shortInfoReleases, releaseName);
+    $location.search('selected', $scope.shortInfoReleases.join(","))
     $scope.shortInfo = _.filter($scope.shortInfo, function(elem){
     return elem["RELEASE NAME"] != releaseName;});
   };
@@ -205,22 +206,19 @@ function tableController($scope, $http, $location){
     }
   });
   $scope.$watch("menus", function(v){
-    console.log("changed",v);
     _.each($scope.menus, function(single_menu){
       if(single_menu.showSubCat){
         $location.search(single_menu.name,'true');
       }else{
         $location.search(single_menu.name,null);
       }
-      if (single_menu.showSubCat){
-        _.each(single_menu.subcats, function(subcat){
-          if (subcat.show){
-            $location.search(""+single_menu.name[0]+subcat.name.substring(0,4)+"",'true');
-          }else{
-            $location.search(""+single_menu.name[0]+subcat.name.substring(0,4)+"",null);
-          }
-        });
-      }
+      _.each(single_menu.subcats, function(subcat){
+        if (subcat.show){
+          $location.search(""+single_menu.name[0]+subcat.name.substring(0,4)+"",'true');
+        }else{
+          $location.search(""+single_menu.name[0]+subcat.name.substring(0,4)+"",null);
+        }
+      });
     });
   },true);
 
