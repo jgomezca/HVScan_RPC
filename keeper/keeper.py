@@ -966,7 +966,6 @@ def compass(inputFile, outputFile):
             tmpPath,
             os.path.join(tmpPath, 'stylesheets/screen.css'), outputFile,
         ),
-        stdout = subprocess.PIPE,
         shell = True,
     )
 
