@@ -77,7 +77,6 @@ class Browser(object):
                        lower(name)        like :s
                     or lower(object_type) like :s
                     or lower(description) like :s
-                order by insertion_time desc
             )
             where rownum <= :s
         ''', (string, string, string, limit))
@@ -90,7 +89,6 @@ class Browser(object):
                 where
                        lower(hash)        like :s
                     or lower(object_type) like :s
-                order by insertion_time desc
             )
             where rownum <= :s
         ''', (string, string, limit))
@@ -104,7 +102,6 @@ class Browser(object):
                        lower(name)        like :s
                     or lower(release)     like :s
                     or lower(description) like :s
-                order by insertion_time desc
             )
             where rownum <= :s
         ''', (string, string, string, limit))
@@ -144,16 +141,12 @@ class Browser(object):
                 'data': _render_sinces(time_type, self.connections[database].fetch('''
                         select *
                         from (
-                            select *
-                            from (
-                                select since, insertion_time, payload_hash
-                                from iov
-                                where tag_name = :s
-                                order by since desc, insertion_time desc
-                            )
-                            where rownum <= :s
+                            select since, insertion_time, payload_hash
+                            from iov
+                            where tag_name = :s
+                            order by since desc, insertion_time desc
                         )
-                        order by since, insertion_time
+                        where rownum <= :s
                     ''', (item, limit))),
             }, default = lambda obj:
                 obj.strftime('%Y-%m-%d %H:%M:%S,%f') if isinstance(obj, datetime.datetime) else None
@@ -166,7 +159,6 @@ class Browser(object):
                         select record, label, tag_name
                         from global_tag_map
                         where global_tag_name = :s
-                        order by record, label
                     ''', (item, )),
             })
 
