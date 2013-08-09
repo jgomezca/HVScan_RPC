@@ -22,6 +22,26 @@ import database
 limit = 100
 
 
+def _high(n):
+    return int(n) >> 32
+
+
+def _low(n):
+    return int(n) & 0xffffffff
+
+
+def _render_sinces(time_type, data):
+    if time_type == 'Time':
+        for row in data:
+            row[0] = str(datetime.datetime.fromtimestamp(_high(row[0])).replace(microsecond = _low(row[0])))
+
+    elif time_type == 'Lumi':
+        for row in data:
+            row[0] = '%s Lumi %5s' % (_high(row[0]), _low(row[0]))
+
+    return data
+
+
 class Browser(object):
     '''Browser server.
     '''
@@ -113,9 +133,15 @@ class Browser(object):
         service.setResponseJSON()
 
         if type_ == 'tags':
+            time_type = self.connections[database].fetch('''
+                select time_type
+                from tag
+                where name = :s
+            ''', (item, ))[0][0]
+
             return json.dumps({
                 'headers': ['Since', 'Insertion Time', 'Payload'],
-                'data': self.connections[database].fetch('''
+                'data': _render_sinces(time_type, self.connections[database].fetch('''
                         select *
                         from (
                             select *
@@ -128,7 +154,7 @@ class Browser(object):
                             where rownum <= :s
                         )
                         order by since, insertion_time
-                    ''', (item, limit)),
+                    ''', (item, limit))),
             }, default = lambda obj:
                 obj.strftime('%Y-%m-%d %H:%M:%S,%f') if isinstance(obj, datetime.datetime) else None
             )
