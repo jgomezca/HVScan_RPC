@@ -344,7 +344,7 @@ function getSelectedRows(type) {
 }
 
 var selectedRowClass = 'selectedRow';
-$('#results').on('click', 'tr', function() {
+$('#results').on('click', 'tbody tr', function() {
     var t = $(this);
 
     // Do not select if the table is empty
