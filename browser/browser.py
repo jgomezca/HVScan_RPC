@@ -33,11 +33,11 @@ def _low(n):
 def _render_sinces(time_type, data):
     if time_type == 'Time':
         for row in data:
-            row[0] = str(datetime.datetime.utcfromtimestamp(_high(row[0])).replace(microsecond = _low(row[0])))
+            row[0] = '%s (UTC: %s)' % (row[0], datetime.datetime.utcfromtimestamp(_high(row[0])).replace(microsecond = _low(row[0])))
 
     elif time_type == 'Lumi':
         for row in data:
-            row[0] = '%s Lumi %5s' % (_high(row[0]), _low(row[0]))
+            row[0] = '%s (Run: %s Lumi: %s)' % (row[0], _high(row[0]), _low(row[0]))
 
     return data
 
