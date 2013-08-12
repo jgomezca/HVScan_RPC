@@ -33,7 +33,8 @@ def _low(n):
 def _render_sinces(time_type, data):
     if time_type == 'Time':
         for row in data:
-            row[0] = '%s (UTC: %s)' % (row[0], datetime.datetime.utcfromtimestamp(_high(row[0])).replace(microsecond = _low(row[0])))
+            # datetime does not support nanosecond precision: format ourselves
+            row[0] = '%s (UTC: %s,%s)' % (row[0], datetime.datetime.utcfromtimestamp(_high(row[0])), str(_low(row[0])).zfill(9))
 
     elif time_type == 'Lumi':
         for row in data:
