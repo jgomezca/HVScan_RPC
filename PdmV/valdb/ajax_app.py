@@ -420,7 +420,7 @@ Links: %s
             if (cat.upper() == 'HLT'): #if the category is HLT  -> send email to trigger hn and a reply to orginal with text to diff hn
                 hlt_msg_id = email.utils.make_msgid()
                 hn_address = 'hn-cms-trigger-performance@cern.ch'
-                hn_address = 'hn-cms-hnTest@cern.ch'
+                #hn_address = 'hn-cms-hnTest@cern.ch'
                 #hn_address = 'vlimant@cern.ch'  # Testing adresses
                 if len(returnedStatusValueOld[1].split(",")) == 1:
                     self.sendMailOnChanges(msgText, msgSubject, None, hlt_msg_id, userName, hn_address) #send message to other HN adress without threading
