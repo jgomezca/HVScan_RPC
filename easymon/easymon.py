@@ -214,6 +214,12 @@ def getStatus(checkMKStatus, title, item):
 
     if not isinstance(item, tuple):
         # Check_MK Service, return its status
+
+        # If the service cannot be found in CheckMK's output
+        # (e.g. the local check might be disabled) we return unknown
+        if item not in checkMKStatus:
+            return 'UNKNOWN'
+
         return checkMKStatus[item][0]
 
     # Group, recurse
@@ -270,7 +276,7 @@ class Easymon(object):
                 })
             else:
                 # Check_MK Service
-                if item is None:
+                if item is None or item not in checkMKStatus:
                     (status, message, stateAge, checkAge) = ('UNKNOWN', 'UNKNOWN - Check is not enabled.', '???', '???')
                     url = None
                 else:
