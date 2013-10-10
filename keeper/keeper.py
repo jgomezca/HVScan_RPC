@@ -335,7 +335,7 @@ def run(service, filename, extraCommandLine = '', replaceProcess = True):
         return subprocess.call(['bash', '-c', commandLine])
 
 
-def start(service, warnIfAlreadyStarted = True, sendEmail = True, maxWaitTime = 10):
+def start(service, warnIfAlreadyStarted = True, sendEmail = True, maxWaitTime = 30):
     '''Starts a service or the keeper itself.
     '''
 
@@ -434,7 +434,7 @@ def start(service, warnIfAlreadyStarted = True, sendEmail = True, maxWaitTime = 
     logging.info('Started %s: %s', service, ','.join(getPIDs(service)))
 
 
-def wait(service, maxWaitTime = 20, forStart = False):
+def wait(service, maxWaitTime = 30, forStart = False):
     '''Waits until a service stops.
     
     Raises exception if a maximum wait time is exceeded.
