@@ -53,7 +53,7 @@ function tableController($scope, $http, $location){
                     priority: 3}
   };
   $scope.Headers = {"Reconstruction":
-      [{name:"Release Name", db_name:"Release_Name"}, {name:"Tracker", db_name:"TK"}, {name:"Ecal", db_name:"Ecal"}, {name:"Hcal", db_name:"Hcal"}, {name:"DT",db_name:"DT"}, {name:"CSC", db_name:"CSC"}, 
+      [{name:"Release Name", db_name:"Release_Name"}, {name:"Tracker", db_name:"TK"}, {name:"Ecal", db_name:"Ecal"}, {name:"Hcal", db_name:"Hcal"}, {name:"CASTOR", db_name:"CASTOR"}, {name:"DT",db_name:"DT"}, {name:"CSC", db_name:"CSC"}, 
        {name:"RPC", db_name:"RPC"}, {name:"Tracking", db_name:"Tracking"}, {name:"Electron", db_name:"Electron"}, {name:"Photon", db_name:"Photon"}, {name:"Muon", db_name:"Muon"}, 
        {name:"Jet", db_name:"Jet"}, {name:"MET", db_name:"MET"}, {name:"bTag", db_name:"bTag"}, {name:"Tau", db_name:"Tau"}, {name:"Info", db_name:"Summary"}, {name:"RelMon", db_name:"RelMon"}],
       "HLT":
@@ -62,7 +62,7 @@ function tableController($scope, $http, $location){
        {name:"Susy", db_name:"Susy"},{name:"Exotica", db_name:"Exotica"},{name:"B", db_name:"B"},{name:"Fwd", db_name:"Fwd"}, {name:"Info", db_name:"Summary"}, {name:"RelMon", db_name:"RelMon"}],
       "PAGs":
       [{name:"Release Name", db_name:"Release_Name"}, {name:"SMP", db_name:"SMP"}, {name:"Higgs", db_name:"Higgs"}, {name:"Top", db_name:"Top"}, {name:"Susy", db_name:"Susy"}, 
-       {name:"Exotica", db_name:"Exotica"},{name:"B2G", db_name:"B2G"},{name:"B", db_name:"B"},{name:"Fwd", db_name:"Fwd"},{name:"Info", db_name: "Summary"},{name:"RelMon", db_name:"RelMon"}]
+       {name:"Exotica", db_name:"Exotica"},{name:"B2G", db_name:"B2G"},{name:"B", db_name:"B"}, {name:"Fwd", db_name:"Fwd"}, {name:"HIN", db_name:"HIN"},{name:"Info", db_name: "Summary"},{name:"RelMon", db_name:"RelMon"}]
   };
   $scope.status_icons= {
             "NOT YET DONE" : "media/minus.gif",
@@ -361,7 +361,7 @@ app.directive("editModal", function($http){
   replace: true,
   template:'<div modal="editableModal" close="closeEditable()" style="display: block;max-height:500px;">'+
       '  <div class="modal-header">'+
-      '    <h2> Release: <text type="text">{{details[\'RELEASE_NAME\']}}</text></h2>'+
+      '    <h2> Validation campaign: <text type="text">{{details[\'RELEASE_NAME\']}}</text></h2>'+
       '    <h4> <text> {{catSubCat}}</text></h4>'+
       '    <h3> Author: <text type="text">{{user_fullname}}</text></h3>'+
       '  </div>  <!--end of modal header-->'+
@@ -463,7 +463,7 @@ app.directive("addRelease", function($http){
       '      </div>'+
       '    </div>'+
       '    <div class="control-group">'+
-      '      <label class="control-label">Release name:</label>'+
+      '      <label class="control-label">Validation campaign name:</label>'+
       '      <div class="controls">'+
       '        <input type="text" class="large" maxlength="20" ng-model="release_name" name="release_name" required></input>'+
       '        <span class="error" ng-show="addReleaseForm.release_name.$error.required">Required!</span>'+

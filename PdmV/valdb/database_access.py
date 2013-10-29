@@ -175,9 +175,9 @@ possible_status_list = ["OK",
 possible_category_list = ["Reconstruction", "HLT", "PAGs"]
 possible_subcatrgory_list = ["Data", "FullSim", "FastSim"] 
 
-reconstruction_status_list = ["CSC", "TAU", "TRACKING", "BTAG", "JET", "ECAL", "RPC", "PHOTON", "MUON", "MET", "ELECTRON", "TK", "HCAL", "DT", "SUMMARY"]
+reconstruction_status_list = ["CSC", "TAU", "TRACKING", "BTAG", "JET", "ECAL", "RPC", "PHOTON", "MUON", "MET", "ELECTRON", "TK", "HCAL", "DT", "CASTOR", "SUMMARY"]
 hlt_status_list = ["TAU", "JET", "HIGGS", "TOP", "MUON", "PHOTON", "MET", "ELECTRON", "EXOTICA", "SUSY", "TRACKING", "BTAG", "SMP", "FWD", "B","SUMMARY"]
-pags_status_list = ["B2G","B", "HIGGS", "FWD", "TOP", "SMP", "EXOTICA", "SUSY", "SUMMARY"]
+pags_status_list = ["B2G","B", "HIGGS", "FWD", "TOP", "SMP", "EXOTICA", "SUSY", "HIN", "SUMMARY"]
 
 # Returns validation statuses in JSON key-value form, found by release category, subcategory and name 
 def getReleaseShortInfo(cat, sub_cat, rel_name, Session):
@@ -437,10 +437,12 @@ def changeStatus(cat, sub_cat, rel_name, status_kind, new_status, new_comment, n
                 status_dict[RELMON_URL] = j.RELMON_URL
                 RELMON = j.RELMON_URL
             dict[i.status_kind] = status_dict
-
-        if cat == 'HLT' and "RELMON_URL" not in dict[status_kind]: #if the new column B added, but no info was saved before.
+        logging.error("%s" %cat)
+        if cat == 'Reconstruction' and "RELMON_URL" not in dict[status_kind]: #if the new column added, but no info was saved before.
             dict[status_kind]["RELMON_URL"] = RELMON
-        if cat == 'PAGs' and "RELMON_URL" not in dict[status_kind]: #if the new column B added, but no info was saved before.
+        if cat == 'HLT' and "RELMON_URL" not in dict[status_kind]: #if the new column added, but no info was saved before.
+            dict[status_kind]["RELMON_URL"] = RELMON
+        if cat == 'PAGs' and "RELMON_URL" not in dict[status_kind]: #if the new column added, but no info was saved before.
             dict[status_kind]["RELMON_URL"] = RELMON
             
         dict[status_kind][VALIDATION_STATUS] = new_status

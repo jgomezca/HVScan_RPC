@@ -30,12 +30,12 @@
           <div>
             <label style="font-family:verdana; font-size:18px"><br></label>
             <form class="form-inline">
-              <label for="releaseName" style="display:inline; font-family:verdana; font-size:18px">Select one release</label>
+              <label for="releaseName" style="display:inline; font-family:verdana; font-size:18px">Select one validation campaign</label>
               <input type="text" ng-model="searchableName"/>
               <button class="btn" ng-click="getReleaseList()">OK</button>
               <img ng-show="pendingRequests" ng-src="https://twiki.cern.ch/twiki/pub/TWiki/TWikiDocGraphics/processing-bg.gif"></img>
               <span ng-show="showSearchLength">
-                Releases found: <b>{{releaseList.length}}</b>
+                Campaigns found: <b>{{releaseList.length}}</b>
               </span>
             </form>
           </div>
@@ -90,7 +90,7 @@
                <!--     MODAL -->
                   <div modal="shouldBeOpen" close="close()" style="display: block;max-height:500px;"> <!--hidden modal template-->
                     <div class="modal-header">
-                      <h2>Release: <text>{{details['RELEASE_NAME']}}</text></h2>
+                      <h3>Validation campaign: <text>{{details['RELEASE_NAME']}}</text></h3>
                       <h4><text>{{catSubCat}}</text></h4>
                       <a ng-repeat="version in details['VERSIONS']" rel="tooltip" title="{{$index}}" ng-click="selectVersion(version);" ng-href="#">
                         <!-- <i class="icon-asterisk"></i> -->
@@ -160,7 +160,7 @@
         </div> <!--end of span9-->
         <div class="span3">
           <div>
-            <label style="font-family:verdana; font-size:18px">List of releases</label>
+            <label style="font-family:verdana; font-size:18px">List of campaigns</label>
             <span class="nullable">
               <select ng-model="selectedRelease" ng-options="value for value in releaseList">
                 <option value="">------</option>
@@ -168,7 +168,7 @@
             </span>
             <img src="media/add_icon.png" alt="Add" style="vertical-align: center; margin-bottom:9px;" ng-click="addSelectedRelease();"/>
             <div><input name = "showAlllLitsBTN" class="btnOK" type="button" value="Show All" ng-click="addAllReleases();"/></div>
-            <label style="font-family:verdana; font-size:18px; margin-top: 15px;">Selected releases:</label>
+            <label style="font-family:verdana; font-size:18px; margin-top: 15px;">Selected campaigns:</label>
             <br>
             <ul id="list" style="list-style:none;">
              <li ng-repeat="elem in shortInfoReleases">

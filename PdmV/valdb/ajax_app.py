@@ -81,11 +81,11 @@ class API(object):
         mailId = self.parent_obj.getMsgId()
         for cat in catSubCatList: #in case user specified a comma separated list for releases CatSubCats
             if cat[0].upper() == 'R': #get subCategory collumn list
-                defaultKeys = ["CSC", "TAU", "TRACKING", "BTAG", "JET", "ECAL", "RPC", "PHOTON", "MUON", "MET", "ELECTRON", "TK", "HCAL", "DT", "SUMMARY"]
+                defaultKeys = ["CSC", "TAU", "TRACKING", "BTAG", "JET", "ECAL", "RPC", "PHOTON", "MUON", "MET", "ELECTRON", "TK", "HCAL", "DT", "CASTOR", "SUMMARY"]
             elif cat[0].upper() == 'H':
                 defaultKeys = ["TAU", "JET", "HIGGS", "TOP", "MUON", "PHOTON", "MET", "ELECTRON", "EXOTICA", "SUSY", "SMP", "FWD", "BTAG", "TRACKING", "B", "SUMMARY"]
             elif cat[0].upper() == 'P':
-                defaultKeys = ["B2G","B", "HIGGS", "FWD", "TOP", "SMP", "EXOTICA", "SUSY", "SUMMARY"]
+                defaultKeys = ["B2G","B", "HIGGS", "FWD", "TOP", "SMP", "EXOTICA", "SUSY", "HIN", "SUMMARY"]
             subCat = self.parent_obj.configuration[cat]
             StatList = []
             StatValList = []
@@ -308,9 +308,9 @@ class AjaxApp(object):
         subcategories = request["subcats"]
         msgIDs = self.getMultipleMsgId()
         messageID_to_inform = ["","",""]
-        reco_default_keys = ["CSC", "TAU", "TRACKING", "BTAG", "JET", "ECAL", "RPC", "PHOTON", "MUON", "MET", "ELECTRON", "TK", "HCAL", "DT", "SUMMARY"]
+        reco_default_keys = ["CSC", "TAU", "TRACKING", "BTAG", "JET", "ECAL", "RPC", "PHOTON", "MUON", "MET", "ELECTRON", "TK", "HCAL", "DT", "CASTOR", "SUMMARY"]
         hlt_default_keys = ["TAU", "JET", "HIGGS", "TOP", "MUON", "PHOTON", "MET", "ELECTRON", "EXOTICA", "SUSY", "SMP", "FWD", "BTAG", "TRACKING", "B", "SUMMARY"]
-        pags_default_keys = ["B2G", "B", "HIGGS", "FWD", "TOP", "SMP", "EXOTICA", "SUSY", "SUMMARY"]
+        pags_default_keys = ["B2G", "B", "HIGGS", "FWD", "TOP", "SMP", "EXOTICA", "SUSY", "HIN", "SUMMARY"]
         msgSubject = "New release %s added" %(releaseName)
         success = []
         for cat in categories:
