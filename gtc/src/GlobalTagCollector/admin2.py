@@ -12,6 +12,7 @@ from GlobalTagCollector.models import GTQueue, GTQueueEntry, GlobalTag, GTType, 
 from GlobalTagCollector.forms import HardwareArchitectureModelForm
 from django.contrib import messages
 import logging
+from django.core.exceptions import MultipleObjectsReturned
 
 logger = logging.getLogger(__file__)
 
@@ -99,7 +100,11 @@ def gt_queue_entries(request, queue_id):
     #Each gt_queue_entry append with attribute type_conn_string
     #TODO: improve query to avoid 1+N db queries
     for gt_queue_entry in gt_queue_entries_qs:
-        type_conn_string = GTType.objects.get(gt_type_category=gt_queue.gt_type_category, account_type=gt_queue_entry.tag.account.account_type).type_conn_string
+        try:
+            type_conn_string = GTType.objects.get(gt_type_category=gt_queue.gt_type_category, account_type=gt_queue_entry.tag.account.account_type).type_conn_string
+        except MultipleObjectsReturned:
+            # Fix for the HLT queue entries, where MultipleObjectsReturned may be raised
+            type_conn_string = GTType.objects.filter(gt_type_category=gt_queue.gt_type_category, account_type=gt_queue_entry.tag.account.account_type)[0].type_conn_string
         gt_queue_entry.type_conn_string = type_conn_string
 
     return render_to_response("admin2/gt_queue_entries.html", {
