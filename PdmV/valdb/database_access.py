@@ -175,7 +175,7 @@ possible_status_list = ["OK",
 possible_category_list = ["Reconstruction", "HLT", "PAGs"]
 possible_subcatrgory_list = ["Data", "FullSim", "FastSim"] 
 
-reconstruction_status_list = ["CSC", "TAU", "TRACKING", "BTAG", "JET", "ECAL", "RPC", "PHOTON", "MUON", "MET", "ELECTRON", "TK", "HCAL", "DT", "CASTOR", "SUMMARY"]
+reconstruction_status_list = ["CSC", "TAU", "TRACKING", "BTAG", "JET", "ECAL", "RPC", "PHOTON", "MUON", "MET", "ELECTRON", "TK", "HCAL", "DT", "CASTOR", "L1", "SUMMARY"]
 hlt_status_list = ["TAU", "JET", "HIGGS", "TOP", "MUON", "PHOTON", "MET", "ELECTRON", "EXOTICA", "SUSY", "TRACKING", "BTAG", "SMP", "FWD", "B","SUMMARY"]
 pags_status_list = ["B2G","B", "HIGGS", "FWD", "TOP", "SMP", "EXOTICA", "SUSY", "HIN", "SUMMARY"]
 
