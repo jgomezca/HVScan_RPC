@@ -159,19 +159,24 @@ virtualHosts['cms-conddb-prod1'] = dict(virtualHosts['cms-conddb-prod'])
 virtualHosts['cms-conddb-prod2'] = dict(virtualHosts['cms-conddb-prod'])
 
 # cms-pdmv-int is the same as -dev but with different 'backendHostnames'
-# (for PdmV's keeper services, e.g. valdb, libs) and with different mcm/*
-# (-int uses the production backend service and the database's admin web GUI)
+# (for PdmV's keeper services, e.g. valdb, libs) and with different mcm/*.
+# mcm on -int uses the production database but the integration web server
 virtualHosts['cms-pdmv-int'] = dict(virtualHosts['cms-pdmv-dev'])
 virtualHosts['cms-pdmv-int']['backendHostnames'] = ['vocms146']
-virtualHosts['cms-pdmv-int']['services'] = list(virtualHosts['cms-pdmv-int']['services'])
-virtualHosts['cms-pdmv-int']['services'][virtualHosts['cms-pdmv-int']['services'].index('mcm')] += '-prod'
-virtualHosts['cms-pdmv-int']['services'][virtualHosts['cms-pdmv-int']['services'].index('mcm/public')] += '-prod'
-virtualHosts['cms-pdmv-int']['services'][virtualHosts['cms-pdmv-int']['services'].index('mcm/admin')] += '-prod'
+virtualHosts['cms-pdmv-int']['services'] = list(virtualHosts['cms-pdmv-dev']['services'])
+virtualHosts['cms-pdmv-int']['services'][virtualHosts['cms-pdmv-int']['services'].index('mcm')] += '-int'
+virtualHosts['cms-pdmv-int']['services'][virtualHosts['cms-pdmv-int']['services'].index('mcm/public')] += '-int'
+virtualHosts['cms-pdmv-int']['services'][virtualHosts['cms-pdmv-int']['services'].index('mcm/admin')] += '-intprod'
 
 # cms-pdmv is the same as -int (i.e. including the changes in mcm) but with
 # different 'backendHostnames' (for PdmV's keeper services, e.g. valdb, libs)
+# mcm on -prod uses the production database and the production web server
 virtualHosts['cms-pdmv'] = dict(virtualHosts['cms-pdmv-int'])
 virtualHosts['cms-pdmv']['backendHostnames'] = ['cmsdbbe1', 'cmsdbbe2']
+virtualHosts['cms-pdmv']['services'] = list(virtualHosts['cms-pdmv-dev']['services'])
+virtualHosts['cms-pdmv']['services'][virtualHosts['cms-pdmv']['services'].index('mcm')] += '-prod'
+virtualHosts['cms-pdmv']['services'][virtualHosts['cms-pdmv']['services'].index('mcm/public')] += '-prod'
+virtualHosts['cms-pdmv']['services'][virtualHosts['cms-pdmv']['services'].index('mcm/admin')] += '-intprod'
 
 # cmstags-prod has also its -prod{1,2} counterparts, as well as -dev and -int
 virtualHosts['cmstags'] = dict(virtualHosts['cmstags-prod'])
@@ -379,8 +384,10 @@ services = {
         'shibbolethGroups': pdmvShibbolethGroups,
     },
 
+    # mcm in -dev uses the same machine for the database (mcm/admin) as for
+    # the web server (mcm/public and mcm)
     'mcm/public': {
-        'backendHostnames': ['preptest'],
+        'backendHostnames': ['cms-pdmv-mcmdev'],
         'backendPort': 443,
         'backendUrl': '/public',
         # FIXME: Temporary fix until mcm moves the work out of the webserver
@@ -394,14 +401,14 @@ services = {
         'protocol': 'http',
         # FIXME: Temporary fix until Nik setups SSL in CouchDB's admin interface.
         #        The SSL port will probably be 6984.
-        'backendHostnames': ['preptest'],
+        'backendHostnames': ['cms-pdmv-mcmdev'],
         'backendPort': 5984,
         'backendUrl': '',
         'shibbolethGroups': pdmvAdminShibbolethGroups,
     },
 
     'mcm': {
-        'backendHostnames': ['preptest'],
+        'backendHostnames': ['cms-pdmv-mcmdev'],
         'backendPort': 443,
         'backendUrl': '',
         # FIXME: Temporary fix until mcm moves the work out of the webserver
@@ -603,18 +610,25 @@ services['dropBox']['backendTimeout'] = 60 * 10 # 10 minutes
 # FIXME: gtc still uses HTTP
 services['gtc']['protocol'] = 'http'
 
-# PdmV's mcm's -int/-prod web backend and database
-services['mcm-prod'] = dict(services['mcm'])
-services['mcm-prod']['url'] = 'mcm'
+# mcm on -int uses the production database but the integration web server
+services['mcm-int'] = dict(services['mcm'])
+services['mcm-int']['url'] = 'mcm'
+services['mcm-int']['backendHostnames'] = ['cms-pdmv-mcmint']
+
+services['mcm/public-int'] = dict(services['mcm/public'])
+services['mcm/public-int']['url'] = 'mcm/public'
+services['mcm/public-int']['backendHostnames'] = ['cms-pdmv-mcmint']
+
+services['mcm/admin-intprod'] = dict(services['mcm/admin'])
+services['mcm/admin-intprod']['url'] = 'mcm/admin'
+services['mcm/admin-intprod']['backendHostnames'] = ['cms-pdmv-mcm-db']
+
+# mcm on -prod uses the production database and the production web server
+services['mcm-prod'] = dict(services['mcm-int'])
 services['mcm-prod']['backendHostnames'] = ['cms-pdmv-mcm']
 
-services['mcm/public-prod'] = dict(services['mcm/public'])
-services['mcm/public-prod']['url'] = 'mcm/public'
+services['mcm/public-prod'] = dict(services['mcm/public-int'])
 services['mcm/public-prod']['backendHostnames'] = ['cms-pdmv-mcm']
-
-services['mcm/admin-prod'] = dict(services['mcm/admin'])
-services['mcm/admin-prod']['url'] = 'mcm/admin'
-services['mcm/admin-prod']['backendHostnames'] = ['cms-pdmv-mcm-db']
 
 
 # Templates
