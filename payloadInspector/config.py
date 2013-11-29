@@ -34,5 +34,6 @@ general.date_format = '%d/%m/%y %H:%M:%S'
 
 skippedTags = set([
 	'EcalLaserAPDPNRatios_data_20120814_2011-2012_v0',
+	'TrackerAlignment_2011Realistic_v2_mc',
 ])
 
