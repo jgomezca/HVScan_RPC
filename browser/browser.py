@@ -11,12 +11,14 @@ __email__ = 'mojedasa@cern.ch'
 
 import datetime
 import json
+import glob
 
 import cherrypy
 import mako.template
 
 import service
 import database
+import shibboleth
 
 
 limit = 100
@@ -43,27 +45,41 @@ def _render_sinces(time_type, data):
     return data
 
 
+def render_template(filename):
+    with open(filename, 'rb') as f:
+        return mako.template.Template(f.read())
+
+
 class Browser(object):
     '''Browser server.
     '''
 
     def __init__(self):
-        with open('index.html', 'rb') as f:
-            self.indexTemplate = mako.template.Template(f.read())
+        self.templates = dict(
+            (filename.split('templates/')[1].rsplit('.html')[0], render_template(filename))
+            for filename
+            in glob.glob('templates/*.html')
+        )
 
-        self.connections = dict(map(
-            lambda x: (x, database.Connection(service.secrets['connections'][x])),
-            ['Development', 'Integration', 'Archive', 'Production']
-        ))
+        self.connections = dict(
+            (name, database.Connection(conn))
+            for name,conn
+            in service.secrets['connections'].items()
+        )
 
     @cherrypy.expose
     def index(self):
-        '''Status page.
-        '''
-
-        return self.indexTemplate.render(
-            title = 'CMS Conditions DB Browser'
+        return self.templates['index'].render(
+            username = shibboleth.getUsername(),
         )
+
+
+    @cherrypy.expose
+    def news(self):
+        # TODO: Render from an Atom/RSS feed
+        return self.templates['news'].render(
+        )
+
 
     @cherrypy.expose
     def search(self, database, string):
@@ -169,6 +185,16 @@ class Browser(object):
     @cherrypy.expose
     def diff(self, database, type_, first, second):
         return json.dumps([])
+
+
+    @cherrypy.expose
+    def upload(self, file_content, source_tag, destination_tags, comment):
+        return '%s' % {
+            'file_content': file_content[0:50] + ' (...)',
+            'source_tag': source_tag,
+            'destination_tags': json.loads(destination_tags),
+            'comment': comment,
+        }
 
 
 def main():

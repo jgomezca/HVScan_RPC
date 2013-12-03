@@ -1,228 +1,105 @@
-@import "compass/reset";
 @import "compass";
-
-* {
-    @include box-sizing(border-box);
-}
-
-.clearfix:before, .clearfix:after {
-    content: " ";
-    display: table;
-}
-
-.clearfix:after {
-    clear: both;
-}
-
-.displaynone {
-    display: none;
-}
-
-$margin:  10px;
-$padding: 10px;
-$height:  30px;
-$radius:  6px;
-
-$basecolor:     #0080B0;
-
-$databasecolor: #70A000;
-$uploadcolor:   #B08000;
-$helpcolor:     #8000B0;
-$listcolor:     #B08000;
-$diffcolor:     #8000B0;
-
-
-body {
-    background-color: scale-color($basecolor, $lightness: 90%);
-}
-
-.working {
-    color: #FF8000;
-}
-
-.error {
-    color: #FF0000;
-}
-
-.highlight {
-    color: #FF0000;
-    font-weight: bold;
-}
-
-header, #results {
-    margin: $margin;
-}
-
-.moveddown {
-    padding-top: 150px;
-}
-
-.container {
-    width: 1030px;
-    margin-left: auto;
-    margin-right: auto;
-    padding: 0 $padding;
-
-    > * {
-        float: left;
-        margin-right: $margin;
-        display: block;
-    }
-}
-
-h1 {
-    margin-right: $margin * 2;
-
-    $titlepadding: 5px;
-
-    height: $height;
-    font-size: $height - ($titlepadding * 2);
-    padding-top: $titlepadding;
-
-    font-family: sans-serif;
-    font-weight: bold;
-    text-align: center;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-    color: #000000;
-}
-
-hr {
-    border: 0;
-    margin: 0;
-    padding: 0;
-    height: 1px;
-    @include background-image(linear-gradient(left, rgba(0,0,0,0), rgba(0,0,0,0.5), rgba(0,0,0,0)));
-}
-
-input {
-    margin: 0;
-    border-right: 0;
-    background-color: #FFFFFF;
-    padding: ($padding / 2) ($padding / 1.5);
-    height: $height;
-    width: 300px;
-}
-
-button {
-    margin: 0;
-    color: #FFFFFF;
-
-    padding: $padding / 2;
-    height: $height;
-    width: $height;
-
-    &:hover {
-        cursor: pointer;
-    }
-}
-
-@mixin image-button($color, $image-path) {
-    border: 1px solid $color;
-    @include border-radius($radius);
-    @include background-image(url($image-path), linear-gradient(scale-color($color, $lightness: 40%), scale-color($color, $lightness: 5%)));
-    background-repeat: no-repeat, repeat;
-    background-position: 50%;
-}
-
-@mixin text-image-button($color, $image-path) {
-    @include image-button($color, $image-path);
-
-    width: auto;
-
-    font-weight: bold;
-    font-size: $height / 2;
-
-    padding-left: $height;
-    padding-right: $padding;
-
-    background-position: ($padding / 2) 50%;
-}
-
-@mixin search-input {
-    border: 1px solid $basecolor;
-    @include border-left-radius($radius);
-    @include box-shadow(inset 0 0 8px scale-color($basecolor, $lightness: 25%));
-}
 
 button::-moz-focus-inner, input::-moz-focus-inner {
     border: 0;
     padding: 0;
 }
 
+// Bootstrap comes with -4px, which looks 1 pixel off in both Chrome and Firefox
+.input-group-btn>.btn+.btn {
+    margin-left: -5px !important;
+}
+
+// For full-width rows that we need in the search results
+.container-liquid {
+  padding: 0 15px;
+  margin: 0 auto;
+}
+
+.displaynone {
+    display: none;
+}
+
+select[disabled] {
+    color: #919191;
+}
+
+$margin: 10px;
+$basecolor: #0080B0;
+$backgroundcolor: scale-color($basecolor, $lightness: 87%);
+
+body {
+    background-color: $backgroundcolor;
+}
+
+.navbar {
+    margin-bottom: 0;
+}
+
+.navbar-danger {
+    color: #FF0000 !important;
+}
+
+.nav > li > a > .glyphicon, .nav > li > .glyphicon {
+    color: $backgroundcolor;
+}
+
 #search {
-    $searchcolor: #0080B0;
-
-    input {
-        @include search-input;
-    }
-
-    button {
-        float: right;
-        border: 1px solid $searchcolor;
-        border-left: 0;
-        @include border-right-radius($radius);
-        @include background-image(url("../images/search.png"), linear-gradient(scale-color($searchcolor, $lightness: 40%), scale-color($searchcolor, $lightness: 5%)));
-        background-repeat: no-repeat, repeat;
-        background-position: 50%;
-    }
-}
-
-#database {
-    @include text-image-button($databasecolor, "../images/select.png");
-}
-
-#upload {
-    @include text-image-button($uploadcolor, "../images/upload.png");
-}
-
-#help {
-    @include image-button($helpcolor, "../images/help.png");
-}
-
-#results {
-    input {
-        @include search-input;
-    }
-}
-
-table {
-    font-family: monospace;
-}
-
-p {
-    margin-bottom: $margin;
-}
-
-.tableHeaderContainer {
-    width: 300px;
-    margin-left: auto;
-    margin-right: auto;
-}
-
-h2 {
-    float:left;
-    margin-right: $margin * 2;
-    padding-top: 6px;
-
-    height: $height;
-
-    font-family: sans-serif;
-    font-weight: bold;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-    color: #000000;
-}
-
-.tableHeaderContainer > button {
+    width: 350px;
     float: left;
-    margin-right: $margin;
 }
 
-.list {
-    @include text-image-button($listcolor, "../images/list.png");
+#main {
+    margin-top: $margin;
+
+    > h1 {
+        margin-top: 0;
+    }
 }
 
-.diff {
-    @include text-image-button($diffcolor, "../images/diff.png");
+.alert-critical {
+    background-color: #F2DEDE;
+    border-color: #FF0000;
+    color: #FF0000;
+}
+
+.working {
+    color: #FF8000;
+}
+
+.alert-in-top, .tutorial-step {
+    margin-top: $margin;
+    margin-bottom: 0;
+
+    > :first-child {
+        margin-top: 0;
+    }
+}
+
+// Default "info" colors are basically the same as the background of body,
+// so change them into something that stands out a bit more.
+.alert-info {
+    background-color: #FFFFFF;
+    border-color: #A8CEFF;
+}
+
+.alert-timestamp {
+    margin: 0 0 5px 5px;
+}
+
+#news address {
+    display: block;
+    line-height: 1.428571429;
+    color: #999999;
+
+    &:before {
+        content: '\2014 \00A0';
+    }
+}
+
+.highlight {
+    color: #FF0000;
+    font-weight: bold;
 }
 
 .ui-widget {
@@ -243,8 +120,24 @@ h2 {
     padding-top: 3px;
 }
 
+.dataTable {
+    font-family: monospace;
+    font-size: 13px;
+}
+
 .dataTables_wrapper .ui-toolbar {
     padding: 1px 1px 1px 5px;
+}
+
+.table-header-container {
+    width: 300px;
+    margin-left: auto;
+    margin-right: auto;
+
+    > h2 {
+        display: inline;
+        font-size: 24px;
+    }
 }
 
 .dataTables_wrapper {
@@ -257,5 +150,11 @@ h2 {
 
 .odd.selectedRow td {
 	background-color: #9FAFD1 !important;
+}
+
+// XXX: Required to prevent big arrows when pointing to things
+//      inside, for instance, an h2
+h2 > .popover {
+    font-size: 14px;
 }
 

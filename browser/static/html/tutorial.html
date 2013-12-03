@@ -1,0 +1,195 @@
+<div id='tutorial-steps' class='container'>
+    <div class='row'>
+        <div class='col-md-12'>
+            <article class='hidden alert alert-success tutorial-step' id='tutorial-introduction'>
+                <h3>Welcome to the CMS Conditions DB Service tutorial</h3>
+                <p>The new user interface contains two main parts: the menu, in the top, and the body, where this message is being presented.</p>
+                <p><a href='#' class='tutorial-next'><span class='glyphicon glyphicon-chevron-right'></span> Next!</a></p>
+            </article>
+
+            <article class='hidden alert alert-success tutorial-step' id='tutorial-menu'>
+                <h3>The Menu</h3>
+                <p>This is the menu, which combines all the useful links and activities related to the CMS Conditions DB.</p>
+                <p>By using the menu, you will be able to forget about individual services and URLs. You only need to bookmark <a href='https://cms-conddb.cern.ch'>https://cms-conddb.cern.ch</a>!</p>
+                <p><a href='#' class='tutorial-next'><span class='glyphicon glyphicon-chevron-right'></span> Next!</a></p>
+            </article>
+
+            <article class='hidden alert alert-success tutorial-step' id='tutorial-search'>
+                <h3>The Search</h3>
+                <p>This is the search feature. It is the first one in the menu because is the most important and commonly used.</p>
+                <p>It allows you to search for and browse any kind of information related to conditions, e.g. tags, global tags, payloads, records, IOVs, ...</p>
+                <p>The only requirement to use it is to know something about what you are looking for. The search is done on most of the DB fields, is case-insensitive and looks for substrings as well. For instance, you can search for some string in the comments of a tag!</p>
+                <p>Its results are highlighted as well.</p>
+                <p><a href='#' class='tutorial-next'><span class='glyphicon glyphicon-search'></span> Let's search for <em class='tutorial-example-search'></em>!</a></p>
+            </article>
+
+            <article class='hidden alert alert-success tutorial-step' id='tutorial-search-results'>
+                <h3>The Search Results</h3>
+                <p>These are the results for <em class='tutorial-example-search'></em>.</p>
+                <p>As you can see, there are several tables shown, each with its own results. The tables are paginated and limited to a number of total results.</p>
+                <p>Within the tables, you can look for some entries (client-side search) using the search form in the header of the table.</p>
+                <p>The rows of the tables are selectable by clicking on them.</p>
+                <p><a href='#' class='tutorial-next'><span class='glyphicon glyphicon-chevron-right'></span> Select some rows!</a></p>
+            </article>
+
+            <article class='hidden alert alert-success tutorial-step' id='tutorial-search-actions'>
+                <h3>Actions on rows</h3>
+                <p>After selecting some rows, it is possible to apply some actions on them like <strong>List</strong> or <strong>Diff</strong>.</p>
+                <p><a href='#' class='tutorial-next'><span class='glyphicon glyphicon-list'></span> Display the list of IOVs for the selected tag!</a></p>
+            </article>
+
+            <article class='hidden alert alert-success tutorial-step' id='tutorial-search-list-results'>
+                <h3>List of IOVs of a tag</h3>
+                <p>Here are the results of the list of the tag <em class='tutorial-example-tag'></em>.</p>
+                <p><a href='#' class='tutorial-next'><span class='glyphicon glyphicon-chevron-right'></span> Next!</a></p>
+            </article>
+
+            <article class='hidden alert alert-success tutorial-step' id='tutorial-database'>
+                <h3>The Database selector</h3>
+                <p>Since now there is only one production database (schema) holding all the tags, global tags, records et. al., you will not probably need to switch or specify the databases anymore.</p>
+                <p>However, if you ever need to check something in some special database, use the database selector.</p>
+                <p><a href='#' class='tutorial-next'><span class='glyphicon glyphicon-chevron-right'></span> Next!</a></p>
+            </article>
+
+            <article class='hidden alert alert-success tutorial-step' id='tutorial-end'>
+                <h3>The End</h3>
+                <p>This is the end of the tutorial.</p>
+                <p>We hope it was useful!</p>
+                <p><a href='#' class='tutorial-close'><span class='glyphicon glyphicon-remove'></span> Close</a> <a href='#' class='tutorial-restart'><span class='glyphicon glyphicon-backward'></span> Restart!</a><p>
+            </article>
+        </div>
+    </div>
+</div>
+
+<script>
+    function tutorial_display(what) {
+        $('.tutorial-step').hide();
+        $(what).show();
+    }
+
+    function tutorial_highlight(what) {
+        var highlight_time = 4000;
+
+        var obj = $(what);
+        obj.popover({
+            'trigger': 'manual',
+            'html': true,
+            'content': '<span class="glyphicon glyphicon-arrow-up"></span>',
+            'placement': 'bottom',
+        });
+
+        obj.on('shown.bs.popover', function() {
+            setTimeout(function() {
+                obj.popover('destroy');
+            }, highlight_time);
+        })
+        obj.popover('show');
+
+        obj.animate({
+            opacity: 0.2,
+        }, highlight_time / 2, function() {
+            obj.animate({
+                opacity: 1.0,
+            }, highlight_time / 2);
+        });
+    }
+
+    var tutorial_example_search = 'ecalpedestal';
+    var tutorial_example_tag;
+    var tutorial_current_step;
+    var tutorial_steps = [
+        function() {
+            tutorial_display('#tutorial-introduction');
+        },
+        function() {
+            tutorial_display('#tutorial-menu');
+            tutorial_highlight('nav');
+        },
+        function() {
+            tutorial_display('#tutorial-search');
+            tutorial_highlight('#search');
+        },
+        function() {
+            tutorial_display('#tutorial-search-results');
+            $('#search input').val(tutorial_example_search);
+            $('#search').submit();
+        },
+        function() {
+            tutorial_display('#tutorial-search-actions');
+            var row = $('#tags tbody tr:nth-child(2)');
+            row.addClass('selectedRow');
+            tutorial_example_tag = $('#tags tbody tr:nth-child(2)').children('td:first-child').html();
+            $('.tutorial-example-tag').html(tutorial_example_tag);
+            tutorial_highlight('.list[data-type=tags]');
+        },
+        function() {
+            tutorial_display('#tutorial-search-list-results');
+            $('.list[data-type=tags]').click();
+        },
+        function() {
+            tutorial_display('#tutorial-database');
+            tutorial_highlight($('#database').parent());
+        },
+        function() {
+            tutorial_display('#tutorial-end');
+        },
+    ];
+
+    function tutorial_reset() {
+        // Hide all articles (and remove Bootstrap's hidden
+        // class, if any -- it is only used to prevent showing
+        // the steps when loading the page)
+        $('.tutorial-step').hide().removeClass('hidden');
+
+        // Clear anything -- not strictly required, but looks nicer
+        $('#main').empty();
+
+        tutorial_current_step = -1;
+    }
+
+    function tutorial_next() {
+        tutorial_current_step++;
+        if (tutorial_current_step == tutorial_steps.length)
+            tutorial_reset();
+        else
+            tutorial_steps[tutorial_current_step]();
+    }
+
+    $('.tutorial-next').click(function() {
+        tutorial_next();
+        return false;
+    });
+
+    $('.tutorial-close').click(function() {
+        tutorial_reset();
+
+        // Just in case: do not leave anything behind
+        $('#tutorial').empty();
+
+        // Return to the main page
+        run();
+
+        return false;
+    });
+
+    $('.tutorial-restart').click(function() {
+        tutorial_reset();
+        tutorial_next();
+        return false;
+    });
+
+    // Set the example search text in the HTML 'template' above
+    $('.tutorial-example-search').html(tutorial_example_search);
+
+    // Clear everything, just in case the tutorial was
+    // restarted without closing
+    $('#tutorial').empty();
+
+    // Move the steps from this page to the real place
+    $('#tutorial-steps').appendTo('#tutorial');
+
+    // Run it
+    tutorial_reset();
+    tutorial_next();
+</script>
+

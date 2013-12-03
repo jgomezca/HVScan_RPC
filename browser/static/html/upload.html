@@ -1,0 +1,185 @@
+<div id='upload' class='container'>
+    <div class='row'>
+        <div class='col-md-12'>
+            <h1>Upload tag</h1>
+        </div>
+    </div>
+
+    <form id='upload-form' enctype='multipart/form-data' method='post' action='upload' role='form' class='form-horizontal'>
+        <div class='form-group'>
+            <label for='file_object' class='col-md-2 control-label'>SQLite DB</label>
+            <div class='col-md-10'>
+                <input type='file' id='file_object' name='file_object' accept='.db' class='form-control' required>
+            </div>
+        </div>
+
+        <div class='form-group'>
+            <label for='source-tag' class='col-md-2 control-label'>Source tag</label>
+            <div class='col-md-10'>
+                <select id='source-tag' name='source-tag' class='form-control' required disabled>
+                    <option selected>Select first an SQLite DB file.</option>
+                </select>
+            </div>
+        </div>
+
+        <div class='form-group'>
+            <div class='col-md-2'>
+                <label for='destination-tags' class='control-label'>Destination tag(s) & their Synchronization</label>
+            </div>
+            <div class='col-md-10'>
+                <div id='destination-tags'>
+                    <div class='input-group destination-tag'>
+                        <input type='text' class='form-control destination-tag-name' placeholder='e.g. EcalADCToGeVConstant_2009runs_hlt' required>
+                        <div class='input-group-btn'>
+                            <button type='button' class='btn btn-default dropdown-toggle' data-toggle='dropdown'>Synchronize to <span class='synchronization'>None</span> <span class='caret'></span></button>
+                            <ul class='dropdown-menu pull-right'>
+                                <li><a class='synchronization-selector' href='#'>None</a></li>
+                                <li class='divider'></li>
+                                <li><a class='synchronization-selector' href='#'>HLT</a></li>
+                                <li><a class='synchronization-selector' href='#'>Express</a></li>
+                                <li class='divider'></li>
+                                <li><a class='synchronization-selector' href='#'>Prompt</a></li>
+                                <li><a class='synchronization-selector' href='#'>PCL</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <button type='button' class='btn btn-success pull-left' style='margin: 5px 10px 5px 0' id='destination-tags-more'><span class='glyphicon glyphicon-plus'></span>&nbsp; Add one more</button>
+                <div class='help-block'>
+                    <p>One or more tags can be the destination, each with a different synchronization value. Typically, your payloads do not require synchronization, so you only need to provide one destination tag name. Otherwise, when you require synchronization, sometimes you need to upload the same payloads to different tags, and each tag typically needs to be synchronized differently (e.g. one for Offline, another one for HLT and another one for PCL).</p>
+                    <p>The possible synchronization values are explained in more detail here:</p>
+                    <ul>
+                        <li><strong>HLT</strong> and <strong>Express</strong>: smallest Run number waiting for Prompt Reconstruction not having larger run numbers already released (as seen by the Tier0 monitoring).</li>
+                        <li><strong>Prompt</strong>: smallest Run number waiting for Prompt Reco not having larger run numbers already released, as seen by the Tier0 monitoring.</li>
+                        <li><strong>PCL</strong>: same as Prompt, but only if the begin time of the first IOV is larger than the First Condition Safe Run number obtained from Tier0.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class='form-group'>
+            <label for='comment' class='col-md-2 control-label'>Comment</label>
+            <div class='col-md-10'>
+                <textarea id='comment' name='comment' cols='40' rows='4' class='form-control' placeholder='Write any comment or description for the tag here.'></textarea>
+            </div>
+        </div>
+
+        <div class='form-group'>
+            <div class='col-md-offset-2 col-md-10'>
+                <button type='submit' title='Upload' class='btn btn-default'>Upload</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+    function reset_tags() {
+        $('#source-tag').prop('disabled', true).html('<option>Select first an SQLite DB file.</option>');
+    }
+    reset_tags();
+
+    function reset_handlers() {
+        $('#destination-tags .synchronization-selector').click(function() {
+            $(this).closest('.input-group-btn').find('.synchronization').html($(this).html());
+            return false;
+        });
+    }
+    reset_handlers();
+
+    $('#destination-tags-more').click(function() {
+        var copied = $('#destination-tags > :first-child').clone().appendTo('#destination-tags');
+        copied.find('input').val('');
+        copied.find('.synchronization').val('None');
+        reset_handlers();
+    });
+
+    function exists_table(db, table_name) {
+        return db.exec("select count(*) from sqlite_master where type='table' and lower(name)=lower('" + table_name + "')")[0][0].value == "1";
+    }
+
+    var file_ok = false;
+    var file_content = null;
+
+    $('#upload-form').submit(function() {
+        if (file_ok == false) {
+            error('Please provide a valid file.');
+            return false;
+        };
+
+        var destination_tags = [];
+        $('.destination-tag').each(function() {
+            destination_tags.push({
+                name: $(this).find('.destination-tag-name').val(),
+                synchronization: $(this).find('.synchronization').html(),
+            });
+        });
+
+        post('upload', {
+            file_content: file_content,
+            source_tag: $('#source-tag').val(),
+            destination_tags: JSON.stringify(destination_tags),
+            comment: $('#comment').val(),
+        }, function(data) {
+            $('#main').html(
+                  "<div id='upload-result' class='container'>"
+                + "    <div class='row'>"
+                + "        <div class='col-md-12'>"
+                + "            <h2>It worked!</h2>"
+                + "            <p>The DropBox is being implemented but, for the moment, the server can at least tell you that it has received correctly this data:</p>"
+                + "            <p>" + escape_HTML(data) + "</p>"
+                + "        </div>"
+                + "    </div>"
+                + "</div>"
+            ); 
+        });
+        return false;
+    });
+
+    $('#file_object').change(function() {
+        clear_alerts();
+        reset_tags();
+        file_ok = false;
+        file_content = null;
+
+        var reader = new FileReader();
+        reader.onload = function() {
+            file_content = reader.result;
+            var db = SQL.open(file_content);
+            try {
+                db.exec('select 1 from sqlite_master;');
+            } catch(e) {
+                error('The file is not a valid SQLite database.');
+                db.close();
+                return;
+            }
+
+            if (!exists_table(db, 'tag') || !exists_table(db, 'iov') || !exists_table(db, 'payload')) {
+                error('The SQLite database does not contain the expected tables ("tag", "iov" and "payload").');
+                db.close();
+                return;
+            }
+
+            if (db.exec('select count(*) from tag;')[0][0].value == "0") {
+                error('There are no tags in the SQLite database file.');
+                db.close();
+                return;
+            }
+
+            var tags = $.map(db.exec('select name from tag;'), function(row) {
+                return row[0].value;
+            });
+            db.close();
+
+            var source_tag = $('#source-tag');
+            source_tag.empty();
+            $.each(tags, function() {
+                 $('<option />', {value: this, text: this}).appendTo(source_tag);
+            });
+            source_tag.prop('disabled', false);
+
+            file_ok = true;
+        };
+        reader.readAsBinaryString($(this).get(0).files[0]);
+    });
+</script>
+
