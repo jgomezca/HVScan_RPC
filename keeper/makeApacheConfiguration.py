@@ -664,8 +664,8 @@ ServerRoot {serverRoot}
 PidFile run/httpd.pid
 Timeout 120
 KeepAlive On
-MaxKeepAliveRequests 40
-KeepAliveTimeout 4
+MaxKeepAliveRequests 100
+KeepAliveTimeout 5
 
 <IfModule prefork.c>
 StartServers       8
