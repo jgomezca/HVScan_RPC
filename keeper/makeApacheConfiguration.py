@@ -60,6 +60,7 @@ frontends = {
         'cmssdt', 'cmssdt-prod', 'cmssdt-prod1',
         'cmscov', 'cmscov-prod', 'cmscov-prod1',
         'cms-popularity', 'cms-pop-prod', 'cms-pop-prod1',
+        'cms-ai-monitoring',
     ],
     'vocms151': [
         'cms-conddb', 'cms-conddb-prod', 'cms-conddb-prod2',
@@ -68,6 +69,7 @@ frontends = {
         'cmssdt', 'cmssdt-prod', 'cmssdt-prod2',
         'cmscov', 'cmscov-prod', 'cmscov-prod2',
         'cms-popularity', 'cms-pop-prod', 'cms-pop-prod2',
+        'cms-ai-monitoring',
     ],
 
     'private': ['private'],
@@ -132,6 +134,10 @@ virtualHosts = {
         'backendHostnames': ['cms-pop-dev'],
         'services': ['cms-popularity'],
     },
+
+    'cms-ai-monitoring': {
+        'services': ['cms-ai-monitoring'],
+    }
 }
 
 # Add the services managed by the keeper to the cms-conddb-dev virtual host
@@ -570,6 +576,17 @@ services = {
         'backendPort': 443,
         'shibbolethGroups': ['cms-web-access', 'cms-cern-it-web-access', 'cms-all-t2'],
     },
+
+    'cms-ai-monitoring': {
+        'url': '',
+        'protocol': 'http',
+        'backendHostnames': ['ganglia-cmsev'],
+        'backendPort': 80,
+        'backendUrl': '/ganglia/',
+        'backendExclude': ['Shibboleth.sso/ADFS'],
+        'shibbolethGroups': ['cms-web-access'],
+    },
+
 }
 
 # Add the services managed by the keeper
