@@ -181,7 +181,11 @@ function configure_data_table(data, highlight_string) {
     return {
         'bJQueryUI': true,
         'sPaginationType': 'full_numbers',
-        'iDisplayLength': 10,
+        'iDisplayLength': 5,
+        'aLengthMenu': [
+            [5, 10, 25, 50, 100, -1],
+            [5, 10, 25, 50, 100, 'All']
+        ],
         'aaData': data['data'],
         'aoColumns': aoColumns,
     };
