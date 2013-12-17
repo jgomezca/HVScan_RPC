@@ -266,14 +266,14 @@ function action_search(database, string) {
     }, function(data) {
         $('#main').html(
               "<div class='col-md-12'>"
-            + "    <h2>Tags <button class='btn btn-danger list' data-type='tags'><span class='glyphicon glyphicon-list'></span> <span>List</span></button> <button class='btn btn-danger diff' data-type='tags'><span class='glyphicon glyphicon-pause'></span> <span>Diff</span></button></h2><table id='tags'></table>"
             + "    <h2>Global Tags <button class='btn btn-danger list' data-type='gts'><span class='glyphicon glyphicon-list'></span> <span>List</span></button> <button class='btn btn-danger diff' data-type='gts'><span class='glyphicon glyphicon-pause'></span> <span>Diff</span></button></h2><table id='gts'></table>"
+            + "    <h2>Tags <button class='btn btn-danger list' data-type='tags'><span class='glyphicon glyphicon-list'></span> <span>List</span></button> <button class='btn btn-danger diff' data-type='tags'><span class='glyphicon glyphicon-pause'></span> <span>Diff</span></button></h2><table id='tags'></table>"
             + "    <h2>Payloads</h2><table id='payloads'></table>"
             + "</div>"
         );
 
-        build_data_table('tags', data['tags'], string);
         build_data_table('gts', data['gts'], string);
+        build_data_table('tags', data['tags'], string);
         build_data_table('payloads', data['payloads'], string);
     });
 }
